@@ -1,12 +1,12 @@
 import { useParams } from '@tanstack/react-router'
 import { moduleGuides, moduleGuideById } from '../data/modules'
 import { ScreenList } from '../ui/GuideBlocks'
-import { HelpBreadcrumbs, HelpFrame, GuideLink } from '../ui/HelpFrame'
+import { HelpBreadcrumbs, HelpFrame, GuideLink, HelpRouteLink } from '../ui/HelpFrame'
 
 export function HelpModulesPage() {
   return <HelpFrame eyebrow="Каталог интерфейса" title="Разделы и страницы системы" description="Что находится на каждом экране, кто им пользуется и какие действия действительно работают.">
     <HelpBreadcrumbs items={[{ label: 'Справка', href: '/help' }, { label: 'Разделы системы' }]} />
-    <div className="module-guide-grid">{moduleGuides.map((module) => <a href={`/help/modules/${module.id}`} key={module.id}><span>{module.code}</span><h2>{module.name}</h2><p>{module.summary}</p><small>{module.screens.length} страниц и рабочих областей</small></a>)}</div>
+    <div className="module-guide-grid">{moduleGuides.map((module) => <HelpRouteLink href={`/help/modules/${module.id}`} key={module.id}><span>{module.code}</span><h2>{module.name}</h2><p>{module.summary}</p><small>{module.screens.length} страниц и рабочих областей</small></HelpRouteLink>)}</div>
   </HelpFrame>
 }
 

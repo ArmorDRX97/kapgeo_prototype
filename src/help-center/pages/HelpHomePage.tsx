@@ -2,7 +2,7 @@ import { BookOpenCheck, Boxes, GitPullRequestArrow, Search, ShieldCheck, UsersRo
 import { useMemo, useState } from 'react'
 import { moduleGuides } from '../data/modules'
 import { roleGuides } from '../data/roles'
-import { HelpFrame, GuideLink } from '../ui/HelpFrame'
+import { HelpFrame, GuideLink, HelpRouteLink } from '../ui/HelpFrame'
 
 export function HelpHomePage() {
   const [query, setQuery] = useState('')
@@ -24,7 +24,7 @@ export function HelpHomePage() {
   return <HelpFrame title="Как работать в AI KAPGEO" description="Самодостаточное руководство по входу, ролям, разделам, действиям и передаче результата между специалистами.">
     <section className="help-search-section" aria-label="Поиск по руководству">
       <label><Search size={19} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Роль, страница, действие или код задачи…" /></label>
-      {query && <div className="help-search-results">{results.length ? results.map((item) => <a href={item.href} key={`${item.href}-${item.title}`}><strong>{item.title}</strong><span>{item.detail}</span></a>) : <p>Совпадений не найдено. Попробуйте название роли, модуля или объекта.</p>}</div>}
+      {query && <div className="help-search-results">{results.length ? results.map((item) => <HelpRouteLink href={item.href} key={`${item.href}-${item.title}`}><strong>{item.title}</strong><span>{item.detail}</span></HelpRouteLink>) : <p>Совпадений не найдено. Попробуйте название роли, модуля или объекта.</p>}</div>}
     </section>
 
     <section className="help-start-grid">
@@ -36,7 +36,7 @@ export function HelpHomePage() {
 
     <section className="help-section">
       <div className="help-section__heading"><div><p>Рабочие профили</p><h2>Выберите свою роль</h2></div><GuideLink href="/help/roles" subtle>Все роли</GuideLink></div>
-      <div className="role-card-grid">{roleGuides.map((role) => <a href={`/help/roles/${role.id}`} key={role.id}><span>{role.id}</span><strong>{role.name}</strong><small>{role.person}</small></a>)}</div>
+      <div className="role-card-grid">{roleGuides.map((role) => <HelpRouteLink href={`/help/roles/${role.id}`} key={role.id}><span>{role.id}</span><strong>{role.name}</strong><small>{role.person}</small></HelpRouteLink>)}</div>
     </section>
 
     <aside className="help-confidence"><ShieldCheck size={21} /><div><strong>Руководство основано на работающем интерфейсе</strong><p>Перед публикацией проверены вход, навигация всех ролей, данные на рабочих страницах и ключевые действия модулей.</p></div><GuideLink href="/help/verification">Что именно проверено</GuideLink></aside>

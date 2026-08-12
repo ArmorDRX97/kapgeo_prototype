@@ -388,6 +388,7 @@
 - [x] E18-T13 Заменить ошибочно использованные статусные badge в списке уведомлений на явные рабочие ссылки и проверить их назначения.
 - [x] E18-T14 Подготовить GitHub Pages: production hash history, repository base path, Actions workflow и полное исключение `archive/`.
 - [x] E18-T15 Опубликовать `main` в `ArmorDRX97/kapgeo_prototype`, включить GitHub Pages и проверить публичный вход, MFA, стили и стартовый маршрут.
+- [x] E18-T16 Исправить внутреннюю навигацию `/help/*` для GitHub Pages: все ссылки должны сохранять `/kapgeo_prototype/#/` и открываться без 404.
 
 ## 20. Зависимости
 

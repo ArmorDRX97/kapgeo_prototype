@@ -1,4 +1,5 @@
 import { BookOpenCheck, Boxes, GitPullRequestArrow, Home, SearchCheck, UsersRound } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 import type { PropsWithChildren, ReactNode } from 'react'
 import '../help-center.css'
 
@@ -23,7 +24,7 @@ export function HelpFrame({ title, description, eyebrow, actions, children }: Pr
         {actions && <div className="help-hero__actions">{actions}</div>}
       </header>
       <nav className="help-nav" aria-label="Разделы справочного центра">
-        {navigation.map(({ href, label, icon: Icon }) => <a href={href} key={href}><Icon size={16} /><span>{label}</span></a>)}
+        {navigation.map(({ href, label, icon: Icon }) => <HelpRouteLink href={href} key={href}><Icon size={16} /><span>{label}</span></HelpRouteLink>)}
       </nav>
       <div className="help-content">{children}</div>
     </div>
@@ -31,9 +32,13 @@ export function HelpFrame({ title, description, eyebrow, actions, children }: Pr
 }
 
 export function GuideLink({ href, children, subtle = false }: PropsWithChildren<{ href: string; subtle?: boolean }>) {
-  return <a className={subtle ? 'help-link help-link--subtle' : 'help-link'} href={href}>{children}<span aria-hidden="true">→</span></a>
+  return <HelpRouteLink className={subtle ? 'help-link help-link--subtle' : 'help-link'} href={href}>{children}<span aria-hidden="true">→</span></HelpRouteLink>
+}
+
+export function HelpRouteLink({ href, className, children }: PropsWithChildren<{ href: string; className?: string }>) {
+  return <Link className={className} to={href as never}>{children}</Link>
 }
 
 export function HelpBreadcrumbs({ items }: { items: Array<{ label: string; href?: string }> }) {
-  return <nav className="help-breadcrumbs" aria-label="Хлебные крошки">{items.map((item, index) => <span key={`${item.label}-${index}`}>{item.href ? <a href={item.href}>{item.label}</a> : item.label}{index < items.length - 1 && <i>/</i>}</span>)}</nav>
+  return <nav className="help-breadcrumbs" aria-label="Хлебные крошки">{items.map((item, index) => <span key={`${item.label}-${index}`}>{item.href ? <HelpRouteLink href={item.href}>{item.label}</HelpRouteLink> : item.label}{index < items.length - 1 && <i>/</i>}</span>)}</nav>
 }
