@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.vite/
+.idea/
+*.log
+.env
+.env.*
+!.env.example
+
+# Historical inputs and analysis artifacts stay local and are never published.
+archive/
+
+# Temporary local authorization artifacts.
+.gh-auth-*.tmp

@@ -1,0 +1,13 @@
+import { ArrowRightLeft, CheckCircle2, CopyPlus, FileOutput } from 'lucide-react'
+import { useState } from 'react'
+import { Badge } from '../../shared/ui/Badge'
+import { PageHeader } from '../../shared/ui/PageHeader'
+import { Panel } from '../../shared/ui/Panel'
+
+const rows = [{ name: 'Расход кислоты, т/сут', base: '11,6', alternate: '12,4', unit: 'т' }, { name: 'Средняя приемистость', base: '81', alternate: '84', unit: 'м³/ч' }, { name: 'Небаланс раствора', base: '4,8', alternate: '2,9', unit: '%' }, { name: 'Отклонение от факта', base: '−2,4', alternate: '−1,1', unit: '%' }]
+export function ScenarioComparePage() {
+  const [published, setPublished] = useState(false)
+  return <div className="page-stack"><PageHeader eyebrow="Модуль моделирования · MOD-22–23" title="Сравнение сценариев" description="BASE-01 и ALT-02 используют одинаковый GEO snapshot v12; различается только план кислотного режима. Сравнение не смешивает версии входных данных." meta={<Badge tone="ai" dot>ALT-02 · готов к решению</Badge>} actions={<button type="button" className="button button--secondary button--md"><CopyPlus size={16} />Клонировать сценарий</button>} />
+    <div className="scenario-compare-layout"><Panel title="Сводка результатов" description="Прогноз на 30 суток"><div className="scenario-table"><div className="scenario-table__head"><span>Показатель</span><span>BASE-01</span><span>ALT-02</span><span>Изменение</span></div>{rows.map((row) => <div className="scenario-table__row" key={row.name}><span><strong>{row.name}</strong><small>{row.unit}</small></span><span>{row.base}</span><span className="is-alternate">{row.alternate}</span><span><ArrowRightLeft size={15} />см. карту/профиль</span></div>)}</div></Panel><aside className="scenario-aside"><Panel title="Решение" description="Результат не публикуется автоматически"><div className="scenario-decision"><CheckCircle2 size={21} /><span><strong>ALT-02 уменьшает небаланс</strong><small>Рекомендуется технологический review перед публикацией.</small></span></div><button type="button" className="button button--primary button--md" disabled={published} onClick={() => setPublished(true)}><FileOutput size={16} />{published ? 'ALT-02 опубликован' : 'Опубликовать ALT-02'}</button>{published && <p className="success-message">Версия ALT-02 передана в аналитику как scenario result v1.</p>}</Panel><Panel title="Входы и diff" description="Трассируемость"><div className="correlation-checks"><div><Badge tone="success">Одинаково</Badge><span>GEO v12, сетка и начальные условия.</span></div><div><Badge tone="warning">Изменено</Badge><span>Кислотный режим: 12,4 т/сут вместо 11,6 т/сут.</span></div></div></Panel></aside></div>
+  </div>
+}
