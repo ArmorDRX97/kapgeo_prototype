@@ -1,13 +1,21 @@
 import type { LabResult } from '../model/types'
+import { validateMeasuredValue } from '../../../shared/scientific/quantities/registry'
+import type { QuantityId } from '../../../shared/scientific/quantities/types'
 
 export type LabResultIssue = { resultId: string; message: string }
 
+export function labAnalyteQuantity(analyte: LabResult['analyte']): QuantityId {
+  return analyte === 'pH' ? 'ph' : 'mass_concentration'
+}
+
 export function validateLabResults(results: LabResult[]): LabResultIssue[] {
-  return results.flatMap((result) => {
-    const issues: LabResultIssue[] = []
-    if (!Number.isFinite(result.value) || result.value < 0) issues.push({ resultId: result.id, message: `${result.analyte}: значение не может быть отрицательным.` })
-    if (result.analyte === 'pH' && (result.unit !== 'pH' || result.value > 14)) issues.push({ resultId: result.id, message: 'pH указывается в единице pH и находится в диапазоне 0–14.' })
-    if (result.analyte !== 'pH' && result.unit !== 'мг/кг') issues.push({ resultId: result.id, message: `${result.analyte} требует единицу мг/кг.` })
-    return issues
-  })
+  return results.flatMap((result) => validateMeasuredValue({
+    quantityId: labAnalyteQuantity(result.analyte),
+    value: result.value,
+    unitId: result.unit,
+    qualifier: result.qualifier,
+    missingReason: result.missingReason,
+    uncertainty: result.uncertainty,
+    source: { id: result.id, label: `${result.method} · ${result.analyst}` },
+  }).map((issue) => ({ resultId: result.id, message: `${result.analyte}: ${issue.message}` })))
 }

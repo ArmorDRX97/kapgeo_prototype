@@ -23,6 +23,7 @@
 | приёмка и демонстрация | [10-acceptance-demo.md](./ui-ux/10-acceptance-demo.md) |
 | источники, решения и вопросы | [11-traceability-open-questions.md](./ui-ux/11-traceability-open-questions.md) |
 | геология | [02-geology.md](./ui-ux/modules/02-geology.md) |
+| глубокое расширение геологии по руководству пользователя | [индекс комплекта](./geology-functional-expansion/README.md), [gap-анализ](./geology-functional-expansion/02-current-state-gap-analysis.md), [prototype-эпики и задачник](./geology-functional-expansion/05-prototype-epics-backlog.md) |
 | технология | [03-technology.md](./ui-ux/modules/03-technology.md) |
 | моделирование | [04-modeling.md](./ui-ux/modules/04-modeling.md) |
 | аналитика | [05-analytics.md](./ui-ux/modules/05-analytics.md) |
@@ -33,9 +34,10 @@
 ## Приоритет источников
 
 1. Зафиксированные решения и требования в `docs/ui-ux/`.
-2. Текущий код и тесты — для фактически реализованного поведения.
-3. Журнал открытых вопросов — если решение ещё не принято.
-4. Архивные первоисточники — только точечно и только если основных документов недостаточно.
+2. Для детального геологического scope — `docs/geology-functional-expansion/`, который уточняет операции, gaps, архитектуру и порядок реализации без изменения общесистемных правил.
+3. Текущий код и тесты — для фактически реализованного поведения.
+4. Журнал открытых вопросов — если решение ещё не принято.
+5. Архивные первоисточники — только точечно и только если основных документов недостаточно.
 
 ## Архив
 

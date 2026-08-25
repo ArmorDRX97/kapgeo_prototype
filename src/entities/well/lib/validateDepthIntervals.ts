@@ -1,4 +1,4 @@
-export type DepthInterval = { id: string; from: number; to: number }
+export type DepthInterval = { id: string; from: number; to: number; kind?: 'interval' | 'point' }
 
 export type IntervalIssue = {
   severity: 'error' | 'warning'
@@ -10,9 +10,10 @@ export type IntervalIssue = {
 export function validateDepthIntervals(intervals: DepthInterval[], totalDepth: number, requireCoverage = false): IntervalIssue[] {
   const issues: IntervalIssue[] = []
   const sorted = [...intervals].sort((a, b) => a.from - b.from)
+  const ranged = sorted.filter((interval) => interval.kind !== 'point')
 
   sorted.forEach((interval) => {
-    if (!Number.isFinite(interval.from) || !Number.isFinite(interval.to) || interval.from >= interval.to) {
+    if (!Number.isFinite(interval.from) || !Number.isFinite(interval.to) || (interval.kind !== 'point' && interval.from >= interval.to)) {
       issues.push({ severity: 'error', code: 'invalid-range', intervalId: interval.id, message: `Интервал ${interval.from}–${interval.to} м: начало должно быть меньше окончания.` })
     }
     if (interval.from < 0 || interval.to > totalDepth) {
@@ -20,9 +21,9 @@ export function validateDepthIntervals(intervals: DepthInterval[], totalDepth: n
     }
   })
 
-  for (let index = 1; index < sorted.length; index += 1) {
-    const previous = sorted[index - 1]!
-    const current = sorted[index]!
+  for (let index = 1; index < ranged.length; index += 1) {
+    const previous = ranged[index - 1]!
+    const current = ranged[index]!
     if (current.from < previous.to) {
       issues.push({ severity: 'error', code: 'overlap', intervalId: current.id, message: `Перекрытие ${previous.to - current.from} м между интервалами ${previous.from}–${previous.to} и ${current.from}–${current.to} м.` })
     } else if (requireCoverage && current.from > previous.to) {
@@ -30,9 +31,9 @@ export function validateDepthIntervals(intervals: DepthInterval[], totalDepth: n
     }
   }
 
-  if (requireCoverage && sorted.length > 0) {
-    if (sorted[0]!.from > 0) issues.push({ severity: 'warning', code: 'gap', intervalId: sorted[0]!.id, message: `Неописанный интервал 0–${sorted[0]!.from} м.` })
-    if (sorted.at(-1)!.to < totalDepth) issues.push({ severity: 'warning', code: 'gap', intervalId: sorted.at(-1)!.id, message: `Неописанный интервал ${sorted.at(-1)!.to}–${totalDepth} м.` })
+  if (requireCoverage && ranged.length > 0) {
+    if (ranged[0]!.from > 0) issues.push({ severity: 'warning', code: 'gap', intervalId: ranged[0]!.id, message: `Неописанный интервал 0–${ranged[0]!.from} м.` })
+    if (ranged.at(-1)!.to < totalDepth) issues.push({ severity: 'warning', code: 'gap', intervalId: ranged.at(-1)!.id, message: `Неописанный интервал ${ranged.at(-1)!.to}–${totalDepth} м.` })
   }
 
   return issues

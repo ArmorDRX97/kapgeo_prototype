@@ -1,6 +1,6 @@
 import type { Well } from '../../entities/well/model/types'
 
-export const wells: Well[] = [
+const wellSeed: Well[] = [
   { id: 'WELL-1010-FULL', code: 'WELL-1010', type: 'Разведочная', purpose: 'Разведочная', profile: 'PR-07', crs: 'EPSG:32642', casingDiameter: 168, status: 'Работает', quality: 'Высокое', site: 'Северный', block: 'BLK-07-12', cell: 'TC-07-12-03', depth: 612.4, coordinates: { x: 468_146.8, y: 4_812_856.4 }, mapPosition: { x: 41, y: 42 }, updatedAt: 'Сегодня, 10:15', completeness: 100, activeTask: 'Все обязательные данные заполнены', aiConflicts: 0, version: 12 },
   { id: 'WELL-1042', code: 'WELL-1042', type: 'Откачная', purpose: 'Эксплуатационная', profile: 'PR-07', crs: 'EPSG:32642', casingDiameter: 168, status: 'Требует внимания', quality: 'Среднее', site: 'Северный', block: 'BLK-07-12', cell: 'TC-07-12-04', depth: 612.4, coordinates: { x: 468_214.3, y: 4_812_905.8 }, mapPosition: { x: 46, y: 38 }, updatedAt: 'Сегодня, 09:42', completeness: 94, activeTask: 'Разрешить расхождение интерпретации', aiConflicts: 1 },
   { id: 'WELL-1038', code: 'WELL-1038', type: 'Закачная', purpose: 'Эксплуатационная', profile: 'PR-07', crs: 'EPSG:32642', casingDiameter: 168, status: 'Работает', quality: 'Высокое', site: 'Северный', block: 'BLK-07-12', cell: 'TC-07-12-04', depth: 598.1, coordinates: { x: 468_089.7, y: 4_812_814.2 }, mapPosition: { x: 35, y: 47 }, updatedAt: 'Сегодня, 09:31', completeness: 100, aiConflicts: 0 },
@@ -13,5 +13,11 @@ export const wells: Well[] = [
   { id: 'WELL-1060', code: 'WELL-1060', type: 'Наблюдательная', purpose: 'Наблюдательная', profile: 'PR-07', crs: 'EPSG:32642', casingDiameter: 146, status: 'Требует внимания', quality: 'Среднее', site: 'Северный', block: 'BLK-07-14', cell: 'TC-07-14-01', depth: 619.6, coordinates: { x: 468_702.9, y: 4_813_018.4 }, mapPosition: { x: 89, y: 28 }, updatedAt: 'Вчера, 16:10', completeness: 76, activeTask: 'Проверить координаты устья', aiConflicts: 0 },
   { id: 'WELL-1014', code: 'WELL-1014', type: 'Разведочная', purpose: 'Разведочная', profile: 'PR-06', crs: 'EPSG:32642', casingDiameter: 127, status: 'Отключена', quality: 'Есть проблемы', site: 'Центральный', block: 'BLK-06-07', cell: '—', depth: 681.1, coordinates: { x: 467_588.1, y: 4_812_391.6 }, mapPosition: { x: 8, y: 88 }, updatedAt: '5 дней назад', completeness: 63, activeTask: 'Устранить разрывы интервалов', aiConflicts: 0 },
 ]
+
+export function getSeedWells(): Well[] {
+  return structuredClone(wellSeed)
+}
+
+export const wells: Well[] = getSeedWells()
 
 export const primaryWell = wells[0]!

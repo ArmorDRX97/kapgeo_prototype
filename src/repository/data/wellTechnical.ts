@@ -48,3 +48,7 @@ export function setTechnicalData(wellId: string, data: WellTechnicalData) {
   technicalStore.set(wellId, cloneTechnical(data))
   return cloneTechnical(data)
 }
+
+export function resetTechnicalData() {
+  technicalStore.clear()
+}

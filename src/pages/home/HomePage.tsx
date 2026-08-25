@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { AlertTriangle, ArrowRight, Bot, CheckCircle2, Clock3, Database, MapPinned } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Bot, Clock3, Database, MapPinned } from 'lucide-react'
 import { useSession } from '../../entities/session/model/sessionContext'
+import { JobStatusCard, useScientificJobs } from '../../features/scientific-jobs'
 import { fetchHomeSummary } from '../../repository/api'
+import { isScientificJobActive } from '../../shared/scientific/jobs'
 import { Badge } from '../../shared/ui/Badge'
 import { MetricCard } from '../../shared/ui/MetricCard'
 import { PageHeader } from '../../shared/ui/PageHeader'
@@ -11,6 +13,9 @@ import { Panel } from '../../shared/ui/Panel'
 export function HomePage() {
   const { persona } = useSession()
   const summary = useQuery({ queryKey: ['home-summary', persona?.id], queryFn: fetchHomeSummary })
+  const scientificJobs = useScientificJobs()
+  const activeJobCount = scientificJobs.jobs.filter(isScientificJobActive).length
+  const failedJobCount = scientificJobs.jobs.filter((job) => job.state === 'failed').length
 
   return (
     <div className="page-stack">
@@ -25,7 +30,7 @@ export function HomePage() {
         <MetricCard icon={Clock3} label="Мои задачи" value="7" detail="2 требуют решения сегодня" tone="teal" />
         <MetricCard icon={AlertTriangle} label="Качество данных" value="12" detail="3 блокирующие проблемы" tone="amber" />
         <MetricCard icon={Bot} label="AI-проверка" value="4" detail="1 существенное расхождение" tone="violet" />
-        <MetricCard icon={Database} label="Фоновые задачи" value="2" detail="Один импорт с предупреждениями" tone="blue" />
+        <MetricCard icon={Database} label="Фоновые задачи" value={String(activeJobCount)} detail={failedJobCount ? `${failedJobCount} требуют внимания` : 'Ошибок нет'} tone="blue" />
       </div>
 
       <div className="dashboard-grid">
@@ -57,13 +62,7 @@ export function HomePage() {
 
         <Panel title="Фоновые операции" className="dashboard-grid__wide">
           <div className="job-grid">
-            {summary.data?.jobs.map((job) => (
-              <article className="job-card" key={job.id}>
-                <div className="job-card__icon">{job.progress === 100 ? <CheckCircle2 size={19} /> : <Bot size={19} />}</div>
-                <div className="job-card__main"><strong>{job.title}</strong><span>{job.id} · {job.status}</span><div className="progress"><span style={{ width: `${job.progress}%` }} /></div></div>
-                <strong className="job-card__progress">{job.progress}%</strong>
-              </article>
-            ))}
+            {scientificJobs.jobs.slice(0, 2).map((job) => <JobStatusCard key={job.id} job={job} compact />)}
             <Link to="/geology/wells" className="quick-action"><MapPinned size={20} /><span><strong>Продолжить с геологией</strong><small>Реестр и карта скважин</small></span><ArrowRight size={17} /></Link>
           </div>
         </Panel>

@@ -29,3 +29,7 @@ export function setGeologyData(wellId: string, data: WellGeologyData) {
   geologyStore.set(wellId, cloneGeology(data))
   return cloneGeology(data)
 }
+
+export function resetGeologyData() {
+  geologyStore.clear()
+}

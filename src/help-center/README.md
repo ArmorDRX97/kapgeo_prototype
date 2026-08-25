@@ -28,3 +28,12 @@
 - изменение роли или последовательности — в `data/roles.ts`;
 - межролевой handoff — в `data/flows.ts`;
 - после браузерной проверки обновляются `verificationRecords` и дата проверки.
+
+## GEOX-E12
+
+Справка /help фиксирует browser-only IndexedDB, synthetic data, publication/snapshot export и полный reset через /profile. Версия контента HELP-GEO-E12-v1 сохраняется в demo records.
+
+
+## GEOX-E00
+
+Каталог геологии содержит /geology/methodology: интерактивный walkthrough scope, synthetic formulas, definitions, templates и volume profiles. Help Center объясняет назначение страницы; предметные решения сохраняются бизнес-repository, а не внутри help content.

@@ -39,6 +39,11 @@ export function HelpHomePage() {
       <div className="role-card-grid">{roleGuides.map((role) => <HelpRouteLink href={`/help/roles/${role.id}`} key={role.id}><span>{role.id}</span><strong>{role.name}</strong><small>{role.person}</small></HelpRouteLink>)}</div>
     </section>
 
+    <section className="help-note" aria-label="Демонстрационные данные">
+      <h2>Все данные локальные и synthetic</h2>
+      <p>Рабочие области сохраняют версии, связи, jobs и browser-артефакты в IndexedDB этого браузера. На странице публикации можно экспортировать demo snapshot, а в профиле — полностью удалить изменения и восстановить эталонный seed.</p>
+      <p><GuideLink href="/geology/delivery">Публикация и snapshot</GuideLink> · <GuideLink href="/profile">Полный reset</GuideLink></p>
+    </section>
     <aside className="help-confidence"><ShieldCheck size={21} /><div><strong>Руководство основано на работающем интерфейсе</strong><p>Перед публикацией проверены вход, навигация всех ролей, данные на рабочих страницах и ключевые действия модулей.</p></div><GuideLink href="/help/verification">Что именно проверено</GuideLink></aside>
   </HelpFrame>
 }

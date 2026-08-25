@@ -1,15 +1,18 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Accessibility, Contrast, Languages, MousePointer2 } from 'lucide-react'
-import { useState } from 'react'
+import { fetchPlatformPreferences, savePlatformPreferences } from '../../repository/api'
 import { Badge } from '../../shared/ui/Badge'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { Panel } from '../../shared/ui/Panel'
 
 export function AccessibilityPage() {
-  const [contrast, setContrast] = useState(false)
-  const [motion, setMotion] = useState(false)
-  const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable')
-  const apply = (name: string, value: string) => document.documentElement.dataset[name] = value
-  return <div className="page-stack"><PageHeader eyebrow="Качество интерфейса · E14–E15" title="Доступность и отображение" description="Настройки применяются сразу в браузере и позволяют изменить контраст, анимации и плотность рабочих областей." meta={<Badge tone="success" dot>Keyboard focus и skip-link включены</Badge>} />
-    <div className="accessibility-grid"><Panel title="Отображение" description="Персональные настройки интерфейса"><div className="accessibility-settings"><label><span><Contrast size={19} /><strong>Высокий контраст</strong></span><input type="checkbox" checked={contrast} onChange={(event) => { setContrast(event.target.checked); apply('contrast', event.target.checked ? 'high' : 'normal') }} /></label><label><span><MousePointer2 size={19} /><strong>Уменьшить движение</strong></span><input type="checkbox" checked={motion} onChange={(event) => { setMotion(event.target.checked); apply('motion', event.target.checked ? 'reduced' : 'normal') }} /></label><label><span><Accessibility size={19} /><strong>Плотность</strong></span><select value={density} onChange={(event) => { const value = event.target.value as typeof density; setDensity(value); apply('density', value) }}><option value="comfortable">Комфортная</option><option value="compact">Компактная</option></select></label></div></Panel><aside className="accessibility-aside"><Panel title="Локализация" description="Языки интерфейса"><div className="accessibility-note"><Languages size={20} /><span><strong>RU — основной рабочий язык</strong><small>Поддержка KZ и EN планируется в отдельных каталогах локализации.</small></span></div></Panel><Panel title="Проверочный чек‑лист" description="P0 flow"><ul className="accessibility-checklist"><li>Навигация с клавиатуры и видимый focus</li><li>Контраст статусов и текстовых альтернатив</li><li>1024px, tablet и mobile read-only</li><li>Отсутствие скрытых критичных полей</li></ul></Panel></aside></div>
+  const queryClient = useQueryClient()
+  const query = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences })
+  const mutation = useMutation({ mutationFn: savePlatformPreferences, onSuccess: (next) => queryClient.setQueryData(['platform-preferences'], next) })
+  if (!query.data) return <div className="page-loading"><span /><p>Загружаем настройки доступности…</p></div>
+  const preferences = query.data
+  const save = (next: typeof preferences) => mutation.mutate(next)
+  return <div className="page-stack"><PageHeader eyebrow="Качество интерфейса · GEOX-E12" title="Доступность и отображение" description="Настройки применяются сразу и сохраняются в IndexedDB для следующего открытия." meta={<Badge tone="success" dot>Keyboard focus и skip-link включены</Badge>} />
+    <div className="accessibility-grid"><Panel title="Отображение" description="Персональные настройки интерфейса"><div className="accessibility-settings"><label><span><Contrast size={19} /><strong>Высокий контраст</strong></span><input type="checkbox" checked={preferences.contrast} onChange={(event) => save({ ...preferences, contrast: event.target.checked })} /></label><label><span><MousePointer2 size={19} /><strong>Уменьшить движение</strong></span><input type="checkbox" checked={preferences.reducedMotion} onChange={(event) => save({ ...preferences, reducedMotion: event.target.checked })} /></label><label><span><Accessibility size={19} /><strong>Плотность</strong></span><select value={preferences.density} onChange={(event) => save({ ...preferences, density: event.target.value as typeof preferences.density })}><option value="comfortable">Комфортная</option><option value="compact">Компактная</option></select></label></div></Panel><aside className="accessibility-aside"><Panel title="Локализация" description="Сохраняемый язык"><div className="accessibility-note"><Languages size={20} /><span><strong>{preferences.locale.toUpperCase()} — текущий язык</strong><small>RU/KZ/EN terminology переключается без reload; отсутствующие строки явно отмечаются fallback.</small></span></div></Panel><Panel title="Проверочный чек‑лист" description="P0 flow"><ul className="accessibility-checklist"><li>Навигация с клавиатуры и видимый focus</li><li>Non-color status cues и семантические labels</li><li>Reduced motion через document preference</li><li>390/1024/1440 px compatibility flags</li></ul></Panel></aside></div>
   </div>
 }

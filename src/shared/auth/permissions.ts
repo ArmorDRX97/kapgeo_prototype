@@ -4,15 +4,18 @@ export type Permission =
   | 'home.view'
   | 'work.view'
   | 'geology.view'
+  | 'geology.well-master.edit'
+  | 'geology.well-master.review'
+  | 'geology.well-master.publish'
   | 'technology.view'
   | 'modeling.view'
   | 'analytics.view'
   | 'administration.view'
 
 const rolePermissions: Record<RoleId, Permission[]> = {
-  R1: ['home.view', 'work.view', 'geology.view', 'modeling.view', 'analytics.view'],
-  R2: ['home.view', 'work.view', 'geology.view', 'technology.view'],
-  R3: ['home.view', 'work.view', 'geology.view', 'modeling.view'],
+  R1: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'modeling.view', 'analytics.view'],
+  R2: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'technology.view'],
+  R3: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'modeling.view'],
   R4: ['home.view', 'work.view', 'geology.view', 'modeling.view', 'analytics.view'],
   R5: ['home.view', 'work.view', 'modeling.view', 'analytics.view'],
   R6: ['home.view', 'work.view', 'geology.view', 'technology.view', 'modeling.view', 'analytics.view'],
@@ -21,8 +24,8 @@ const rolePermissions: Record<RoleId, Permission[]> = {
   R9: ['home.view', 'work.view', 'technology.view'],
   R10: ['home.view', 'work.view', 'technology.view'],
   R11: ['home.view', 'work.view', 'geology.view', 'technology.view', 'modeling.view', 'analytics.view'],
-  R12: ['home.view', 'work.view', 'geology.view', 'technology.view', 'modeling.view', 'analytics.view'],
-  R13: ['home.view', 'work.view', 'geology.view', 'technology.view', 'modeling.view', 'analytics.view', 'administration.view'],
+  R12: ['home.view', 'work.view', 'geology.view', 'geology.well-master.review', 'geology.well-master.publish', 'technology.view', 'modeling.view', 'analytics.view'],
+  R13: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'geology.well-master.review', 'geology.well-master.publish', 'technology.view', 'modeling.view', 'analytics.view', 'administration.view'],
   R14: ['home.view', 'work.view', 'geology.view', 'technology.view', 'administration.view'],
 }
 

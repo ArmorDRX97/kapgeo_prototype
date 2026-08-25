@@ -19,3 +19,7 @@ export function setLabResults(wellId: string, results: LabResult[]) {
   store.set(wellId, clone(results))
   return clone(results)
 }
+
+export function resetLabResults() {
+  store.clear()
+}

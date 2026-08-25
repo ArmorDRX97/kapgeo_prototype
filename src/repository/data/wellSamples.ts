@@ -21,3 +21,7 @@ export function setSamples(wellId: string, samples: Sample[]) {
   sampleStore.set(wellId, clone(samples))
   return clone(samples)
 }
+
+export function resetSamples() {
+  sampleStore.clear()
+}

@@ -6,10 +6,18 @@ import { Badge } from '../../shared/ui/Badge'
 import { Button } from '../../shared/ui/Button'
 import { Panel } from '../../shared/ui/Panel'
 import { DrillingCoreWorkspace } from './components/DrillingCoreWorkspace'
+import { TrajectoryWorkspace } from './components/TrajectoryWorkspace'
 import { LithologyWorkspace } from './components/LithologyWorkspace'
+import { GeologyDataWorkspace } from './components/GeologyDataWorkspace'
 import { SamplesWorkspace } from './components/SamplesWorkspace'
 import { LogsWorkspace } from './components/LogsWorkspace'
+import { LogDataWorkspace } from './components/LogDataWorkspace'
+import { InterpretationDataWorkspace } from './components/InterpretationDataWorkspace'
+import { OutputDataWorkspace } from './components/OutputDataWorkspace'
 import { WellPassportWorkspace } from './components/WellPassportWorkspace'
+import { WellMasterWorkspace } from './components/WellMasterWorkspace'
+import { WellAuditWorkspace } from './components/WellAuditWorkspace'
+import { filtersToWellSearch, searchToWellWorkspace, type WellSearch, type WellWorkspaceFocus } from './wellSearch'
 import type { WellTabKey } from './wellTabSearch'
 
 const tabs: Array<{ key: WellTabKey; label: string }> = [
@@ -43,14 +51,68 @@ export function WellDetailsPage() {
   const navigate = useNavigate({ from: '/objects/wells/$wellId' })
   const { data: well, isLoading } = useQuery({ queryKey: ['well', params.wellId], queryFn: () => fetchWell(params.wellId) })
   const activeTab = search.tab ?? 'overview'
+  const {
+    workspaceFocus,
+    workspaceVersion,
+    workspaceScenario,
+    selectedWellId: workspaceSelectedWellId,
+  } = searchToWellWorkspace(search)
+
+  const selectedWellId = workspaceSelectedWellId ?? params.wellId
+  const returnFocus: WellWorkspaceFocus = workspaceFocus ?? 'registry'
+
+  const buildWellSearchForCard = (): WellSearch => filtersToWellSearch(
+    {
+      query: search.q ?? '',
+      status: search.status ?? 'Все',
+      type: search.type ?? 'Все',
+      quality: search.quality ?? 'Все',
+      site: search.site ?? 'Все',
+    },
+    {
+      selectedWellId,
+      workspaceVersion,
+      workspaceScenario,
+      workspaceFocus: returnFocus,
+    },
+  )
+
+  const buildBackSearch = (targetFocus: WellWorkspaceFocus): WellSearch => filtersToWellSearch(
+    {
+      query: search.q ?? '',
+      status: search.status ?? 'Все',
+      type: search.type ?? 'Все',
+      quality: search.quality ?? 'Все',
+      site: search.site ?? 'Все',
+    },
+    {
+      selectedWellId,
+      workspaceVersion,
+      workspaceScenario,
+      workspaceFocus: targetFocus,
+    },
+  )
+
+  const backSearch = returnFocus === 'map'
+    ? buildBackSearch('map')
+    : buildBackSearch('registry')
 
   if (isLoading || !well) return <div className="page-loading"><span /><p>Загружаем карточку скважины…</p></div>
   const isNewObjectDraft = well.version === 1 && well.updatedAt === 'Только что'
   const isWorkingDraft = well.status === 'На проверке'
 
+  const domainStatusItems: DomainStatusItem[] = [
+    [Construction, 'Паспорт и конструкция', isNewObjectDraft ? 'Черновик 68%' : 'Заполнено', isNewObjectDraft ? 'info' : 'success'],
+    [RadioTower, 'ГИС и интерпретация', isNewObjectDraft ? 'Нет данных' : well.aiConflicts ? '1 расхождение' : 'Проверено', isNewObjectDraft ? 'neutral' : well.aiConflicts ? 'ai' : 'success'],
+    [FlaskConical, 'Пробы и лаборатория', isNewObjectDraft ? 'Нет данных' : '24 результата', isNewObjectDraft ? 'neutral' : 'info'],
+    [Wrench, 'Технологический режим', isNewObjectDraft ? 'Не назначен' : 'Работает', isNewObjectDraft ? 'neutral' : 'success'],
+    [FileText, 'Документы', isNewObjectDraft ? 'Нет документов' : '1 ожидается', isNewObjectDraft ? 'neutral' : 'warning'],
+    [ClipboardCheck, 'Качество данных', well.quality, 'warning'],
+  ]
+
   return (
     <div className="page-stack">
-      <Link to="/geology/wells" className="back-link"><ArrowLeft size={16} /> К реестру скважин</Link>
+      <Link to={returnFocus === 'map' ? '/geology/map' : '/geology/wells'} search={backSearch} className="back-link"><ArrowLeft size={16} /> К {returnFocus === 'map' ? 'карте' : 'реестру'} скважин</Link>
       <header className="object-header">
         <div className="object-header__main">
           <span className="object-header__icon"><RadioTower size={25} /></span>
@@ -66,21 +128,14 @@ export function WellDetailsPage() {
       </header>
 
       <nav className="object-tabs" aria-label="Разделы карточки">
-        {tabs.map((tab) => <button key={tab.key} type="button" className={activeTab === tab.key ? 'is-active' : ''} onClick={() => void navigate({ search: { tab: tab.key === 'overview' ? undefined : tab.key }, replace: true })}>{tab.label}{tab.key === 'logs' && well.aiConflicts > 0 && <span>{well.aiConflicts}</span>}</button>)}
+        {tabs.map((tab) => <button type="button" key={tab.key} className={activeTab === tab.key ? 'is-active' : ''} onClick={() => void navigate({ search: { ...buildWellSearchForCard(), tab: tab.key === 'overview' ? undefined : tab.key }, replace: true })}>{tab.label}{tab.key === 'logs' && well.aiConflicts > 0 && <span>{well.aiConflicts}</span>}</button>)}
       </nav>
 
       {activeTab === 'overview' && <div className="object-content-grid">
         <div className="object-content-grid__main">
           <Panel title="Состояние данных" description="Опубликованные и рабочие данные по выбранной версии">
             <div className="domain-status-grid">
-              {([
-                [Construction, 'Паспорт и конструкция', isNewObjectDraft ? 'Черновик 68%' : 'Заполнено', isNewObjectDraft ? 'info' : 'success'],
-                [RadioTower, 'ГИС и интерпретация', isNewObjectDraft ? 'Нет данных' : well.aiConflicts ? '1 расхождение' : 'Проверено', isNewObjectDraft ? 'neutral' : well.aiConflicts ? 'ai' : 'success'],
-                [FlaskConical, 'Пробы и лаборатория', isNewObjectDraft ? 'Нет данных' : '24 результата', isNewObjectDraft ? 'neutral' : 'info'],
-                [Wrench, 'Технологический режим', isNewObjectDraft ? 'Не назначен' : 'Работает', isNewObjectDraft ? 'neutral' : 'success'],
-                [FileText, 'Документы', isNewObjectDraft ? 'Нет документов' : '1 ожидается', isNewObjectDraft ? 'neutral' : 'warning'],
-                [ClipboardCheck, 'Качество данных', well.quality, 'warning'],
-              ] satisfies DomainStatusItem[]).map(([Icon, title, value, tone]) => (
+              {domainStatusItems.map(([Icon, title, value, tone]) => (
                 <article key={title}><span className="domain-status-grid__icon"><Icon size={18} /></span><div><strong>{title}</strong><small>Версия согласована с карточкой</small></div><Badge tone={tone}>{String(value)}</Badge><ChevronRight size={16} /></article>
               ))}
             </div>
@@ -106,12 +161,14 @@ export function WellDetailsPage() {
           </Panel>
         </aside>
       </div>}
-      {activeTab === 'passport' && <WellPassportWorkspace well={well} />}
-      {activeTab === 'drilling' && <DrillingCoreWorkspace well={well} />}
-      {activeTab === 'lithology' && <LithologyWorkspace well={well} />}
-      {activeTab === 'samples' && <SamplesWorkspace well={well} />}
-      {activeTab === 'logs' && <LogsWorkspace well={well} />}
-      {!['overview', 'passport', 'drilling', 'lithology', 'samples', 'logs'].includes(activeTab) && <PlannedWellWorkspace tab={tabs.find((tab) => tab.key === activeTab)?.label ?? activeTab} />}
+      {activeTab === 'passport' && <><WellMasterWorkspace well={well} /><WellPassportWorkspace well={well} /></>}
+      {activeTab === 'drilling' && <><TrajectoryWorkspace well={well} /><DrillingCoreWorkspace well={well} /></>}
+      {activeTab === 'lithology' && <><GeologyDataWorkspace well={well} /><LithologyWorkspace well={well} /></>}
+      {activeTab === 'samples' && <><GeologyDataWorkspace well={well} /><SamplesWorkspace well={well} /></>}
+      {activeTab === 'logs' && <><LogDataWorkspace well={well} /><InterpretationDataWorkspace well={well} /><LogsWorkspace well={well} /></>}
+      {activeTab === 'audit' && <WellAuditWorkspace well={well} />}
+      {activeTab === 'documents' && <OutputDataWorkspace well={well} />}
+      {!['overview', 'passport', 'drilling', 'lithology', 'samples', 'logs', 'audit', 'documents'].includes(activeTab) && <PlannedWellWorkspace tab={tabs.find((tab) => tab.key === activeTab)?.label ?? activeTab} />}
     </div>
   )
 }

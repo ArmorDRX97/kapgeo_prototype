@@ -8,6 +8,8 @@ import { AnalyticsReportPage } from '../pages/analytics/AnalyticsReportPage'
 import { MfaPage } from '../pages/auth/MfaPage'
 import { SignInPage } from '../pages/auth/SignInPage'
 import { GeologyOverviewPage } from '../pages/geology/GeologyOverviewPage'
+import { GeologyMasterPage } from '../pages/geology/GeologyMasterPage'
+import { GeologyMethodologyPage } from '../pages/geology/GeologyMethodologyPage'
 import { GeologyMapPage } from '../pages/geology/GeologyMapPage'
 import { GeologyCorrelationPage } from '../pages/geology/GeologyCorrelationPage'
 import { ReservesPage } from '../pages/geology/ReservesPage'
@@ -50,6 +52,8 @@ const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: '/home', 
 const workRoute = createRoute({ getParentRoute: () => rootRoute, path: '/work', component: WorkPage })
 const workflowCenterRoute = createRoute({ getParentRoute: () => rootRoute, path: '/work/workflows', component: WorkflowCenterPage })
 const geologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology', component: GeologyOverviewPage })
+const geologyMasterRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/master', component: GeologyMasterPage })
+const geologyMethodologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/methodology', component: GeologyMethodologyPage })
 const geologyMapRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/map', validateSearch: validateWellSearch, component: GeologyMapPage })
 const geologyCorrelationRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/correlation', component: GeologyCorrelationPage })
 const reservesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/reserves', component: ReservesPage })
@@ -98,6 +102,8 @@ const routeTree = rootRoute.addChildren([
   workRoute,
   workflowCenterRoute,
   geologyRoute,
+  geologyMasterRoute,
+  geologyMethodologyRoute,
   geologyMapRoute,
   geologyCorrelationRoute,
   reservesRoute,

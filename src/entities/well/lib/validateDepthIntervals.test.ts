@@ -22,6 +22,15 @@ describe('validateDepthIntervals', () => {
     expect(issues.filter((issue) => issue.code === 'gap')).toHaveLength(3)
   })
 
+  it('разрешает точечный элемент и не включает его в coverage/overlap', () => {
+    const issues = validateDepthIntervals([
+      { id: 'A', from: 0, to: 100 },
+      { id: 'POINT', kind: 'point', from: 100, to: 100 },
+      { id: 'B', from: 100, to: 200 },
+    ], 200, true)
+
+    expect(issues).toEqual([])
+  })
   it('считает выход керна в допустимом диапазоне', () => {
     expect(calculateRecovery(100, 200, 82)).toBe(82)
     expect(calculateRecovery(100, 200, 140)).toBe(100)

@@ -1,10 +1,15 @@
 # Статус реализации
 
-Дата обновления: 10 августа 2026  
-Текущий этап: **E09 Геология — интервальные редакторы и первичные данные**
+Дата обновления: 24 августа 2026
+
+Текущий этап: **GEOX — профессиональное расширение геологического модуля**
 
 ## Готово
 
+- детально разобрано руководство пользователя геологического модуля объёмом 339 страниц и сопоставлены 199 извлечённых растровых иллюстраций;
+- создан пакет `docs/geology-functional-expansion/`: функциональный реестр источника, gap-анализ, целевой процесс, архитектура интеграции, эпики, playbook реализации, трассировка и журнал решений;
+- зафиксирована граница контекстов: ГЕО владеет геологическими данными, интерпретацией, запасами и приёмкой версии, а общий вычислительный контур 2D/3D, сеток, вариографии и интерполяции переиспользуется из МОД;
+- настоящий milestone является документационным: работающий код прототипа на этом этапе не менялся, а перечисленные далее экраны сохраняют прежний demo-уровень;
 - проанализирован исходный комплект и создана основная UI/UX-документация;
 - определены 14 ролей, 159 экранов/рабочих областей и 12 сквозных процессов;
 - описаны дизайн-система, frontend-архитектура, mock data и acceptance;
@@ -20,17 +25,39 @@
 - добавлены mock API и синтетические данные скважин, задач и фоновых операций.
 - GEO-03 вынесен в отдельную рабочую карту со слоями, legend, cross-selection и инспектором;
 - GEO-04 поддерживает URL-фильтры, сохранённые demo-представления и перенос выборки между картой и реестром;
+- GEOX-E01-T10 (phase 1+2) внедряет shared workspace между `/geology/map`, `/geology/wells` и `/objects/wells/$wellId`: единый `selectedWellId/workspaceFocus`, передача контекста в карточку, маршрутизация `tab` в URL и fallback-подбор при смене фильтрации.
+- GEOX-E02 завершён как сохраняемый synthetic well-master: /geology/master редактирует месторождения, участки, залежи и effective-dated кондиции с version/audit; реестр скважин хранит группировку и saved views; wizard добавляет принадлежность, проект и spatial/duplicate check; полный паспорт разделён на пять независимых агрегатов, construction editor поддерживает intervals/points и undo/redo; review/publish доступен через demo-permissions (автор / согласующий / издатель); reload сохраняет результат в IndexedDB, а reset возвращает seed.
+- GEOX-E03 завершён: вкладка ?tab=drilling использует versioned IndexedDB workspace траектории и керна — surveys, fixture import с mapping/diff/protocol, deterministic mean-angle/vertical-fallback result, job/artifact evidence, MD/TVD/N/E inspector, depth mapping core runs/bins/boxes, validation, preview relations к литологии/пробам, undo/redo и CSV export.
+- GEOX-E04 завершён: вкладки литологии и проб используют versioned IndexedDB geology workspace: core/log/composite/stratigraphy tracks, RU/KZ/EN dictionaries, overrides, sample links и workflow, lab QA/QC, synthetic granulometry, batch labels/barcodes, LIMS staging/reconciliation, versions/relations/audit/jobs/artifacts.
+- GEOX-E05 завершён: вкладка ГИС получила versioned IndexedDB workspace с synthetic LAS/DAT fixture, parser/mapping/QC preview, atomic LogRun/curve versions, bounded viewer, templates, derived/merged curves, main-curve impact, audit/jobs/artifacts.
+- GEOX-E06 завершён: вкладка ГИС дополнена versioned workspace интерпретаций: manual permeable/filtration/differential/ore/tech tracks, automatic KS/align proposals, explicit preliminary/no-correction exclusion, synthetic AI evidence, human resolution и review/publish audit.
+- GEOX-E07 завершён: вкладка документов использует versioned output workspace с SVG-column/template/annotations/legend, Blob-export preview, demo documents, GIS-like map edit и managed views.
+- GEOX-E08 завершён: /geology/correlation получил versioned SectionProject workspace с route/corridor, connectivity, helpers, contours, ore/oxidation, auto-repair и downloadable drawing artifact.
+- GEOX-E09 завершён: /geology/reserves получил versioned ReserveProject с intersections/blocks/well sets/cells, четырьмя synthetic methods на locked snapshot, compare, plan и passport publication.
+- GEOX-E10 завершён: /modeling получил versioned 2D geology workspace с domain/grid, source points, statistics, variogram/CV, четырьмя interpolation plugins, accepted field/contours и JSON output.
+- GEOX-E11 завершён: /modeling/results/$projectId получил versioned DGM workspace с horizons/picks/surfaces, prismatic mesh, 3D fields/composition, slices, WebGL/2D/table fallback и publication exports.
 - GEO-05 реализован как четырёхшаговый wizard с проверкой duplicate-кода, координат и конструкции;
 - созданный demo-объект появляется в query cache и открывается как честная draft-карточка версии 1;
 - набор скважин расширен до 10 связанных synthetic-объектов, добавлены unit-тесты фильтрации.
 - вкладки единой карточки получили стабильное URL-состояние `?tab=`;
 - GEO-06 содержит редактируемый паспорт и конструкцию с проверкой интервалов;
-- изменение координат или глубины требует причины и показывает impact preview зависимых разрезов/моделей;
-- сохранение паспорта создаёт новую demo-версию и переводит её в статус «На проверке»;
+- GEOX-E01-T01…T04 разделили паспорт и конструкцию на независимые versioned aggregates и ввели repository contracts с demo/HTTP adapters;
+- изменение координат, CRS, профиля, глубины, диаметра или конструкции показывает impact preview из графа точных зависимостей и требует причины;
+- сохранение передаёт `expectedVersion` и `idempotencyKey`, создаёт новую demo-версию в статусе «На проверке» и возвращает request/audit evidence;
+- конкурентное изменение возвращает `VERSION_CONFLICT` с актуальными версиями и действием перезагрузки вместо last-write-wins;
+- зависимые разрез, модель и колонка после сохранения получают видимые `stale` records; исходные опубликованные версии не изменяются и остаются в истории;
+- compatibility API возвращает независимые query snapshots: после сохранения заголовок карточки синхронно показывает новую версию и координаты, а ранее загруженный snapshot не мутируется;
 - GEO-07 связывает таблицу рейсов с глубинным треком и инспектором выбранного интервала;
 - GEO-08 показывает керновые коробки, хранение, фотографии и связь с пробами;
 - overlap, gap, неверный диапазон и выход за глубину проверяются общей предметной функцией и unit-тестами.
 - GEO-09 реализован как интерактивный редактор литологии/стратиграфии: колонка и таблица синхронизированы, доступны изменение границ, split/merge, copy, заполнение пропуска, undo/redo, diff и сохранение черновика;
+- GEOX-E01-T05 добавляет canonical quantity/unit registry: совместимость размерностей, преобразование `м/см/мм`, `мг/кг/г/т/ppm/%`, `кг/м³/т/м³`, диапазоны, qualifiers, uncertainty и обязательную причину missing value;
+- лабораторная валидация GEO-11 использует общий quantity registry, предлагает только совместимые единицы, поддерживает qualifiers и показывает значение в канонической единице;
+- GEOX-E01-T06 заменяет lithology-only helpers обобщённым interval command engine с policies для coverage/overlap/gap/minimum thickness/snap, командами add/update/split/merge/stretch/shift/copy/remove, детальным diff и общей undo/redo history;
+- GEO-09 мигрирован на interval engine: заполнение пропуска создаёт одну трассируемую add-команду, undo восстанавливает исходный gap, а merge разрешён только для эквивалентных литологии/стратиграфии/источника;
+- GEOX-E01-T07 добавляет CRS-aware `Point/LineString/Polygon`: 2D/3D consistency, geographic ranges, line/ring invariants, polygon topology, bounds, metric length/area и position limits;
+- геометрия сериализуется детерминированным envelope `kapgeo.geometry/v1`; преобразование между разными CRS требует явный `GeometryTransformAdapter` и до решения OQ-50 не имитируется;
+- versioned-паспорт хранит устье как единый `SpatialPoint`, а demo repository и create-well compatibility boundary блокируют невалидные координаты до мутации;
 - GEO-10 реализован во вкладке проб: создание из связанного литологического интервала, реестр, цепочка до лаборатории, явные типы и проверка duplicate/depth перед сохранением;
 - GEO-11 добавляет к выбранной пробе результаты, единицы, метод, аналитика, QA/QC-статус и флаг контрольной пробы; несовместимая единица или невозможное значение блокируют сохранение;
 - GEO-12 реализован во вкладке ГИС: реестр наборов, состав кривых, глубинная привязка, источник и явные QC-замечания;
@@ -39,16 +66,17 @@
 - GEO-15 добавляет в LogViewer ручную интерпретацию: границы, категория, confidence, обязательное обоснование и validation перед сохранением demo-черновика;
 - GEO-16–18 завершают demo-сценарий AI-сравнения: экспертный выбор с обязательной причиной, отправка на проверку и видимый audit trail;
 - GEO-19 добавляет выбор и сохранение шаблона геологической колонки без изменения исходных интервалов;
-- GEO-20 добавляет отдельный маршрут `/geology/correlation`: разрез A–A′, переключение датума, выбор опорной скважины, связи горизонтов, контрольные замечания и переход в литологическую колонку;
-- GEO-21 добавляет `/geology/reserves`: параметры подсчёта, мгновенно пересчитываемый тоннаж/металл, доказуемые источники и передачу demo-версии на review;
-- GEO-22 добавляет `/geology/delivery`: паспорт выдачи, выбор модулей-получателей, публикацию версии и видимый audit trail;
+- `/geology/correlation` частично демонстрирует GEO-22/24: разрез A–A′, переключение датума, выбор опорной скважины, связи горизонтов, контрольные замечания и переход в литологическую колонку; реестра разрезов, редактирования трассы, рудных тел и полного предметного workflow пока нет;
+- `/geology/reserves` частично демонстрирует GEO-27–30: параметры упрощённого подсчёта, мгновенно пересчитываемый тоннаж/металл, источники и передачу demo-версии на review; четыре методики руководства, версии входов, блоки/полигоны/ячейки и воспроизводимые расчётные запуски пока не реализованы;
+- `/geology/delivery` является demo-срезом GEO-34: паспорт выдачи, выбор модулей-получателей, публикация версии и видимый audit trail;
 - добавлен эталонный fully-populated synthetic-кейс `WELL-1010-FULL` (код `WELL-1010`): он покрывает все реализованные вкладки геологии без пустых рабочих областей;
 
 ## Работающие маршруты
 
 - `/auth/sign-in`, `/auth/mfa` — demo-авторизация;
 - `/home`, `/work`, `/notifications`, `/profile`, `/help` — общая платформа;
-- `/geology`, `/geology/map`, `/geology/wells`, `/geology/wells/new`, `/objects/wells/$wellId` — геологический проводник и объект;
+- `/geology`, `/geology/master`, `/geology/map`, `/geology/wells`, `/geology/wells/new`, `/objects/wells/$wellId` — геологический проводник, master data и объект;
+- `/geology/correlation`, `/geology/reserves`, `/geology/delivery` — частичные demo-срезы GEO-22/24, GEO-27–30 и GEO-34;
 - `/geology/interpretations/$interpretationId/compare` — рабочая область решения «ручное / AI / скорректированное»;
 - `/technology`, `/modeling`, `/analytics`, `/admin` — стилизованные стартовые страницы модулей;
 - `/forbidden` и not-found — системные состояния.
@@ -59,25 +87,40 @@
 - collapsed sidebar сохраняет доступную кнопку «Развернуть меню»; проверено browser-smoke;
 - стрелка выбора даты в topbar центрирована относительно контента и не переносится на отдельную строку;
 
+- общий монитор фоновых задач показывает queued/running/post-processing/succeeded/failed/cancelled, диагностические сообщения, результаты, cancel и retry; stage-only job не получает фиктивный процент;
+- мастер импорта LAS/DAT создаёт идемпотентную `file_import` job с immutable input snapshot и версией parser, а новый набор ГИС появляется только как result успешной задачи;
 - demo-вход через SSO и MFA, выход, смена персоны;
 - фильтрация модулей и запрет прямого перехода без права;
 - переходы между задачей, WELL-1042 и сравнением интерпретаций;
-- синхронный фильтр карта/реестр, shareable URL, выбор маркера и инспектор;
+- синхронный фильтр карта/реестр/карточка, shareable URL, выбор маркера и инспектор;
 - создание WELL-1064 в demo-сессии и переход в draft-карточку;
 - переходы по URL-вкладкам паспорта и бурения без потери выбранного объекта;
 - блокировка сохранения конструкции/рейса при невалидном интервале;
+- browser-smoke GEO-09: заполнение разрыва `320–340 м` убирает предупреждение, diff показывает `1 добавлено`, undo восстанавливает разрыв и чистое состояние без ошибок консоли;
+- browser-smoke GEO-11: для `U` доступны только совместимые `мг/кг`, `г/т`, `ppm`, `%`; смена единицы пересчитывает каноническое значение, qualifiers редактируются, ошибок консоли нет;
+- browser-smoke GEOX-E01-T07: `EPSG:32642 · geometry v1` виден в versioned-паспорте; easting вне допустимого диапазона показывает блокирующую ошибку, смена CRS — предупреждение об отсутствии автоматического transform;
+- изменение валидной точки устья создаёт паспорт v13, оставляет конструкцию v12 и помечает точные snapshots разреза/модели stale; ошибок консоли нет;
 - создание версии 8 WELL-1042 после изменения глубины с обязательным обоснованием и impact preview;
 - синхронный выбор рейса на глубинном треке, пересчёт выхода керна и добавление коробки;
 - выбор результата сравнения, обязательная причина корректировки и подтверждение сохранения;
 - responsive shell с мобильным меню;
 - unit-тесты матрицы прав, фильтрации скважин и глубинных интервалов;
 - `typecheck`, `test`, `lint` и production build выполняются без ошибок.
+- `GEOX-E01-T09 Audit/evidence` (foundation): реализован append-only in-memory audit store с детерминированной сортировкой, событиями `science.job.*` для create/start/progress/retry/cancel/finished/failed, idempotent write, dedupe по idempotency/requestId и связкой job flow с requestId/result artifacts.
+- Вкладка Audit в карточке скважины показывает объединённый timeline версий passport/construction и событий science job для выбранной скважины.
+- Добавлен WellAuditWorkspace regression suite: src/pages/geology/components/WellAuditWorkspace.test.tsx (loading/пустая секция научных событий/science events + summary).
 
-## Следующий вертикальный срез
 
-`E10 Технология — замеры → лаборатория → баланс → РВР`
+## Текущий приоритет (выполняется)
+С 24 августа 2026 текущий implementation backlog — [13 prototype-эпиков с IndexedDB](./geology-functional-expansion/05-prototype-epics-backlog.md). Цель этапа: кликабельный демонстрационный сайт на GitHub Pages, deterministic synthetic data, persistence после reload и глобальный reset. Production backend и промышленная защита не входят в текущий DoD.
 
-Цель среза: завершить сквозной технологический сценарий на demo-данных BLK-07-12.
+`GEOX-E01` закрыт: `DemoDatabase`/IndexedDB, deterministic seed/schema migration, repository adapters, persisted workflows/jobs/artifacts/audit, map workspace preferences и подтверждаемый reset в Profile реализованы. Подробная карта реализации и проверок: [GEOX-E01 verification](./geology-functional-expansion/09-e01-indexeddb-verification.md).
+
+Ранее завершённые foundation-срезы сохраняются как база миграции:
+
+- `GEOX-E01-T09 Audit/evidence` и `GEOX-E01-T08 Scientific jobs`:
+ - T09: domain types + contracts, in-memory append-only audit store, emitters `science.job.*` (create/start/progress/retry/cancel/finish/failed), dedupe по `requestId/idempotencyKey` и детерминированные тесты.
+ - T08: общий contract/lifecycle, deterministic demo + HTTP repository, query/mutation, карточка и глобальный монитор, error/diagnostic/cancel/retry, интеграция home и LAS/DAT import.
 
 Текущий прогресс E10: реализованы обзор, пакет оперативных замеров, лабораторный реестр растворов, материальный баланс с решением, оборудование, РВР, технологические ГИС `/technology/logs`, plan-fact/отчётность и AI-рекомендации с человеческим решением `/technology/recommendations`.
 
@@ -91,7 +134,7 @@
 
 - production backend и настоящие интеграции;
 - полный каталог P0/P1 routes и предметных рабочих областей;
-- предметные редакторы и вычисления;
+- полный профессиональный набор предметных редакторов, четыре методики запасов и научно-вычислительный контур 2D/3D;
 - промышленная авторизация/ЭЦП;
 - полная RU/KZ/EN локализация;
 - Storybook, MSW handlers, расширенное component/e2e coverage и production deployment;
@@ -99,7 +142,7 @@
 
 ## Последняя browser-проверка
 
-Проверен сценарий: вход R1 → WELL-1042 → GEO-11 → pH с неверной единицей и значением 15 блокирует сохранение → исправление до pH 7,2 → сохранение результата. На desktop нет горизонтального переполнения.
+20 августа 2026 проверен сценарий R1 → WELL-1042 → Паспорт: изменение X показывает два точных downstream impact до сохранения; без предметной причины команда недоступна; после сохранения заголовок обновляется с версии 7 до 8 и показывает новую координату, паспорт сообщает request ID, а разрез и модель отображаются как stale без изменения прежних version IDs. Ошибок console/runtime не обнаружено.
 
 ## Правило обновления
 
@@ -120,3 +163,32 @@
 - Проект подготовлен к публикации на GitHub Pages в `ArmorDRX97/kapgeo_prototype`: production-сборка использует `/kapgeo_prototype/` и hash history для устойчивых deep link, deployment выполняется workflow `.github/workflows/deploy-pages.yml`, каталог `archive/` полностью исключён из Git.
 - Публичная версия опубликована по адресу `https://armordrx97.github.io/kapgeo_prototype/`. На опубликованной сборке проверены загрузка ресурсов, вход, MFA, переход на `#/home`, базовый шрифт 14 px и отсутствие горизонтального переполнения.
 - Внутренние ссылки справочного центра переведены на router-aware компонент: навигация, поиск, роли, модули, хлебные крошки и переходы к рабочим экранам сохраняют repository base path и hash history GitHub Pages вместо выхода на корень `armordrx97.github.io`.
+
+GEOX-E12 завершён: `/geology/delivery` замыкает exact-version publication flow с demo approval/reauth, Technology/Modeling/Analytics handoff, withdrawal/replacement, export history, RU/KZ/EN fallback, accessibility/performance/policy/browser QA и regression evidence. Все состояния synthetic, сохраняются в IndexedDB и сбрасываются global reset. Проверка: [20-e12 publication/hardening](./geology-functional-expansion/20-e12-publication-hardening-verification.md).
+
+
+GEOX-E00 завершён: добавлен `/geology/methodology` — интерактивный методический центр передачи прототипа с решениями по пяти контурам, четырьмя synthetic method definitions, versioned conditions/dictionaries, templates и volume profiles. `Verified` в этом экране является demo workflow state, а не нормативным подтверждением. Проверка: [21-e00 methodology](./geology-functional-expansion/21-e00-methodology-verification.md). Все 13 prototype-эпиков GEOX-E00…E12 теперь имеют реализованный IndexedDB-срез и evidence-документ.
+
+
+
+- 24 августа 2026 локальная Vite-конфигурация разделена по режимам: dev-сервер
+  работает с корневым URL (`/home`), а production build сохраняет prefix
+  `/kapgeo_prototype/` для GitHub Pages. Проверены `typecheck`, 40 test files /
+  98 tests и production build. На момент записи этот визуальный QA ещё не был начат; матрица обхода находится в
+  [visual-qa-route-matrix.md](./visual-qa-route-matrix.md).
+
+- 24 августа 2026 завершён последовательный browser-QA canonical routes в
+  изолированном Chrome: desktop `1440 px`, mobile `390 px`, дополнительно
+  topbar `/home` на `960 px`. Исправлены overlap context/date в topbar,
+  обрезание status Badge в `/geology/methodology` и mobile overflow
+  approval-actions в `/geology/delivery`. Детали, охват и повторные результаты:
+  [visual-qa-route-matrix.md](./visual-qa-route-matrix.md). Финально:
+  `typecheck`, 40 files / 98 tests, `build`; lint без errors (3 прежних
+  warnings exhaustive-deps).
+
+
+- 25 августа 2026 выполнен визуальный QA маршрута `/objects/wells/WELL-1042?tab=drilling` в Chrome (1440 px) под ролью Геолог. Исправлены слитые значения в таблице trajectory (добавлена grid-разметка строк и безопасное сокращение источника) и удалён отображавшийся внизу страницы буквальный артефакт `\n`. Повторная браузерная проверка подтвердила пять раздельных колонок и отсутствие артефакта; `typecheck`, 40 test files / 98 tests и `build` проходят.
+- 25 августа 2026 продолжен визуальный QA карточки WELL-1042: проверены вкладки Обзор, Паспорт, Литология, ГИС, Пробы, Технология, Оборудование, Модель, Документы и Аудит в Chrome на desktop 1440 px и mobile 390 px. Исправлены grid-строки интерпретационных таблиц и переполнение правой колонки на ГИС; адаптивно перенесены action-блоки заголовков панелей, кнопка «Добавить секцию» в Паспорте и «Сохранить вид» в шаблоне Литологии. Все проверенные вкладки теперь не имеют горизонтального переполнения страницы; аудит после ожидания данных отображается корректно. Проверка: `typecheck`, 40 test files / 98 tests, `build`.
+- 25 августа 2026 закрыты замечания по приложенным скриншотам карточки WELL-1042. В GEOX-E04 строки versioned tracks получают общую grid-разметку и больше не сливаются; действия гранулометрии выровнены в единый вертикальный action-блок. В GEOX-E05 шаблон треков переведён в одну колонку без посимвольного переноса кодов; в GEOX-E06 правые таблицы интерпретации заменены компактными карточками «интервал / источник / метод / статус». Выравнивание шаблона геологической колонки переработано на desktop-grid с корректным mobile fallback. Повторный Chrome QA на desktop 1440 px: overflow 0 для Литологии, Проб и ГИС; `typecheck`, 40 test files / 98 tests и `build` проходят.
+
+- 25 августа 2026 реализована permission-based интерактивная экскурсия по всему геологическому модулю: fixed launcher и соседнее меню, полный каталог из 74 шагов и пять тематических сценариев, автоматический обзор текущей/будущей страницы, route/tab navigation, target wait/fallback, overlay/highlight, keyboard focus, pause/resume/completion и локальный reset. Persona-specific progress хранится в IndexedDB `preferences` и очищается глобальным reset. Полный Chrome-проход подтвердил 74/74 target без fallback на 21 route/URL-варианте; desktop 1440 и mobile 390 имеют overflow 0. Проверка: `typecheck`, 43 test files / 106 tests, `lint`, production `build`. Evidence: [22-geology-guided-tour-verification.md](./geology-functional-expansion/22-geology-guided-tour-verification.md).

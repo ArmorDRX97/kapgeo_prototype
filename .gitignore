@@ -13,3 +13,9 @@ archive/
 
 # Temporary local authorization artifacts.
 .gh-auth-*.tmp
+# Local QA and source-material artifacts are not part of the published prototype.
+.tmp/
+screenshots/
+temp-check.txt
+~$*
+/РП по геологическому модулю.pdf

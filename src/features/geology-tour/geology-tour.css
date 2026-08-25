@@ -1,0 +1,108 @@
+.geology-tour-launcher {
+  position: fixed;
+  z-index: 75;
+  right: 20px;
+  bottom: 20px;
+  display: inline-flex;
+  min-height: 48px;
+  padding: 0 17px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-brand-700) 72%, var(--border-default));
+  border-radius: 999px;
+  color: var(--text-inverse);
+  background: var(--color-brand-700);
+  box-shadow: var(--shadow-lg);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.geology-tour-launcher:hover { background: var(--color-brand-800); }
+.geology-tour-launcher.is-new::after { content: ''; position: absolute; top: 1px; right: 4px; width: 10px; height: 10px; border: 2px solid var(--surface-panel); border-radius: 50%; background: var(--color-amber-500); }
+
+.geology-tour-menu {
+  position: fixed;
+  z-index: 76;
+  right: 20px;
+  bottom: 80px;
+  display: grid;
+  width: min(430px, calc(100vw - 24px));
+  max-height: min(720px, calc(100vh - 100px));
+  overflow: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-lg);
+}
+
+.geology-tour-menu > header { position: sticky; z-index: 1; top: 0; display: grid; padding: 14px; grid-template-columns: 38px minmax(0, 1fr) 32px; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-default); background: var(--surface-panel); }
+.geology-tour-menu > header > div { display: grid; gap: 2px; }
+.geology-tour-menu > header small { color: var(--text-secondary); font-size: 12px; }
+.geology-tour-menu > header button { display: grid; width: 32px; height: 32px; padding: 0; place-items: center; border: 0; border-radius: var(--radius-sm); background: transparent; cursor: pointer; }
+.geology-tour-menu > header button:hover { background: var(--surface-subtle); }
+.geology-tour-menu__icon { display: grid; width: 38px; height: 38px; place-items: center; border-radius: var(--radius-md); color: var(--color-brand-700); background: var(--color-brand-100); }
+
+.geology-tour-complete { display: flex; margin: 12px 12px 0; padding: 10px; align-items: flex-start; gap: 8px; border-radius: var(--radius-sm); color: var(--color-green-700); background: var(--color-green-50); font-size: 12px; }
+.geology-tour-resume, .geology-tour-current { display: grid; margin: 12px 12px 0; padding: 11px; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 9px; border: 1px solid var(--color-brand-300); border-radius: var(--radius-md); background: var(--color-brand-50); text-align: left; cursor: pointer; }
+.geology-tour-current { grid-template-columns: 20px minmax(0, 1fr); border-color: var(--border-default); background: var(--surface-panel); }
+.geology-tour-current:disabled { cursor: not-allowed; opacity: .5; }
+.geology-tour-resume > span, .geology-tour-current > span { display: grid; gap: 2px; }
+.geology-tour-resume small, .geology-tour-current small { color: var(--text-secondary); font-size: 12px; }
+.geology-tour-resume > svg:first-child, .geology-tour-current > svg:first-child { color: var(--color-brand-700); }
+
+.geology-tour-list { display: grid; padding: 12px; gap: 7px; }
+.geology-tour-list > button { display: grid; width: 100%; padding: 11px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 9px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-panel); text-align: left; cursor: pointer; }
+.geology-tour-list > button:hover { border-color: var(--color-brand-300); background: var(--color-brand-50); }
+.geology-tour-list > button > span { display: grid; min-width: 0; gap: 3px; }
+.geology-tour-list small { color: var(--text-secondary); font-size: 12px; line-height: 1.4; }
+.geology-tour-list em { display: flex; margin-top: 3px; align-items: center; gap: 4px; color: var(--text-tertiary); font-size: 12px; font-style: normal; }
+.geology-tour-list > button > svg { color: var(--color-brand-700); }
+.geology-tour-menu > footer { display: flex; padding: 11px 14px; align-items: flex-start; gap: 8px; color: var(--text-secondary); border-top: 1px solid var(--border-default); background: var(--surface-subtle); font-size: 12px; line-height: 1.4; }
+.geology-tour-reset { display: flex; margin: 0 12px 12px; padding: 9px 10px; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-secondary); background: var(--surface-panel); cursor: pointer; }
+.geology-tour-reset:hover { color: var(--text-primary); background: var(--surface-subtle); }
+
+.geology-tour-layer { position: fixed; z-index: 100; inset: 0; pointer-events: none; }
+.geology-tour-shade { position: fixed; pointer-events: auto; background: color-mix(in srgb, var(--surface-dark) 72%, transparent); }
+.geology-tour-shade--top { inset: 0 0 auto; }
+.geology-tour-shade--left { left: 0; }
+.geology-tour-shade--right { right: 0; }
+.geology-tour-shade--bottom { right: 0; bottom: 0; left: 0; }
+.geology-tour-highlight { position: fixed; border: 3px solid var(--color-brand-400); border-radius: var(--radius-md); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand-300) 28%, transparent), var(--shadow-md); pointer-events: none; transition: inset var(--duration-fast) var(--ease-standard), width var(--duration-fast) var(--ease-standard), height var(--duration-fast) var(--ease-standard); }
+
+.geology-tour-tooltip { position: fixed; display: grid; max-height: calc(100vh - 24px); overflow: auto; pointer-events: auto; border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-panel); box-shadow: var(--shadow-lg); }
+.geology-tour-tooltip:focus { outline: 3px solid color-mix(in srgb, var(--focus-ring) 60%, transparent); outline-offset: 3px; }
+.geology-tour-tooltip > header { display: flex; padding: 13px 14px 10px; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.geology-tour-tooltip > header > div { display: flex; min-width: 0; align-items: center; gap: 8px; }
+.geology-tour-tooltip > header span { overflow: hidden; color: var(--color-brand-700); font-size: 12px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.geology-tour-tooltip > header strong { flex: none; color: var(--text-tertiary); font-size: 12px; }
+.geology-tour-tooltip > header button { display: grid; width: 30px; height: 30px; padding: 0; place-items: center; border: 0; border-radius: var(--radius-sm); background: transparent; cursor: pointer; }
+.geology-tour-tooltip > header button:hover { background: var(--surface-subtle); }
+.geology-tour-progress { height: 4px; margin: 0 14px; overflow: hidden; border-radius: 999px; background: var(--surface-subtle); }
+.geology-tour-progress i { display: block; height: 100%; border-radius: inherit; background: var(--color-brand-500); transition: width var(--duration-normal) var(--ease-standard); }
+.geology-tour-tooltip h2 { margin: 14px 14px 7px; font-size: 19px; line-height: 1.2; }
+.geology-tour-tooltip > p { margin: 0 14px 12px; color: var(--text-secondary); line-height: 1.55; }
+.geology-tour-hint, .geology-tour-fallback { display: flex; margin: 0 14px 12px; padding: 10px; align-items: flex-start; gap: 8px; border-radius: var(--radius-sm); color: var(--text-secondary); background: var(--surface-subtle); font-size: 12px; line-height: 1.45; }
+.geology-tour-hint svg { color: var(--color-brand-700); }
+.geology-tour-fallback { color: var(--color-amber-700); background: var(--color-amber-50); }
+.geology-tour-tooltip > footer { display: flex; padding: 12px 14px; align-items: center; gap: 7px; border-top: 1px solid var(--border-default); }
+.geology-tour-tooltip > footer > span { flex: 1; }
+.geology-tour-loading { display: flex; min-height: 130px; padding: 28px 20px; align-items: center; justify-content: center; flex-direction: column; gap: 10px; color: var(--text-secondary); text-align: center; }
+.geology-tour-loading > span { width: 25px; height: 25px; border: 3px solid var(--border-default); border-top-color: var(--color-brand-500); border-radius: 50%; animation: geology-tour-spin .8s linear infinite; }
+.geology-tour-loading p { margin: 0; }
+
+@keyframes geology-tour-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 640px) {
+  .geology-tour-launcher { right: 12px; bottom: 12px; min-width: 48px; padding: 0 13px; }
+  .geology-tour-launcher span { display: none; }
+  .geology-tour-menu { right: 12px; bottom: 72px; }
+  .geology-tour-tooltip { right: 12px; left: 12px !important; width: auto !important; transform: none !important; }
+  .geology-tour-tooltip > footer { flex-wrap: wrap; }
+  .geology-tour-tooltip > footer > span { display: none; }
+  .geology-tour-tooltip > footer .button { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .geology-tour-highlight, .geology-tour-progress i { transition: none; }
+  .geology-tour-loading > span { animation-duration: 1.5s; }
+}

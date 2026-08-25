@@ -1,7 +1,13 @@
+import type { ConstructionInterval } from '../../well-construction/model/types'
+import type { WellPurpose } from '../../well-passport/model/types'
+import type { ValueQualifier } from '../../../shared/scientific/quantities/types'
+
+export type { ConstructionInterval } from '../../well-construction/model/types'
+export type { WellPurpose } from '../../well-passport/model/types'
+
 export type WellType = 'Откачная' | 'Закачная' | 'Наблюдательная' | 'Разведочная'
 export type WellStatus = 'Работает' | 'На проверке' | 'Отключена' | 'Требует внимания'
 export type QualityState = 'Высокое' | 'Среднее' | 'Есть проблемы'
-export type WellPurpose = 'Эксплуатационная' | 'Разведочная' | 'Наблюдательная'
 
 export type WellFilters = {
   query: string
@@ -21,6 +27,10 @@ export type CreateWellInput = {
   crs: string
   depth: number
   casingDiameter: number
+  depositId?: string
+  siteId?: string
+  lensId?: string
+  projectCode?: string
 }
 
 export type Well = {
@@ -44,15 +54,6 @@ export type Well = {
   activeTask?: string
   aiConflicts: number
   version?: number
-}
-
-export type ConstructionInterval = {
-  id: string
-  from: number
-  to: number
-  diameter: number
-  material: 'Сталь' | 'ПВХ' | 'Фильтр'
-  element: 'Направление' | 'Кондуктор' | 'Эксплуатационная колонна' | 'Фильтровая колонна'
 }
 
 export type DrillingRun = {
@@ -121,8 +122,11 @@ export type LabResult = {
   id: string
   sampleId: string
   analyte: 'U' | 'Mo' | 'pH'
-  value: number
-  unit: 'мг/кг' | 'pH'
+  value?: number
+  unit: 'мг/кг' | 'г/т' | 'ppm' | '%' | 'pH'
+  qualifier?: ValueQualifier
+  missingReason?: string
+  uncertainty?: number
   method: string
   analyst: string
   qaStatus: QaStatus

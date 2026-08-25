@@ -9,13 +9,17 @@
 
 Все P0/P1-экраны должны иметь состояния из раздела 12 [информационной архитектуры](./03-information-architecture.md). Реестр задаёт UX-покрытие, но не означает отдельный React-файл для каждой строки: общие формы, карточки и инспекторы переиспользуются.
 
-### Реализованный геологический срез на 10.08.2026
+### Реализованный геологический срез и детальный scope на 20.08.2026
 
 - `GEO-01`, `GEO-03`, `GEO-04` — кликабельны и связаны общим состоянием фильтра через URL;
-- `GEO-05` — функциональный wizard, создающий synthetic draft;
-- `GEO-06` — редактируемый паспорт/конструкция, version impact и сохранение demo-версии;
+- `GEO-02` — `/geology/master`: сохраняемые synthetic месторождения, участки, залежи и effective-dated кондиции;
+- `GEO-05` — функциональный wizard, создающий synthetic draft с принадлежностью и spatial/duplicate check;
+- `GEO-06` — редактируемые versioned aggregates паспорта/конструкции, dependency impact, optimistic conflict и stale records в demo repository;
 - `GEO-07`, `GEO-08` — синхронные рейсы/глубинный трек и реестр керновых коробок;
 - `GEO-17`, `GEO-18` — рабочее сравнение и экспертное решение;
+- `/geology/methodology` реализует `GEOX-E00`: walkthrough, methods/formulas, definitions, templates и volume profiles для передачи прототипа;
+- `/geology/correlation`, `/geology/reserves` и `/geology/delivery` расширены versioned IndexedDB-workspaces `GEOX-E08/E09/E12`; они остаются synthetic prototype, а не production implementation;
+- полный состав вложенных рабочих областей и порядок расширения определены в [детальном пакете геологии](../geology-functional-expansion/README.md);
 - источником фактической готовности остаётся `docs/implementation-status.md`.
 
 ## 2. Авторизация, профиль и общий shell
@@ -76,40 +80,41 @@
 
 | ID | Экран | Тип | Приоритет | Маршрут / вызов |
 |---|---|---|---|---|
+| GEO-00 | Методический центр прототипа: scope, formulas, definitions, templates и volume profiles | Page/Workspace | P0 | `/geology/methodology` |
 | GEO-01 | Обзор модуля | Page | P0 | `/geology` |
-| GEO-02 | Реестр месторождений и участков | Page | P1 | `/geology/deposits` |
+| GEO-02 | Месторождения, залежи, участки и кондиции | Page/Workspace | P0 | `/geology/master` |
 | GEO-03 | Карта скважин и объектов | Workspace | P0 | `/geology/map` |
 | GEO-04 | Реестр скважин | Page | P0 | `/geology/wells` |
 | GEO-05 | Создание/редактирование скважины | Wizard | P0 | `/geology/wells/new` |
-| GEO-06 | Паспорт и конструкция скважины | Tab | P0 | карточка скважины |
-| GEO-07 | Рейсы бурения и выход керна | Workspace | P1 | well tab |
-| GEO-08 | Керн, коробки и фотографии | Workspace | P1 | well tab |
-| GEO-09 | Литология и стратиграфия по интервалам | Workspace | P0 | well tab |
-| GEO-10 | Опробование и пробы | Workspace | P0 | карточка скважины `?tab=samples` |
-| GEO-11 | Лабораторные результаты и QA/QC | Workspace | P1 | sample tab |
-| GEO-12 | Геофизические исследования: реестр | Page | P0 | `/geology/logs` |
-| GEO-13 | Импорт LAS/DAT | Wizard | P0 | `/geology/logs/import` |
+| GEO-06 | Паспорт, проходка, освоение, геология и конструкция скважины | Tab/Workspace | P0 | карточка скважины |
+| GEO-07 | Рейсы бурения, выход и интерпретация керна | Workspace | P0 | well tabs `drilling/core` |
+| GEO-08 | Керн, промер, коробки и фотографии | Workspace | P1 | well tab `core` |
+| GEO-09 | Литология, стратиграфия, проницаемость и фильтрация | Workspace | P0 | well tabs `lithology/technology` |
+| GEO-10 | Керновые, гранулометрические, литогеохимические и технологические пробы | Workspace | P0 | карточка скважины `?tab=samples` |
+| GEO-11 | Лабораторные результаты, гранулометрия и QA/QC | Workspace | P1 | sample tab |
+| GEO-12 | Геофизические исследования и инклинометрия: реестр | Page/Workspace | P0 | `/geology/logs`, well tab `trajectory` |
+| GEO-13 | Импорт LAS/DAT/станционных форматов | Wizard | P0 | `/geology/logs/import` |
 | GEO-14 | Просмотрщик каротажных кривых | Workspace | P0 | `/geology/logs/:id` |
-| GEO-15 | Ручная интерпретация ГИС | Workspace | P0 | `/geology/interpretations/:id/manual` |
+| GEO-15 | Ручная интерпретация ГИС, керна, технологических и рудных интервалов | Workspace | P0 | `/geology/interpretations/:id/manual` |
 | GEO-16 | AI-интерпретация и объяснение | Workspace | P0 | `/geology/interpretations/:id/ai` |
 | GEO-17 | Сравнение ручной и AI-интерпретации | Workspace | P0 | `/geology/interpretations/:id/compare` |
 | GEO-18 | Экспертное разрешение расхождений | Workspace | P0 | compare action |
-| GEO-19 | Геологическая колонка | Workspace | P0 | `/geology/columns/:wellId` |
-| GEO-20 | Шаблоны колонок/планшетов | Page/Editor | P1 | `/geology/templates/columns` |
-| GEO-21 | Геологическая карта и слои | Workspace | P0 | `/geology/maps` |
-| GEO-22 | Геологические разрезы | Workspace | P0 | `/geology/correlation` (demo A–A′) |
-| GEO-23 | Редактор трассы разреза | Workspace | P1 | `/geology/sections/new` |
-| GEO-24 | Корреляция горизонтов и пластов | Workspace | P1 | `/geology/correlation` (demo) |
-| GEO-32 | Публикация геологической версии | Page | P0 | `/geology/delivery` (demo) |
-| GEO-25 | Контуры рудных тел | Workspace | P1 | `/geology/ore-bodies` |
-| GEO-26 | Объёмная/поверхностная модель | Workspace | P2 | `/geology/3d` |
-| GEO-27 | Проекты подсчёта запасов | Page | P0 | `/geology/reserves` |
-| GEO-28 | Параметры метода подсчёта | Wizard | P0 | `/geology/reserves/:id/setup` |
-| GEO-29 | План/контуры подсчётных блоков | Workspace | P0 | `/geology/reserves/:id/plan` |
-| GEO-30 | Таблица расчёта запасов | Workspace | P0 | `/geology/reserves/:id/results` |
-| GEO-31 | Паспорт блока запасов | Page | P0 | `/geology/reserves/blocks/:id` |
+| GEO-19 | Геологическая колонка горизонта/всего ствола | Workspace | P0 | `/geology/columns/:wellId` |
+| GEO-20 | Шаблоны колонок, планшетов, легенд и печатных форм | Page/Editor | P1 | `/geology/templates/columns` |
+| GEO-21 | Геологическая карта, слои и spatial editing | Workspace | P0 | `/geology/maps` |
+| GEO-22 | Реестр и рабочая область геотехнологических разрезов | Page/Workspace | P0 | `/geology/sections`, `/geology/correlation` (demo) |
+| GEO-23 | Редактор трассы разреза и состава скважин | Workspace | P1 | `/geology/sections/new`, section `route` |
+| GEO-24 | Технологические горизонты, ритмопачки и фундамент | Workspace | P1 | section `horizons/rhythm`, `/geology/correlation` (partial demo) |
+| GEO-25 | Рудные тела, технологический забаланс и зоны окисления | Workspace | P1 | section `ore/oxidation` |
+| GEO-26 | 2D/3D геологическая модель и ЦГМ | Workspace | P2 | geology entry → `/modeling/projects/:id?context=geology` |
+| GEO-27 | Проекты запасов, рудные пачки и пересечения | Page/Workspace | P0 | `/geology/reserves` |
+| GEO-28 | Настройка метода и effective input snapshot | Wizard | P0 | `/geology/reserves/:id/setup` |
+| GEO-29 | Контуры блоков, технологические полигоны и ячейки | Workspace | P0 | `/geology/reserves/:id/plan` |
+| GEO-30 | Запуски четырёх методик, результаты и сравнение | Workspace | P0 | `/geology/reserves/:id/results` |
+| GEO-31 | Паспорт блока и план запасов | Page/Workspace | P0 | `/geology/reserves/blocks/:id` |
 | GEO-32 | Проверка и утверждение запасов | Workspace | P0 | reserve approval |
 | GEO-33 | Отчёты и графические приложения | Page | P1 | `/geology/reports` |
+| GEO-34 | Публикация/отзыв геологической версии и межмодульная выдача | Page/Workflow | P0 | `/geology/delivery` (demo) |
 
 ## 5. Технологический модуль
 

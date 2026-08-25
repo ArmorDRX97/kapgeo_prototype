@@ -21,7 +21,7 @@
 
 - **P0:** нужен для связного прототипа и главных бизнес-рисков.
 - **P1:** нужен для полного UX-покрытия модулей.
-- **P2:** расширение после подтверждения 2D/3D, отчётных форм и production-ограничений.
+- **P2:** более поздняя очередь поставки; для геологии это не исключает 2D/3D из полного целевого scope, зафиксированного в `GEOX`.
 
 ### 2.1. Текущий задачник реализации
 
@@ -49,11 +49,15 @@
 | E09-T05 Log registry, demo import and viewer | Готово | GEO-12–14: registry, QC, four-step LAS/DAT demo wizard, synchronized tracks and cursor inspector | real parsing, persisted layouts, comments and templates |
 | E09-T06 Manual/AI/compare/resolution | Частично | GEO-17/18, решение и обязательная причина | manual/AI editors, approval/audit |
 | E09-T07 Геологическая колонка и template | Готово | GEO-19: шаблон представления колонки, сохранение в demo-сессии | persisted templates и роли доступа |
-| E09-T08 Карта, разрез и корреляция | Готово | `/geology/correlation`: профиль A–A′, datum, cross-selection и контроль корреляции | редактор трассы, сохранение/approval разреза |
-| E09-T09 Запасы | Готово | `/geology/reserves`: параметры, расчёт тоннажа/металла, зависимости и review | contours, passport и production calculation engine |
-| E09-T10 Отчёты и cross-module handoff | Готово | `/geology/delivery`: паспорт, выбор получателей, публикация и audit trail | production integration contracts и генерация реального PDF |
+| E09-T08 Карта, разрез и корреляция | Частично | `/geology/correlation`: demo-профиль A–A′, datum, cross-selection и контроль корреляции; частичное покрытие GEO-22/24 | реестр разрезов, трасса и состав скважин, версии, ритмопачки/фундамент, рудные тела, approval |
+| E09-T09 Запасы | Частично | `/geology/reserves`: упрощённый demo-расчёт и review; частичное покрытие GEO-27–30 | проекты и snapshots, контуры/ячейки, четыре методики, воспроизводимый engine, сравнение и паспорт блока |
+| E09-T10 Отчёты и cross-module handoff | Частично | `/geology/delivery`: demo-паспорт, получатели, публикация и audit trail; срез GEO-34 | отчётные формы, графические приложения, отзыв версии и production integration contracts |
 
-Следующая активная задача: **сквозная UX-проверка GEO**.
+Следующая активная задача: **GEOX-E01-T08 — common scientific jobs**. T05/T06/T07 завершены как foundation: quantities подключены к GEO-11, intervals — к GEO-09, CRS-aware geometry — к versioned-паспорту и compatibility create-well boundary. T01–T04 частично реализованы для passport/construction vertical slice. Полный статус находится в детальном roadmap. Если работа затрагивает расчёты запасов, сначала выполняется **GEOX-E00 — ручная спецификация формул и golden-наборы**.
+
+### 2.2. Профессиональное расширение геологии (`GEOX`)
+
+Раздел E09 фиксирует исторический первый vertical slice прототипа. Текущий полный scope пяти контуров руководства — скважины, геотехнологические разрезы, запасы, 2D и 3D геомоделирование — декомпозирован в [авторитетном prototype-backlog геологии](../geology-functional-expansion/05-prototype-epics-backlog.md). Все задачи `GEOX-E00…E12` поставляются как кликабельные synthetic-сценарии с IndexedDB persistence/reset и GitHub Pages; прежний production roadmap сохранён только как future reference.
 
 ## 3. E00 — подтверждение продукта и источников
 

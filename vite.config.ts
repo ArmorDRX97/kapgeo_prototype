@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({
-  base: '/kapgeo_prototype/',
+export default defineConfig(({ command }) => ({
+  // GitHub Pages needs the repository prefix in the built artifact, while the
+  // local Vite server should keep browser-history routes at the domain root.
+  base: command === 'build' ? '/kapgeo_prototype/' : '/',
   plugins: [react()],
   server: {
     port: 4173,
@@ -20,4 +22,4 @@ export default defineConfig({
       reporter: ['text', 'html'],
     },
   },
-})
+}))

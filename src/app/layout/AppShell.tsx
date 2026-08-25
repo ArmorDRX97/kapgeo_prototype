@@ -1,10 +1,13 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { Bell, BookOpenText, Boxes, BriefcaseBusiness, ChartNoAxesCombined, ChevronDown, ChevronsUpDown, Database, Home, LogOut, MapPinned, Menu, Network, Search, Settings2, UserRound, X } from 'lucide-react'
-import { type PropsWithChildren, useState } from 'react'
+import { type PropsWithChildren, useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { userPersonas } from '../../entities/session/model/personas'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { hasPermission, type Permission } from '../../shared/auth/permissions'
-import { wells } from '../../repository/data/wells'
+import { fetchPlatformPreferences, fetchWells } from '../../repository/api'
+import { ScientificJobMonitor } from '../../features/scientific-jobs'
+import { GeologyTour } from '../../features/geology-tour'
 
 type StaticRoute = '/home' | '/work' | '/geology' | '/technology' | '/modeling' | '/analytics' | '/admin'
 
@@ -23,13 +26,23 @@ export function AppShell({ children }: PropsWithChildren) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [jobsOpen, setJobsOpen] = useState(false)
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const navigate = useNavigate()
   const { persona, signOut, switchPersona } = useSession()
   const visibleNavigation = navigation.filter((item) => hasPermission(persona, item.permission))
+  const { data: persistedWells = [] } = useQuery({ queryKey: ['wells'], queryFn: fetchWells, staleTime: 30_000 })
+  const { data: platformPreferences } = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences, staleTime: 30_000 })
+  useEffect(() => {
+    if (!platformPreferences) return
+    document.documentElement.lang = platformPreferences.locale
+    document.documentElement.dataset.contrast = platformPreferences.contrast ? 'high' : 'normal'
+    document.documentElement.dataset.motion = platformPreferences.reducedMotion ? 'reduced' : 'normal'
+    document.documentElement.dataset.density = platformPreferences.density
+  }, [platformPreferences])
   const query = searchQuery.trim().toLowerCase()
   const searchResults = [
-    ...wells.map((well) => ({ id: well.id, title: well.code, detail: `${well.site} · ${well.block} · скважина`, kind: 'well' as const })),
+    ...persistedWells.map((well) => ({ id: well.id, title: well.code, detail: `${well.site} · ${well.block} · скважина`, kind: 'well' as const })),
     { id: 'BLK-07-12', title: 'BLK-07-12', detail: 'Северный · технологический блок', kind: 'route' as const, to: '/technology' as const },
     { id: 'REPORT-OP-DAY-03', title: 'OP-DAY-03 · суточный отчёт', detail: 'Технология · rev.2', kind: 'route' as const, to: '/technology/plan-fact' as const },
     { id: 'RESULT-07', title: 'RESULT-07 · модель', detail: 'BASE-01 · опубликованный результат', kind: 'route' as const, to: '/modeling/results/$projectId' as const },
@@ -81,7 +94,8 @@ export function AppShell({ children }: PropsWithChildren) {
             {searchOpen && <div id="global-search-results" className="global-search-popover"><label><Search size={16} /><input autoFocus value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Введите код скважины, блок или отчёт" aria-label="Глобальный поиск" /></label><p>{query ? 'Результаты выборки' : 'Быстрый доступ'}</p>{searchResults.length ? <div>{searchResults.map((result) => <button type="button" key={result.id} onClick={() => openResult(result)}><strong>{result.title}</strong><span>{result.detail}</span></button>)}</div> : <small>По вашему запросу ничего не найдено.</small>}</div>}
           </div>
           <div className="topbar__actions">
-            <button type="button" aria-label="Фоновые задачи"><Database size={18} /><span className="activity-pulse" /></button>
+            <button type="button" aria-label="Фоновые задачи" aria-expanded={jobsOpen} aria-controls="scientific-job-monitor" onClick={() => setJobsOpen((value) => !value)}><Database size={18} /><span className="activity-pulse" /></button>
+            {jobsOpen && <ScientificJobMonitor onClose={() => setJobsOpen(false)} />}
             <Link to="/notifications" aria-label="Уведомления"><Bell size={18} /><em>3</em></Link>
             <div className="persona-control"><UserRound size={16} /><select value={persona?.id} onChange={(event) => switchPersona(event.target.value)} aria-label="Текущий профиль">{userPersonas.map((item) => <option key={item.id} value={item.id}>{item.position}</option>)}</select></div>
             <button type="button" onClick={logout} aria-label="Выйти"><LogOut size={18} /></button>
@@ -90,6 +104,7 @@ export function AppShell({ children }: PropsWithChildren) {
         <main id="main-content" className="content">{children}</main>
       </div>
       {mobileOpen && <button className="mobile-backdrop" type="button" aria-label="Закрыть меню" onClick={() => setMobileOpen(false)} />}
+      <GeologyTour />
     </div>
   )
 }

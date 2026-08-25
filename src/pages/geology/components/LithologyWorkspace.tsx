@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Check, Copy, GitCompareArrows, LayoutTemplate, Merge, Plus, Redo2, Save, Scissors, Undo2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { mergeLithologyIntervals, splitLithologyInterval } from '../../../entities/well/lib/lithologyIntervals'
-import { validateDepthIntervals } from '../../../entities/well/lib/validateDepthIntervals'
 import type { GeologicalInterval, Lithology, StratigraphyUnit, Well, WellGeologyData } from '../../../entities/well/model/types'
 import { fetchWellGeologyData, saveWellGeologyData } from '../../../repository/api'
+import { applyIntervalCommand, createIntervalEditorState, diffIntervals, redoIntervalCommand, undoIntervalCommand, validateIntervals } from '../../../shared/scientific/intervals/engine'
+import type { IntervalCommand, IntervalPolicy } from '../../../shared/scientific/intervals/types'
 import { Badge } from '../../../shared/ui/Badge'
 import { Button } from '../../../shared/ui/Button'
 import { Panel } from '../../../shared/ui/Panel'
@@ -27,69 +27,79 @@ export function LithologyWorkspace({ well }: { well: Well }) {
 }
 
 function LithologyEditor({ well, initialData }: { well: Well; initialData: WellGeologyData }) {
-  const [intervals, setIntervals] = useState(initialData.intervals)
+  const policy = useMemo<IntervalPolicy<GeologicalInterval>>(() => ({
+    coverage: { from: 0, to: well.depth },
+    overlap: 'forbidden',
+    gap: 'warning',
+    minimumThickness: 0.1,
+    snapResolution: 0.1,
+    categoryOf: (interval) => interval.lithology,
+    canMerge: (first, second) => first.lithology === second.lithology && first.stratigraphy === second.stratigraphy && first.source === second.source,
+    mergeAttributes: (first, second) => ({ ...first, description: `${first.description} ${second.description}`.trim() }),
+  }), [well.depth])
+  const [editor, setEditor] = useState(() => createIntervalEditorState(initialData.intervals))
   const [baseline, setBaseline] = useState(initialData.intervals)
-  const [history, setHistory] = useState<GeologicalInterval[][]>([])
-  const [future, setFuture] = useState<GeologicalInterval[][]>([])
   const [selectedId, setSelectedId] = useState(initialData.intervals[0]?.id ?? '')
   const [saved, setSaved] = useState(false)
+  const [commandError, setCommandError] = useState('')
   const [template, setTemplate] = useState('Стандартная разведочная')
   const [templateSaved, setTemplateSaved] = useState(false)
   const queryClient = useQueryClient()
+  const intervals = editor.present
   const sorted = useMemo(() => [...intervals].sort((a, b) => a.from - b.from), [intervals])
   const selectedIndex = sorted.findIndex((item) => item.id === selectedId)
   const selected = sorted[selectedIndex]
   const next = selectedIndex >= 0 ? sorted[selectedIndex + 1] : undefined
   const previous = selectedIndex > 0 ? sorted[selectedIndex - 1] : undefined
-  const issues = useMemo(() => validateDepthIntervals(sorted, well.depth, true), [sorted, well.depth])
+  const issues = useMemo(() => validateIntervals(sorted, policy), [sorted, policy])
   const blockingIssues = issues.filter((item) => item.severity === 'error')
-  const changed = JSON.stringify(sorted) !== JSON.stringify(baseline)
+  const diff = useMemo(() => diffIntervals(baseline, sorted), [baseline, sorted])
+  const changed = diff.length > 0
   const mutation = useMutation({
     mutationFn: () => saveWellGeologyData(well.id, { baseVersion: initialData.baseVersion, intervals: sorted }),
     onSuccess: (data) => {
       queryClient.setQueryData(['well-geology', well.id], data)
       setBaseline(data.intervals)
+      setEditor(createIntervalEditorState(data.intervals))
       setSaved(true)
     },
   })
 
-  const commit = (nextIntervals: GeologicalInterval[], focusId = selectedId) => {
-    setHistory((items) => [...items, intervals])
-    setIntervals(nextIntervals)
-    setFuture([])
-    setSelectedId(focusId)
-    setSaved(false)
+  const commit = (command: IntervalCommand<GeologicalInterval>, focusId = selectedId) => {
+    try {
+      setEditor((state) => applyIntervalCommand(state, command, policy))
+      setSelectedId(focusId)
+      setSaved(false)
+      setCommandError('')
+    } catch (error) {
+      setCommandError(error instanceof Error ? error.message : 'Не удалось выполнить интервальную команду.')
+    }
   }
-  const update = (id: string, patch: Partial<GeologicalInterval>) => commit(intervals.map((item) => item.id === id ? { ...item, ...patch } : item), id)
+  const update = (id: string, patch: Partial<GeologicalInterval>) => commit({ type: 'update', id, patch }, id)
   const undo = () => {
-    const previousState = history.at(-1)
-    if (!previousState) return
-    setFuture((items) => [intervals, ...items])
-    setIntervals(previousState)
-    setHistory((items) => items.slice(0, -1))
-    setSelectedId(previousState[0]?.id ?? '')
+    const state = undoIntervalCommand(editor)
+    setEditor(state)
+    if (!state.present.some((item) => item.id === selectedId)) setSelectedId(state.present[0]?.id ?? '')
     setSaved(false)
+    setCommandError('')
   }
   const redo = () => {
-    const nextState = future[0]
-    if (!nextState) return
-    setHistory((items) => [...items, intervals])
-    setIntervals(nextState)
-    setFuture((items) => items.slice(1))
-    setSelectedId(nextState[0]?.id ?? '')
+    const state = redoIntervalCommand(editor)
+    setEditor(state)
+    if (!state.present.some((item) => item.id === selectedId)) setSelectedId(state.present[0]?.id ?? '')
     setSaved(false)
+    setCommandError('')
   }
   const split = () => {
     if (!selected) return
-    const result = splitLithologyInterval(selected, Number(((selected.from + selected.to) / 2).toFixed(1)))
-    if (!result) return
-    commit(intervals.flatMap((item) => item.id === selected.id ? result : [item]), result[1].id)
+    const suffix = editor.past.length + 1
+    const newIds: [string, string] = [`${selected.id}-A${suffix}`, `${selected.id}-B${suffix}`]
+    commit({ type: 'split', id: selected.id, at: (selected.from + selected.to) / 2, newIds }, newIds[1])
   }
   const merge = () => {
     if (!selected || !next) return
-    const result = mergeLithologyIntervals(selected, next)
-    if (!result) return
-    commit(intervals.filter((item) => item.id !== selected.id && item.id !== next.id).concat(result), result.id)
+    const newId = `${selected.id}-MERGED-${editor.past.length + 1}`
+    commit({ type: 'merge', firstId: selected.id, secondId: next.id, newId }, newId)
   }
   const addGap = () => {
     const gap = sorted.find((item, index) => index > 0 && item.from > sorted[index - 1]!.to)
@@ -97,7 +107,7 @@ function LithologyEditor({ well, initialData }: { well: Well; initialData: WellG
     const to = gap ? gap.from : Math.min(well.depth, from + 20)
     if (to <= from) return
     const item: GeologicalInterval = { id: `LITH-GAP-${sorted.length + 1}`, from, to, lithology: previous?.lithology ?? 'Песчаник', stratigraphy: previous?.stratigraphy ?? 'K2', description: 'Новый интервал — требуется описание.', source: 'Ручное описание' }
-    commit([...intervals, item], item.id)
+    commit({ type: 'add', interval: item }, item.id)
   }
   const copyPrevious = () => {
     if (!selected || !previous) return
@@ -108,7 +118,7 @@ function LithologyEditor({ well, initialData }: { well: Well; initialData: WellG
     {saved && <div className="success-banner"><Check size={17} /><span><strong>Литологический черновик сохранён</strong>Изменения готовы к отправке на проверку.</span><button type="button" onClick={() => setSaved(false)}>Закрыть</button></div>}
     <div className="lithology-workspace__toolbar">
       <div><Badge tone="info">GEO-09</Badge><strong>Версия {initialData.baseVersion} · рабочий черновик</strong><span>Выберите интервал на колонке или в таблице, чтобы уточнить его описание.</span></div>
-      <div className="lithology-workspace__actions"><Button size="sm" variant="secondary" disabled={!history.length} onClick={undo} aria-label="Отменить действие"><Undo2 size={15} /> Отменить</Button><Button size="sm" variant="secondary" disabled={!future.length} onClick={redo} aria-label="Повторить действие"><Redo2 size={15} /> Повторить</Button><Button size="sm" variant="secondary" onClick={addGap}><Plus size={15} /> Заполнить пропуск</Button></div>
+      <div className="lithology-workspace__actions"><Button size="sm" variant="secondary" disabled={!editor.past.length} onClick={undo} aria-label="Отменить действие"><Undo2 size={15} /> Отменить</Button><Button size="sm" variant="secondary" disabled={!editor.future.length} onClick={redo} aria-label="Повторить действие"><Redo2 size={15} /> Повторить</Button><Button size="sm" variant="secondary" onClick={addGap}><Plus size={15} /> Заполнить пропуск</Button></div>
     </div>
     <div className="lithology-layout">
       <Panel className="lithology-column-panel" title="Геологическая колонка" description={`0–${well.depth} м · цвет = литология`}>
@@ -136,12 +146,13 @@ function LithologyEditor({ well, initialData }: { well: Well; initialData: WellG
               <label><span>Стратиграфия</span><select value={selected.stratigraphy} onChange={(event) => update(selected.id, { stratigraphy: event.target.value as StratigraphyUnit })}>{stratigraphyOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
               <label className="lithology-form-grid__wide"><span>Описание</span><textarea rows={2} value={selected.description} onChange={(event) => update(selected.id, { description: event.target.value })} /></label>
             </div>
-            <div className="lithology-inspector__actions"><Button size="sm" variant="secondary" onClick={split}><Scissors size={15} /> Разделить пополам</Button><Button size="sm" variant="secondary" disabled={!next || Math.abs(selected.to - next.from) > .001} onClick={merge}><Merge size={15} /> Объединить со следующим</Button><Button size="sm" variant="quiet" disabled={!previous} onClick={copyPrevious}><Copy size={15} /> Скопировать сверху</Button></div>
+            <div className="lithology-inspector__actions"><Button size="sm" variant="secondary" onClick={split}><Scissors size={15} /> Разделить пополам</Button><Button size="sm" variant="secondary" disabled={!next || Math.abs(selected.to - next.from) > .001 || !policy.canMerge?.(selected, next)} onClick={merge}><Merge size={15} /> Объединить со следующим</Button><Button size="sm" variant="quiet" disabled={!previous} onClick={copyPrevious}><Copy size={15} /> Скопировать сверху</Button></div>
           </div> : <div className="empty-result"><Plus size={23} /><strong>Нет описанных интервалов</strong><span>Заполните первый интервал или импортируйте описание керна.</span></div>}
+          {commandError && <div className="validation-list" role="alert"><div className="validation-item validation-item--error"><AlertTriangle size={15} /><span>{commandError}</span></div></div>}
           {issues.length > 0 && <div className="validation-list">{issues.map((issue, index) => <div key={`${issue.code}-${index}`} className={`validation-item validation-item--${issue.severity}`}><AlertTriangle size={15} /><span>{issue.message}</span></div>)}</div>}
         </Panel>
         <Panel title="Изменения перед сохранением" description="Diff относительно версии, из которой создан черновик">
-          <div className="lithology-diff"><GitCompareArrows size={19} /><div><strong>{changed ? `Изменено интервалов: ${Math.abs(sorted.length - initialData.intervals.length) || 1}` : 'Изменений пока нет'}</strong><span>{changed ? 'Границы, классификация и описания будут сохранены как рабочий черновик.' : 'Выберите интервал и внесите уточнение. Undo/redo действует до сохранения.'}</span></div>{changed && <Badge tone="warning">Draft</Badge>}</div>
+          <div className="lithology-diff"><GitCompareArrows size={19} /><div><strong>{changed ? `Изменено интервалов: ${diff.length}` : 'Изменений пока нет'}</strong><span>{changed ? `${diff.filter((item) => item.type === 'added').length} добавлено · ${diff.filter((item) => item.type === 'modified').length} изменено · ${diff.filter((item) => item.type === 'removed').length} удалено.` : 'Выберите интервал и внесите уточнение. Undo/redo действует до сохранения.'}</span></div>{changed && <Badge tone="warning">Draft</Badge>}</div>
         </Panel>
       </div>
     </div>

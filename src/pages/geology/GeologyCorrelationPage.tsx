@@ -6,6 +6,7 @@ import { fetchWells } from '../../repository/api'
 import { Badge } from '../../shared/ui/Badge'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { Panel } from '../../shared/ui/Panel'
+import { SectionDataWorkspace } from './components/SectionDataWorkspace'
 
 type Horizon = { code: string; name: string; color: string; top: number; base: number }
 
@@ -25,7 +26,7 @@ export function GeologyCorrelationPage() {
   const wells = useMemo(() => sectionWells.map((id) => wellsQuery.data?.find((well) => well.id === id)).filter(Boolean), [wellsQuery.data])
   const selectedWell = wells.find((well) => well?.id === selectedWellId)
 
-  return <div className="page-stack">
+  return <div className="page-stack"><SectionDataWorkspace />
     <PageHeader eyebrow="Геологический модуль · GEO-20" title="Разрез и корреляция" description="Рабочая схема профиля PR-07: сопоставляйте горизонты, фиксируйте опорную скважину и сразу переходите к первичным данным." meta={<Badge tone="success" dot>Профиль PR-07 · 3 скважины</Badge>} actions={<Link to="/geology/map" className="button button--secondary button--md"><MapPinned size={17} />К карте</Link>} />
     <div className="correlation-toolbar"><div className="segmented-control" aria-label="Привязка разреза"><button type="button" className={datum === 'horizon' ? 'is-active' : ''} onClick={() => setDatum('horizon')}>По горизонтам</button><button type="button" className={datum === 'depth' ? 'is-active' : ''} onClick={() => setDatum('depth')}>По глубине</button></div><div className="correlation-toolbar__meta"><Waypoints size={16} /> Линия профиля: 328 м <span>·</span> Масштаб 1:2 000</div></div>
     <div className="correlation-layout">

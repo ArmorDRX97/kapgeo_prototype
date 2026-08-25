@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { AlertTriangle, ArrowRight, Columns3, FileCheck2, Map, Mountain, RadioTower } from 'lucide-react'
+import { AlertTriangle, ArrowRight, BookOpenCheck, Columns3, FileCheck2, Map, Mountain, RadioTower } from 'lucide-react'
 import { fetchWells } from '../../repository/api'
 import { Badge } from '../../shared/ui/Badge'
 import { MetricCard } from '../../shared/ui/MetricCard'
@@ -18,7 +18,7 @@ export function GeologyOverviewPage() {
         title="Геология месторождения"
         description="Скважины, первичные материалы, ГИС, интерпретации, карты, разрезы и запасы."
         meta={<Badge tone="success" dot>Сарытау · Северный</Badge>}
-        actions={<Link to="/geology/wells" className="button button--primary button--md">Открыть реестр <ArrowRight size={17} /></Link>}
+        actions={<><Link to="/geology/master" className="button button--secondary button--md">Контекст</Link><Link to="/geology/wells" className="button button--primary button--md">Открыть реестр <ArrowRight size={17} /></Link></>}
       />
 
       <div className="metrics-grid">
@@ -47,6 +47,8 @@ export function GeologyOverviewPage() {
       </div>
 
       <div className="module-shortcuts">
+        <Link to="/geology/methodology" className="module-shortcut-link"><BookOpenCheck size={20} /><div><strong>Методический центр</strong><span>Пять контуров, формулы, definitions и demo-шаблоны</span></div><Badge>GEOX-E00</Badge></Link>
+        <Link to="/geology/master" className="module-shortcut-link"><Mountain size={20} /><div><strong>Месторождения и кондиции</strong><span>Участки, залежи и effective-dated условия</span></div><Badge>GEO-02</Badge></Link>
         <Link to="/geology/map" className="module-shortcut-link"><Map size={20} /><div><strong>Карта скважин</strong><span>Слои, фильтры и cross-selection объектов</span></div><Badge>GEO-03</Badge></Link>
         <Link to="/geology/correlation" className="module-shortcut-link"><Columns3 size={20} /><div><strong>Колонки и разрезы</strong><span>Синхронные глубинные представления и корреляция профиля</span></div><Badge>GEO-19–20</Badge></Link>
         <Link to="/geology/reserves" className="module-shortcut-link"><FileCheck2 size={20} /><div><strong>Подсчёт запасов</strong><span>Проект, прозрачный расчёт и передача на согласование</span></div><Badge>GEO-21</Badge></Link>
