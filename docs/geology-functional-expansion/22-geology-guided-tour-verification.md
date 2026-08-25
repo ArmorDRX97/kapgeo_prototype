@@ -20,8 +20,9 @@
 
 | ID | Сценарий | Охват |
 |---|---|---|
-| `geology-complete` | Полная экскурсия | 74 шага по всему текущему геологическому модулю |
+| `geology-complete` | Полная экскурсия | 80 шагов по всему текущему геологическому модулю |
 | `geology-start` | Первое знакомство | контекст, дата, поиск, обзор, карта, реестр и создание скважины |
+| `geology-bgd` | БГД и месторождения | реестр, фильтры, создание, редактор, dependency guard и режим фокуса |
 | `geology-well` | Карточка скважины | все вкладки WELL-1042, включая связанные planned routes |
 | `geology-logs` | ГИС и интерпретация | импорт, QC, LogRun, viewer, интервалы, AI и human resolution |
 | `geology-projects` | Разрезы, запасы и публикация | SectionProject, ReserveProject, review и exact-version delivery |
@@ -92,9 +93,10 @@ Browser acceptance выполнена в изолированном Chrome:
 
 - desktop `1440 × 900`: launcher `140 × 48`, соседнее menu `430 × 720`, первый target и tooltip не пересекаются;
 - mobile `390 × 844`: menu `366 × 720`, tooltip закреплён снизу, target остаётся видимым, page overflow равен `0`;
-- полный проход всех `74` шагов открыл `21` route/URL-вариант; все 74 target найдены, fallback и missing highlight отсутствуют;
+- базовый проход до расширения БГД открыл `21` route/URL-вариант; все прежние 74 target найдены, fallback и missing highlight отсутствуют;
+- incremental Chrome acceptance БГД подтвердил 6/6 новых target на `/geology/bgd`, включая fixed переключатель режима; текущий полный каталог содержит 80 шагов;
 - переходы `/geology → /geology/master` и `WELL-1042 → ?tab=passport` подтверждены;
 - pause/reload показал `Продолжить` на шаге 8, локальный reset удалил resume;
 - launcher виден для R1 с `geology.view` и отсутствует у R8 без такого permission;
 - финал полного тура закрыл dialog и записал завершение;
-- `typecheck`, `43` test files / `106` tests, `lint` и production `build` проходят.
+- после расширения БГД проходят `typecheck`, `45` test files / `111` tests, `lint` и production `build`; lint содержит только три прежних warnings.

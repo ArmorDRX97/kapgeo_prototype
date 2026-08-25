@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { AlertTriangle, ArrowRight, BookOpenCheck, Columns3, FileCheck2, Map, Mountain, RadioTower } from 'lucide-react'
+import { AlertTriangle, ArrowRight, BookOpenCheck, Columns3, Database, FileCheck2, Map, Mountain, RadioTower } from 'lucide-react'
 import { fetchWells } from '../../repository/api'
 import { Badge } from '../../shared/ui/Badge'
 import { MetricCard } from '../../shared/ui/MetricCard'
@@ -18,7 +18,7 @@ export function GeologyOverviewPage() {
         title="Геология месторождения"
         description="Скважины, первичные материалы, ГИС, интерпретации, карты, разрезы и запасы."
         meta={<Badge tone="success" dot>Сарытау · Северный</Badge>}
-        actions={<><Link to="/geology/master" className="button button--secondary button--md">Контекст</Link><Link to="/geology/wells" className="button button--primary button--md">Открыть реестр <ArrowRight size={17} /></Link></>}
+        actions={<><Link to="/geology/bgd" className="button button--secondary button--md">Открыть БГД</Link><Link to="/geology/wells" className="button button--primary button--md">Открыть реестр <ArrowRight size={17} /></Link></>}
       />
 
       <div className="metrics-grid">
@@ -47,6 +47,7 @@ export function GeologyOverviewPage() {
       </div>
 
       <div className="module-shortcuts">
+        <Link to="/geology/bgd" className="module-shortcut-link"><Database size={20} /><div><strong>База геологических данных</strong><span>Создание и ведение месторождений, участков и залежей</span></div><Badge>БГД 1.4</Badge></Link>
         <Link to="/geology/methodology" className="module-shortcut-link"><BookOpenCheck size={20} /><div><strong>Методический центр</strong><span>Пять контуров, формулы, definitions и demo-шаблоны</span></div><Badge>GEOX-E00</Badge></Link>
         <Link to="/geology/master" className="module-shortcut-link"><Mountain size={20} /><div><strong>Месторождения и кондиции</strong><span>Участки, залежи и effective-dated условия</span></div><Badge>GEO-02</Badge></Link>
         <Link to="/geology/map" className="module-shortcut-link"><Map size={20} /><div><strong>Карта скважин</strong><span>Слои, фильтры и cross-selection объектов</span></div><Badge>GEO-03</Badge></Link>

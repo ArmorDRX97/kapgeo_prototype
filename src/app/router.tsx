@@ -8,6 +8,8 @@ import { AnalyticsReportPage } from '../pages/analytics/AnalyticsReportPage'
 import { MfaPage } from '../pages/auth/MfaPage'
 import { SignInPage } from '../pages/auth/SignInPage'
 import { GeologyOverviewPage } from '../pages/geology/GeologyOverviewPage'
+import { GeoBasePage } from '../pages/geology/GeoBasePage'
+import { GeoBaseDepositPage } from '../pages/geology/GeoBaseDepositPage'
 import { GeologyMasterPage } from '../pages/geology/GeologyMasterPage'
 import { GeologyMethodologyPage } from '../pages/geology/GeologyMethodologyPage'
 import { GeologyMapPage } from '../pages/geology/GeologyMapPage'
@@ -43,6 +45,7 @@ import { WorkPage } from '../pages/work/WorkPage'
 import { WorkflowCenterPage } from '../pages/work/WorkflowCenterPage'
 import { validateWellSearch } from '../pages/geology/wellSearch'
 import { validateWellTabSearch } from '../pages/geology/wellTabSearch'
+import { validateBgdSearch } from '../features/geobase/model/bgdSearch'
 
 const rootRoute = createRootRoute({ component: RootLayout, notFoundComponent: NotFoundPage })
 const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: () => <Navigate to="/home" /> })
@@ -52,6 +55,8 @@ const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: '/home', 
 const workRoute = createRoute({ getParentRoute: () => rootRoute, path: '/work', component: WorkPage })
 const workflowCenterRoute = createRoute({ getParentRoute: () => rootRoute, path: '/work/workflows', component: WorkflowCenterPage })
 const geologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology', component: GeologyOverviewPage })
+const geoBaseRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd', validateSearch: validateBgdSearch, component: GeoBasePage })
+const geoBaseDepositRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId', validateSearch: validateBgdSearch, component: GeoBaseDepositPage })
 const geologyMasterRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/master', component: GeologyMasterPage })
 const geologyMethodologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/methodology', component: GeologyMethodologyPage })
 const geologyMapRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/map', validateSearch: validateWellSearch, component: GeologyMapPage })
@@ -102,6 +107,8 @@ const routeTree = rootRoute.addChildren([
   workRoute,
   workflowCenterRoute,
   geologyRoute,
+  geoBaseRoute,
+  geoBaseDepositRoute,
   geologyMasterRoute,
   geologyMethodologyRoute,
   geologyMapRoute,

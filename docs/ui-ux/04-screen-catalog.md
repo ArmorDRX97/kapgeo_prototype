@@ -11,6 +11,7 @@
 
 ### Реализованный геологический срез и детальный scope на 20.08.2026
 
+- `GEO-BGD-01/02` — `/geology/bgd` и `/geology/bgd/:depositId`: сохраняемый реестр и отдельная карточка CRUD месторождения для ведения реестра и карточек месторождений;
 - `GEO-01`, `GEO-03`, `GEO-04` — кликабельны и связаны общим состоянием фильтра через URL;
 - `GEO-02` — `/geology/master`: сохраняемые synthetic месторождения, участки, залежи и effective-dated кондиции;
 - `GEO-05` — функциональный wizard, создающий synthetic draft с принадлежностью и spatial/duplicate check;
@@ -82,6 +83,8 @@
 |---|---|---|---|---|
 | GEO-00 | Методический центр прототипа: scope, formulas, definitions, templates и volume profiles | Page/Workspace | P0 | `/geology/methodology` |
 | GEO-01 | Обзор модуля | Page | P0 | `/geology` |
+| GEO-BGD-01 | База геологических данных: реестр месторождений | Page | P0 | `/geology/bgd` |
+| GEO-BGD-02 | Карточка месторождения: просмотр, изменение, видимость и безопасное удаление | Page/Workspace | P0 | `/geology/bgd/:depositId` |
 | GEO-02 | Месторождения, залежи, участки и кондиции | Page/Workspace | P0 | `/geology/master` |
 | GEO-03 | Карта скважин и объектов | Workspace | P0 | `/geology/map` |
 | GEO-04 | Реестр скважин | Page | P0 | `/geology/wells` |

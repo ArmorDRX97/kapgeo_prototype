@@ -1,6 +1,6 @@
 # Статус реализации
 
-Дата обновления: 24 августа 2026
+Дата обновления: 25 августа 2026
 
 Текущий этап: **GEOX — профессиональное расширение геологического модуля**
 
@@ -192,3 +192,4 @@ GEOX-E00 завершён: добавлен `/geology/methodology` — инте�
 - 25 августа 2026 закрыты замечания по приложенным скриншотам карточки WELL-1042. В GEOX-E04 строки versioned tracks получают общую grid-разметку и больше не сливаются; действия гранулометрии выровнены в единый вертикальный action-блок. В GEOX-E05 шаблон треков переведён в одну колонку без посимвольного переноса кодов; в GEOX-E06 правые таблицы интерпретации заменены компактными карточками «интервал / источник / метод / статус». Выравнивание шаблона геологической колонки переработано на desktop-grid с корректным mobile fallback. Повторный Chrome QA на desktop 1440 px: overflow 0 для Литологии, Проб и ГИС; `typecheck`, 40 test files / 98 tests и `build` проходят.
 
 - 25 августа 2026 реализована permission-based интерактивная экскурсия по всему геологическому модулю: fixed launcher и соседнее меню, полный каталог из 74 шагов и пять тематических сценариев, автоматический обзор текущей/будущей страницы, route/tab navigation, target wait/fallback, overlay/highlight, keyboard focus, pause/resume/completion и локальный reset. Persona-specific progress хранится в IndexedDB `preferences` и очищается глобальным reset. Полный Chrome-проход подтвердил 74/74 target без fallback на 21 route/URL-варианте; desktop 1440 и mobile 390 имеют overflow 0. Проверка: `typecheck`, 43 test files / 106 tests, `lint`, production `build`. Evidence: [22-geology-guided-tour-verification.md](./geology-functional-expansion/22-geology-guided-tour-verification.md).
+- 25 августа 2026 реализованы отдельные `/geology/bgd` и `/geology/bgd/:depositId`: фильтруемый реестр и самостоятельная карточка расширенного CRUD месторождений с immutable numeric ID/code, type/custom type, CRS/описанием, hide/show, первоначальными участками/залежами, version/audit и dependency guard удаления. Данные synthetic и сохраняются в IndexedDB; global reset возвращает seed. Полная экскурсия расширена до 80 шагов и шести тематических сценариев. Chrome QA подтвердил CRUD/reload/hide/delete/dependency guard, 6/6 новых tour-target, отдельный переход list/detail, сохранение фильтров, открытие карточки после create и overflow 0 при 1440/390 px; проходят `typecheck`, 45 files / 111 tests, `lint` и production `build`. Evidence: [23-geobase-field-crud-verification.md](./geology-functional-expansion/23-geobase-field-crud-verification.md).

@@ -3,6 +3,8 @@ import { geologyTourCoveredRoutes, geologyTourDefinitions } from './catalog'
 
 const requiredRoutes = [
   '/geology',
+  '/geology/bgd',
+  '/geology/bgd/DEP-SARYTAU',
   '/geology/master',
   '/geology/methodology',
   '/geology/map',

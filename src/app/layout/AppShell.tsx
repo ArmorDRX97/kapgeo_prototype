@@ -9,11 +9,12 @@ import { fetchPlatformPreferences, fetchWells } from '../../repository/api'
 import { ScientificJobMonitor } from '../../features/scientific-jobs'
 import { GeologyTour } from '../../features/geology-tour'
 
-type StaticRoute = '/home' | '/work' | '/geology' | '/technology' | '/modeling' | '/analytics' | '/admin'
+type StaticRoute = '/home' | '/work' | '/geology' | '/geology/bgd' | '/technology' | '/modeling' | '/analytics' | '/admin'
 
 const navigation: Array<{ label: string; to: StaticRoute; icon: typeof Home; permission: Permission; badge?: string }> = [
   { label: 'Главная', to: '/home', icon: Home, permission: 'home.view' },
   { label: 'Мои задачи', to: '/work', icon: BriefcaseBusiness, permission: 'work.view', badge: '7' },
+  { label: 'БГД', to: '/geology/bgd', icon: Database, permission: 'geology.view' },
   { label: 'Геология', to: '/geology', icon: MapPinned, permission: 'geology.view' },
   { label: 'Технология', to: '/technology', icon: Network, permission: 'technology.view' },
   { label: 'Моделирование', to: '/modeling', icon: Boxes, permission: 'modeling.view' },
@@ -30,9 +31,10 @@ export function AppShell({ children }: PropsWithChildren) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const navigate = useNavigate()
   const { persona, signOut, switchPersona } = useSession()
+  const { data: platformPreferences } = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences, staleTime: 30_000 })
   const visibleNavigation = navigation.filter((item) => hasPermission(persona, item.permission))
   const { data: persistedWells = [] } = useQuery({ queryKey: ['wells'], queryFn: fetchWells, staleTime: 30_000 })
-  const { data: platformPreferences } = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences, staleTime: 30_000 })
+
   useEffect(() => {
     if (!platformPreferences) return
     document.documentElement.lang = platformPreferences.locale
@@ -74,7 +76,7 @@ export function AppShell({ children }: PropsWithChildren) {
           <p>Рабочее пространство</p>
           {visibleNavigation.map((item) => {
             const Icon = item.icon
-            const active = item.to === '/home' ? pathname === '/home' : pathname.startsWith(item.to)
+            const active = item.to === '/home' ? pathname === '/home' : item.to === '/geology' ? pathname === '/geology' || (pathname.startsWith('/geology/') && !pathname.startsWith('/geology/bgd')) : pathname.startsWith(item.to)
             return <Link key={item.to} to={item.to} className={active ? 'is-active' : ''} onClick={() => setMobileOpen(false)}><Icon size={19} /><span>{item.label}</span>{item.badge && <em>{item.badge}</em>}</Link>
           })}
         </nav>
@@ -87,16 +89,18 @@ export function AppShell({ children }: PropsWithChildren) {
       <div className="app-main">
         <header className="topbar">
           <button className="topbar__mobile-menu" type="button" onClick={() => setMobileOpen(true)} aria-label="Открыть меню"><Menu size={19} /></button>
-          <button className="context-selector" type="button"><span><small>Контекст</small><strong>Казатомпром / Сарытау / Северный</strong></span><ChevronDown size={15} /></button>
-          <button className="as-of-selector" type="button"><small>На дату</small><strong>10 авг 2026</strong><ChevronDown size={14} /></button>
-          <div className={`global-search-wrap${searchOpen ? ' is-open' : ''}`}>
-            <button className="global-search" type="button" onClick={() => setSearchOpen(true)} aria-expanded={searchOpen} aria-controls="global-search-results"><Search size={17} /><span>Найти скважину, блок, отчёт…</span><kbd>Ctrl K</kbd></button>
-            {searchOpen && <div id="global-search-results" className="global-search-popover"><label><Search size={16} /><input autoFocus value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Введите код скважины, блок или отчёт" aria-label="Глобальный поиск" /></label><p>{query ? 'Результаты выборки' : 'Быстрый доступ'}</p>{searchResults.length ? <div>{searchResults.map((result) => <button type="button" key={result.id} onClick={() => openResult(result)}><strong>{result.title}</strong><span>{result.detail}</span></button>)}</div> : <small>По вашему запросу ничего не найдено.</small>}</div>}
-          </div>
+            <button className="context-selector" type="button"><span><small>Контекст</small><strong>Казатомпром / Сарытау / Северный</strong></span><ChevronDown size={15} /></button>
+            <button className="as-of-selector" type="button"><small>На дату</small><strong>10 авг 2026</strong><ChevronDown size={14} /></button>
+            <div className={`global-search-wrap${searchOpen ? ' is-open' : ''}`}>
+              <button className="global-search" type="button" onClick={() => setSearchOpen(true)} aria-expanded={searchOpen} aria-controls="global-search-results"><Search size={17} /><span>Найти скважину, блок, отчёт…</span><kbd>Ctrl K</kbd></button>
+              {searchOpen && <div id="global-search-results" className="global-search-popover"><label><Search size={16} /><input autoFocus value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Введите код скважины, блок или отчёт" aria-label="Глобальный поиск" /></label><p>{query ? 'Результаты выборки' : 'Быстрый доступ'}</p>{searchResults.length ? <div>{searchResults.map((result) => <button type="button" key={result.id} onClick={() => openResult(result)}><strong>{result.title}</strong><span>{result.detail}</span></button>)}</div> : <small>По вашему запросу ничего не найдено.</small>}</div>}
+            </div>
+
           <div className="topbar__actions">
-            <button type="button" aria-label="Фоновые задачи" aria-expanded={jobsOpen} aria-controls="scientific-job-monitor" onClick={() => setJobsOpen((value) => !value)}><Database size={18} /><span className="activity-pulse" /></button>
-            {jobsOpen && <ScientificJobMonitor onClose={() => setJobsOpen(false)} />}
-            <Link to="/notifications" aria-label="Уведомления"><Bell size={18} /><em>3</em></Link>
+              <button type="button" aria-label="Фоновые задачи" aria-expanded={jobsOpen} aria-controls="scientific-job-monitor" onClick={() => setJobsOpen((value) => !value)}><Database size={18} /><span className="activity-pulse" /></button>
+              {jobsOpen && <ScientificJobMonitor onClose={() => setJobsOpen(false)} />}
+              <Link to="/notifications" aria-label="Уведомления"><Bell size={18} /><em>3</em></Link>
+
             <div className="persona-control"><UserRound size={16} /><select value={persona?.id} onChange={(event) => switchPersona(event.target.value)} aria-label="Текущий профиль">{userPersonas.map((item) => <option key={item.id} value={item.id}>{item.position}</option>)}</select></div>
             <button type="button" onClick={logout} aria-label="Выйти"><LogOut size={18} /></button>
           </div>

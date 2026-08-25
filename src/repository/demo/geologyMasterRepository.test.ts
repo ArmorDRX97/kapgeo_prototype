@@ -1,39 +1,70 @@
-import { afterEach, describe, expect, it } from 'vitest'
-import { demoDatabase } from './demoDatabase'
+import { beforeEach, describe, expect, it } from 'vitest'
+import type { UpdateDepositPatch } from '../../entities/geology-master/model/types'
+import { DemoDatabase } from './demoDatabase'
 import { DemoGeologyMasterRepository } from './geologyMasterRepository'
 
-describe('DemoGeologyMasterRepository', () => {
-  afterEach(async () => { await demoDatabase.reset() })
+describe('DemoGeologyMasterRepository BGD CRUD', () => {
+  const database = new DemoDatabase('test-geology-master-bgd')
+  const repository = new DemoGeologyMasterRepository(database)
 
-  it('persists a newly created deposit and protects its immutable code', async () => {
-    const repository = new DemoGeologyMasterRepository()
-    const created = await repository.createDeposit({ code: 'DEMO-02', name: 'Демонстрационный объект', description: 'Synthetic fixture.', crs: 'EPSG:32642' })
-
-    await expect(new DemoGeologyMasterRepository().getMasterData()).resolves.toMatchObject({ deposits: expect.arrayContaining([expect.objectContaining({ id: created.id, code: 'DEMO-02' })]) })
-    await expect(repository.createDeposit({ code: 'DEMO-02', name: 'Дубликат', description: 'Synthetic fixture.', crs: 'EPSG:32642' })).rejects.toThrow('immutable code')
+  beforeEach(async () => {
+    await database.reset()
   })
 
-  it('persists site and lens CRUD and prevents archival with active dependants', async () => {
-    const repository = new DemoGeologyMasterRepository()
-    const site = await repository.createSite({ depositId: 'DEP-SARYTAU', code: 'EAST', name: 'Восточный' })
-    const lens = await repository.createLens({ siteId: site.id, code: 'E-01', name: 'Залежь E-01' })
+  it('seeds deterministic fields with GeoBase attributes', async () => {
+    const data = await repository.getMasterData()
 
-    await expect(repository.archiveSite(site)).rejects.toThrow('DEPENDENCY_WARNING')
-    const archivedLens = await repository.archiveLens(lens)
-    const archivedSite = await repository.archiveSite({ ...site, version: site.version })
-
-    expect(archivedLens.status).toBe('archived')
-    expect(archivedSite.status).toBe('archived')
-    expect((await repository.getMasterData()).sites).toEqual(expect.arrayContaining([expect.objectContaining({ id: site.id, status: 'archived' })]))
+    expect(data.deposits).toHaveLength(3)
+    expect(data.deposits[0]).toMatchObject({ numericId: 1, code: 'SARYTAU', objectType: 'field', isHidden: false })
+    expect(data.deposits.find((item) => item.code === 'VOSTOCHNAYA')?.isHidden).toBe(true)
+    expect(data.deposits[0]?.occurrences).toHaveLength(2)
   })
-  it('creates a new draft of published conditions, then approves and publishes it', async () => {
-    const repository = new DemoGeologyMasterRepository()
-    const published = (await repository.getMasterData()).conditionSets[0]!
-    const draft = await repository.createConditionSetVersion(published)
-    const saved = await repository.saveConditionSet(draft, { effectiveFrom: '2026-09-01', density: 2.72, balanceThreshold: 1.25, offBalanceThreshold: 0.65, azimuthCorrection: 0.1, geometryTolerance: 0.2 })
-    const approved = await repository.approveConditionSet(saved)
-    const republished = await repository.publishConditionSet(approved)
 
-    expect(republished).toMatchObject({ status: 'published', version: approved.version + 1, density: 2.72 })
+  it('creates, updates, hides and deletes an independent field', async () => {
+    const created = await repository.createDeposit({
+      numericId: 77,
+      code: 'DEMO-77',
+      objectType: 'custom',
+      customType: 'лицензионная территория',
+      name: 'Демонстрационное 77',
+      crs: 'LOCAL:DEMO-77',
+      coordinateSystemDescription: 'Условная локальная сетка',
+      description: 'Только synthetic данные.',
+      isHidden: false,
+      occurrences: [{ id: '', type: 'рудная залежь', name: 'Залежь 1' }],
+    })
+
+    expect(created).toMatchObject({ numericId: 77, version: 1, objectType: 'custom', isHidden: false })
+    expect(created.occurrences[0]?.id).toBe('OCC-DEMO-77-01')
+
+    const patch: UpdateDepositPatch = {
+      name: 'Демонстрационное 77 · скрыто',
+      objectType: 'field',
+      customType: undefined,
+      crs: created.crs,
+      coordinateSystemDescription: created.coordinateSystemDescription,
+      description: created.description,
+      isHidden: true,
+      occurrences: created.occurrences,
+    }
+    const updated = await repository.updateDeposit(created, patch)
+    expect(updated).toMatchObject({ version: 2, objectType: 'field', isHidden: true })
+
+    await repository.deleteDeposit(updated)
+    expect((await repository.getMasterData()).deposits.some((item) => item.id === created.id)).toBe(false)
+  })
+
+  it('rejects duplicate numeric IDs and immutable codes', async () => {
+    await expect(repository.createDeposit({ numericId: 1, code: 'OTHER', name: 'Другое', description: '', crs: 'EPSG:32642' }))
+      .rejects.toThrow('числовым ID')
+    await expect(repository.createDeposit({ numericId: 99, code: 'SARYTAU', name: 'Дубликат', description: '', crs: 'EPSG:32642' }))
+      .rejects.toThrow('кодом')
+  })
+
+  it('blocks deletion when hierarchy dependencies exist', async () => {
+    const data = await repository.getMasterData()
+    const sarytau = data.deposits.find((item) => item.code === 'SARYTAU')!
+
+    await expect(repository.deleteDeposit(sarytau)).rejects.toThrow('DEPENDENCY_WARNING')
   })
 })

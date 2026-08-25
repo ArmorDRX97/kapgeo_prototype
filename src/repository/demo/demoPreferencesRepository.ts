@@ -25,6 +25,7 @@ export type PlatformPreferences = {
   performanceProfile: 'small' | 'medium' | 'large'
   browserWidths: Array<390 | 1024 | 1440>
   helpSeen: boolean
+  bgdOnlyMode: boolean
   updatedAt: string
 }
 
@@ -42,7 +43,7 @@ const defaultWellRegistryPreferences: WellRegistryPreferences = {
 }
 const defaultPlatformPreferences: PlatformPreferences = {
   id: 'platform:readiness', locale: 'ru', density: 'comfortable', contrast: false, reducedMotion: false,
-  performanceProfile: 'small', browserWidths: [], helpSeen: false, updatedAt: '2026-08-24T00:00:00.000Z',
+  performanceProfile: 'small', browserWidths: [], helpSeen: false, bgdOnlyMode: false, updatedAt: '2026-08-24T00:00:00.000Z',
 }
 
 export class DemoPreferencesRepository {
@@ -74,7 +75,7 @@ export class DemoPreferencesRepository {
 
   async getPlatform(): Promise<PlatformPreferences> {
     const stored = await demoDatabase.get<PlatformPreferences>('preferences', defaultPlatformPreferences.id)
-    if (stored) return structuredClone(stored)
+    if (stored) return structuredClone({ ...defaultPlatformPreferences, ...stored })
     await demoDatabase.put('preferences', defaultPlatformPreferences)
     return structuredClone(defaultPlatformPreferences)
   }

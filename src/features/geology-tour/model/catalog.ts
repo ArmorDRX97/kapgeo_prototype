@@ -24,6 +24,13 @@ const orientation: GeologyTourStep[] = [
   step('orientation-attention', '/geology', panelTarget('Требует внимания'), 'Обзор модуля', 'Очередь внимания', 'Здесь собраны проблемы качества, расхождения интерпретаций и незавершённые процессы.'),
 ]
 
+const geobase: GeologyTourStep[] = [
+  step('bgd-page', '/geology/bgd', pageTarget('База геологических данных'), 'БГД', 'Корневой реестр месторождений', 'БГД хранит месторождения как корневые объекты, от которых дальше наследуются участки, залежи, скважины и связанные данные.'),
+  step('bgd-registry', '/geology/bgd', target('[data-geology-tour="bgd-registry"]'), 'БГД', 'Поиск и выбор месторождения', 'Реестр показывает неизменяемые идентификаторы, тип, систему координат, видимость и количество связанных объектов.'),
+  step('bgd-filters', '/geology/bgd', target('[data-geology-tour="bgd-filters"]'), 'БГД', 'Фильтры реестра', 'Найдите месторождение по номеру, коду или названию и отдельно покажите скрытые объекты, не удаляя их данные.'),
+  step('bgd-create', '/geology/bgd', target('[data-geology-tour="bgd-create"]'), 'БГД', 'Создание месторождения', 'Создайте уникальный номер и код, задайте тип, систему координат, описание и первоначальный список участков или залежей.'),
+  step('bgd-editor', '/geology/bgd/DEP-SARYTAU', target('[data-geology-tour="bgd-editor"]'), 'БГД', 'Карточка и безопасный CRUD', 'Редактируйте атрибуты и видимость, добавляйте вложенные объекты и удаляйте только месторождения без зависимых данных.'),
+]
 const masterAndMethods: GeologyTourStep[] = [
   step('master-page', '/geology/master', pageTarget(), 'Справочники', 'Геологическая иерархия', 'Месторождения, участки, залежи и наборы кондиций управляются как версионируемые справочные сущности.'),
   step('master-tree', '/geology/master', target('.master-layout, .master-data-layout, #main-content'), 'Справочники', 'Структура объектов', 'Выберите сущность, изучите её состояние и создайте новую версию вместо изменения опубликованных данных на месте.'),
@@ -125,10 +132,11 @@ export const geologyTourDefinitions: GeologyTourDefinition[] = [
     id: 'geology-complete',
     title: 'Полная экскурсия по геологии',
     description: 'Весь модуль: от контекста и справочников до скважины, запасов и публикации.',
-    estimatedMinutes: 35,
-    steps: uniqueSteps([orientation, masterAndMethods, registryAndMap, wellOverview, passportAndDrilling, lithologyAndSamples, logsAndInterpretation, outputsAndAudit, projectsAndPublication]),
+    estimatedMinutes: 39,
+    steps: uniqueSteps([orientation, geobase, masterAndMethods, registryAndMap, wellOverview, passportAndDrilling, lithologyAndSamples, logsAndInterpretation, outputsAndAudit, projectsAndPublication]),
   },
-  { id: 'geology-start', title: 'Первое знакомство', description: 'Контекст, навигация, обзор, карта и реестр.', estimatedMinutes: 6, steps: uniqueSteps([orientation, registryAndMap]) },
+  { id: 'geology-start', title: 'Первое знакомство', description: 'Контекст, навигация, обзор, карта и реестр.', estimatedMinutes: 6, steps: uniqueSteps([orientation, geobase, registryAndMap]) },
+  { id: 'geology-bgd', title: 'БГД и месторождения', description: 'Создание, поиск, редактирование, видимость, зависимости и безопасное удаление месторождений.', estimatedMinutes: 5, steps: uniqueSteps([geobase]) },
   { id: 'geology-well', title: 'Карточка скважины', description: 'Все вкладки WELL-1042: паспорт, глубины, литология, ГИС, пробы, документы и аудит.', estimatedMinutes: 18, steps: uniqueSteps([wellOverview, passportAndDrilling, lithologyAndSamples, logsAndInterpretation, outputsAndAudit]) },
   { id: 'geology-logs', title: 'ГИС и интерпретация', description: 'Импорт, QC, viewer, интервалы, AI и экспертное решение.', estimatedMinutes: 9, steps: uniqueSteps([logsAndInterpretation, projectsAndPublication.slice(0, 3)]) },
   { id: 'geology-projects', title: 'Разрезы, запасы и публикация', description: 'SectionProject, методы запасов, review и передача exact versions.', estimatedMinutes: 11, steps: uniqueSteps([projectsAndPublication]) },

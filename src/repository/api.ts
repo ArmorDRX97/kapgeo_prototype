@@ -32,7 +32,7 @@ import type { ReserveProjectWorkspace } from '../entities/reserve-project/model/
 import type { GeologicalModelWorkspace } from '../entities/geological-model/model/types'
 import type { DgmWorkspace } from '../entities/dgm/model/types'
 import type { WellTrajectoryWorkspace } from '../entities/well-trajectory/model/types'
-import type { ConditionSet, Deposit, GeologicalLens, GeologicalMasterData, GeologicalSite } from '../entities/geology-master/model/types'
+import type { ConditionSet, CreateDepositInput, Deposit, GeologicalLens, GeologicalMasterData, GeologicalSite, UpdateDepositPatch } from '../entities/geology-master/model/types'
 import type { WellAssignment, WellMasterAggregateData, WellMasterAggregateKind, WellMasterWorkspace } from '../entities/well-master/model/types'
 import type { AuditEvent } from '../shared/audit'
 import { demoGeologyTourRepository } from './demo/geologyTourRepository'
@@ -221,8 +221,20 @@ export async function fetchDemoAuditEvents(): Promise<AuditEvent[]> {
 }
 
 export async function fetchGeologicalMasterData(): Promise<GeologicalMasterData> { return demoGeologyMasterRepository.getMasterData() }
-export async function createDeposit(input: Pick<Deposit, 'code' | 'name' | 'description' | 'crs'>): Promise<Deposit> { return demoGeologyMasterRepository.createDeposit(input) }
-export async function updateDeposit(current: Deposit, patch: Pick<Deposit, 'name' | 'description' | 'crs'>): Promise<Deposit> { return demoGeologyMasterRepository.updateDeposit(current, patch) }
+export async function createDeposit(input: CreateDepositInput): Promise<Deposit> { return demoGeologyMasterRepository.createDeposit(input) }
+export async function updateDeposit(current: Deposit, patch: Partial<UpdateDepositPatch> & Pick<Deposit, 'name' | 'description' | 'crs'>): Promise<Deposit> {
+  return demoGeologyMasterRepository.updateDeposit(current, {
+    name: patch.name,
+    objectType: patch.objectType ?? current.objectType,
+    customType: patch.customType ?? current.customType,
+    description: patch.description,
+    crs: patch.crs,
+    coordinateSystemDescription: patch.coordinateSystemDescription ?? current.coordinateSystemDescription,
+    isHidden: patch.isHidden ?? current.isHidden,
+    occurrences: patch.occurrences ?? current.occurrences,
+  })
+}
+export async function deleteDeposit(current: Deposit): Promise<void> { return demoGeologyMasterRepository.deleteDeposit(current) }
 export async function archiveDeposit(current: Deposit): Promise<Deposit> { return demoGeologyMasterRepository.archiveDeposit(current) }
 export async function createSite(input: Pick<GeologicalSite, 'depositId' | 'code' | 'name'>): Promise<GeologicalSite> { return demoGeologyMasterRepository.createSite(input) }
 export async function updateSite(current: GeologicalSite, patch: Pick<GeologicalSite, 'name'>): Promise<GeologicalSite> { return demoGeologyMasterRepository.updateSite(current, patch) }
