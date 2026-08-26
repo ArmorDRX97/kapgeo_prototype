@@ -66,6 +66,7 @@ export function GeologyDatabaseDeposit({ depositId, onBack }: {
         performanceProfile: preferences.performanceProfile,
         browserWidths: preferences.browserWidths,
         helpSeen: preferences.helpSeen,
+        minimumMode: preferences.minimumMode,
         currentDepositId: depositId,
       })
     },

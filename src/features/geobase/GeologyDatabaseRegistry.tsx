@@ -11,7 +11,6 @@ import {
   EyeOff,
   Layers3,
   MapPinned,
-  Pencil,
   Plus,
   RotateCcw,
   Save,
@@ -192,6 +191,7 @@ export function GeologyDatabaseRegistry({ search, onSearchChange, onOpenDeposit 
         performanceProfile: preferences.performanceProfile,
         browserWidths: preferences.browserWidths,
         helpSeen: preferences.helpSeen,
+        minimumMode: preferences.minimumMode,
         currentDepositId: depositId,
       })
     },
@@ -314,7 +314,6 @@ export function GeologyDatabaseRegistry({ search, onSearchChange, onOpenDeposit 
             </button>
             <div className="geobase-table__actions">
               <Button size="sm" variant={current ? 'secondary' : 'quiet'} disabled={current || currentDepositMutation.isPending} onClick={() => currentDepositMutation.mutate(item.id)} aria-label={`Выбрать ${item.nameRu} текущим`}><CheckCircle2 size={14} /> {current ? 'Текущее' : 'Выбрать'}</Button>
-              <Button size="sm" variant="quiet" onClick={() => onOpenDeposit(item.id)}><Pencil size={14} /> Открыть</Button>
             </div>
           </article>
         }) : <div className="geobase-empty"><Database size={22} /><strong>{data.deposits.length ? 'Месторождения не найдены' : 'Реестр пока пуст'}</strong><span>{data.deposits.length ? 'Измените условия поиска или сбросьте фильтры.' : 'Создайте первое месторождение, чтобы начать наполнение БГД.'}</span></div>}

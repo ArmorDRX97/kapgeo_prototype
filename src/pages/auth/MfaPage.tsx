@@ -1,12 +1,15 @@
 import { useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, KeyRound, ShieldCheck } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useSession } from '../../entities/session/model/sessionContext'
+import { fetchPlatformPreferences } from '../../repository/api'
 import { Button } from '../../shared/ui/Button'
 
 export function MfaPage() {
   const navigate = useNavigate()
   const { pendingPersona, verifyMfa } = useSession()
+  const { data: preferences } = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences })
   const [code, setCode] = useState('246810')
   const [error, setError] = useState('')
 
@@ -15,7 +18,7 @@ export function MfaPage() {
       setError('Неверный одноразовый код. Проверьте введённое значение.')
       return
     }
-    void navigate({ to: pendingPersona?.homeRoute === '/geology' ? '/home' : (pendingPersona?.homeRoute ?? '/home') })
+    void navigate({ to: preferences?.minimumMode ? '/geology/bgd' : pendingPersona?.homeRoute === '/geology' ? '/home' : (pendingPersona?.homeRoute ?? '/home') })
   }
 
   return (

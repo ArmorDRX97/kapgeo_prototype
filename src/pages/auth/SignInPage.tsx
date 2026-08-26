@@ -1,17 +1,22 @@
 import { useNavigate } from '@tanstack/react-router'
 import { Building2, CheckCircle2, Globe2, LockKeyhole, ShieldCheck } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { userPersonas, defaultPersona } from '../../entities/session/model/personas'
 import { useSession } from '../../entities/session/model/sessionContext'
+import { fetchPlatformPreferences } from '../../repository/api'
 import { Button } from '../../shared/ui/Button'
 
 export function SignInPage() {
   const navigate = useNavigate()
   const { beginSso } = useSession()
   const [personaId, setPersonaId] = useState(defaultPersona.id)
+  const { data: preferences } = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences })
+  const minimumMode = preferences?.minimumMode ?? false
+  const availablePersonas = minimumMode ? userPersonas.filter((persona) => persona.id === 'geo.ivanova') : userPersonas
 
   const handleSignIn = () => {
-    beginSso(personaId)
+    beginSso(minimumMode ? 'geo.ivanova' : personaId)
     void navigate({ to: '/auth/mfa' })
   }
 
@@ -23,12 +28,18 @@ export function SignInPage() {
           <span className="brand__text"><strong>AI KAPGEO</strong><small>Industrial intelligence platform</small></span>
         </div>
         <div className="auth-visual__content">
-          <h1>Единая среда для работы с недрами и производством</h1>
-          <p>Геология, технология, моделирование и аналитика — в связанном пространстве данных, версий и решений.</p>
+          <h1>{minimumMode ? 'База геологических данных' : 'Единая среда для работы с недрами и производством'}</h1>
+          <p>{minimumMode ? 'Работа с реестром месторождений, их карточками, участками и залежами.' : 'Геология, технология, моделирование и аналитика — в связанном пространстве данных, версий и решений.'}</p>
           <ul className="auth-benefits">
-            <li><CheckCircle2 size={18} /> Сквозная карточка скважины</li>
-            <li><CheckCircle2 size={18} /> Объяснимый AI под контролем эксперта</li>
-            <li><CheckCircle2 size={18} /> Версии, согласование и аудит</li>
+            {minimumMode ? <>
+              <li><CheckCircle2 size={18} /> Реестр и карточки месторождений</li>
+              <li><CheckCircle2 size={18} /> Названия и описания на трёх языках</li>
+              <li><CheckCircle2 size={18} /> Участки, залежи и история изменений</li>
+            </> : <>
+              <li><CheckCircle2 size={18} /> Сквозная карточка скважины</li>
+              <li><CheckCircle2 size={18} /> Объяснимый AI под контролем эксперта</li>
+              <li><CheckCircle2 size={18} /> Версии, согласование и аудит</li>
+            </>}
           </ul>
         </div>
         <div className="auth-visual__mesh" aria-hidden="true" />
@@ -43,8 +54,8 @@ export function SignInPage() {
 
           <label className="field">
             <span className="field__label">Профиль пользователя</span>
-            <select value={personaId} onChange={(event) => setPersonaId(event.target.value)}>
-              {userPersonas.map((persona) => (
+            <select value={minimumMode ? 'geo.ivanova' : personaId} disabled={minimumMode} onChange={(event) => setPersonaId(event.target.value)}>
+              {availablePersonas.map((persona) => (
                 <option key={persona.id} value={persona.id}>{persona.position} · {persona.name}</option>
               ))}
             </select>
