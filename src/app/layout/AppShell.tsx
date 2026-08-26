@@ -5,9 +5,10 @@ import { useQuery } from '@tanstack/react-query'
 import { userPersonas } from '../../entities/session/model/personas'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { hasPermission, type Permission } from '../../shared/auth/permissions'
-import { fetchPlatformPreferences, fetchWells } from '../../repository/api'
+import { fetchGeologicalMasterData, fetchPlatformPreferences, fetchWells } from '../../repository/api'
 import { ScientificJobMonitor } from '../../features/scientific-jobs'
 import { GeologyTour } from '../../features/geology-tour'
+import { getDepositName } from '../../entities/geology-master/model/types'
 
 type StaticRoute = '/home' | '/work' | '/geology' | '/geology/bgd' | '/technology' | '/modeling' | '/analytics' | '/admin'
 
@@ -34,6 +35,14 @@ export function AppShell({ children }: PropsWithChildren) {
   const { data: platformPreferences } = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences, staleTime: 30_000 })
   const visibleNavigation = navigation.filter((item) => hasPermission(persona, item.permission))
   const { data: persistedWells = [] } = useQuery({ queryKey: ['wells'], queryFn: fetchWells, staleTime: 30_000 })
+  const { data: masterData } = useQuery({ queryKey: ['geology-master'], queryFn: fetchGeologicalMasterData, staleTime: 30_000 })
+  const currentDeposit = masterData?.deposits.find((item) => item.id === platformPreferences?.currentDepositId)
+    ?? masterData?.deposits.find((item) => !item.isHidden)
+  const currentSites = masterData?.sites.filter((item) => item.depositId === currentDeposit?.id) ?? []
+  const currentSite = currentSites.find((item) => persona?.scope.includes(item.name)) ?? currentSites[0]
+  const contextLabel = currentDeposit
+    ? `Казатомпром / ${getDepositName(currentDeposit, platformPreferences?.locale ?? 'ru')}${currentSite ? ` / ${currentSite.name}` : ''}`
+    : 'Казатомпром / Месторождение не выбрано'
 
   useEffect(() => {
     if (!platformPreferences) return
@@ -89,7 +98,7 @@ export function AppShell({ children }: PropsWithChildren) {
       <div className="app-main">
         <header className="topbar">
           <button className="topbar__mobile-menu" type="button" onClick={() => setMobileOpen(true)} aria-label="Открыть меню"><Menu size={19} /></button>
-            <button className="context-selector" type="button"><span><small>Контекст</small><strong>Казатомпром / Сарытау / Северный</strong></span><ChevronDown size={15} /></button>
+            <button className="context-selector" type="button"><span><small>Контекст</small><strong>{contextLabel}</strong></span><ChevronDown size={15} /></button>
             <button className="as-of-selector" type="button"><small>На дату</small><strong>10 авг 2026</strong><ChevronDown size={14} /></button>
             <div className={`global-search-wrap${searchOpen ? ' is-open' : ''}`}>
               <button className="global-search" type="button" onClick={() => setSearchOpen(true)} aria-expanded={searchOpen} aria-controls="global-search-results"><Search size={17} /><span>Найти скважину, блок, отчёт…</span><kbd>Ctrl K</kbd></button>

@@ -26,10 +26,10 @@ describe('DemoPreferencesRepository', () => {
   it('persists locale, accessibility and browser QA preferences', async () => {
     const repository = new DemoPreferencesRepository()
     const initial = await repository.getPlatform()
-    await repository.savePlatform({ ...initial, locale: 'kk', contrast: true, reducedMotion: true, performanceProfile: 'large', browserWidths: [390, 1440], helpSeen: true, bgdOnlyMode: true })
+    await repository.savePlatform({ ...initial, locale: 'kk', contrast: true, reducedMotion: true, performanceProfile: 'large', browserWidths: [390, 1440], helpSeen: true, currentDepositId: 'DEP-SEVERNOE' })
 
-    expect(await repository.getPlatform()).toMatchObject({ locale: 'kk', contrast: true, reducedMotion: true, performanceProfile: 'large', browserWidths: [390, 1440], bgdOnlyMode: true })
+    expect(await repository.getPlatform()).toMatchObject({ locale: 'kk', contrast: true, reducedMotion: true, performanceProfile: 'large', browserWidths: [390, 1440], currentDepositId: 'DEP-SEVERNOE' })
     await demoDatabase.reset()
-    expect(await repository.getPlatform()).toMatchObject({ locale: 'ru', contrast: false, browserWidths: [], bgdOnlyMode: false })
+    expect(await repository.getPlatform()).toMatchObject({ locale: 'ru', contrast: false, browserWidths: [], currentDepositId: 'DEP-SARYTAU' })
   })})
 

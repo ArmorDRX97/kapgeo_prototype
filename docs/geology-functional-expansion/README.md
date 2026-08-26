@@ -56,7 +56,7 @@
 | [07-traceability-matrix.md](./07-traceability-matrix.md) | при ревью scope и приёмке | связь страниц/рисунков руководства с целевыми экранами и эпиками |
 | [08-open-questions-decisions.md](./08-open-questions-decisions.md) | до расчётного backend и утверждения UX | принятые решения, блокеры и вопросы предметным владельцам |
 | [22-geology-guided-tour-verification.md](./22-geology-guided-tour-verification.md) | при изменении геологических routes, panels или обучения | каталог 80 шагов, persistence, reset, расширение и browser acceptance экскурсии |
-| [23-geobase-field-crud-verification.md](./23-geobase-field-crud-verification.md) | при изменении корневых объектов БГД или режима фокуса | трассировка GeoBase 1.4, CRUD, dependency guard, IndexedDB и режим «Только БГД» |
+| [23-geobase-field-crud-verification.md](./23-geobase-field-crud-verification.md) | при изменении корневых объектов БГД | UC.KAPGEO.BGD.01, мультиязычный CRUD, единый числовой код, URL-реестр, текущий контекст, права, аудит и IndexedDB-миграция |
 
 Минимальный маршрут для новой сессии: этот файл → текущий статус → нужный эпик в `05-prototype-epics-backlog.md` → соответствующая спецификация в документе 03 → архитектурные контракты в документе 04 → трассировка в документе 07.
 
@@ -148,4 +148,4 @@ GEOX-E12 завершён: publication workspace хранит exact-version pack
 
 GEOX-E00 завершён: `/geology/methodology` хранит walkthrough пяти контуров, четыре versioned synthetic method definitions/examples, conditions/dictionaries с impact, output templates и volume profiles. Baseline `unverified`, данные IndexedDB и сбрасываются reset. Детали — в [21-e00-methodology-verification.md](./21-e00-methodology-verification.md).
 
-БГД-срез завершён: `/geology/bgd` реализует расширенный CRUD месторождений по пункту 1.4 GeoBase, immutable identifiers, hide/show, вложенные участки/залежи, dependency guard и audit/version persistence. Fixed режим `Только БГД` изолирует интерфейс без удаления остальных данных. Детали — в [23-geobase-field-crud-verification.md](./23-geobase-field-crud-verification.md).
+БГД-срез актуализирован по `UC.KAPGEO.BGD.01`: `/geology/bgd` реализует поиск, сортировку, пагинацию и CRUD месторождений с одним неизменяемым числовым кодом, обязательными RU/KZ/EN-названиями, необязательной системой координат, трёхъязычными залежами, текущим контекстом, объектными правами, audit/version persistence и совместимой миграцией старых записей. Детали — в [23-geobase-field-crud-verification.md](./23-geobase-field-crud-verification.md).

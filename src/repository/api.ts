@@ -222,19 +222,11 @@ export async function fetchDemoAuditEvents(): Promise<AuditEvent[]> {
 
 export async function fetchGeologicalMasterData(): Promise<GeologicalMasterData> { return demoGeologyMasterRepository.getMasterData() }
 export async function createDeposit(input: CreateDepositInput): Promise<Deposit> { return demoGeologyMasterRepository.createDeposit(input) }
-export async function updateDeposit(current: Deposit, patch: Partial<UpdateDepositPatch> & Pick<Deposit, 'name' | 'description' | 'crs'>): Promise<Deposit> {
-  return demoGeologyMasterRepository.updateDeposit(current, {
-    name: patch.name,
-    objectType: patch.objectType ?? current.objectType,
-    customType: patch.customType ?? current.customType,
-    description: patch.description,
-    crs: patch.crs,
-    coordinateSystemDescription: patch.coordinateSystemDescription ?? current.coordinateSystemDescription,
-    isHidden: patch.isHidden ?? current.isHidden,
-    occurrences: patch.occurrences ?? current.occurrences,
-  })
+export async function updateDeposit(current: Deposit, patch: UpdateDepositPatch): Promise<Deposit> {
+  return demoGeologyMasterRepository.updateDeposit(current, patch)
 }
 export async function deleteDeposit(current: Deposit): Promise<void> { return demoGeologyMasterRepository.deleteDeposit(current) }
+export async function recordDepositViewed(depositId: string, actor: { id: string; name: string }): Promise<void> { return demoGeologyMasterRepository.recordDepositViewed(depositId, actor) }
 export async function archiveDeposit(current: Deposit): Promise<Deposit> { return demoGeologyMasterRepository.archiveDeposit(current) }
 export async function createSite(input: Pick<GeologicalSite, 'depositId' | 'code' | 'name'>): Promise<GeologicalSite> { return demoGeologyMasterRepository.createSite(input) }
 export async function updateSite(current: GeologicalSite, patch: Pick<GeologicalSite, 'name'>): Promise<GeologicalSite> { return demoGeologyMasterRepository.updateSite(current, patch) }

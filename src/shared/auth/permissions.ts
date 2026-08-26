@@ -7,13 +7,17 @@ export type Permission =
   | 'geology.well-master.edit'
   | 'geology.well-master.review'
   | 'geology.well-master.publish'
+  | 'geology.bgd.create'
+  | 'geology.bgd.update'
+  | 'geology.bgd.delete'
+  | 'geology.bgd.audit'
   | 'technology.view'
   | 'modeling.view'
   | 'analytics.view'
   | 'administration.view'
 
 const rolePermissions: Record<RoleId, Permission[]> = {
-  R1: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'modeling.view', 'analytics.view'],
+  R1: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'geology.bgd.create', 'geology.bgd.update', 'geology.bgd.delete', 'modeling.view', 'analytics.view'],
   R2: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'technology.view'],
   R3: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'modeling.view'],
   R4: ['home.view', 'work.view', 'geology.view', 'modeling.view', 'analytics.view'],
@@ -24,9 +28,9 @@ const rolePermissions: Record<RoleId, Permission[]> = {
   R9: ['home.view', 'work.view', 'technology.view'],
   R10: ['home.view', 'work.view', 'technology.view'],
   R11: ['home.view', 'work.view', 'geology.view', 'technology.view', 'modeling.view', 'analytics.view'],
-  R12: ['home.view', 'work.view', 'geology.view', 'geology.well-master.review', 'geology.well-master.publish', 'technology.view', 'modeling.view', 'analytics.view'],
-  R13: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'geology.well-master.review', 'geology.well-master.publish', 'technology.view', 'modeling.view', 'analytics.view', 'administration.view'],
-  R14: ['home.view', 'work.view', 'geology.view', 'technology.view', 'administration.view'],
+  R12: ['home.view', 'work.view', 'geology.view', 'geology.well-master.review', 'geology.well-master.publish', 'geology.bgd.audit', 'technology.view', 'modeling.view', 'analytics.view'],
+  R13: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'geology.well-master.review', 'geology.well-master.publish', 'geology.bgd.create', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.audit', 'technology.view', 'modeling.view', 'analytics.view', 'administration.view'],
+  R14: ['home.view', 'work.view', 'geology.view', 'geology.bgd.audit', 'technology.view', 'administration.view'],
 }
 
 export function hasPermission(persona: UserPersona | null, permission: Permission) {
@@ -35,4 +39,14 @@ export function hasPermission(persona: UserPersona | null, permission: Permissio
 
 export function getPermissions(persona: UserPersona | null) {
   return new Set(persona?.roles.flatMap((role) => rolePermissions[role]) ?? [])
+}
+
+export function hasDepositPermission(
+  persona: UserPersona | null,
+  permission: Extract<Permission, 'geology.bgd.create' | 'geology.bgd.update' | 'geology.bgd.delete'>,
+  deposit?: { id: string; createdBy: string },
+) {
+  if (!hasPermission(persona, permission)) return false
+  if (!deposit || permission === 'geology.bgd.create' || persona?.roles.includes('R13')) return true
+  return deposit.id === 'DEP-SARYTAU' || deposit.createdBy === persona?.name
 }

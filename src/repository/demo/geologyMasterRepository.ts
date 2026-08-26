@@ -11,30 +11,31 @@ import type {
 import { DemoDatabase, demoDatabase, type DemoRecord } from './demoDatabase'
 
 const seedTimestamp = '2026-08-24T00:00:00.000Z'
+const seedMarkerKey = 'geologyMasterSeeded'
 
 const seed: GeologicalMasterData = {
   deposits: [
     {
-      id: 'DEP-SARYTAU', numericId: 1, code: 'SARYTAU', objectType: 'field', name: 'Сарытау',
-      description: 'Synthetic месторождение для кликабельного прототипа.', crs: 'EPSG:32642',
-      coordinateSystemDescription: 'WGS 84 / UTM zone 42N · демонстрационная система координат', isHidden: false,
+      id: 'DEP-SARYTAU', code: 1, objectType: 'field', nameRu: 'Сарытау', nameKk: 'Сарытау', nameEn: 'Sarytau',
+      descriptionRu: 'Урановое месторождение Сарытау.', descriptionKk: 'Сарытау уран кен орны.', descriptionEn: 'Sarytau uranium deposit.',
+      coordinateSystem: 'WGS 84 / UTM zone 42N (EPSG:32642)', isHidden: false,
       occurrences: [
-        { id: 'OCC-SARYTAU-01', type: 'рудная залежь', name: 'PR-07' },
-        { id: 'OCC-SARYTAU-02', type: 'рудная залежь', name: 'CN-02' },
+        { id: 'OCC-SARYTAU-01', type: 'Рудная залежь', nameRu: 'PR-07', nameKk: 'PR-07', nameEn: 'PR-07' },
+        { id: 'OCC-SARYTAU-02', type: 'Рудная залежь', nameRu: 'CN-02', nameKk: 'CN-02', nameEn: 'CN-02' },
       ],
-      status: 'active', version: 4, createdAt: seedTimestamp, updatedAt: seedTimestamp,
+      status: 'active', version: 4, createdAt: seedTimestamp, createdBy: 'Ирина Иванова', updatedAt: seedTimestamp, updatedBy: 'Ирина Иванова',
     },
     {
-      id: 'DEP-SEVERNOE', numericId: 2, code: 'SEVERNOE', objectType: 'field', name: 'Северное',
-      description: 'Synthetic месторождение без дочерних объектов для демонстрации CRUD.', crs: 'LOCAL:SEVERNOE',
-      coordinateSystemDescription: 'Локальная система координат · условная', isHidden: false, occurrences: [],
-      status: 'active', version: 1, createdAt: seedTimestamp, updatedAt: seedTimestamp,
+      id: 'DEP-SEVERNOE', code: 2, objectType: 'field', nameRu: 'Северное', nameKk: 'Солтүстік', nameEn: 'Severnoye',
+      descriptionRu: 'Месторождение северного производственного контура.', descriptionKk: 'Солтүстік өндірістік контурдың кен орны.', descriptionEn: 'Deposit of the northern production area.',
+      coordinateSystem: 'Локальная система координат Северного участка', isHidden: false, occurrences: [],
+      status: 'active', version: 1, createdAt: seedTimestamp, createdBy: 'Ирина Иванова', updatedAt: seedTimestamp, updatedBy: 'Ирина Иванова',
     },
     {
-      id: 'DEP-VOSTOCHNAYA', numericId: 4, code: 'VOSTOCHNAYA', objectType: 'area', name: 'Восточная',
-      description: 'Скрытая synthetic площадь для проверки фильтра видимости.', crs: 'EPSG:32642',
-      coordinateSystemDescription: '', isHidden: true, occurrences: [], status: 'active', version: 1,
-      createdAt: seedTimestamp, updatedAt: seedTimestamp,
+      id: 'DEP-VOSTOCHNAYA', code: 4, objectType: 'area', nameRu: 'Восточная', nameKk: 'Шығыс', nameEn: 'Vostochnaya',
+      descriptionRu: 'Восточная геологоразведочная площадь.', descriptionKk: 'Шығыс геологиялық барлау алаңы.', descriptionEn: 'Eastern exploration area.',
+      coordinateSystem: 'WGS 84 / UTM zone 42N (EPSG:32642)', isHidden: true, occurrences: [], status: 'active', version: 1,
+      createdAt: seedTimestamp, createdBy: 'Ирина Иванова', updatedAt: seedTimestamp, updatedBy: 'Ирина Иванова',
     },
   ],
   sites: [
@@ -64,43 +65,64 @@ function record<T>(kind: MasterKind, value: T & { id: string }, status = 'active
   }
 }
 
-function normalizeOccurrence(value: Partial<DepositOccurrence>, code: string, index: number): DepositOccurrence {
+type LegacyOccurrence = Partial<DepositOccurrence> & { name?: string }
+type LegacyDeposit = Partial<Deposit> & {
+  numericId?: number
+  code?: number | string
+  name?: string
+  description?: string
+  crs?: string
+  coordinateSystemDescription?: string
+}
+
+function normalizeOccurrence(value: LegacyOccurrence, code: number, index: number): DepositOccurrence {
+  const fallbackName = String(value.name ?? '').trim()
   return {
     id: value.id || `OCC-${code}-${String(index + 1).padStart(2, '0')}`,
     type: String(value.type ?? '').trim(),
-    name: String(value.name ?? '').trim(),
+    nameRu: String(value.nameRu ?? fallbackName).trim(),
+    nameKk: String(value.nameKk ?? fallbackName).trim(),
+    nameEn: String(value.nameEn ?? fallbackName).trim(),
   }
 }
 
-function normalizeDeposit(value: Partial<Deposit>, fallbackNumericId: number): Deposit {
-  const code = String(value.code ?? `FIELD-${fallbackNumericId}`).trim().toUpperCase()
+function normalizeDeposit(value: LegacyDeposit, fallbackCode: number): Deposit {
+  const legacyCode = typeof value.code === 'number' ? value.code : Number(value.numericId)
+  const code = Number.isInteger(legacyCode) && legacyCode > 0 ? legacyCode : fallbackCode
+  const legacyName = String(value.name ?? '').trim()
+  const legacyDescription = String(value.description ?? '').trim()
   return {
     id: value.id ?? `DEP-${code}`,
-    numericId: Number.isInteger(value.numericId) && Number(value.numericId) > 0 ? Number(value.numericId) : fallbackNumericId,
     code,
     objectType: value.objectType ?? 'field',
     customType: value.customType?.trim() || undefined,
-    name: String(value.name ?? code).trim(),
-    description: String(value.description ?? '').trim(),
-    crs: String(value.crs ?? 'EPSG:32642').trim(),
-    coordinateSystemDescription: String(value.coordinateSystemDescription ?? value.crs ?? '').trim(),
+    nameRu: String(value.nameRu ?? (legacyName || `Месторождение ${code}`)).trim(),
+    nameKk: String(value.nameKk ?? (legacyName || `Кен орны ${code}`)).trim(),
+    nameEn: String(value.nameEn ?? (legacyName || `Deposit ${code}`)).trim(),
+    descriptionRu: String(value.descriptionRu ?? legacyDescription).trim(),
+    descriptionKk: String(value.descriptionKk ?? legacyDescription).trim(),
+    descriptionEn: String(value.descriptionEn ?? legacyDescription).trim(),
+    coordinateSystem: String(value.coordinateSystem ?? value.coordinateSystemDescription ?? value.crs ?? '').trim(),
     isHidden: Boolean(value.isHidden),
     occurrences: (value.occurrences ?? []).map((item, index) => normalizeOccurrence(item, code, index)),
     status: value.status ?? 'active',
     version: Number(value.version ?? 1),
     createdAt: value.createdAt ?? seedTimestamp,
+    createdBy: value.createdBy ?? 'Ирина Иванова',
     updatedAt: value.updatedAt ?? seedTimestamp,
+    updatedBy: value.updatedBy ?? value.createdBy ?? 'Ирина Иванова',
   }
 }
 
-function validateDepositValues(value: Pick<Deposit, 'name' | 'objectType' | 'customType' | 'crs' | 'occurrences'>): void {
-  if (value.name.trim().length < 2) throw new Error('Название месторождения должно содержать минимум 2 символа.')
-  if (!value.crs.trim()) throw new Error('Укажите код или наименование системы координат.')
+function validateDepositValues(value: Pick<Deposit, 'nameRu' | 'nameKk' | 'nameEn' | 'objectType' | 'customType' | 'occurrences'>): void {
+  if (!value.nameRu.trim()) throw new Error('Укажите название месторождения на русском языке.')
+  if (!value.nameKk.trim()) throw new Error('Укажите название месторождения на казахском языке.')
+  if (!value.nameEn.trim()) throw new Error('Укажите название месторождения на английском языке.')
   if (value.objectType === 'custom' && !value.customType?.trim()) throw new Error('Для пользовательского типа укажите его наименование.')
   const keys = new Set<string>()
   for (const occurrence of value.occurrences) {
-    if (!occurrence.type.trim() || !occurrence.name.trim()) throw new Error('Для каждой залежи укажите тип и название.')
-    const key = `${occurrence.type.trim().toLocaleLowerCase('ru')}::${occurrence.name.trim().toLocaleLowerCase('ru')}`
+    if (!occurrence.type.trim() || !occurrence.nameRu.trim() || !occurrence.nameKk.trim() || !occurrence.nameEn.trim()) throw new Error('Для каждой залежи укажите тип и названия на трёх языках.')
+    const key = `${occurrence.type.trim().toLocaleLowerCase('ru')}::${occurrence.nameRu.trim().toLocaleLowerCase('ru')}`
     if (keys.has(key)) throw new Error('Список залежей содержит дубликат типа и названия.')
     keys.add(key)
   }
@@ -111,14 +133,32 @@ export class DemoGeologyMasterRepository {
 
   async getMasterData(): Promise<GeologicalMasterData> {
     const records = await this.database.getAll<DemoRecord<unknown>>('records')
-    const rawDeposits = records.filter((item) => item.entityType === 'deposit').map((item) => item.data as Partial<Deposit>)
+    const depositRecords = records.filter((item) => item.entityType === 'deposit')
+    const rawDeposits = depositRecords.map((item) => item.data as LegacyDeposit)
     if (rawDeposits.length === 0) {
-      await this.seed()
-      return this.getMasterData()
+      const marker = await this.database.get<{ key: string; value: boolean }>('meta', seedMarkerKey)
+      if (!marker?.value) {
+        await this.seed()
+        return this.getMasterData()
+      }
+      return {
+        deposits: [],
+        sites: records.filter((item) => item.entityType === 'site').map((item) => structuredClone(item.data as GeologicalSite)),
+        lenses: records.filter((item) => item.entityType === 'lens').map((item) => structuredClone(item.data as GeologicalLens)),
+        conditionSets: records.filter((item) => item.entityType === 'condition-set').map((item) => structuredClone(item.data as ConditionSet)),
+      }
     }
     const deposits = rawDeposits
-      .map((item, index) => normalizeDeposit(item, item.code === 'SARYTAU' ? 1 : index + 1))
-      .sort((left, right) => left.numericId - right.numericId || left.name.localeCompare(right.name, 'ru'))
+      .map((item, index) => normalizeDeposit(item, item.id === 'DEP-SARYTAU' ? 1 : index + 1))
+      .sort((left, right) => left.nameRu.localeCompare(right.nameRu, 'ru') || left.code - right.code)
+    const needsMigration = rawDeposits.some((item) => typeof item.code !== 'number' || !item.nameRu || !item.nameKk || !item.nameEn)
+    const marker = await this.database.get<{ key: string; value: boolean }>('meta', seedMarkerKey)
+    if (needsMigration || !marker?.value) {
+      await this.database.transaction(['records', 'meta'], async (transaction) => {
+        for (const deposit of deposits) await transaction.put('records', record('deposit', deposit, deposit.status))
+        await transaction.put('meta', { key: seedMarkerKey, value: true })
+      })
+    }
     return {
       deposits: deposits.map((item) => structuredClone(item)),
       sites: records.filter((item) => item.entityType === 'site').map((item) => structuredClone(item.data as GeologicalSite)),
@@ -129,36 +169,37 @@ export class DemoGeologyMasterRepository {
 
   async createDeposit(input: CreateDepositInput): Promise<Deposit> {
     const data = await this.getMasterData()
-    const code = input.code.trim().toUpperCase()
-    if (!/^[A-Z0-9-]{3,24}$/.test(code)) throw new Error('Код месторождения: 3–24 символа A–Z, цифры или дефис.')
-    if (data.deposits.some((item) => item.code === code)) throw new Error('Месторождение с таким неизменяемым кодом уже существует.')
-    const numericId = input.numericId ?? Math.max(0, ...data.deposits.map((item) => item.numericId)) + 1
-    if (!Number.isInteger(numericId) || numericId <= 0) throw new Error('Числовой ID должен быть целым положительным числом.')
-    if (data.deposits.some((item) => item.numericId === numericId)) throw new Error('Месторождение с таким числовым ID уже существует.')
+    const code = Number(input.code)
+    if (!Number.isInteger(code) || code <= 0) throw new Error('Код месторождения должен быть целым положительным числом.')
+    if (data.deposits.some((item) => item.code === code)) throw new Error('Месторождение с таким кодом уже существует.')
     const now = new Date().toISOString()
     const occurrences = (input.occurrences ?? []).map((item, index) => normalizeOccurrence(item, code, index))
     const deposit: Deposit = {
       id: `DEP-${code}`,
-      numericId,
       code,
       objectType: input.objectType ?? 'field',
       customType: input.customType?.trim() || undefined,
-      name: input.name.trim(),
-      description: input.description.trim(),
-      crs: input.crs.trim(),
-      coordinateSystemDescription: input.coordinateSystemDescription?.trim() ?? '',
+      nameRu: input.nameRu.trim(),
+      nameKk: input.nameKk.trim(),
+      nameEn: input.nameEn.trim(),
+      descriptionRu: input.descriptionRu?.trim() ?? '',
+      descriptionKk: input.descriptionKk?.trim() ?? '',
+      descriptionEn: input.descriptionEn?.trim() ?? '',
+      coordinateSystem: input.coordinateSystem?.trim() ?? '',
       isHidden: input.isHidden ?? false,
       occurrences,
       status: 'active',
       version: 1,
       createdAt: now,
+      createdBy: 'Ирина Иванова',
       updatedAt: now,
+      updatedBy: 'Ирина Иванова',
     }
     validateDepositValues(deposit)
     await this.database.transaction(['records', 'versions', 'auditEvents'], async (transaction) => {
       await transaction.put('records', record('deposit', deposit, deposit.status))
       await transaction.put('versions', { id: `VERSION:deposit:${deposit.id}:1`, objectId: deposit.id, version: 1, status: 'draft', createdAt: now, data: deposit })
-      await transaction.put('auditEvents', this.audit('deposit.created', deposit.id, 'Создано synthetic месторождение в БГД.'))
+      await transaction.put('auditEvents', this.audit('deposit.created', deposit.id, 'Создано месторождение в БГД.'))
     })
     return structuredClone(deposit)
   }
@@ -172,13 +213,17 @@ export class DemoGeologyMasterRepository {
       ...latest,
       ...patch,
       customType: patch.objectType === 'custom' ? patch.customType?.trim() : undefined,
-      name: patch.name.trim(),
-      description: patch.description.trim(),
-      crs: patch.crs.trim(),
-      coordinateSystemDescription: patch.coordinateSystemDescription.trim(),
+      nameRu: patch.nameRu.trim(),
+      nameKk: patch.nameKk.trim(),
+      nameEn: patch.nameEn.trim(),
+      descriptionRu: patch.descriptionRu.trim(),
+      descriptionKk: patch.descriptionKk.trim(),
+      descriptionEn: patch.descriptionEn.trim(),
+      coordinateSystem: patch.coordinateSystem.trim(),
       occurrences,
       version: latest.version + 1,
       updatedAt: new Date().toISOString(),
+      updatedBy: 'Ирина Иванова',
     }
     validateDepositValues(next)
     await this.persistVersion('deposit', next, 'in_review', 'deposit.updated', 'Изменены сведения месторождения в БГД.')
@@ -193,15 +238,26 @@ export class DemoGeologyMasterRepository {
     const siteIds = new Set(sites.map((site) => site.id))
     const lenses = data.lenses.filter((lens) => siteIds.has(lens.siteId))
     const conditions = data.conditionSets.filter((condition) => siteIds.has(condition.siteId))
-    if (sites.length || lenses.length || conditions.length) {
-      throw new Error(`DEPENDENCY_WARNING: удаление отменено. Связанные данные: участки — ${sites.length}, залежи — ${lenses.length}, наборы кондиций — ${conditions.length}. Используйте «Скрыть» или сначала перенесите дочерние объекты.`)
+    if (sites.length || lenses.length || conditions.length || latest.occurrences.length) {
+      throw new Error(`DEPENDENCY_WARNING: удаление отменено. Связанные данные: участки — ${sites.length}, залежи — ${lenses.length + latest.occurrences.length}, наборы кондиций — ${conditions.length}. Используйте «Скрыть» или сначала перенесите дочерние объекты.`)
     }
     await this.database.transaction(['records', 'versions', 'auditEvents'], async (transaction) => {
       const versions = await transaction.getAll<StoredVersion>('versions')
       for (const version of versions.filter((item) => item.objectId === latest.id)) await transaction.delete('versions', version.id)
       await transaction.delete('records', `deposit:${latest.id}`)
-      await transaction.put('auditEvents', this.audit('deposit.deleted', latest.id, 'Synthetic месторождение удалено из БГД после проверки зависимостей.'))
+      await transaction.put('auditEvents', this.audit('deposit.deleted', latest.id, 'Месторождение удалено из БГД после проверки зависимостей.'))
     })
+  }
+
+  async recordDepositViewed(depositId: string, actor: { id: string; name: string }): Promise<void> {
+    await this.requireDeposit(depositId)
+    const recent = await this.database.getAll<{ eventType: string; entityId: string; actor: { id: string }; occurredAt: string }>('auditEvents')
+    const alreadyRecorded = recent.some((event) => event.eventType === 'deposit.viewed'
+      && event.entityId === depositId
+      && event.actor.id === actor.id
+      && Date.now() - new Date(event.occurredAt).getTime() < 60_000)
+    if (alreadyRecorded) return
+    await this.database.put('auditEvents', this.audit('deposit.viewed', depositId, 'Открыта карточка месторождения.', actor))
   }
 
   async archiveDeposit(current: Deposit): Promise<Deposit> {
@@ -221,7 +277,7 @@ export class DemoGeologyMasterRepository {
     if (!data.deposits.some((item) => item.id === input.depositId)) throw new Error('Сначала выберите существующее месторождение.')
     if (data.sites.some((item) => item.depositId === input.depositId && item.code === code)) throw new Error('Участок с таким immutable code уже существует в месторождении.')
     const site: GeologicalSite = { id: `SITE-${code}`, depositId: input.depositId, code, name: input.name.trim(), status: 'active', version: 1 }
-    await this.persistHierarchy('site', site, 'site.created', 'Создан synthetic участок.')
+    await this.persistHierarchy('site', site, 'site.created', 'Создан участок месторождения.')
     return structuredClone(site)
   }
 
@@ -250,7 +306,7 @@ export class DemoGeologyMasterRepository {
     if (!data.sites.some((item) => item.id === input.siteId && item.status === 'active')) throw new Error('Выберите активный участок для залежи.')
     if (data.lenses.some((item) => item.siteId === input.siteId && item.code === code)) throw new Error('Залежь с таким immutable code уже существует на участке.')
     const lens: GeologicalLens = { id: `LENS-${code}`, siteId: input.siteId, code, name: input.name.trim(), status: 'active', version: 1 }
-    await this.persistHierarchy('lens', lens, 'lens.created', 'Создана synthetic залежь.')
+    await this.persistHierarchy('lens', lens, 'lens.created', 'Создана залежь участка.')
     return structuredClone(lens)
   }
 
@@ -276,7 +332,7 @@ export class DemoGeologyMasterRepository {
     if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: набор кондиций изменён в другой вкладке.')
     if (latest.status === 'published') throw new Error('PUBLISHED_IMMUTABLE: создайте новую версию кондиций вместо изменения опубликованной.')
     const next: ConditionSet = { ...latest, ...patch, version: latest.version + 1, status: 'draft' }
-    await this.persistVersion('condition-set', next, 'draft', 'conditions.saved', 'Сохранён новый synthetic черновик кондиций.')
+    await this.persistVersion('condition-set', next, 'draft', 'conditions.saved', 'Сохранён новый черновик кондиций.')
     return structuredClone(next)
   }
 
@@ -291,7 +347,7 @@ export class DemoGeologyMasterRepository {
     if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: набор кондиций изменён в другой вкладке.')
     if (latest.status !== 'draft') throw new Error('Утвердить можно только черновик кондиций.')
     const next: ConditionSet = { ...latest, version: latest.version + 1, status: 'approved' }
-    await this.persistVersion('condition-set', next, 'approved', 'conditions.approved', 'Кондиции утверждены в synthetic workflow.')
+    await this.persistVersion('condition-set', next, 'approved', 'conditions.approved', 'Кондиции утверждены.')
     return structuredClone(next)
   }
 
@@ -300,12 +356,12 @@ export class DemoGeologyMasterRepository {
     if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: набор кондиций изменён в другой вкладке.')
     if (latest.status !== 'approved') throw new Error('Опубликовать можно только утверждённый набор кондиций.')
     const next: ConditionSet = { ...latest, version: latest.version + 1, status: 'published' }
-    await this.persistVersion('condition-set', next, 'published', 'conditions.published', 'Кондиции опубликованы для synthetic сценария.')
+    await this.persistVersion('condition-set', next, 'published', 'conditions.published', 'Кондиции опубликованы.')
     return structuredClone(next)
   }
 
   private async seed(): Promise<void> {
-    await this.database.transaction(['records', 'versions'], async (transaction) => {
+    await this.database.transaction(['records', 'versions', 'meta'], async (transaction) => {
       for (const deposit of seed.deposits) {
         await transaction.put('records', record('deposit', deposit, deposit.status))
         await transaction.put('versions', { id: `VERSION:deposit:${deposit.id}:${deposit.version}`, objectId: deposit.id, version: deposit.version, status: 'published', createdAt: seedTimestamp, data: deposit })
@@ -316,6 +372,7 @@ export class DemoGeologyMasterRepository {
         await transaction.put('records', record('condition-set', condition, condition.status))
         await transaction.put('versions', { id: `VERSION:condition-set:${condition.id}:${condition.version}`, objectId: condition.id, version: condition.version, status: condition.status, createdAt: seedTimestamp, data: condition })
       }
+      await transaction.put('meta', { key: seedMarkerKey, value: true })
     })
   }
 
@@ -348,7 +405,7 @@ export class DemoGeologyMasterRepository {
   }
 
   private async requireDeposit(id: string): Promise<Deposit> {
-    const stored = await this.database.get<DemoRecord<Partial<Deposit>>>('records', `deposit:${id}`)
+    const stored = await this.database.get<DemoRecord<LegacyDeposit>>('records', `deposit:${id}`)
     if (!stored) throw new Error('Месторождение не найдено.')
     return normalizeDeposit(stored.data, 1)
   }
@@ -359,9 +416,9 @@ export class DemoGeologyMasterRepository {
     return stored.data
   }
 
-  private audit(action: string, entityId: string, reason: string) {
+  private audit(action: string, entityId: string, reason: string, actor = { id: 'PERSON-R1-GEOLOGIST', name: 'Ирина Иванова' }) {
     const occurredAt = new Date().toISOString()
-    return { id: `AUD-${action}-${entityId}-${occurredAt}`, eventType: action, entityType: 'other', entityId, actor: { id: 'PERSON-R1-GEOLOGIST', type: 'user', name: 'Айгерим Садыкова · synthetic' }, occurredAt, status: 'accepted', payload: { metadata: { reason } } }
+    return { id: `AUD-${action}-${entityId}-${occurredAt}`, eventType: action, entityType: 'other', entityId, actor: { ...actor, type: 'user' }, occurredAt, status: 'accepted', payload: { metadata: { reason } } }
   }
 }
 
