@@ -11,5 +11,7 @@ export function GeoBaseDepositPage() {
   return <GeologyDatabaseDeposit
     depositId={depositId}
     onBack={(replace) => void navigate({ to: '/geology/bgd', search, replace })}
+    onCreateWell={() => void navigate({ to: '/geology/bgd/$depositId/wells/new', params: { depositId } })}
+    onOpenWell={(wellId) => void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId } })}
   />
 }

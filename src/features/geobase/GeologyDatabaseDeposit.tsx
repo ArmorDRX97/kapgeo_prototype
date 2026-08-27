@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, CheckCircle2, CircleAlert, Database, History, Languages, MapPinned, RefreshCw, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, CircleAlert, Database, History, Languages, MapPinned, Plus, RadioTower, RefreshCw, ShieldCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getOccurrenceName, type Deposit, type UpdateDepositPatch } from '../../entities/geology-master/model/types'
 import { useSession } from '../../entities/session/model/sessionContext'
@@ -8,6 +8,7 @@ import {
   fetchDemoAuditEvents,
   fetchGeologicalMasterData,
   fetchPlatformPreferences,
+  fetchWells,
   recordDepositViewed,
   savePlatformPreferences,
   updateDeposit,
@@ -20,15 +21,18 @@ import { Panel } from '../../shared/ui/Panel'
 import { DeleteDepositDialog, DepositEditor, type DepositDependencies } from './GeologyDatabaseRegistry'
 import './geobase.css'
 
-export function GeologyDatabaseDeposit({ depositId, onBack }: {
+export function GeologyDatabaseDeposit({ depositId, onBack, onCreateWell, onOpenWell }: {
   depositId: string
   onBack: (replace?: boolean) => void
+  onCreateWell: () => void
+  onOpenWell: (wellId: string) => void
 }) {
   const { persona } = useSession()
   const queryClient = useQueryClient()
   const masterQuery = useQuery({ queryKey: ['geology-master'], queryFn: fetchGeologicalMasterData })
   const preferencesQuery = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences })
   const auditQuery = useQuery({ queryKey: ['demo-audit-events'], queryFn: fetchDemoAuditEvents, enabled: hasPermission(persona, 'geology.bgd.audit') })
+  const wellsQuery = useQuery({ queryKey: ['wells'], queryFn: fetchWells })
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -108,6 +112,7 @@ export function GeologyDatabaseDeposit({ depositId, onBack }: {
   }
   const isCurrent = preferencesQuery.data?.currentDepositId === deposit.id
   const auditEvents = (auditQuery.data ?? []).filter((event) => event.entityId === deposit.id).slice(0, 8)
+  const depositWells = (wellsQuery.data ?? []).filter((well) => (well.bgd?.depositId ?? 'DEP-SARYTAU') === deposit.id)
   const versionConflict = currentError?.message.includes('VERSION_CONFLICT')
 
   return <div className="page-stack geobase-page" data-geology-tour="bgd-detail">
@@ -141,6 +146,10 @@ export function GeologyDatabaseDeposit({ depositId, onBack }: {
         <section><h3>Участки <Badge>{sites.length}</Badge></h3>{sites.length ? sites.map((site) => <article key={site.id}><span><strong>{site.name}</strong><small>{site.code} · версия {site.version}</small></span><Badge tone={site.status === 'active' ? 'success' : 'neutral'}>{site.status === 'active' ? 'Активен' : 'Архив'}</Badge></article>) : <p>Участки ещё не добавлены.</p>}</section>
         <section><h3>Залежи <Badge>{deposit.occurrences.length + lenses.length}</Badge></h3>{deposit.occurrences.map((occurrence) => <article key={occurrence.id}><span><strong>{getOccurrenceName(occurrence)}</strong><small>{occurrence.nameKk} · {occurrence.nameEn}</small></span><Badge>{occurrence.type}</Badge></article>)}{lenses.map((lens) => <article key={lens.id}><span><strong>{lens.name}</strong><small>{lens.code} · участок {data.sites.find((site) => site.id === lens.siteId)?.name ?? '—'}</small></span><Badge tone={lens.status === 'active' ? 'success' : 'neutral'}>{lens.status === 'active' ? 'Активна' : 'Архив'}</Badge></article>)}{!deposit.occurrences.length && !lenses.length && <p>Залежи ещё не добавлены.</p>}</section>
       </div>
+    </Panel>
+
+    <Panel className="geobase-wells" title="Скважины" description="Скважины создаются и ведутся в контексте текущего месторождения." action={hasPermission(persona, 'geology.bgd.well.create') ? <Button size="sm" onClick={onCreateWell}><Plus size={15} /> Создать скважину</Button> : undefined}>
+      {wellsQuery.isLoading ? <div className="skeleton skeleton--list" /> : depositWells.length ? <div className="geobase-well-list">{depositWells.map((well) => <button type="button" key={well.id} onClick={() => onOpenWell(well.id)}><RadioTower size={18} /><span><strong>Скважина {well.code}</strong><small>{well.type} · {well.profile} · глубина {well.depth.toLocaleString('ru-RU')} м</small></span><Badge tone={well.status === 'Работает' ? 'success' : well.status === 'Отключена' ? 'neutral' : 'warning'} dot>{well.status}</Badge></button>)}</div> : <div className="geobase-empty"><RadioTower size={22} /><strong>Скважин пока нет</strong><span>Создайте первую скважину, чтобы продолжить наполнение месторождения.</span></div>}
     </Panel>
 
     <DepositEditor

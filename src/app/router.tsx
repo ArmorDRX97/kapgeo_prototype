@@ -10,6 +10,7 @@ import { SignInPage } from '../pages/auth/SignInPage'
 import { GeologyOverviewPage } from '../pages/geology/GeologyOverviewPage'
 import { GeoBasePage } from '../pages/geology/GeoBasePage'
 import { GeoBaseDepositPage } from '../pages/geology/GeoBaseDepositPage'
+import { BgdNewWellPage, BgdWellPage } from '../pages/geology/BgdWellPage'
 import { GeologyMasterPage } from '../pages/geology/GeologyMasterPage'
 import { GeologyMethodologyPage } from '../pages/geology/GeologyMethodologyPage'
 import { GeologyMapPage } from '../pages/geology/GeologyMapPage'
@@ -57,6 +58,8 @@ const workflowCenterRoute = createRoute({ getParentRoute: () => rootRoute, path:
 const geologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology', component: GeologyOverviewPage })
 const geoBaseRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd', validateSearch: validateBgdSearch, component: GeoBasePage })
 const geoBaseDepositRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId', validateSearch: validateBgdSearch, component: GeoBaseDepositPage })
+const bgdNewWellRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId/wells/new', component: BgdNewWellPage })
+const bgdWellRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId/wells/$wellId', component: BgdWellPage })
 const geologyMasterRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/master', component: GeologyMasterPage })
 const geologyMethodologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/methodology', component: GeologyMethodologyPage })
 const geologyMapRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/map', validateSearch: validateWellSearch, component: GeologyMapPage })
@@ -109,6 +112,8 @@ const routeTree = rootRoute.addChildren([
   geologyRoute,
   geoBaseRoute,
   geoBaseDepositRoute,
+  bgdNewWellRoute,
+  bgdWellRoute,
   geologyMasterRoute,
   geologyMethodologyRoute,
   geologyMapRoute,

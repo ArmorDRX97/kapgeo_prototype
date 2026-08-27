@@ -1,7 +1,99 @@
-import type { Well } from '../../entities/well/model/types'
+import type { Well, WellBgdData } from '../../entities/well/model/types'
+
+export const fullWellBgdData: WellBgdData = {
+  name: 1010,
+  depositId: 'DEP-SARYTAU',
+  lensId: 'LENS-PR07',
+  profileId: 'PR-07',
+  geoBlockId: 'BLK-07-12',
+  techBlockId: 'TC-07-12',
+  statusChangedAt: '2026-08-10T10:15',
+  statusHistory: [
+    { status: 'На проверке', changedAt: '2026-06-10T08:30' },
+    { status: 'Требует внимания', changedAt: '2026-07-01T14:20' },
+    { status: 'Работает', changedAt: '2026-08-10T10:15' },
+  ],
+  descriptionRu: 'Разведочная скважина профиля PR-07, полностью документированная по результатам бурения, каротажа, освоения и геологического описания.',
+  descriptionKk: 'PR-07 профиліндегі барлау ұңғымасы. Бұрғылау, каротаж, игеру және геологиялық сипаттама нәтижелері толық құжатталған.',
+  descriptionEn: 'Exploration well on profile PR-07, fully documented with drilling, logging, development and geological results.',
+  note: 'Эталонная полностью заполненная карточка для проверки всех разделов БГД.',
+  geometry: {
+    headX: 468146.8,
+    headY: 4812856.4,
+    headZ: 153.5,
+    bottomX: 468158.321,
+    bottomY: 4812872.852,
+    bottomZ: -458.532,
+    acceptedDepth: 612.4,
+    bottomOffsetLength: 20.1,
+    bottomOffsetAzimuth: 55,
+  },
+  passport: {
+    date: '2026-08-10T10:00',
+    author: 'Ирина Иванова',
+    chiefGeologist: 'Марина Ли',
+    chiefGeophysicist: 'Аскар Аскаров',
+    drillingManager: 'Садык Нурланов',
+    samplingPerformer: 'Ирина Иванова',
+    interpretationPerformer: 'Аскар Аскаров',
+    surveyor: 'Марина Ли',
+  },
+  drilling: {
+    startedAt: '2026-06-10T08:30',
+    completedAt: '2026-06-24T18:00',
+    drillingType: 'Колонковое',
+    foreman: 'Садык Нурланов',
+    rigType: 'ЗИФ-1200',
+    rigNumber: 6,
+    company: 'АО «Волковгеология»',
+    brigade: 'Бригада 2',
+    designDepth: 610,
+    drillLogDepth: 612.4,
+    loggingDepth: 611.8,
+    intervals: [
+      { id: 'DRILL-1010-01', drillingDiameter: 295, depthFrom: 0, depthTo: 82, drillingTool: 'Трёхшарошечное долото', flushingAgent: 'Техническая вода' },
+      { id: 'DRILL-1010-02', drillingDiameter: 215, depthFrom: 82, depthTo: 430, drillingTool: 'Алмазная коронка', flushingAgent: 'Полимерно-глинистый' },
+      { id: 'DRILL-1010-03', drillingDiameter: 168, depthFrom: 430, depthTo: 612.4, drillingTool: 'PDC-долото', flushingAgent: 'Сульфанол' },
+    ],
+  },
+  development: {
+    flowRate: 18.4,
+    specificFlowRate: 2.7,
+    works: [
+      {
+        id: 'WORK-1010-01', workType: 'Эрлифтная прокачка', startedAt: '2026-06-25T08:00', completedAt: '2026-06-26T18:00', method: 'Эрлифт',
+        descriptionRu: 'Прокачка до устойчивого осветления воды и стабилизации дебита.',
+        descriptionKk: 'Су толық тазарғанға және дебит тұрақтанғанға дейін эрлифттік айдау орындалды.',
+        descriptionEn: 'Airlift pumping continued until the water cleared and the flow rate stabilized.',
+      },
+      {
+        id: 'WORK-1010-02', workType: 'Пневмоимпульсная обработка', startedAt: '2026-06-27T09:00', completedAt: '2026-06-27T16:30', method: 'Комбинированный',
+        descriptionRu: 'Выполнена обработка фильтрового интервала с контрольным замером приёмистости.',
+        descriptionKk: 'Сүзгі аралығы өңделіп, қабылдағыштықтың бақылау өлшемі жүргізілді.',
+        descriptionEn: 'The screen interval was treated and followed by an injectivity control measurement.',
+      },
+      {
+        id: 'WORK-1010-03', workType: 'Химреагентная обработка', startedAt: '2026-06-28T10:00', completedAt: '2026-06-29T15:00', method: 'Прокачка',
+        descriptionRu: 'Удалены остаточные кольматирующие отложения, выполнена финальная прокачка.',
+        descriptionKk: 'Қалдық колматант шөгінділері жойылып, соңғы айдау орындалды.',
+        descriptionEn: 'Residual clogging deposits were removed and final pumping was completed.',
+      },
+    ],
+  },
+  geology: {
+    permafrostDepth: 120,
+    groundwaterLevel: 76.5,
+    complications: 'Суффозия в интервале 312–318 м; локальная трещиноватость 438–446 м. Осложнения учтены в конструкции и режиме освоения.',
+    impermeableIntervals: [
+      { id: 'IMP-1010-01', depthFrom: 50, depthTo: 67 },
+      { id: 'IMP-1010-02', depthFrom: 80, depthTo: 105 },
+      { id: 'IMP-1010-03', depthFrom: 340, depthTo: 352 },
+    ],
+  },
+}
 
 const wellSeed: Well[] = [
-  { id: 'WELL-1010-FULL', code: 'WELL-1010', type: 'Разведочная', purpose: 'Разведочная', profile: 'PR-07', crs: 'EPSG:32642', casingDiameter: 168, status: 'Работает', quality: 'Высокое', site: 'Северный', block: 'BLK-07-12', cell: 'TC-07-12-03', depth: 612.4, coordinates: { x: 468_146.8, y: 4_812_856.4 }, mapPosition: { x: 41, y: 42 }, updatedAt: 'Сегодня, 10:15', completeness: 100, activeTask: 'Все обязательные данные заполнены', aiConflicts: 0, version: 12 },
+  { id: 'WELL-1010-FULL', code: 'WELL-1010', type: 'Разведочная', purpose: 'Разведочная', profile: 'PR-07', crs: 'EPSG:32642', casingDiameter: 168, status: 'Работает', quality: 'Высокое', site: 'Северный', block: 'BLK-07-12', cell: 'TC-07-12-03', depth: 612.4, coordinates: { x: 468_146.8, y: 4_812_856.4 }, mapPosition: { x: 41, y: 42 }, updatedAt: 'Сегодня, 10:15', completeness: 100, activeTask: 'Все обязательные данные заполнены', aiConflicts: 0, version: 12, bgd: fullWellBgdData },
   { id: 'WELL-1042', code: 'WELL-1042', type: 'Откачная', purpose: 'Эксплуатационная', profile: 'PR-07', crs: 'EPSG:32642', casingDiameter: 168, status: 'Требует внимания', quality: 'Среднее', site: 'Северный', block: 'BLK-07-12', cell: 'TC-07-12-04', depth: 612.4, coordinates: { x: 468_214.3, y: 4_812_905.8 }, mapPosition: { x: 46, y: 38 }, updatedAt: 'Сегодня, 09:42', completeness: 94, activeTask: 'Разрешить расхождение интерпретации', aiConflicts: 1 },
   { id: 'WELL-1038', code: 'WELL-1038', type: 'Закачная', purpose: 'Эксплуатационная', profile: 'PR-07', crs: 'EPSG:32642', casingDiameter: 168, status: 'Работает', quality: 'Высокое', site: 'Северный', block: 'BLK-07-12', cell: 'TC-07-12-04', depth: 598.1, coordinates: { x: 468_089.7, y: 4_812_814.2 }, mapPosition: { x: 35, y: 47 }, updatedAt: 'Сегодня, 09:31', completeness: 100, aiConflicts: 0 },
   { id: 'WELL-1046', code: 'WELL-1046', type: 'Наблюдательная', purpose: 'Наблюдательная', profile: 'PR-07', crs: 'EPSG:32642', casingDiameter: 146, status: 'На проверке', quality: 'Высокое', site: 'Северный', block: 'BLK-07-12', cell: 'TC-07-12-05', depth: 624.9, coordinates: { x: 468_332.1, y: 4_812_998.4 }, mapPosition: { x: 57, y: 30 }, updatedAt: 'Вчера, 18:05', completeness: 87, activeTask: 'Проверить новый набор ГИС', aiConflicts: 0 },

@@ -1,4 +1,4 @@
-import type { CreateWellInput, LabResult, Sample, Well, WellGeologyData, WellTechnicalData } from '../entities/well/model/types'
+import type { CreateWellInput, LabResult, Sample, UpdateWellInput, Well, WellGeologyData, WellTechnicalData } from '../entities/well/model/types'
 import type { SaveWellPassportCommand } from './contracts/geology'
 import { demoWellPassportRepository } from './demo/wellPassportRepository'
 import { demoWellDataRepository } from './demo/wellDataRepository'
@@ -52,21 +52,30 @@ export async function fetchWell(wellId: string) {
 
 export async function createWell(input: CreateWellInput): Promise<Well> {
   await wait(420)
-  const location = createPoint([input.coordinates.x, input.coordinates.y], crsFromLegacy(input.crs))
-  const geometryError = validateGeometry(location).find((issue) => issue.severity === 'error')
-  if (geometryError) throw new Error(`Координаты устья не прошли проверку: ${geometryError.message}`)
+  const hasCoordinates = input.bgd
+    ? input.bgd.geometry.headX !== null && input.bgd.geometry.headY !== null
+    : true
+  if (hasCoordinates) {
+    const location = createPoint([input.coordinates.x, input.coordinates.y], crsFromLegacy(input.crs))
+    const geometryError = validateGeometry(location).find((issue) => issue.severity === 'error')
+    if (geometryError) throw new Error(`Координаты устья не прошли проверку: ${geometryError.message}`)
+  }
 
   const existingWells = await demoWellDataRepository.listWells()
-  const nearDuplicate = existingWells.find((item) => Math.hypot(item.coordinates.x - input.coordinates.x, item.coordinates.y - input.coordinates.y) < 25)
+  const nearDuplicate = hasCoordinates ? existingWells.find((item) => (item.bgd?.depositId ?? 'DEP-SARYTAU') === (input.bgd?.depositId ?? input.depositId ?? 'DEP-SARYTAU')
+    && Math.hypot(item.coordinates.x - input.coordinates.x, item.coordinates.y - input.coordinates.y) < 25) : undefined
   if (nearDuplicate) throw new Error('Пространственный duplicate-check: устье ближе 25 м к ' + nearDuplicate.code + '.')
   const numericCode = Number(input.code.replace(/\D/g, '')) || 1000
+  const depositId = input.bgd?.depositId ?? input.depositId ?? 'DEP-SARYTAU'
+  const wellId = input.bgd && depositId !== 'DEP-SARYTAU' ? `WELL-${numericCode}-${depositId.replace(/^DEP-/, '')}` : `WELL-${numericCode}`
   const well: Well = {
     ...input,
-    id: input.code,
-    status: 'На проверке',
+    id: wellId,
+    code: input.bgd ? String(input.bgd.name) : input.code,
+    status: input.bgd?.statusHistory.at(-1)?.status ?? 'На проверке',
     quality: 'Среднее',
-    block: 'Не назначен',
-    cell: '—',
+    block: input.block ?? 'Не назначен',
+    cell: input.cell ?? '—',
     mapPosition: { x: 18 + (numericCode * 17) % 68, y: 16 + (numericCode * 29) % 70 },
     updatedAt: 'Только что',
     completeness: 68,
@@ -80,6 +89,22 @@ export async function createWell(input: CreateWellInput): Promise<Well> {
     await demoWellMasterRepository.saveAssignment(created, workspace, { depositId: input.depositId ?? workspace.assignment.depositId, siteId: input.siteId ?? workspace.assignment.siteId, lensId: input.lensId ?? workspace.assignment.lensId, projectCode: input.projectCode ?? workspace.assignment.projectCode })
   }
   return created
+}
+
+export async function updateWell(input: UpdateWellInput): Promise<Well> {
+  await wait(360)
+  const { wellId, expectedVersion, ...data } = input
+  const current = await demoWellDataRepository.getWell(wellId)
+  if ((current.version ?? 1) !== expectedVersion) throw new Error('VERSION_CONFLICT: скважина изменена в другой вкладке.')
+  const next: Well = {
+    ...current,
+    ...data,
+    id: current.id,
+    code: data.bgd ? String(data.bgd.name) : data.code,
+    status: data.bgd?.statusHistory.at(-1)?.status ?? current.status,
+    version: current.version,
+  }
+  return demoWellDataRepository.updateWell(current, next)
 }
 export async function fetchWellTechnicalData(wellId: string) {
   await wait(160)

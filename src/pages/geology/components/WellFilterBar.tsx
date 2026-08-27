@@ -6,7 +6,7 @@ import { Badge } from '../../../shared/ui/Badge'
 import { Button } from '../../../shared/ui/Button'
 
 const statuses: Array<'Все' | WellStatus> = ['Все', 'Работает', 'На проверке', 'Отключена', 'Требует внимания']
-const types: Array<'Все' | WellType> = ['Все', 'Откачная', 'Закачная', 'Наблюдательная', 'Разведочная']
+const types: Array<'Все' | WellType> = ['Все', 'Закачная', 'Откачная', 'Универсальная', 'Контрольная', 'Наблюдательная', 'Гидрогеологическая', 'Разведочная', 'Технического водоснабжения', 'Прочая']
 const qualities: Array<'Все' | QualityState> = ['Все', 'Высокое', 'Среднее', 'Есть проблемы']
 
 export function WellFilterBar({ filters, sites, onChange, onReset }: {

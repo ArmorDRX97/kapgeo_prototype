@@ -20,7 +20,7 @@ export type WellSearch = {
 } & WellWorkspaceSelection
 
 const statuses: WellStatus[] = ['Работает', 'На проверке', 'Отключена', 'Требует внимания']
-const types: WellType[] = ['Откачная', 'Закачная', 'Наблюдательная', 'Разведочная']
+const types: WellType[] = ['Закачная', 'Откачная', 'Универсальная', 'Контрольная', 'Наблюдательная', 'Гидрогеологическая', 'Разведочная', 'Технического водоснабжения', 'Прочая']
 const qualities: QualityState[] = ['Высокое', 'Среднее', 'Есть проблемы']
 
 export function validateWellSearch(search: Record<string, unknown>): WellSearch {
