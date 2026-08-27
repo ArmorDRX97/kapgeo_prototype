@@ -29,4 +29,16 @@ describe('UC.KAPGEO.BGD.03 well form validation', () => {
     expect(errors).toContain('Проверьте обязательные значения интервала бурения №1.')
     expect(errors).toContain('Проверьте непроницаемый интервал №1.')
   })
+
+  it('validates the documentation date range', () => {
+    const form = createEmptyWellBgdForm('DEP-SARYTAU')
+    form.bgd!.name = 2101
+    form.bgd!.passport.documentStartDate = '2026-08-11T10:00'
+    form.bgd!.passport.documentEndDate = '2026-08-10T10:00'
+
+    expect(validateWellBgdForm(form, [])).toContain('Дата начала составления документации должна быть не позже даты окончания.')
+
+    form.bgd!.passport.documentEndDate = '2026-08-12T10:00'
+    expect(validateWellBgdForm(form, [])).toEqual([])
+  })
 })

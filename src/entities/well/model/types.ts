@@ -82,6 +82,8 @@ export type WellBgdData = {
     bottomOffsetAzimuth: number | null
   }
   passport: {
+    documentStartDate: string
+    documentEndDate: string
     date: string
     author: string
     chiefGeologist: string

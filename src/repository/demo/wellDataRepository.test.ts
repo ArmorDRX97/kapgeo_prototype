@@ -25,6 +25,10 @@ describe('DemoWellDataRepository full well fixture', () => {
     expect(well.bgd?.development.works).toHaveLength(3)
     expect(well.bgd?.geology.impermeableIntervals).toHaveLength(3)
     expect(Object.values(well.bgd?.passport ?? {}).every(Boolean)).toBe(true)
+    expect(well.bgd?.passport).toMatchObject({
+      documentStartDate: '2026-06-10T08:30',
+      documentEndDate: '2026-08-10T09:45',
+    })
     expect(well.site).toBe('Северный')
     expect(getTechnicalData(well)).toMatchObject({
       construction: expect.arrayContaining([expect.objectContaining({ element: 'Фильтровая колонна' })]),
@@ -38,7 +42,9 @@ describe('DemoWellDataRepository full well fixture', () => {
 
   it('backfills an existing legacy full-well record without requiring reset', async () => {
     const legacy = getSeedWells().find((item) => item.id === 'WELL-1010-FULL')!
-    delete legacy.bgd
+    const legacyPassport = legacy.bgd!.passport as unknown as Record<string, string>
+    delete legacyPassport.documentStartDate
+    delete legacyPassport.documentEndDate
     await demoDatabase.put('records', wellRecord(legacy))
 
     const repository = new DemoWellDataRepository()
@@ -47,6 +53,8 @@ describe('DemoWellDataRepository full well fixture', () => {
     const stored = await repository.getWell('WELL-1010-FULL')
 
     expect(migrated?.bgd?.descriptionRu).toContain('полностью документированная')
+    expect(migrated?.bgd?.passport.documentStartDate).toBe('2026-06-10T08:30')
+    expect(migrated?.bgd?.passport.documentEndDate).toBe('2026-08-10T09:45')
     expect(stored.bgd?.drilling.intervals).toHaveLength(3)
   })
 })

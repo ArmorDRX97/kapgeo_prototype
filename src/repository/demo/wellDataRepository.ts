@@ -1,4 +1,4 @@
-import type { LabResult, LogRun, Sample, Well, WellGeologyData, WellTechnicalData } from '../../entities/well/model/types'
+import type { LabResult, LogRun, Sample, Well, WellBgdData, WellGeologyData, WellTechnicalData } from '../../entities/well/model/types'
 import { getGeologyData, setGeologyData } from '../data/wellGeology'
 import { getWellLogs } from '../data/wellLogs'
 import { getLabResults, setLabResults } from '../data/labResults'
@@ -21,17 +21,33 @@ function dataRecord<T>(kind: WellDataKind, well: Well, data: T): DemoRecord<T> {
   }
 }
 
+function completeFullWellFixture(value: Well): Well | null {
+  if (value.id !== 'WELL-1010-FULL') return null
+  const template = wells.find((item) => item.id === 'WELL-1010-FULL')
+  if (!template?.bgd) return null
+  if (!value.bgd) return { ...structuredClone(value), bgd: structuredClone(template.bgd) }
+  const passport: Partial<WellBgdData['passport']> = value.bgd.passport
+  if ('documentStartDate' in passport && 'documentEndDate' in passport) return null
+  return {
+    ...structuredClone(value),
+    bgd: {
+      ...structuredClone(value.bgd),
+      passport: { ...structuredClone(template.bgd.passport), ...structuredClone(passport) },
+    },
+  }
+}
+
 export class DemoWellDataRepository {
   async listWells(): Promise<Well[]> {
     const records = await demoDatabase.getAll<DemoRecord<Well>>('records')
     const values = records
       .filter((record) => record.entityType === 'well')
       .map((record) => structuredClone(record.data))
-    const fullTemplate = wells.find((item) => item.id === 'WELL-1010-FULL')
-    const legacyFull = values.find((item) => item.id === 'WELL-1010-FULL' && !item.bgd)
-    if (legacyFull && fullTemplate?.bgd) {
-      legacyFull.bgd = structuredClone(fullTemplate.bgd)
-      await demoDatabase.put('records', wellRecord(legacyFull, new Date().toISOString()))
+    const legacyFullIndex = values.findIndex((item) => item.id === 'WELL-1010-FULL')
+    const completed = legacyFullIndex >= 0 ? completeFullWellFixture(values[legacyFullIndex]!) : null
+    if (completed) {
+      values[legacyFullIndex] = completed
+      await demoDatabase.put('records', wellRecord(completed, new Date().toISOString()))
     }
     return values
       .sort((left, right) => left.code.localeCompare(right.code))
@@ -40,13 +56,10 @@ export class DemoWellDataRepository {
   async getWell(wellId: string): Promise<Well> {
     const record = await demoDatabase.get<DemoRecord<Well>>('records', `well:${wellId}`)
     if (!record) throw new Error(`Скважина ${wellId} не найдена.`)
-    if (wellId === 'WELL-1010-FULL' && !record.data.bgd) {
-      const template = wells.find((item) => item.id === 'WELL-1010-FULL')
-      if (template?.bgd) {
-        const completed = { ...structuredClone(record.data), bgd: structuredClone(template.bgd) }
-        await demoDatabase.put('records', wellRecord(completed, new Date().toISOString()))
-        return completed
-      }
+    const completed = completeFullWellFixture(record.data)
+    if (completed) {
+      await demoDatabase.put('records', wellRecord(completed, new Date().toISOString()))
+      return completed
     }
     return structuredClone(record.data)
   }

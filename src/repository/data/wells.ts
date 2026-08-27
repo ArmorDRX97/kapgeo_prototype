@@ -29,6 +29,8 @@ export const fullWellBgdData: WellBgdData = {
     bottomOffsetAzimuth: 55,
   },
   passport: {
+    documentStartDate: '2026-06-10T08:30',
+    documentEndDate: '2026-08-10T09:45',
     date: '2026-08-10T10:00',
     author: 'Ирина Иванова',
     chiefGeologist: 'Марина Ли',
