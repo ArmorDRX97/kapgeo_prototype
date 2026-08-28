@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { Bell, BookOpenText, Boxes, BriefcaseBusiness, ChartNoAxesCombined, ChevronDown, ChevronsUpDown, Database, Home, LogOut, MapPinned, Menu, Minimize2, Network, Search, Settings2, UserRound, X } from 'lucide-react'
+import { Bell, BookOpenText, Boxes, BriefcaseBusiness, ChartNoAxesCombined, ChevronDown, ChevronsUpDown, Database, Home, LogOut, MapPinned, Menu, Minimize2, Network, RotateCcw, Search, Settings2, UserRound, X } from 'lucide-react'
 import { type PropsWithChildren, useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { userPersonas } from '../../entities/session/model/personas'
@@ -9,6 +9,7 @@ import { fetchGeologicalMasterData, fetchPlatformPreferences, fetchWells, savePl
 import { ScientificJobMonitor } from '../../features/scientific-jobs'
 import { GeologyTour } from '../../features/geology-tour'
 import { getDepositName } from '../../entities/geology-master/model/types'
+import { resetDemoData } from '../../repository/demo/demoDataControl'
 
 type StaticRoute = '/home' | '/work' | '/geology' | '/geology/bgd' | '/technology' | '/modeling' | '/analytics' | '/admin'
 
@@ -48,6 +49,11 @@ export function AppShell({ children }: PropsWithChildren) {
       window.location.reload()
     },
   })
+  const resetDataMutation = useMutation({
+    mutationFn: resetDemoData,
+    onSuccess: () => window.location.reload(),
+    onError: () => window.alert('Не удалось сбросить локальные данные. Закройте другие вкладки системы и повторите попытку.'),
+  })
   const { data: persistedWells = [] } = useQuery({ queryKey: ['wells'], queryFn: fetchWells, staleTime: 30_000 })
   const { data: masterData } = useQuery({ queryKey: ['geology-master'], queryFn: fetchGeologicalMasterData, staleTime: 30_000 })
   const currentDeposit = masterData?.deposits.find((item) => item.id === platformPreferences?.currentDepositId)
@@ -83,6 +89,12 @@ export function AppShell({ children }: PropsWithChildren) {
     void navigate({ to: '/auth/sign-in' })
   }
 
+  const resetData = () => {
+    if (!window.confirm('Сбросить заполненные и изменённые данные? Все локальные изменения будут удалены, после перезагрузки восстановятся исходные значения.')) return
+    setMobileOpen(false)
+    resetDataMutation.mutate()
+  }
+
   const openResult = (result: typeof searchResults[number]) => {
     setSearchOpen(false)
     setSearchQuery('')
@@ -115,6 +127,7 @@ export function AppShell({ children }: PropsWithChildren) {
           })}
         </nav>
         <div className="sidebar__bottom">
+          <button type="button" className="sidebar__reset-data" onClick={resetData} disabled={resetDataMutation.isPending} title="Сбросить заполненные и изменённые данные"><RotateCcw size={18} /><span><strong>{resetDataMutation.isPending ? 'Сбрасываем данные…' : 'Сбросить демо данные'}</strong><small>Удалит заполненные и изменённые данные</small></span></button>
           {!minimumMode && <Link to="/help" className={pathname.startsWith('/help') ? 'is-active' : ''}><BookOpenText size={18} /><span>Справочный центр</span></Link>}
           <Link to="/profile" className={pathname.startsWith('/profile') ? 'is-active' : ''}><span className="avatar avatar--sm">{persona?.initials}</span><span className="sidebar__profile"><strong>{persona?.name}</strong><small>{persona?.position}</small></span><ChevronsUpDown size={15} /></Link>
         </div>

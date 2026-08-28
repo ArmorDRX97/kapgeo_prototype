@@ -19,6 +19,20 @@ describe('DemoGeologyMasterRepository BGD CRUD', () => {
     expect(sarytau).toMatchObject({ code: 1, nameRu: 'Сарытау', nameKk: 'Сарытау', nameEn: 'Sarytau', objectType: 'field', isHidden: false })
     expect(data.deposits.find((item) => item.code === 4)?.isHidden).toBe(true)
     expect(sarytau?.occurrences).toHaveLength(2)
+    const limits = data.conditionSets.find((item) => item.id === 'CONDITIONS-NORTH-2026')?.limits
+    expect(limits).toHaveLength(29)
+    expect(limits).toContainEqual(expect.objectContaining({ id: 'uranium-cutoff', value: '0.012', unit: 'м%' }))
+  })
+
+  it('adds the full condition-limits list to legacy stored condition sets', async () => {
+    await repository.getMasterData()
+    const stored = await database.get<DemoRecord<Record<string, unknown>>>('records', 'condition-set:CONDITIONS-NORTH-2026')
+    delete (stored!.data as { limits?: unknown }).limits
+    await database.put('records', stored!)
+
+    const migrated = (await repository.getMasterData()).conditionSets.find((item) => item.id === 'CONDITIONS-NORTH-2026')
+    expect(migrated?.limits).toHaveLength(29)
+    expect(migrated?.limits?.find((item) => item.id === 'rock-density')?.value).toBe('1730')
   })
 
   it('creates, updates, hides and deletes an independent field', async () => {

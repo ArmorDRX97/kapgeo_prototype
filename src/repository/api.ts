@@ -258,7 +258,9 @@ export async function updateSite(current: GeologicalSite, patch: Pick<Geological
 export async function archiveSite(current: GeologicalSite): Promise<GeologicalSite> { return demoGeologyMasterRepository.archiveSite(current) }
 export async function createLens(input: Pick<GeologicalLens, 'siteId' | 'code' | 'name'>): Promise<GeologicalLens> { return demoGeologyMasterRepository.createLens(input) }
 export async function updateLens(current: GeologicalLens, patch: Pick<GeologicalLens, 'name'>): Promise<GeologicalLens> { return demoGeologyMasterRepository.updateLens(current, patch) }
-export async function archiveLens(current: GeologicalLens): Promise<GeologicalLens> { return demoGeologyMasterRepository.archiveLens(current) }export async function createConditionSetVersion(source: ConditionSet): Promise<ConditionSet> { return demoGeologyMasterRepository.createConditionSetVersion(source) }
+export async function archiveLens(current: GeologicalLens): Promise<GeologicalLens> { return demoGeologyMasterRepository.archiveLens(current) }
+export async function createConditionSet(input: Omit<ConditionSet, 'id' | 'status' | 'version'>): Promise<ConditionSet> { return demoGeologyMasterRepository.createConditionSet(input) }
+export async function createConditionSetVersion(source: ConditionSet): Promise<ConditionSet> { return demoGeologyMasterRepository.createConditionSetVersion(source) }
 export async function saveConditionSet(current: ConditionSet, patch: Omit<ConditionSet, 'id' | 'siteId' | 'code' | 'version' | 'status'>): Promise<ConditionSet> { return demoGeologyMasterRepository.saveConditionSet(current, patch) }
 export async function approveConditionSet(current: ConditionSet): Promise<ConditionSet> { return demoGeologyMasterRepository.approveConditionSet(current) }
 export async function publishConditionSet(current: ConditionSet): Promise<ConditionSet> { return demoGeologyMasterRepository.publishConditionSet(current) }

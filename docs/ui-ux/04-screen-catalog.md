@@ -84,7 +84,7 @@
 | GEO-00 | Методический центр прототипа: scope, formulas, definitions, templates и volume profiles | Page/Workspace | P0 | `/geology/methodology` |
 | GEO-01 | Обзор модуля | Page | P0 | `/geology` |
 | GEO-BGD-01 | База геологических данных: реестр месторождений | Page | P0 | `/geology/bgd` |
-| GEO-BGD-02 | Карточка месторождения: просмотр, изменение, видимость и безопасное удаление | Page/Workspace | P0 | `/geology/bgd/:depositId` |
+| GEO-BGD-02 | Карточка месторождения: просмотр, изменение, видимость, кондиционные лимиты по участкам и безопасное удаление | Page/Workspace | P0 | `/geology/bgd/:depositId` |
 | GEO-BGD-03 | Создание и редактирование скважины БГД: описание, геометрия, документация, паспорт, проходка, освоение и геология | Page/Workspace | P0 | `/geology/bgd/:depositId/wells/new`, `/geology/bgd/:depositId/wells/:wellId` |
 | GEO-02 | Месторождения, залежи, участки и кондиции | Page/Workspace | P0 | `/geology/master` |
 | GEO-03 | Карта скважин и объектов | Workspace | P0 | `/geology/map` |

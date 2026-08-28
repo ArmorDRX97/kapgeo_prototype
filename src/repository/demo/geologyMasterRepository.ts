@@ -8,10 +8,43 @@ import type {
   GeologicalSite,
   UpdateDepositPatch,
 } from '../../entities/geology-master/model/types'
+import { buildConditionLimits } from '../../entities/geology-master/model/types'
 import { DemoDatabase, demoDatabase, type DemoRecord } from './demoDatabase'
 
 const seedTimestamp = '2026-08-24T00:00:00.000Z'
 const seedMarkerKey = 'geologyMasterSeeded'
+
+const seededConditionLimits = buildConditionLimits('', {
+  'section-top': '-420',
+  'filter-top-addition': '2',
+  'filter-bottom-addition': '6',
+  'filter-top-percent': '20',
+  'filter-bottom-percent': '20',
+  'section-bottom': '-570',
+  'uranium-cutoff': '0.012',
+  'permafrost-boundary': 'Не задана',
+  'effective-thickness-addition': '2',
+  'gamma-barren': '100',
+  'resistivity-impermeable': '24',
+  'rare-earth-core': '0',
+  'max-waste-thickness': '5',
+  'max-ore-thickness': '15',
+  'min-zenith-angle': '4',
+  'min-barren-thickness': '0.3',
+  'min-impermeable-thickness': '0.3',
+  'min-industrial-linear-reserve': '0.12',
+  'min-core-recovery': '30',
+  'min-area-ore-factor': '0.75',
+  'min-linear-reserve': '0.08',
+  'min-balanced-well-content': '0.0795',
+  'min-balanced-intersection-content': '0.001',
+  'min-offbalance-well-content': '0.0195',
+  'data-start-year': '1960',
+  'well-files-folder': 'Не задана',
+  'rock-density': '1730',
+  'true-azimuth-correction': '10',
+  'magnetic-azimuth-correction': '5',
+})
 
 const seed: GeologicalMasterData = {
   deposits: [
@@ -46,7 +79,7 @@ const seed: GeologicalMasterData = {
     { id: 'LENS-PR07', siteId: 'SITE-NORTH', code: 'PR-07', name: 'Залежь PR-07', status: 'active', version: 3 },
     { id: 'LENS-CN02', siteId: 'SITE-CENTRAL', code: 'CN-02', name: 'Залежь CN-02', status: 'active', version: 1 },
   ],
-  conditionSets: [{ id: 'CONDITIONS-NORTH-2026', siteId: 'SITE-NORTH', code: 'COND-NORTH-2026', effectiveFrom: '2026-01-01', density: 2.71, balanceThreshold: 1.2, offBalanceThreshold: 0.6, azimuthCorrection: 0, geometryTolerance: 0.25, status: 'published', version: 3 }],
+  conditionSets: [{ id: 'CONDITIONS-NORTH-2026', siteId: 'SITE-NORTH', code: 'COND-NORTH-2026', effectiveFrom: '2026-01-01', density: 2.71, balanceThreshold: 1.2, offBalanceThreshold: 0.6, azimuthCorrection: 0, geometryTolerance: 0.25, limits: seededConditionLimits, status: 'published', version: 3 }],
 }
 
 type MasterKind = 'deposit' | 'site' | 'lens' | 'condition-set'
@@ -151,11 +184,15 @@ export class DemoGeologyMasterRepository {
     const deposits = rawDeposits
       .map((item, index) => normalizeDeposit(item, item.id === 'DEP-SARYTAU' ? 1 : index + 1))
       .sort((left, right) => left.nameRu.localeCompare(right.nameRu, 'ru') || left.code - right.code)
+    const rawConditions = records.filter((item) => item.entityType === 'condition-set').map((item) => item.data as ConditionSet)
+    const conditionSets = rawConditions.map((item) => ({ ...structuredClone(item), limits: Array.isArray(item.limits) && item.limits.length ? item.limits : buildConditionLimits('') }))
     const needsMigration = rawDeposits.some((item) => typeof item.code !== 'number' || !item.nameRu || !item.nameKk || !item.nameEn)
+    const needsConditionMigration = rawConditions.some((item) => !Array.isArray(item.limits) || item.limits.length === 0)
     const marker = await this.database.get<{ key: string; value: boolean }>('meta', seedMarkerKey)
-    if (needsMigration || !marker?.value) {
+    if (needsMigration || needsConditionMigration || !marker?.value) {
       await this.database.transaction(['records', 'meta'], async (transaction) => {
         for (const deposit of deposits) await transaction.put('records', record('deposit', deposit, deposit.status))
+        for (const condition of conditionSets) await transaction.put('records', record('condition-set', condition, condition.status))
         await transaction.put('meta', { key: seedMarkerKey, value: true })
       })
     }
@@ -163,7 +200,7 @@ export class DemoGeologyMasterRepository {
       deposits: deposits.map((item) => structuredClone(item)),
       sites: records.filter((item) => item.entityType === 'site').map((item) => structuredClone(item.data as GeologicalSite)),
       lenses: records.filter((item) => item.entityType === 'lens').map((item) => structuredClone(item.data as GeologicalLens)),
-      conditionSets: records.filter((item) => item.entityType === 'condition-set').map((item) => structuredClone(item.data as ConditionSet)),
+      conditionSets: conditionSets.map((item) => structuredClone(item)),
     }
   }
 
@@ -333,6 +370,14 @@ export class DemoGeologyMasterRepository {
     if (latest.status === 'published') throw new Error('PUBLISHED_IMMUTABLE: создайте новую версию кондиций вместо изменения опубликованной.')
     const next: ConditionSet = { ...latest, ...patch, version: latest.version + 1, status: 'draft' }
     await this.persistVersion('condition-set', next, 'draft', 'conditions.saved', 'Сохранён новый черновик кондиций.')
+    return structuredClone(next)
+  }
+
+  async createConditionSet(input: Omit<ConditionSet, 'id' | 'status' | 'version'>): Promise<ConditionSet> {
+    const data = await this.getMasterData()
+    if (!data.sites.some((item) => item.id === input.siteId)) throw new Error('Сначала выберите существующий участок.')
+    const next: ConditionSet = { ...input, id: `CONDITIONS-${input.siteId}-${Date.now()}`, status: 'draft', version: 1 }
+    await this.persistVersion('condition-set', next, 'draft', 'conditions.created', 'Создан новый черновик кондиционных параметров.')
     return structuredClone(next)
   }
 
