@@ -161,6 +161,16 @@ function validateDepositValues(value: Pick<Deposit, 'nameRu' | 'nameKk' | 'nameE
   }
 }
 
+function migrateConditionLimits(condition: ConditionSet) {
+  const seededMatch = seed.conditionSets.find((item) => item.id === condition.id)
+  if (seededMatch?.limits) return seededMatch.limits.map((item) => ({ ...item }))
+  return buildConditionLimits('', {
+    'uranium-cutoff': String(condition.balanceThreshold),
+    'rock-density': condition.density > 0 ? String(condition.density < 100 ? condition.density * 1000 : condition.density) : '',
+    'true-azimuth-correction': String(condition.azimuthCorrection),
+  })
+}
+
 export class DemoGeologyMasterRepository {
   constructor(private readonly database: DemoDatabase = demoDatabase) {}
 
@@ -185,7 +195,7 @@ export class DemoGeologyMasterRepository {
       .map((item, index) => normalizeDeposit(item, item.id === 'DEP-SARYTAU' ? 1 : index + 1))
       .sort((left, right) => left.nameRu.localeCompare(right.nameRu, 'ru') || left.code - right.code)
     const rawConditions = records.filter((item) => item.entityType === 'condition-set').map((item) => item.data as ConditionSet)
-    const conditionSets = rawConditions.map((item) => ({ ...structuredClone(item), limits: Array.isArray(item.limits) && item.limits.length ? item.limits : buildConditionLimits('') }))
+    const conditionSets = rawConditions.map((item) => ({ ...structuredClone(item), limits: Array.isArray(item.limits) && item.limits.length ? item.limits : migrateConditionLimits(item) }))
     const needsMigration = rawDeposits.some((item) => typeof item.code !== 'number' || !item.nameRu || !item.nameKk || !item.nameEn)
     const needsConditionMigration = rawConditions.some((item) => !Array.isArray(item.limits) || item.limits.length === 0)
     const marker = await this.database.get<{ key: string; value: boolean }>('meta', seedMarkerKey)
