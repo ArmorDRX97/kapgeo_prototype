@@ -1,9 +1,14 @@
 import { createContext, useContext } from 'react'
-import type { SessionState } from './types'
+import type { SessionState, UserPersona } from './types'
+
+export type SignInCredentials = {
+  login: string
+  password: string
+  personaId?: string
+}
 
 export type SessionContextValue = SessionState & {
-  beginSso: (personaId?: string) => void
-  verifyMfa: (code: string) => boolean
+  signIn: (credentials: SignInCredentials) => UserPersona
   signOut: () => void
   switchPersona: (personaId: string) => void
 }

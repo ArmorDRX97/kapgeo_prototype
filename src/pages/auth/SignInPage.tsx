@@ -1,23 +1,24 @@
 import { useNavigate } from '@tanstack/react-router'
-import { Building2, CheckCircle2, Globe2, LockKeyhole, ShieldCheck } from 'lucide-react'
+import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import { userPersonas, defaultPersona } from '../../entities/session/model/personas'
+import { type FormEvent, useState } from 'react'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { fetchPlatformPreferences } from '../../repository/api'
 import { Button } from '../../shared/ui/Button'
 
 export function SignInPage() {
   const navigate = useNavigate()
-  const { beginSso } = useSession()
-  const [personaId, setPersonaId] = useState(defaultPersona.id)
+  const { signIn } = useSession()
+  const [login, setLogin] = useState('')
+  const [password, setPassword] = useState('')
   const { data: preferences } = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences })
   const minimumMode = preferences?.minimumMode ?? false
-  const availablePersonas = minimumMode ? userPersonas.filter((persona) => persona.id === 'geo.ivanova') : userPersonas
 
-  const handleSignIn = () => {
-    beginSso(minimumMode ? 'geo.ivanova' : personaId)
-    void navigate({ to: '/auth/mfa' })
+  const handleSignIn = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const persona = signIn({ login, password, ...(minimumMode ? { personaId: 'geo.ivanova' } : {}) })
+    void navigate({ to: minimumMode ? '/geology/bgd' : persona.homeRoute === '/geology' ? '/home' : persona.homeRoute })
   }
 
   return (
@@ -28,54 +29,59 @@ export function SignInPage() {
           <span className="brand__text"><strong>AI KAPGEO</strong><small>Industrial intelligence platform</small></span>
         </div>
         <div className="auth-visual__content">
-          <h1>{minimumMode ? 'База геологических данных' : 'Единая среда для работы с недрами и производством'}</h1>
-          <p>{minimumMode ? 'Работа с реестром месторождений, их карточками, участками и залежами.' : 'Геология, технология, моделирование и аналитика — в связанном пространстве данных, версий и решений.'}</p>
+          <p className="auth-visual__eyebrow">Данные недр. Точные решения.</p>
+          <h1>{minimumMode ? 'База геологических данных' : 'Цифровая среда для управления недрами'}</h1>
+          <p>{minimumMode ? 'Единое пространство для месторождений, участков, залежей и истории изменений.' : 'Связываем геологию, технологию, моделирование и аналитику в одной прослеживаемой системе.'}</p>
           <ul className="auth-benefits">
             {minimumMode ? <>
-              <li><CheckCircle2 size={18} /> Реестр и карточки месторождений</li>
-              <li><CheckCircle2 size={18} /> Названия и описания на трёх языках</li>
-              <li><CheckCircle2 size={18} /> Участки, залежи и история изменений</li>
+              <li><CheckCircle2 size={17} /> Единый реестр</li>
+              <li><CheckCircle2 size={17} /> История изменений</li>
             </> : <>
-              <li><CheckCircle2 size={18} /> Сквозная карточка скважины</li>
-              <li><CheckCircle2 size={18} /> Объяснимый AI под контролем эксперта</li>
-              <li><CheckCircle2 size={18} /> Версии, согласование и аудит</li>
+              <li><CheckCircle2 size={17} /> Единые данные</li>
+              <li><CheckCircle2 size={17} /> Контроль версий</li>
+              <li><CheckCircle2 size={17} /> Прослеживаемые решения</li>
             </>}
           </ul>
         </div>
-        <div className="auth-visual__mesh" aria-hidden="true" />
+        <p className="auth-visual__caption">Геология · Технология · Моделирование · Аналитика</p>
       </section>
 
       <section className="auth-form-wrap">
-        <div className="auth-form-card">
-          <div className="auth-form-card__icon"><ShieldCheck size={24} /></div>
-          <p className="eyebrow">Корпоративный доступ</p>
-          <h2>Вход в AI KAPGEO</h2>
-          <p className="auth-form-card__lead">Используйте корпоративную учётную запись. После входа потребуется второй фактор.</p>
+        <form className="auth-form-card" onSubmit={handleSignIn} noValidate>
+          <p className="eyebrow">AI KAPGEO</p>
+          <h2>Вход в систему</h2>
+          <p className="auth-form-card__lead">Введите данные или сразу продолжите в демонстрационный режим.</p>
 
-          <label className="field">
-            <span className="field__label">Профиль пользователя</span>
-            <select value={minimumMode ? 'geo.ivanova' : personaId} disabled={minimumMode} onChange={(event) => setPersonaId(event.target.value)}>
-              {availablePersonas.map((persona) => (
-                <option key={persona.id} value={persona.id}>{persona.position} · {persona.name}</option>
-              ))}
-            </select>
-            <span className="field__hint">Персона определяет роли, область данных и стартовую страницу.</span>
-          </label>
+          <div className="auth-form-fields">
+            <label className="field">
+              <span className="field__label">Логин</span>
+              <input
+                autoComplete="username"
+                autoFocus
+                name="login"
+                placeholder="name.surname@company.kz"
+                value={login}
+                onChange={(event) => setLogin(event.target.value)}
+              />
+            </label>
 
-          <Button className="button--full" onClick={handleSignIn}>
-            <Building2 size={18} /> Войти через корпоративный SSO
-          </Button>
-
-          <button className="auth-secondary-action" type="button">
-            <LockKeyhole size={16} /> Войти с локальной учётной записью
-          </button>
-
-          <div className="auth-form-card__divider" />
-          <div className="auth-meta-row">
-            <span><Globe2 size={15} /> Русский</span>
-            <button type="button">Запросить доступ</button>
+            <label className="field">
+              <span className="field__label">Пароль</span>
+              <input
+                autoComplete="current-password"
+                name="password"
+                type="password"
+                placeholder="Введите пароль"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </label>
           </div>
-        </div>
+
+          <Button className="button--full auth-submit" type="submit">
+            Войти <ArrowRight size={18} />
+          </Button>
+        </form>
       </section>
     </main>
   )

@@ -5,7 +5,6 @@ import { AdminOperationsPage } from '../pages/admin/AdminOperationsPage'
 import { AnalyticsPage } from '../pages/analytics/AnalyticsPage'
 import { AnalyticsDecisionPage } from '../pages/analytics/AnalyticsDecisionPage'
 import { AnalyticsReportPage } from '../pages/analytics/AnalyticsReportPage'
-import { MfaPage } from '../pages/auth/MfaPage'
 import { SignInPage } from '../pages/auth/SignInPage'
 import { GeologyOverviewPage } from '../pages/geology/GeologyOverviewPage'
 import { GeoBasePage } from '../pages/geology/GeoBasePage'
@@ -51,7 +50,6 @@ import { validateBgdSearch } from '../features/geobase/model/bgdSearch'
 const rootRoute = createRootRoute({ component: RootLayout, notFoundComponent: NotFoundPage })
 const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: () => <Navigate to="/home" /> })
 const signInRoute = createRoute({ getParentRoute: () => rootRoute, path: '/auth/sign-in', component: SignInPage })
-const mfaRoute = createRoute({ getParentRoute: () => rootRoute, path: '/auth/mfa', component: MfaPage })
 const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: '/home', component: HomePage })
 const workRoute = createRoute({ getParentRoute: () => rootRoute, path: '/work', component: WorkPage })
 const workflowCenterRoute = createRoute({ getParentRoute: () => rootRoute, path: '/work/workflows', component: WorkflowCenterPage })
@@ -105,7 +103,6 @@ const forbiddenRoute = createRoute({ getParentRoute: () => rootRoute, path: '/fo
 const routeTree = rootRoute.addChildren([
   indexRoute,
   signInRoute,
-  mfaRoute,
   homeRoute,
   workRoute,
   workflowCenterRoute,

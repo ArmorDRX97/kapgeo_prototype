@@ -27,14 +27,11 @@
 
 | ID | Экран | Тип | Приоритет | Маршрут / вызов |
 |---|---|---|---|---|
-| AUTH-01 | Корпоративный вход SSO | Page | P0 | `/auth/sign-in` |
-| AUTH-02 | Локальный резервный вход | Page | P0 | `/auth/local` |
-| AUTH-03 | MFA: код/повтор/резервный способ | Page | P0 | `/auth/mfa` |
+| AUTH-01 | Вход по логину и паролю | Page | P0 | `/auth/sign-in` |
 | AUTH-04 | Запрос доступа | Wizard | P1 | `/auth/request-access` |
 | AUTH-05 | Учётная запись заблокирована | Page | P0 | `/auth/locked` |
 | AUTH-06 | Сессия истекает / повторный вход | Modal/Page | P0 | global |
 | AUTH-07 | Нет прав / область недоступна | Page | P0 | `/forbidden` |
-| AUTH-08 | Ошибка SSO/инфраструктуры | Page | P1 | `/auth/error` |
 | HOME-01 | Ролевой рабочий стол | Page | P0 | `/home` |
 | WORK-01 | Мои задачи и согласования | Page | P0 | `/work` |
 | WORK-02 | Карточка задачи | Drawer | P0 | `/work/:id` |

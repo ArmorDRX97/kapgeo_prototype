@@ -20,7 +20,7 @@
 |---|---|---|
 | навигация | каждый P0 route открывается deep link | automated route crawl + manual |
 | доступ | persona видит только разрешённые модули/действия/объекты | permission tests + R13 preview |
-| auth | SSO-demo, MFA, lock, timeout, return URL | e2e AUTH |
+| auth | логин, маскируемый пароль, прямой вход без промежуточного маршрута | component + e2e AUTH |
 | данные | карта/таблица/график согласованы на дату | fixture assertions |
 | формы | ошибки сохраняют введённые значения и ведут к исправлению | component/integration |
 | версии | утверждённое неизменяемо, новая версия и diff работают | e2e workflow |
@@ -41,7 +41,7 @@
 
 **Persona:** `gis.askarov`, `SCN-01`.
 
-1. Войти через SSO-demo и MFA.
+1. Войти по логину и паролю.
 2. Открыть задачу расхождения.
 3. Сравнить исходные кривые, ручные и AI-интервалы.
 4. Открыть объяснение модели и качество входов.
@@ -168,7 +168,7 @@
 | 1280×800 | compact desktop |
 | 1024×768 | collapsed panels |
 | tablet portrait/landscape | РВР, задачи, согласование, просмотр объекта |
-| mobile | auth, MFA, notifications, task decision, profile/read-only card |
+| mobile | auth, notifications, task decision, profile/read-only card |
 
 Конкретные поддерживаемые версии браузеров подтверждаются с IT Заказчика.
 

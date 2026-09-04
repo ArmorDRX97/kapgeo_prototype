@@ -14,7 +14,7 @@ export type RoleId =
   | 'R13'
   | 'R14'
 
-export type SessionStatus = 'anonymous' | 'mfa' | 'authenticated'
+export type SessionStatus = 'anonymous' | 'authenticated'
 
 export type UserPersona = {
   id: string
@@ -29,5 +29,4 @@ export type UserPersona = {
 export type SessionState = {
   status: SessionStatus
   persona: UserPersona | null
-  pendingPersona: UserPersona | null
 }

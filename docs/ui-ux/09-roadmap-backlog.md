@@ -37,7 +37,7 @@
 | E04-T01 Domain schemas | Частично | session/well schemas и IDs | остальные домены + Zod contracts |
 | E04-T03 Synthetic data | Частично | 14 персон, wells, tasks, jobs | полный связный dataset модулей |
 | E05-T01 Unit tests | Частично | permissions, well filters и depth intervals | статусы, units, generator |
-| E06-T01 Auth/MFA | Частично | SSO demo, MFA, persistent session | errors, lockout, return URL, reauth |
+| E06-T01 Авторизация | Частично | логин/пароль, прямой вход, persistent session | production backend, errors, lockout, return URL |
 | E06-T03 App shell | Частично | role navigation, context, notifications | command search и рабочий as-of |
 | E06-T05 Demo persona/banner | Готово | 14 персон, switcher, synthetic banner | — |
 | E07-T01 Object explorer | Частично | list/map, URL filters, saved presets | tree, bulk selection, saved persistence |
@@ -185,11 +185,11 @@
 
 ## 9. E06 — auth, shell и профиль
 
-- E06-T01 SSO/fallback login и MFA.
+- E06-T01 Единый вход по логину и паролю.
   - loading/error/locked;
   - return URL;
-  - 6-failure demo;
-  - session countdown и reauth.
+  - интеграция с production identity backend;
+  - session countdown.
 - E06-T02 Request-access workflow.
   - форма scope/role/reason;
   - статус запроса;

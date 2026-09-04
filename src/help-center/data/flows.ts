@@ -40,7 +40,7 @@ export const flowGuides: FlowGuide[] = [
 ]
 
 export const verificationRecords: VerificationRecord[] = [
-  { area: 'Авторизация и 14 профилей', href: '/auth/sign-in', checked: '12 августа 2026', result: 'Выбор профиля, SSO-переход, MFA и стартовая страница работают.' },
+  { area: 'Авторизация и 14 профилей', href: '/auth/sign-in', checked: '4 сентября 2026', result: 'Вход по логину и паролю сразу открывает стартовую страницу доступного профиля.' },
   { area: 'Ролевая навигация', href: '/profile', checked: '12 августа 2026', result: 'Для R1–R14 проверен фактический состав меню по permissions.' },
   { area: 'Общая платформа', href: '/work/workflows', checked: '12 августа 2026', result: 'Главная, задачи, workflow, уведомления и профиль загружаются с данными.' },
   { area: 'Геология', href: '/objects/wells/WELL-1042?tab=passport', checked: '12 августа 2026', result: 'Обзор, карта, реестр, создание, 11 вкладок карточки, compare, correlation, reserves и delivery доступны.' },

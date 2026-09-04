@@ -10,8 +10,8 @@ function getInitialSessionState(): SessionState {
   const storedPersona = userPersonas.find((persona) => persona.id === storedPersonaId)
 
   return storedPersona
-    ? { status: 'authenticated', persona: storedPersona, pendingPersona: null }
-    : { status: 'anonymous', persona: null, pendingPersona: null }
+    ? { status: 'authenticated', persona: storedPersona }
+    : { status: 'anonymous', persona: null }
 }
 
 export function SessionProvider({ children }: PropsWithChildren) {
@@ -20,25 +20,21 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const value = useMemo<SessionContextValue>(
     () => ({
       ...state,
-      beginSso: (personaId = defaultPersona.id) => {
-        const pendingPersona = userPersonas.find((persona) => persona.id === personaId) ?? defaultPersona
-        setState({ status: 'mfa', persona: null, pendingPersona })
-      },
-      verifyMfa: (code) => {
-        if (code !== '246810' || !state.pendingPersona) return false
-        window.sessionStorage.setItem(SESSION_PERSONA_KEY, state.pendingPersona.id)
-        setState({ status: 'authenticated', persona: state.pendingPersona, pendingPersona: null })
-        return true
+      signIn: ({ login, personaId }) => {
+        const persona = userPersonas.find((item) => item.id === (personaId ?? login.trim())) ?? defaultPersona
+        window.sessionStorage.setItem(SESSION_PERSONA_KEY, persona.id)
+        setState({ status: 'authenticated', persona })
+        return persona
       },
       signOut: () => {
         window.sessionStorage.removeItem(SESSION_PERSONA_KEY)
-        setState({ status: 'anonymous', persona: null, pendingPersona: null })
+        setState({ status: 'anonymous', persona: null })
       },
       switchPersona: (personaId) => {
         const persona = userPersonas.find((item) => item.id === personaId)
         if (persona) {
           window.sessionStorage.setItem(SESSION_PERSONA_KEY, persona.id)
-          setState({ status: 'authenticated', persona, pendingPersona: null })
+          setState({ status: 'authenticated', persona })
         }
       },
     }),
