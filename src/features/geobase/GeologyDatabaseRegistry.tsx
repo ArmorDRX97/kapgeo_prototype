@@ -1,20 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  ArrowDown,
-  ArrowUp,
+  ArrowRight,
+  CalendarDays,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   CircleAlert,
   Database,
-  Eye,
-  EyeOff,
   Layers3,
   MapPinned,
+  Mountain,
   Plus,
-  RotateCcw,
   Save,
-  Search,
   ShieldCheck,
   Trash2,
   X,
@@ -41,7 +36,6 @@ import { Badge } from '../../shared/ui/Badge'
 import { Button } from '../../shared/ui/Button'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { Panel } from '../../shared/ui/Panel'
-import type { BgdSearch, BgdSort, BgdVisibilityFilter } from './model/bgdSearch'
 import './geobase.css'
 
 const objectTypeLabels: Record<DepositObjectType, string> = {
@@ -149,18 +143,7 @@ function toUpdatePatch(form: DepositFormState): UpdateDepositPatch {
   }
 }
 
-function sortValue(deposit: Deposit, sort: BgdSort): string | number {
-  if (sort === 'code') return deposit.code
-  if (sort === 'name') return deposit.nameRu
-  if (sort === 'type') return deposit.objectType === 'custom' ? deposit.customType ?? '' : objectTypeLabels[deposit.objectType]
-  if (sort === 'coordinateSystem') return deposit.coordinateSystem
-  if (sort === 'visibility') return deposit.isHidden ? 1 : 0
-  return deposit.updatedAt
-}
-
-export function GeologyDatabaseRegistry({ search, onSearchChange, onOpenDeposit }: {
-  search: BgdSearch
-  onSearchChange: (patch: Partial<BgdSearch>) => void
+export function GeologyDatabaseRegistry({ onOpenDeposit }: {
   onOpenDeposit: (depositId: string) => void
 }) {
   const { persona } = useSession()
@@ -200,60 +183,14 @@ export function GeologyDatabaseRegistry({ search, onSearchChange, onOpenDeposit 
     },
   })
   const data = masterQuery.data
-  const visibility = search.visibility ?? 'visible'
-  const sort = search.sort ?? 'name'
-  const direction = search.direction ?? 'asc'
-  const pageSize = search.pageSize ?? 10
-  const page = search.page ?? 1
-  const filtered = useMemo(() => {
-    const query = search.q?.trim().toLocaleLowerCase('ru') ?? ''
-    const next = (data?.deposits ?? []).filter((item) => {
-      if (visibility === 'visible' && item.isHidden) return false
-      if (visibility === 'hidden' && !item.isHidden) return false
-      if (search.type && item.objectType !== search.type) return false
-      const haystack = [
-        item.code,
-        item.nameRu,
-        item.nameKk,
-        item.nameEn,
-        item.descriptionRu,
-        item.descriptionKk,
-        item.descriptionEn,
-        item.coordinateSystem,
-        item.customType,
-        ...item.occurrences.flatMap((occurrence) => [occurrence.nameRu, occurrence.nameKk, occurrence.nameEn, occurrence.type]),
-      ].filter(Boolean).join(' ').toLocaleLowerCase('ru')
-      return !query || haystack.includes(query)
-    })
-    next.sort((left, right) => {
-      const leftValue = sortValue(left, sort)
-      const rightValue = sortValue(right, sort)
-      const result = typeof leftValue === 'number' && typeof rightValue === 'number'
-        ? leftValue - rightValue
-        : String(leftValue).localeCompare(String(rightValue), 'ru', { numeric: true, sensitivity: 'base' })
-      return direction === 'asc' ? result : -result
-    })
-    return next
-  }, [data?.deposits, direction, search.q, search.type, sort, visibility])
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
-  const activePage = Math.min(page, totalPages)
-  const pageItems = filtered.slice((activePage - 1) * pageSize, activePage * pageSize)
+  const currentDepositId = preferencesQuery.data?.currentDepositId
+  const orderedDeposits = useMemo(() => [...(data?.deposits ?? [])].sort((left, right) => {
+    if ((left.id === currentDepositId) !== (right.id === currentDepositId)) return left.id === currentDepositId ? -1 : 1
+    if (left.isHidden !== right.isHidden) return left.isHidden ? 1 : -1
+    return left.nameRu.localeCompare(right.nameRu, 'ru') || left.code - right.code
+  }), [currentDepositId, data?.deposits])
   const nextCode = Math.max(0, ...(data?.deposits.map((item) => item.code) ?? [])) + 1
-  const hiddenCount = data?.deposits.filter((item) => item.isHidden).length ?? 0
-  const occurrenceCount = data?.deposits.reduce((sum, item) => sum + item.occurrences.length, 0) ?? 0
   const currentError = masterQuery.error ?? createMutation.error ?? currentDepositMutation.error
-
-  useEffect(() => {
-    if (page > totalPages) onSearchChange({ page: totalPages })
-  }, [onSearchChange, page, totalPages])
-
-  const setFilter = (patch: Partial<BgdSearch>) => onSearchChange({ ...patch, page: 1 })
-  const changeSort = (field: BgdSort) => onSearchChange({
-    sort: field,
-    direction: sort === field && direction === 'asc' ? 'desc' : 'asc',
-    page: 1,
-  })
-  const resetFilters = () => onSearchChange({ q: undefined, type: undefined, visibility: undefined, sort: undefined, direction: undefined, page: undefined, pageSize: undefined })
 
   if (masterQuery.isLoading || !data) return <div className="page-loading"><span /><p>Открываем базу геологических данных…</p></div>
 
@@ -261,71 +198,55 @@ export function GeologyDatabaseRegistry({ search, onSearchChange, onOpenDeposit 
     <PageHeader
       eyebrow="Геологический модуль"
       title="База геологических данных"
-      description="Реестр месторождений — корневых объектов для участков, залежей, скважин и связанных геологических данных."
-      actions={<Button data-geology-tour="bgd-create" disabled={!canCreate} onClick={() => setCreateOpen(true)}><Plus size={16} /> Создать месторождение</Button>}
+      description="Месторождения — корневые объекты для участков, залежей, скважин и связанных геологических данных."
+      actions={<Button className="geobase-create-action" data-geology-tour="bgd-create" disabled={!canCreate} onClick={() => setCreateOpen(true)}>
+        <span className="geobase-create-action__icon"><Plus size={22} /></span>
+        <span className="geobase-create-action__copy"><strong>Создать месторождение</strong><small>Добавить новый корневой объект</small></span>
+        <ArrowRight className="geobase-create-action__arrow" size={19} />
+      </Button>}
     />
 
-    {!canCreate && <div className="form-alert"><ShieldCheck size={17} /><span>Реестр открыт только для чтения. Создание доступно геологу с назначенным разрешением или администратору.</span></div>}
+    {!canCreate && <div className="form-alert"><ShieldCheck size={17} /><span>Список открыт только для чтения. Создание доступно геологу с назначенным разрешением или администратору.</span></div>}
     {currentError && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span>{currentError.message}</span></div>}
 
-    <section className="geobase-summary" aria-label="Сводка БГД">
-      <article><Database size={19} /><span><strong>{data.deposits.length}</strong><small>месторождения и площади</small></span></article>
-      <article><Eye size={19} /><span><strong>{data.deposits.length - hiddenCount}</strong><small>доступно в выборе</small></span></article>
-      <article><EyeOff size={19} /><span><strong>{hiddenCount}</strong><small>скрыто без удаления</small></span></article>
-      <article><Layers3 size={19} /><span><strong>{occurrenceCount}</strong><small>залежей в карточках</small></span></article>
-    </section>
+    {orderedDeposits.length ? <section className="geobase-deposit-grid" data-geology-tour="bgd-registry" aria-label="Месторождения">
+      {orderedDeposits.map((item) => {
+        const current = currentDepositId === item.id
+        const sites = data.sites.filter((site) => site.depositId === item.id)
+        const siteIds = new Set(sites.map((site) => site.id))
+        const lensCount = new Set([
+          ...data.lenses.filter((lens) => siteIds.has(lens.siteId)).map((lens) => lens.code.trim().toLocaleLowerCase('ru')),
+          ...item.occurrences.map((occurrence) => occurrence.nameRu.trim().toLocaleLowerCase('ru')),
+        ].filter(Boolean)).size
+        return <article className={`geobase-deposit-card${current ? ' is-current' : ''}${item.isHidden ? ' is-hidden' : ''}`} key={item.id}>
+          <header className="geobase-deposit-card__header">
+            <span className="geobase-deposit-card__icon"><Mountain size={24} /></span>
+            <span className="geobase-deposit-card__identity">
+              <small>{item.objectType === 'custom' ? item.customType : objectTypeLabels[item.objectType]} · № {item.code}</small>
+              <strong>{getDepositName(item)}</strong>
+              <span>{item.nameKk} · {item.nameEn}</span>
+            </span>
+            <Badge tone={item.isHidden ? 'neutral' : current ? 'info' : 'success'}>{item.isHidden ? 'Скрыто' : current ? 'Текущее' : 'Используется'}</Badge>
+          </header>
 
-    <Panel className="geobase-registry" title="Реестр месторождений" description="Код создаётся один раз и не изменяется; названия ведутся на русском, казахском и английском языках.">
-      <div className="geobase-filters" data-geology-tour="bgd-filters">
-        <label><Search size={16} /><input value={search.q ?? ''} onChange={(event) => setFilter({ q: event.target.value || undefined })} placeholder="Код или название на любом языке" aria-label="Поиск месторождения" /></label>
-        <select value={search.type ?? ''} onChange={(event) => setFilter({ type: (event.target.value || undefined) as DepositObjectType | undefined })} aria-label="Фильтр по типу">
-          <option value="">Все типы</option>
-          <option value="field">Месторождение</option>
-          <option value="area">Площадь</option>
-          <option value="custom">Другой тип</option>
-        </select>
-        <select value={visibility} onChange={(event) => setFilter({ visibility: event.target.value as BgdVisibilityFilter })} aria-label="Фильтр по видимости">
-          <option value="visible">Используемые</option>
-          <option value="hidden">Скрытые</option>
-          <option value="all">Все</option>
-        </select>
-        <Button size="sm" variant="quiet" onClick={resetFilters}><RotateCcw size={14} /> Сбросить</Button>
-        <span><strong>{filtered.length}</strong> из {data.deposits.length}</span>
-      </div>
+          <p className="geobase-deposit-card__description">{getDepositDescription(item) || 'Краткое описание месторождения пока не заполнено.'}</p>
 
-      <div className="geobase-table" data-geology-tour="bgd-registry">
-        <div className="geobase-table__head">
-          <SortButton label="Код" field="code" active={sort} direction={direction} onSort={changeSort} />
-          <SortButton label="Название" field="name" active={sort} direction={direction} onSort={changeSort} />
-          <SortButton label="Тип" field="type" active={sort} direction={direction} onSort={changeSort} />
-          <SortButton label="Система координат" field="coordinateSystem" active={sort} direction={direction} onSort={changeSort} />
-          <SortButton label="Состояние" field="visibility" active={sort} direction={direction} onSort={changeSort} />
-          <span>Действия</span>
-        </div>
-        {pageItems.length ? pageItems.map((item) => {
-          const current = preferencesQuery.data?.currentDepositId === item.id
-          return <article key={item.id}>
-            <button type="button" className="geobase-table__select" onClick={() => onOpenDeposit(item.id)} aria-label={`Открыть ${getDepositName(item)}`}>
-              <span><strong>№ {item.code}</strong><small>v{item.version} · {new Date(item.updatedAt).toLocaleDateString('ru-RU')}</small></span>
-              <span><strong>{item.nameRu}</strong><small>{item.nameKk} · {item.nameEn}</small></span>
-              <span>{item.objectType === 'custom' ? item.customType : objectTypeLabels[item.objectType]}</span>
-              <span><strong>{item.coordinateSystem || 'Не указана'}</strong><small>{getDepositDescription(item) || 'Описание не задано'}</small></span>
-              <span><Badge tone={item.isHidden ? 'neutral' : 'success'}>{item.isHidden ? 'Скрыто' : 'Используется'}</Badge></span>
-            </button>
-            <div className="geobase-table__actions">
-              <Button size="sm" variant={current ? 'secondary' : 'quiet'} disabled={current || currentDepositMutation.isPending} onClick={() => currentDepositMutation.mutate(item.id)} aria-label={`Выбрать ${item.nameRu} текущим`}><CheckCircle2 size={14} /> {current ? 'Текущее' : 'Выбрать'}</Button>
+          <dl className="geobase-deposit-card__facts">
+            <div><dt><MapPinned size={16} /> Участки</dt><dd>{sites.length}</dd></div>
+            <div><dt><Layers3 size={16} /> Залежи</dt><dd>{lensCount}</dd></div>
+            <div className="geobase-deposit-card__coordinate"><dt><Database size={16} /> Система координат</dt><dd>{item.coordinateSystem || 'Не указана'}</dd></div>
+          </dl>
+
+          <footer className="geobase-deposit-card__footer">
+            <span><CalendarDays size={15} /> Обновлено {new Date(item.updatedAt).toLocaleDateString('ru-RU')} · версия {item.version}</span>
+            <div>
+              <Button size="sm" variant={current ? 'secondary' : 'quiet'} disabled={current || currentDepositMutation.isPending || item.isHidden} onClick={() => currentDepositMutation.mutate(item.id)} aria-label={`Выбрать ${item.nameRu} текущим`}><CheckCircle2 size={14} /> {current ? 'Текущее' : 'Выбрать'}</Button>
+              <Button size="sm" variant="secondary" onClick={() => onOpenDeposit(item.id)} aria-label={`Открыть ${getDepositName(item)}`}>Открыть карточку <ArrowRight size={15} /></Button>
             </div>
-          </article>
-        }) : <div className="geobase-empty"><Database size={22} /><strong>{data.deposits.length ? 'Месторождения не найдены' : 'Реестр пока пуст'}</strong><span>{data.deposits.length ? 'Измените условия поиска или сбросьте фильтры.' : 'Создайте первое месторождение, чтобы начать наполнение БГД.'}</span></div>}
-      </div>
-
-      {filtered.length > 0 && <div className="geobase-pagination" aria-label="Пагинация реестра">
-        <span>Страница <strong>{activePage}</strong> из {totalPages}</span>
-        <label>Строк на странице <select value={pageSize} onChange={(event) => onSearchChange({ pageSize: Number(event.target.value), page: 1 })}><option value="5">5</option><option value="10">10</option><option value="20">20</option><option value="50">50</option></select></label>
-        <Button size="sm" variant="quiet" disabled={page <= 1} onClick={() => onSearchChange({ page: page - 1 })} aria-label="Предыдущая страница"><ChevronLeft size={15} /></Button>
-        <Button size="sm" variant="quiet" disabled={page >= totalPages} onClick={() => onSearchChange({ page: page + 1 })} aria-label="Следующая страница"><ChevronRight size={15} /></Button>
-      </div>}
-    </Panel>
+          </footer>
+        </article>
+      })}
+    </section> : <div className="geobase-empty geobase-empty--cards"><Database size={24} /><strong>Месторождений пока нет</strong><span>Создайте первое месторождение, чтобы начать наполнение БГД.</span></div>}
 
     {createOpen && <CreateDepositDialog
       nextCode={nextCode}
@@ -336,10 +257,6 @@ export function GeologyDatabaseRegistry({ search, onSearchChange, onOpenDeposit 
       onSubmit={(input) => createMutation.mutate(input)}
     />}
   </div>
-}
-
-function SortButton({ label, field, active, direction, onSort }: { label: string; field: BgdSort; active: BgdSort; direction: 'asc' | 'desc'; onSort: (field: BgdSort) => void }) {
-  return <button type="button" className={active === field ? 'is-active' : ''} onClick={() => onSort(field)}>{label}{active === field && (direction === 'asc' ? <ArrowUp size={13} /> : <ArrowDown size={13} />)}</button>
 }
 
 export function DepositEditor({ deposit, canEdit, canDelete, pending, dependencies, onSave, onDelete }: {

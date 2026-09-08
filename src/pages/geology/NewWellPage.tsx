@@ -12,12 +12,15 @@ import { PageHeader } from '../../shared/ui/PageHeader'
 import { Panel } from '../../shared/ui/Panel'
 import '../../features/geobase/geobase.css'
 import { createEmptyWellBgdForm, validateWellBgdForm } from '../../features/geobase/model/wellBgdForm'
+import type { BgdWellSection } from '../../features/geobase/model/bgdWellSection'
+import { BgdWellLogsTab } from './components/BgdWellLogsTab'
 
 const tabs = [
   { id: 'description', label: 'Описание' },
   { id: 'drilling', label: 'Проходка' },
   { id: 'development', label: 'Освоение' },
   { id: 'geology', label: 'Геология' },
+  { id: 'logs', label: 'Каротажи' },
 ] as const
 type TabId = typeof tabs[number]['id']
 
@@ -51,7 +54,7 @@ export function NewWellPage() {
   return <WellEditorPage onCancel={() => void navigate({ to: '/geology/wells' })} onSaved={(well) => void navigate({ to: '/objects/wells/$wellId', params: { wellId: well.id } })} />
 }
 
-export function WellEditorPage({ depositId, wellId, onCancel, onSaved }: { depositId?: string; wellId?: string; onCancel: () => void; onSaved: (well: Well) => void }) {
+export function WellEditorPage({ depositId, wellId, activeTab: controlledActiveTab, onTabChange, onCancel, onSaved }: { depositId?: string; wellId?: string; activeTab?: BgdWellSection; onTabChange?: (tab: BgdWellSection) => void; onCancel: () => void; onSaved: (well: Well) => void }) {
   const { persona } = useSession()
   const queryClient = useQueryClient()
   const masterQuery = useQuery({ queryKey: ['geology-master'], queryFn: fetchGeologicalMasterData })
@@ -60,10 +63,13 @@ export function WellEditorPage({ depositId, wellId, onCancel, onSaved }: { depos
   const wellQuery = useQuery({ queryKey: ['well', wellId], queryFn: () => fetchWell(wellId!), enabled: Boolean(wellId) })
   const resolvedDepositId = depositId ?? preferencesQuery.data?.currentDepositId ?? 'DEP-SARYTAU'
   const [form, setForm] = useState<CreateWellInput>(() => createEmptyWellBgdForm(resolvedDepositId))
-  const [activeTab, setActiveTab] = useState<TabId>('description')
+  const [internalActiveTab, setInternalActiveTab] = useState<TabId>('description')
   const [errors, setErrors] = useState<string[]>([])
   const initialized = useRef('')
+  const tabListRef = useRef<HTMLElement>(null)
   const editing = Boolean(wellId)
+  const activeTab = controlledActiveTab ?? internalActiveTab
+  const setActiveTab = (tab: TabId) => onTabChange ? onTabChange(tab) : setInternalActiveTab(tab)
 
   useEffect(() => {
     const key = wellId ? `edit:${wellId}:${wellQuery.data?.version ?? ''}` : `new:${resolvedDepositId}`
@@ -79,8 +85,12 @@ export function WellEditorPage({ depositId, wellId, onCancel, onSaved }: { depos
   const canEditAll = hasPermission(persona, 'geology.bgd.well.update-all')
   const canEditTechnology = hasPermission(persona, 'geology.bgd.well.update-technology')
   const canEditLoggingDepth = hasPermission(persona, 'geology.bgd.well.update-logging-depth')
+  const canManageLogs = hasPermission(persona, 'geology.bgd.well.manage-logs')
   const canSave = editing ? canEditAll || canEditTechnology || canEditLoggingDepth : canCreate
   const pending = masterQuery.isLoading || wellsQuery.isLoading || wellQuery.isLoading
+  useEffect(() => {
+    if (!pending) tabListRef.current?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [activeTab, pending])
   const mutation = useMutation({
     mutationFn: async () => {
       const validationErrors = validateWellBgdForm(form, wellsQuery.data ?? [], wellId)
@@ -126,16 +136,17 @@ export function WellEditorPage({ depositId, wellId, onCancel, onSaved }: { depos
   return <div className="page-stack geobase-page bgd-well-page" data-geology-tour="bgd-well-editor">
     <PageHeader eyebrow="База геологических данных · Скважины" title={editing ? `Скважина ${form.code}` : 'Создание скважины'} description={editing ? `Карточка месторождения ${currentDeposit?.nameRu ?? '—'} · версия ${wellQuery.data?.version ?? 1}` : 'Введите общие сведения, геометрию, паспорт, проходку, освоение и геологические условия.'} meta={<Badge tone={form.status === 'Работает' ? 'success' : form.status === 'Отключена' ? 'neutral' : 'warning'} dot>{form.status}</Badge>} actions={<Button variant="secondary" onClick={onCancel}><ArrowLeft size={16} /> К месторождению</Button>} />
     {!canSave && <div className="form-alert"><ShieldCheck size={17} /><span>Карточка открыта только для чтения. Доступные поля определяются назначенными правами.</span></div>}
-    {editing && !canEditAll && canSave && <div className="form-alert"><ShieldCheck size={17} /><span>{canEditTechnology ? 'Доступно изменение типа, состояния и показателей освоения. Остальные поля — только чтение.' : 'Доступно изменение глубины по каротажу. Остальные поля — только чтение.'}</span></div>}
+    {editing && !canEditAll && canSave && <div className="form-alert"><ShieldCheck size={17} /><span>{canEditTechnology ? 'Доступно изменение типа, состояния и показателей освоения. Остальные поля — только чтение.' : activeTab === 'logs' && canManageLogs ? 'Доступно управление каротажами этой скважины. Паспортные и геологические поля — только чтение.' : 'Доступно изменение глубины по каротажу. Остальные поля — только чтение.'}</span></div>}
     {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span><strong>Проверьте форму</strong>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}
-    <nav className="bgd-well-tabs" aria-label="Разделы карточки скважины">{tabs.map((tab) => <button type="button" key={tab.id} className={activeTab === tab.id ? 'is-active' : ''} onClick={() => setActiveTab(tab.id)}>{tab.label}</button>)}</nav>
+    <nav ref={tabListRef} className="bgd-well-tabs" role="tablist" aria-label="Разделы карточки скважины">{tabs.map((tab) => <button type="button" role="tab" aria-selected={activeTab === tab.id} key={tab.id} className={activeTab === tab.id ? 'is-active' : ''} onClick={() => setActiveTab(tab.id)}>{tab.label}</button>)}</nav>
 
     {activeTab === 'description' && <DescriptionTab form={form} master={master} currentDeposit={currentDeposit} lenses={lenses} disabled={generalDisabled} technologyDisabled={technologyDisabled} setFormField={setFormField} setBgd={setBgd} setGeometry={setGeometry} setPassport={setPassport} calculateBottom={calculateBottom} />}
     {activeTab === 'drilling' && <DrillingTab bgd={bgd} disabled={generalDisabled} loggingDisabled={loggingDisabled} setDrilling={setDrilling} />}
     {activeTab === 'development' && <DevelopmentTab bgd={bgd} disabled={technologyDisabled} setDevelopment={setDevelopment} />}
     {activeTab === 'geology' && <GeologyTab bgd={bgd} disabled={generalDisabled} setGeology={setGeology} />}
+    {activeTab === 'logs' && (wellQuery.data ? <BgdWellLogsTab well={wellQuery.data} canEdit={canEditAll || canManageLogs} /> : <Panel title="Каротажи" description="Каротажные исследования связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся добавление, импорт и просмотр каротажей.</span></div></Panel>)}
 
-    <footer className="bgd-well-actions"><Button variant="secondary" onClick={onCancel}>Отмена</Button><span>{editing ? 'Изменения создадут новую версию и запись аудита.' : 'После сохранения скважина появится в карточке месторождения.'}</span><Button disabled={!canSave || mutation.isPending} onClick={() => { setErrors([]); mutation.mutate() }}><Save size={16} /> {mutation.isPending ? 'Сохраняем…' : editing ? 'Сохранить изменения' : 'Создать скважину'}</Button></footer>
+    {(!editing || activeTab !== 'logs') && <footer className="bgd-well-actions"><Button variant="secondary" onClick={onCancel}>Отмена</Button><span>{editing ? 'Изменения создадут новую версию и запись аудита.' : 'После сохранения скважина появится в карточке месторождения.'}</span><Button disabled={!canSave || mutation.isPending} onClick={() => { setErrors([]); mutation.mutate() }}><Save size={16} /> {mutation.isPending ? 'Сохраняем…' : editing ? 'Сохранить изменения' : 'Создать скважину'}</Button></footer>}
     <datalist id="bgd-well-people">{people.map((person) => <option key={person} value={person} />)}</datalist>
   </div>
 }

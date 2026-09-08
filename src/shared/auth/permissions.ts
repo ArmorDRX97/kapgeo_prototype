@@ -15,14 +15,15 @@ export type Permission =
   | 'geology.bgd.well.update-all'
   | 'geology.bgd.well.update-technology'
   | 'geology.bgd.well.update-logging-depth'
+  | 'geology.bgd.well.manage-logs'
   | 'technology.view'
   | 'modeling.view'
   | 'analytics.view'
   | 'administration.view'
 
 const rolePermissions: Record<RoleId, Permission[]> = {
-  R1: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'geology.bgd.create', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.well.create', 'geology.bgd.well.update-all', 'modeling.view', 'analytics.view'],
-  R2: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'geology.bgd.well.update-logging-depth', 'technology.view'],
+  R1: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'geology.bgd.create', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.well.create', 'geology.bgd.well.update-all', 'geology.bgd.well.manage-logs', 'modeling.view', 'analytics.view'],
+  R2: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'geology.bgd.well.update-logging-depth', 'geology.bgd.well.manage-logs', 'technology.view'],
   R3: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'modeling.view'],
   R4: ['home.view', 'work.view', 'geology.view', 'modeling.view', 'analytics.view'],
   R5: ['home.view', 'work.view', 'modeling.view', 'analytics.view'],
@@ -33,7 +34,7 @@ const rolePermissions: Record<RoleId, Permission[]> = {
   R10: ['home.view', 'work.view', 'technology.view'],
   R11: ['home.view', 'work.view', 'geology.view', 'technology.view', 'modeling.view', 'analytics.view'],
   R12: ['home.view', 'work.view', 'geology.view', 'geology.well-master.review', 'geology.well-master.publish', 'geology.bgd.audit', 'technology.view', 'modeling.view', 'analytics.view'],
-  R13: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'geology.well-master.review', 'geology.well-master.publish', 'geology.bgd.create', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.audit', 'geology.bgd.well.create', 'geology.bgd.well.update-all', 'technology.view', 'modeling.view', 'analytics.view', 'administration.view'],
+  R13: ['home.view', 'work.view', 'geology.view', 'geology.well-master.edit', 'geology.well-master.review', 'geology.well-master.publish', 'geology.bgd.create', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.audit', 'geology.bgd.well.create', 'geology.bgd.well.update-all', 'geology.bgd.well.manage-logs', 'technology.view', 'modeling.view', 'analytics.view', 'administration.view'],
   R14: ['home.view', 'work.view', 'geology.view', 'geology.bgd.audit', 'technology.view', 'administration.view'],
 }
 

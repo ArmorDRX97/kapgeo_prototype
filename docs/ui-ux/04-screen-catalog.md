@@ -11,7 +11,7 @@
 
 ### Реализованный геологический срез и детальный scope на 20.08.2026
 
-- `GEO-BGD-01/02/03` — `/geology/bgd`, `/geology/bgd/:depositId` и вложенные маршруты скважин: сохраняемый реестр, карточка CRUD месторождения и создание/редактирование скважины в его контексте;
+- `GEO-BGD-01/02/03` — `/geology/bgd`, `/geology/bgd/:depositId` и вложенные маршруты скважин: компактная витрина месторождений, карточка CRUD и создание/редактирование скважины в её контексте;
 - `GEO-01`, `GEO-03`, `GEO-04` — кликабельны и связаны общим состоянием фильтра через URL;
 - `GEO-02` — `/geology/master`: сохраняемые synthetic месторождения, участки, залежи и effective-dated кондиции;
 - `GEO-05` — функциональный wizard, создающий synthetic draft с принадлежностью и spatial/duplicate check;
@@ -80,9 +80,9 @@
 |---|---|---|---|---|
 | GEO-00 | Методический центр прототипа: scope, formulas, definitions, templates и volume profiles | Page/Workspace | P0 | `/geology/methodology` |
 | GEO-01 | Обзор модуля | Page | P0 | `/geology` |
-| GEO-BGD-01 | База геологических данных: реестр месторождений | Page | P0 | `/geology/bgd` |
-| GEO-BGD-02 | Карточка месторождения: просмотр, изменение, видимость, кондиционные лимиты по участкам и безопасное удаление | Page/Workspace | P0 | `/geology/bgd/:depositId` |
-| GEO-BGD-03 | Создание и редактирование скважины БГД: описание, геометрия, документация, паспорт, проходка, освоение и геология | Page/Workspace | P0 | `/geology/bgd/:depositId/wells/new`, `/geology/bgd/:depositId/wells/:wellId` |
+| GEO-BGD-01 | База геологических данных: витрина крупных карточек месторождений | Page | P0 | `/geology/bgd` |
+| GEO-BGD-02 | Карточка месторождения: URL-вкладки основных сведений, участков и залежей, кондиционных лимитов, скважин, редактирования и permission-based аудита | Page/Workspace | P0 | `/geology/bgd/:depositId?section=...` |
+| GEO-BGD-03 | Создание и редактирование скважины БГД: описание, геометрия, документация, паспорт, проходка, освоение, геология и browser-workspace каротажей | Page/Workspace | P0 | `/geology/bgd/:depositId/wells/new`, `/geology/bgd/:depositId/wells/:wellId?tab=logs` |
 | GEO-02 | Месторождения, залежи, участки и кондиции | Page/Workspace | P0 | `/geology/master` |
 | GEO-03 | Карта скважин и объектов | Workspace | P0 | `/geology/map` |
 | GEO-04 | Реестр скважин | Page | P0 | `/geology/wells` |
