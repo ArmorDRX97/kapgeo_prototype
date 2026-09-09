@@ -82,7 +82,7 @@
 | GEO-01 | Обзор модуля | Page | P0 | `/geology` |
 | GEO-BGD-01 | База геологических данных: витрина крупных карточек месторождений | Page | P0 | `/geology/bgd` |
 | GEO-BGD-02 | Карточка месторождения: URL-вкладки основных сведений, участков и залежей, кондиционных лимитов, скважин, редактирования и permission-based аудита | Page/Workspace | P0 | `/geology/bgd/:depositId?section=...` |
-| GEO-BGD-03 | Создание и редактирование скважины БГД: описание, геометрия, документация, паспорт, проходка, освоение, геология и browser-workspace каротажей | Page/Workspace | P0 | `/geology/bgd/:depositId/wells/new`, `/geology/bgd/:depositId/wells/:wellId?tab=logs` |
+| GEO-BGD-03 | Создание и редактирование скважины БГД: описание, геометрия, документация, паспорт, проходка, освоение, геология, каротажи, керновые рейсы с вложенным промером и керновые пробы | Page/Workspace | P0 | `/geology/bgd/:depositId/wells/new`, `/geology/bgd/:depositId/wells/:wellId?tab=...` |
 | GEO-02 | Месторождения, залежи, участки и кондиции | Page/Workspace | P0 | `/geology/master` |
 | GEO-03 | Карта скважин и объектов | Workspace | P0 | `/geology/map` |
 | GEO-04 | Реестр скважин | Page | P0 | `/geology/wells` |

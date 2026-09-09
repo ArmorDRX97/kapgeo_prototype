@@ -32,11 +32,13 @@ import type { ReserveProjectWorkspace } from '../entities/reserve-project/model/
 import type { GeologicalModelWorkspace } from '../entities/geological-model/model/types'
 import type { DgmWorkspace } from '../entities/dgm/model/types'
 import type { WellTrajectoryWorkspace } from '../entities/well-trajectory/model/types'
+import type { WellCoreWorkspace } from '../entities/well-core/model/types'
 import type { ConditionSet, CreateDepositInput, Deposit, GeologicalLens, GeologicalMasterData, GeologicalSite, UpdateDepositPatch } from '../entities/geology-master/model/types'
 import type { WellAssignment, WellMasterAggregateData, WellMasterAggregateKind, WellMasterWorkspace } from '../entities/well-master/model/types'
 import type { AuditEvent } from '../shared/audit'
 import { demoGeologyTourRepository } from './demo/geologyTourRepository'
 import type { GeologyTourProgress } from '../entities/geology-tour/model/types'
+import { demoWellCoreRepository } from './demo/wellCoreRepository'
 
 const wait = (duration = 280) => new Promise((resolve) => window.setTimeout(resolve, duration))
 
@@ -112,6 +114,8 @@ export async function fetchWellTechnicalData(wellId: string) {
 }
 
 export async function fetchWellTrajectoryWorkspace(wellId: string) { const well = await demoWellDataRepository.getWell(wellId); await wait(160); return demoWellTrajectoryRepository.get(well) }
+export async function fetchWellCoreWorkspace(wellId: string) { const well = await demoWellDataRepository.getWell(wellId); await wait(160); return demoWellCoreRepository.get(well) }
+export async function saveWellCoreWorkspace(wellId: string, current: WellCoreWorkspace, next: WellCoreWorkspace, eventType: string) { const well = await demoWellDataRepository.getWell(wellId); await wait(260); return demoWellCoreRepository.save(well, current, next, eventType) }
 export async function selectWellTrajectorySurvey(wellId: string, current: WellTrajectoryWorkspace, surveyId: string) { const well = await demoWellDataRepository.getWell(wellId); await wait(240); return demoWellTrajectoryRepository.selectSurvey(well, current, surveyId) }
 export async function importWellTrajectoryFixture(wellId: string, current: WellTrajectoryWorkspace) { const well = await demoWellDataRepository.getWell(wellId); await wait(320); return demoWellTrajectoryRepository.importFixture(well, current) }
 export async function saveWellTrajectoryWorkspace(wellId: string, current: WellTrajectoryWorkspace, next: WellTrajectoryWorkspace, eventType: string) { const well = await demoWellDataRepository.getWell(wellId); await wait(280); return demoWellTrajectoryRepository.save(well, current, next, eventType) }
