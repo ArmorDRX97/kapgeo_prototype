@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Calculator, CircleAlert, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { CreateWellInput, UpdateWellInput, Well, WellBgdData, WellPurpose, WellType } from '../../entities/well/model/types'
@@ -54,11 +53,6 @@ function numberValue(value: string): number | null {
   if (value.trim() === '') return null
   const result = Number(value)
   return Number.isFinite(result) ? result : null
-}
-
-export function NewWellPage() {
-  const navigate = useNavigate()
-  return <WellEditorPage onCancel={() => void navigate({ to: '/geology/wells' })} onSaved={(well) => void navigate({ to: '/objects/wells/$wellId', params: { wellId: well.id } })} />
 }
 
 export function WellEditorPage({ depositId, wellId, activeTab: controlledActiveTab, onTabChange, onCancel, onSaved }: { depositId?: string; wellId?: string; activeTab?: BgdWellSection; onTabChange?: (tab: BgdWellSection) => void; onCancel: () => void; onSaved: (well: Well) => void }) {
@@ -144,7 +138,7 @@ export function WellEditorPage({ depositId, wellId, activeTab: controlledActiveT
   if (pending) return <div className="page-loading"><span /><p>{editing ? 'Открываем карточку скважины…' : 'Подготавливаем форму создания…'}</p></div>
   if (editing && wellQuery.error) return <div className="page-stack"><PageHeader eyebrow="База геологических данных" title="Скважина не найдена" description={wellQuery.error.message} actions={<Button variant="secondary" onClick={onCancel}><ArrowLeft size={16} /> Назад</Button>} /></div>
 
-  return <div className="page-stack geobase-page bgd-well-page" data-geology-tour="bgd-well-editor">
+  return <div className="page-stack geobase-page bgd-well-page">
     <PageHeader eyebrow="База геологических данных · Скважины" title={editing ? `Скважина ${form.code}` : 'Создание скважины'} description={editing ? `Карточка месторождения ${currentDeposit?.nameRu ?? '—'} · версия ${wellQuery.data?.version ?? 1}` : 'Введите общие сведения, геометрию, паспорт, проходку, освоение и геологические условия.'} meta={<Badge tone={form.status === 'Работает' ? 'success' : form.status === 'Отключена' ? 'neutral' : 'warning'} dot>{form.status}</Badge>} actions={<Button variant="secondary" onClick={onCancel}><ArrowLeft size={16} /> К месторождению</Button>} />
     {!canSave && <div className="form-alert"><ShieldCheck size={17} /><span>Карточка открыта только для чтения. Доступные поля определяются назначенными правами.</span></div>}
     {editing && !canEditAll && canSave && <div className="form-alert"><ShieldCheck size={17} /><span>{activeTab === 'lithology' ? 'Литология доступна для просмотра. Изменение интервалов требует права полного редактирования скважины.' : activeTab === 'ore-intervals' && canManageGeophysicalOreIntervals ? 'Доступно управление выделениями по гамма-каротажу и КНД. Керн и паспортные источники — только чтение.' : canEditTechnology ? 'Доступно изменение типа, состояния и показателей освоения. Остальные поля — только чтение.' : activeTab === 'logs' && canManageLogs ? 'Доступно управление каротажами этой скважины. Паспортные и геологические поля — только чтение.' : activeTab === 'core-runs' && canManageCoreMeasurements ? 'Доступно управление промером внутри выбранного рейса. Сами рейсы и пробы — только чтение.' : 'Доступно изменение глубины по каротажу. Остальные поля — только чтение.'}</span></div>}

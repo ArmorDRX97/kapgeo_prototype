@@ -5,32 +5,15 @@ import { DemoPreferencesRepository } from './demoPreferencesRepository'
 describe('DemoPreferencesRepository', () => {
   afterEach(async () => { await demoDatabase.reset() })
 
-  it('persists the geology map workspace layout and reset restores deterministic defaults', async () => {
-    const repository = new DemoPreferencesRepository()
-
-    expect(await repository.getGeologyMapWorkspace()).toMatchObject({ labels: true, contours: true, quality: false })
-    await repository.saveGeologyMapWorkspace({ labels: false, contours: true, quality: true })
-
-    expect(await repository.getGeologyMapWorkspace()).toMatchObject({ labels: false, contours: true, quality: true })
-    await demoDatabase.reset()
-    expect(await repository.getGeologyMapWorkspace()).toMatchObject({ labels: true, contours: true, quality: false })
-  })
-  it('persists the well registry grouping and saved views', async () => {
-    const repository = new DemoPreferencesRepository()
-    await repository.saveWellRegistry({ grouping: 'status', savedViews: [{ id: 'critical', label: 'Критичные', search: { status: 'Требует внимания' } }] })
-
-    expect(await repository.getWellRegistry()).toMatchObject({ grouping: 'status', savedViews: [{ id: 'critical' }] })
-    await demoDatabase.reset()
-    expect(await repository.getWellRegistry()).toMatchObject({ grouping: 'site' })
-  })
-  it('persists locale, accessibility and browser QA preferences', async () => {
+  it('persists BGD locale, accessibility and current deposit preferences', async () => {
     const repository = new DemoPreferencesRepository()
     const initial = await repository.getPlatform()
-    expect(initial.minimumMode).toBe(false)
-    await repository.savePlatform({ ...initial, locale: 'kk', contrast: true, reducedMotion: true, performanceProfile: 'large', browserWidths: [390, 1440], helpSeen: true, minimumMode: true, currentDepositId: 'DEP-SEVERNOE' })
+    expect(initial).toMatchObject({ locale: 'ru', contrast: false, currentDepositId: 'DEP-SARYTAU' })
 
-    expect(await repository.getPlatform()).toMatchObject({ locale: 'kk', contrast: true, reducedMotion: true, performanceProfile: 'large', browserWidths: [390, 1440], minimumMode: true, currentDepositId: 'DEP-SEVERNOE' })
+    await repository.savePlatform({ locale: 'kk', density: 'compact', contrast: true, reducedMotion: true, currentDepositId: 'DEP-SEVERNOE' })
+    expect(await repository.getPlatform()).toMatchObject({ locale: 'kk', density: 'compact', contrast: true, reducedMotion: true, currentDepositId: 'DEP-SEVERNOE' })
+
     await demoDatabase.reset()
-    expect(await repository.getPlatform()).toMatchObject({ locale: 'ru', contrast: false, browserWidths: [], minimumMode: false, currentDepositId: 'DEP-SARYTAU' })
-  })})
-
+    expect(await repository.getPlatform()).toMatchObject({ locale: 'ru', contrast: false, currentDepositId: 'DEP-SARYTAU' })
+  })
+})

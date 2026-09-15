@@ -4,13 +4,11 @@ import type { SessionState, UserPersona } from './types'
 export type SignInCredentials = {
   login: string
   password: string
-  personaId?: string
 }
 
 export type SessionContextValue = SessionState & {
   signIn: (credentials: SignInCredentials) => UserPersona
   signOut: () => void
-  switchPersona: (personaId: string) => void
 }
 
 export const SessionContext = createContext<SessionContextValue | null>(null)

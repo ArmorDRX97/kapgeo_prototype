@@ -134,7 +134,7 @@ export function BgdWellLogsTab({ well, canEdit }: { well: Well; canEdit: boolean
     })
   }
 
-  return <div className="bgd-well-stack bgd-logs-workspace" data-geology-tour="bgd-well-logs">
+  return <div className="bgd-well-stack bgd-logs-workspace">
     {error && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span><strong>Не удалось обновить каротажи</strong>{String(error.message ?? error).split('\n').map((line) => <small key={line}>{line}</small>)}</span></div>}
     {notice && <div className="success-message" role="status"><CheckCircle2 size={17} /><span><strong>Каротажи обновлены</strong>{notice}</span></div>}
 

@@ -109,7 +109,7 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics }
     setErrors([])
   }
 
-  return <div className="bgd-well-stack bgd-ore-workspace" data-geology-tour="bgd-well-ore-intervals">
+  return <div className="bgd-well-stack bgd-ore-workspace">
     {saved && <div className="success-banner"><Check size={17} /><span><strong>Рудные интервалы сохранены</strong>Создана новая локальная demo-версия.</span><button type="button" onClick={() => setSaved(false)}>Закрыть</button></div>}
     <Panel title="Контекст выделения" description="Интервалы разных источников и элементов ведутся раздельно">
       <div className="bgd-ore-context">

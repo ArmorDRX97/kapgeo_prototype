@@ -100,7 +100,7 @@ export function BgdWellCoreRunsTab({ well, canEditRuns, canEditMeasurements }: {
     save.mutate({ current: workspace, next: { ...workspace, runs }, eventType: 'core.measurement.deleted' }, { onSuccess: () => setNotice('Промер керна удалён.') })
   }
 
-  return <div className="bgd-well-stack bgd-core-workspace" data-geology-tour="bgd-core-runs">
+  return <div className="bgd-well-stack bgd-core-workspace">
     <WorkspaceMessage error={requestError} notice={notice} />
     {!canEditRuns && !canEditMeasurements && <div className="form-alert"><ShieldCheck size={17} /><span>Раздел открыт только для чтения.</span></div>}
     {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}
@@ -212,7 +212,7 @@ export function BgdWellCoreSamplesTab({ well, canEdit }: { well: Well; canEdit: 
     save.mutate({ current: workspace, next: { ...workspace, samples: workspace.samples.filter((item) => item.id !== sample.id) }, eventType: 'core.sample.deleted' }, { onSuccess: (next) => { setSelectedId(next.samples[0]?.id ?? ''); setNotice('Проба, её интервалы и результаты удалены.') } })
   }
 
-  return <div className="bgd-well-stack bgd-core-workspace" data-geology-tour="bgd-core-samples">
+  return <div className="bgd-well-stack bgd-core-workspace">
     <WorkspaceMessage error={requestError} notice={notice} />
     {!canEdit && <div className="form-alert"><ShieldCheck size={17} /><span>Раздел открыт только для чтения.</span></div>}
     {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}

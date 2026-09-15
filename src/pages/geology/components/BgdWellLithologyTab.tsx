@@ -135,7 +135,7 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace }: { well: Well; c
     setSelectedId(workspace.tracks.find((item) => item.kind === nextKind)?.intervals[0]?.id ?? '')
   }
 
-  return <div className="bgd-well-stack bgd-lithology-workspace" data-geology-tour="bgd-well-lithology">
+  return <div className="bgd-well-stack bgd-lithology-workspace">
     {saved && <div className="success-banner"><Check size={17} /><span><strong>Литология сохранена</strong>Создана новая локальная версия демо-колонки.</span><button type="button" onClick={() => setSaved(false)}>Закрыть</button></div>}
     {!canEdit && <div className="form-alert"><Layers3 size={17} /><span>Литологические колонки доступны только для просмотра.</span></div>}
     <Panel title="Вид литологии" description="Исходные колонки и сводный результат хранятся отдельно">

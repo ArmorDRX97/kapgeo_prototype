@@ -171,10 +171,6 @@ export function GeologyDatabaseRegistry({ onOpenDeposit }: {
         density: preferences.density,
         contrast: preferences.contrast,
         reducedMotion: preferences.reducedMotion,
-        performanceProfile: preferences.performanceProfile,
-        browserWidths: preferences.browserWidths,
-        helpSeen: preferences.helpSeen,
-        minimumMode: preferences.minimumMode,
         currentDepositId: depositId,
       })
     },
@@ -199,7 +195,7 @@ export function GeologyDatabaseRegistry({ onOpenDeposit }: {
       eyebrow="Геологический модуль"
       title="База геологических данных"
       description="Месторождения — корневые объекты для участков, залежей, скважин и связанных геологических данных."
-      actions={<Button className="geobase-create-action" data-geology-tour="bgd-create" disabled={!canCreate} onClick={() => setCreateOpen(true)}>
+      actions={<Button className="geobase-create-action" disabled={!canCreate} onClick={() => setCreateOpen(true)}>
         <span className="geobase-create-action__icon"><Plus size={22} /></span>
         <span className="geobase-create-action__copy"><strong>Создать месторождение</strong><small>Добавить новый корневой объект</small></span>
         <ArrowRight className="geobase-create-action__arrow" size={19} />
@@ -209,7 +205,7 @@ export function GeologyDatabaseRegistry({ onOpenDeposit }: {
     {!canCreate && <div className="form-alert"><ShieldCheck size={17} /><span>Список открыт только для чтения. Создание доступно геологу с назначенным разрешением или администратору.</span></div>}
     {currentError && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span>{currentError.message}</span></div>}
 
-    {orderedDeposits.length ? <section className="geobase-deposit-grid" data-geology-tour="bgd-registry" aria-label="Месторождения">
+    {orderedDeposits.length ? <section className="geobase-deposit-grid" aria-label="Месторождения">
       {orderedDeposits.map((item) => {
         const current = currentDepositId === item.id
         const sites = data.sites.filter((site) => site.depositId === item.id)
@@ -279,7 +275,6 @@ export function DepositEditor({ deposit, canEdit, canDelete, pending, dependenci
     title={`Месторождение № ${deposit.code} · ${deposit.nameRu}`}
     description={`Код доступен только для чтения · версия ${deposit.version} · изменил(а) ${deposit.updatedBy}`}
     action={<Badge tone={deposit.isHidden ? 'neutral' : 'success'}>{deposit.isHidden ? 'Скрыто' : 'Используется'}</Badge>}
-    data-geology-tour="bgd-editor"
   >
     <DepositForm form={form} onChange={setForm} disabled={readOnly || pending} immutable />
     <div className="geobase-dependencies">

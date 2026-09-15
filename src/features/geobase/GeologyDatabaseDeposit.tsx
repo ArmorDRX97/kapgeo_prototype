@@ -139,10 +139,6 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
         density: preferences.density,
         contrast: preferences.contrast,
         reducedMotion: preferences.reducedMotion,
-        performanceProfile: preferences.performanceProfile,
-        browserWidths: preferences.browserWidths,
-        helpSeen: preferences.helpSeen,
-        minimumMode: preferences.minimumMode,
         currentDepositId: depositId,
       })
     },
@@ -166,7 +162,7 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
     ?? createSiteMutation.error
 
   if (!deposit || !data) {
-    return <div className="page-stack geobase-page" data-geology-tour="bgd-detail">
+    return <div className="page-stack geobase-page">
       <PageHeader
         eyebrow="База геологических данных"
         title="Месторождение не найдено"
@@ -225,7 +221,7 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
     onSectionChange(nextSection)
   }
 
-  return <div className="page-stack geobase-page" data-geology-tour="bgd-detail">
+  return <div className="page-stack geobase-page">
     <PageHeader
       eyebrow="База геологических данных"
       title={deposit.nameRu}
@@ -238,7 +234,7 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
     {currentError && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span>{versionConflict ? 'Карточка уже изменена в другой вкладке. Обновите данные перед повторным сохранением.' : currentError.message}</span>{versionConflict && <Button size="sm" variant="secondary" onClick={() => void refresh()}><RefreshCw size={14} /> Обновить</Button>}</div>}
     {notice && <div className="success-message" role="status"><ShieldCheck size={17} /><span><strong>БГД обновлена</strong>{notice}</span></div>}
 
-    <nav className="geobase-detail-tabs" role="tablist" aria-label="Разделы карточки месторождения" data-geology-tour="bgd-tabs">
+    <nav className="geobase-detail-tabs" role="tablist" aria-label="Разделы карточки месторождения">
       {sectionTabs.map((tab) => <DepositSectionTabButton
         key={tab.id}
         tab={tab}

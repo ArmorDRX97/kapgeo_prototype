@@ -2,10 +2,6 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { demoDatabase, wellRecord } from './demoDatabase'
 import { DemoWellDataRepository } from './wellDataRepository'
 import { getSeedWells } from '../data/wells'
-import { getTechnicalData } from '../data/wellTechnical'
-import { getSamples } from '../data/wellSamples'
-import { getWellLogs } from '../data/wellLogs'
-import { getGeologyData } from '../data/wellGeology'
 
 describe('DemoWellDataRepository full well fixture', () => {
   afterEach(async () => { await demoDatabase.reset() })
@@ -30,14 +26,6 @@ describe('DemoWellDataRepository full well fixture', () => {
       documentEndDate: '2026-08-10T09:45',
     })
     expect(well.site).toBe('Северный')
-    expect(getTechnicalData(well)).toMatchObject({
-      construction: expect.arrayContaining([expect.objectContaining({ element: 'Фильтровая колонна' })]),
-      drillingRuns: expect.arrayContaining([expect.objectContaining({ method: 'Колонковое' })]),
-      coreBoxes: expect.arrayContaining([expect.objectContaining({ number: 'BX-118' })]),
-    })
-    expect(getSamples(well).length).toBeGreaterThan(0)
-    expect(getWellLogs(well.id).length).toBeGreaterThan(0)
-    expect(getGeologyData(well).intervals).toHaveLength(5)
   })
 
   it('backfills an existing legacy full-well record without requiring reset', async () => {

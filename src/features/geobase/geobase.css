@@ -413,7 +413,6 @@
 .bgd-ore-members small { color: var(--text-tertiary); font-size: var(--font-size-xs); }
 
 @media (min-width: 701px) {
-  .app-frame:not(.app-frame--minimum) .bgd-well-actions { margin-right: 132px; }
 }
 
 @media (max-width: 1050px) {

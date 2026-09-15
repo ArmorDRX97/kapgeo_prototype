@@ -1,84 +1,34 @@
 import { demoDatabase } from './demoDatabase'
-import type { DemoLocale } from '../../entities/geology-publication/model/types'
 
-export type GeologyMapWorkspacePreferences = {
-  id: 'workspace:geology-map'
-  labels: boolean
-  contours: boolean
-  quality: boolean
-  updatedAt: string
-}
-
-export type WellRegistryPreferences = {
-  id: 'workspace:well-registry'
-  grouping: 'site' | 'status'
-  savedViews: Array<{ id: string; label: string; search: Record<string, string> }>
-  updatedAt: string
-}
+export type DemoLocale = 'ru' | 'kk' | 'en'
 
 export type PlatformPreferences = {
-  id: 'platform:readiness'
+  id: 'platform:bgd'
   locale: DemoLocale
   density: 'comfortable' | 'compact'
   contrast: boolean
   reducedMotion: boolean
-  performanceProfile: 'small' | 'medium' | 'large'
-  browserWidths: Array<390 | 1024 | 1440>
-  helpSeen: boolean
-  minimumMode: boolean
   currentDepositId?: string
   updatedAt: string
 }
 
-const defaultMapPreferences: GeologyMapWorkspacePreferences = {
-  id: 'workspace:geology-map', labels: true, contours: true, quality: false, updatedAt: '2026-08-24T00:00:00.000Z',
-}
-const defaultWellRegistryPreferences: WellRegistryPreferences = {
-  id: 'workspace:well-registry', grouping: 'site', updatedAt: '2026-08-24T00:00:00.000Z',
-  savedViews: [
-    { id: 'all', label: 'Все скважины', search: {} },
-    { id: 'attention', label: 'Требуют внимания', search: { status: 'Требует внимания' } },
-    { id: 'qc', label: 'Ожидают QC', search: { status: 'На проверке' } },
-    { id: 'quality', label: 'Проблемы качества', search: { quality: 'Есть проблемы' } },
-  ],
-}
 const defaultPlatformPreferences: PlatformPreferences = {
-  id: 'platform:readiness', locale: 'ru', density: 'comfortable', contrast: false, reducedMotion: false,
-  performanceProfile: 'small', browserWidths: [], helpSeen: false, minimumMode: false, currentDepositId: 'DEP-SARYTAU', updatedAt: '2026-08-24T00:00:00.000Z',
+  id: 'platform:bgd',
+  locale: 'ru',
+  density: 'comfortable',
+  contrast: false,
+  reducedMotion: false,
+  currentDepositId: 'DEP-SARYTAU',
+  updatedAt: '2026-09-15T00:00:00.000Z',
 }
 
 export class DemoPreferencesRepository {
-  async getGeologyMapWorkspace(): Promise<GeologyMapWorkspacePreferences> {
-    const stored = await demoDatabase.get<GeologyMapWorkspacePreferences>('preferences', defaultMapPreferences.id)
-    if (stored) return structuredClone(stored)
-    await demoDatabase.put('preferences', defaultMapPreferences)
-    return structuredClone(defaultMapPreferences)
-  }
-
-  async saveGeologyMapWorkspace(next: Omit<GeologyMapWorkspacePreferences, 'id' | 'updatedAt'>): Promise<GeologyMapWorkspacePreferences> {
-    const value: GeologyMapWorkspacePreferences = { id: defaultMapPreferences.id, ...next, updatedAt: new Date().toISOString() }
-    await demoDatabase.put('preferences', value)
-    return structuredClone(value)
-  }
-
-  async getWellRegistry(): Promise<WellRegistryPreferences> {
-    const stored = await demoDatabase.get<WellRegistryPreferences>('preferences', defaultWellRegistryPreferences.id)
-    if (stored) return structuredClone(stored)
-    await demoDatabase.put('preferences', defaultWellRegistryPreferences)
-    return structuredClone(defaultWellRegistryPreferences)
-  }
-
-  async saveWellRegistry(next: Omit<WellRegistryPreferences, 'id' | 'updatedAt'>): Promise<WellRegistryPreferences> {
-    const value: WellRegistryPreferences = { id: defaultWellRegistryPreferences.id, ...next, updatedAt: new Date().toISOString() }
-    await demoDatabase.put('preferences', value)
-    return structuredClone(value)
-  }
-
   async getPlatform(): Promise<PlatformPreferences> {
-    const stored = await demoDatabase.get<PlatformPreferences>('preferences', defaultPlatformPreferences.id)
-    if (stored) return structuredClone({ ...defaultPlatformPreferences, ...stored })
-    await demoDatabase.put('preferences', defaultPlatformPreferences)
-    return structuredClone(defaultPlatformPreferences)
+    const current = await demoDatabase.get<Partial<PlatformPreferences> & { id: string }>('preferences', defaultPlatformPreferences.id)
+    const legacy = current ?? await demoDatabase.get<Partial<PlatformPreferences> & { id: string }>('preferences', 'platform:readiness')
+    const value = { ...defaultPlatformPreferences, ...legacy, id: defaultPlatformPreferences.id }
+    if (!current) await demoDatabase.put('preferences', value)
+    return structuredClone(value)
   }
 
   async savePlatform(next: Omit<PlatformPreferences, 'id' | 'updatedAt'>): Promise<PlatformPreferences> {

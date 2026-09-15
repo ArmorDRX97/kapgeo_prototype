@@ -1,9 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
 import { type FormEvent, useState } from 'react'
 import { useSession } from '../../entities/session/model/sessionContext'
-import { fetchPlatformPreferences } from '../../repository/api'
 import { Button } from '../../shared/ui/Button'
 
 export function SignInPage() {
@@ -11,14 +9,11 @@ export function SignInPage() {
   const { signIn } = useSession()
   const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
-  const { data: preferences } = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences })
-  const minimumMode = preferences?.minimumMode ?? false
 
   const handleSignIn = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-
-    const persona = signIn({ login, password, ...(minimumMode ? { personaId: 'geo.ivanova' } : {}) })
-    void navigate({ to: minimumMode ? '/geology/bgd' : persona.homeRoute === '/geology' ? '/home' : persona.homeRoute })
+    signIn({ login, password })
+    void navigate({ to: '/geology/bgd' })
   }
 
   return (
@@ -30,20 +25,14 @@ export function SignInPage() {
         </div>
         <div className="auth-visual__content">
           <p className="auth-visual__eyebrow">Данные недр. Точные решения.</p>
-          <h1>{minimumMode ? 'База геологических данных' : 'Цифровая среда для управления недрами'}</h1>
-          <p>{minimumMode ? 'Единое пространство для месторождений, участков, залежей и истории изменений.' : 'Связываем геологию, технологию, моделирование и аналитику в одной прослеживаемой системе.'}</p>
+          <h1>База геологических данных</h1>
+          <p>Единое пространство для месторождений, участков, залежей, скважин и истории изменений.</p>
           <ul className="auth-benefits">
-            {minimumMode ? <>
-              <li><CheckCircle2 size={17} /> Единый реестр</li>
-              <li><CheckCircle2 size={17} /> История изменений</li>
-            </> : <>
-              <li><CheckCircle2 size={17} /> Единые данные</li>
-              <li><CheckCircle2 size={17} /> Контроль версий</li>
-              <li><CheckCircle2 size={17} /> Прослеживаемые решения</li>
-            </>}
+            <li><CheckCircle2 size={17} /> Единый реестр</li>
+            <li><CheckCircle2 size={17} /> История изменений</li>
           </ul>
         </div>
-        <p className="auth-visual__caption">Геология · Технология · Моделирование · Аналитика</p>
+        <p className="auth-visual__caption">Месторождения · Скважины · Геологические данные</p>
       </section>
 
       <section className="auth-form-wrap">

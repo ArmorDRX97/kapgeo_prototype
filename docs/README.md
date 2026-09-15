@@ -1,59 +1,25 @@
-# AI KAPGEO — основная документация
+# KAPGEO БГД — документация
 
-Этот файл — первая точка входа для новой сессии, разработчика или AI-агента. Повторно анализировать исходные DOCX/PDF/PPTX не требуется: выводы уже сведены в `docs/ui-ux/`.
+Основная ветка содержит только самостоятельный прототип базы геологических данных. Полный многомодульный прототип зафиксирован в ветке `archive/full-prototype-2026-09-15`; эту ветку не следует использовать для текущей разработки.
 
-## Читать в начале каждой сессии
+## Читать в начале работы
 
-1. [Продуктовая модель](./ui-ux/01-product-brief.md) — что это за система и где её границы.
-2. [Текущий статус реализации](./implementation-status.md) — что уже работает и какой следующий срез.
-3. Этот файл и корневой [`AGENTS.md`](../AGENTS.md) — порядок работы и запрет на повторное сканирование архива.
+1. [Продуктовая модель](./ui-ux/01-product-brief.md).
+2. [Текущий статус реализации](./implementation-status.md).
+3. Корневой [`AGENTS.md`](../AGENTS.md).
 
-## Читать по необходимости
+## Документы по задачам
 
-| Задача | Документы |
+| Задача | Документ |
 |---|---|
-| роли, вход, профиль, доступ | [02-roles-access.md](./ui-ux/02-roles-access.md), [общая платформа](./ui-ux/modules/01-common-platform.md) |
-| навигация и маршруты | [03-information-architecture.md](./ui-ux/03-information-architecture.md), [04-screen-catalog.md](./ui-ux/04-screen-catalog.md) |
-| бизнес-процессы и состояния | [05-cross-module-flows.md](./ui-ux/05-cross-module-flows.md) |
-| визуальный стиль и компоненты | [06-design-system.md](./ui-ux/06-design-system.md), [12-glossary-content.md](./ui-ux/12-glossary-content.md) |
-| встроенное руководство пользователей | `/help` в приложении, [структура и удаление](../src/help-center/README.md) |
+| роли и доступ | [02-roles-access.md](./ui-ux/02-roles-access.md) |
+| маршруты и экраны | [03-information-architecture.md](./ui-ux/03-information-architecture.md), [04-screen-catalog.md](./ui-ux/04-screen-catalog.md) |
+| сценарии | [05-cross-module-flows.md](./ui-ux/05-cross-module-flows.md) |
+| дизайн и терминология | [06-design-system.md](./ui-ux/06-design-system.md), [12-glossary-content.md](./ui-ux/12-glossary-content.md) |
 | React-архитектура | [07-prototype-architecture.md](./ui-ux/07-prototype-architecture.md) |
-| fake data и demo-сценарии | [08-mock-data.md](./ui-ux/08-mock-data.md) |
-| планирование и бэклог | [09-roadmap-backlog.md](./ui-ux/09-roadmap-backlog.md) |
-| приёмка и демонстрация | [10-acceptance-demo.md](./ui-ux/10-acceptance-demo.md) |
-| источники, решения и вопросы | [11-traceability-open-questions.md](./ui-ux/11-traceability-open-questions.md) |
-| геология | [02-geology.md](./ui-ux/modules/02-geology.md) |
-| глубокое расширение геологии по руководству пользователя | [индекс комплекта](./geology-functional-expansion/README.md), [gap-анализ](./geology-functional-expansion/02-current-state-gap-analysis.md), [prototype-эпики и задачник](./geology-functional-expansion/05-prototype-epics-backlog.md) |
-| технология | [03-technology.md](./ui-ux/modules/03-technology.md) |
-| моделирование | [04-modeling.md](./ui-ux/modules/04-modeling.md) |
-| аналитика | [05-analytics.md](./ui-ux/modules/05-analytics.md) |
-| администрирование | [06-administration.md](./ui-ux/modules/06-administration.md) |
+| synthetic data | [08-mock-data.md](./ui-ux/08-mock-data.md) |
+| приёмка | [10-acceptance-demo.md](./ui-ux/10-acceptance-demo.md) |
+| открытые вопросы | [11-traceability-open-questions.md](./ui-ux/11-traceability-open-questions.md) |
+| реализация БГД | [пакет проверок](./geology-functional-expansion/README.md) |
 
-Полный индекс комплекта: [docs/ui-ux/README.md](./ui-ux/README.md).
-
-## Приоритет источников
-
-1. Зафиксированные решения и требования в `docs/ui-ux/`.
-2. Для детального геологического scope — `docs/geology-functional-expansion/`, который уточняет операции, gaps, архитектуру и порядок реализации без изменения общесистемных правил.
-3. Текущий код и тесты — для фактически реализованного поведения.
-4. Журнал открытых вопросов — если решение ещё не принято.
-5. Архивные первоисточники — только точечно и только если основных документов недостаточно.
-
-## Архив
-
-`archive/` содержит тяжёлые исходники и одноразовые результаты их извлечения/рендеринга. Его нельзя включать в обычный поиск, инвентаризацию или контекст новой сессии. Правило закреплено в корневом `AGENTS.md`, `.rgignore` и вложенном `archive/AGENTS.override.md`.
-
-Если редкое обращение к первоисточнику действительно необходимо:
-
-1. сначала найти конкретный вопрос и источник в [трассировке](./ui-ux/11-traceability-open-questions.md);
-2. открыть только названный файл;
-3. перенести новый вывод в основную Markdown-документацию;
-4. снова продолжить работу только по `docs/`.
-
-## Рабочий порядок
-
-1. Выбрать один вертикальный сценарий.
-2. Проверить его экраны, роли, данные и состояния по документации.
-3. Реализовать route → UI → mock behavior → проверку.
-4. Обновить статус реализации и связанные спецификации.
-5. Не объявлять готовыми декоративные кнопки без состояния и результата.
+`archive/` не используется при обычной работе и не должен попадать в широкие поиски.
