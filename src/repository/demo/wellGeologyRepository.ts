@@ -11,15 +11,48 @@ const cloneTrack = (id: string, kind: GeologyTrack['kind'], label: string, sourc
 
 function seed(well: Well): WellGeologyWorkspace {
   const core = getGeologyData(well).intervals
-  const tracks = [cloneTrack(`TRACK-CORE-${well.id}`, 'core', 'Керн', 'Керн', core), cloneTrack(`TRACK-LOG-${well.id}`, 'log', 'ГИС', 'ГИС', core.map((item) => ({ ...item, id: `LOG-${item.id}`, source: 'ГИС' }))), cloneTrack(`TRACK-COMPOSITE-${well.id}`, 'composite', 'Composite', 'Composite', core.map((item) => ({ ...item, id: `COMP-${item.id}`, source: 'Ручное описание' }))), cloneTrack(`TRACK-STRAT-${well.id}`, 'stratigraphy', 'Стратиграфия', 'Ручное описание', core)]
+  const coreLithology = core.map((item) => ({ ...item, source: 'Керн' as const }))
+  const logBoundaries = [[0, 118], [118, 284], [284, 326], [326, 454], [454, well.depth]]
+  const compositeBoundaries = [[0, 120], [120, 282], [282, 330], [330, 452], [452, well.depth]]
+  const log = core.map((item, index) => ({ ...item, id: `LOG-${item.id}`, from: logBoundaries[index]?.[0] ?? item.from, to: logBoundaries[index]?.[1] ?? item.to, description: `Интерпретация по каротажу. ${item.description}`, source: 'ГИС' as const }))
+  const composite = core.map((item, index) => ({ ...item, id: `COMP-${item.id}`, from: compositeBoundaries[index]?.[0] ?? item.from, to: compositeBoundaries[index]?.[1] ?? item.to, description: `Согласованное сводное описание. ${item.description}`, source: 'Ручное описание' as const }))
+  const tracks = [cloneTrack(`TRACK-CORE-${well.id}`, 'core', 'По керну', 'Керн', coreLithology), cloneTrack(`TRACK-LOG-${well.id}`, 'log', 'По каротажу', 'ГИС', log), cloneTrack(`TRACK-COMPOSITE-${well.id}`, 'composite', 'Сводная', 'Composite', composite), cloneTrack(`TRACK-STRAT-${well.id}`, 'stratigraphy', 'Стратиграфия', 'Ручное описание', core)]
   const samples = getSamples(well).map((item, index) => ({ ...item, linkedIntervals: item.linkedIntervalId ? [item.linkedIntervalId] : [], depthSource: index % 2 ? 'composite' as const : 'core' as const, workflow: item.status === 'Результат получен' ? 'result' as const : item.status === 'Отправлена в лабораторию' ? 'laboratory' as const : item.status === 'Зарегистрирована' ? 'requested' as const : 'collection' as const, version: 1 }))
   const dictionaries = [{ id: 'DICT-LITH-SAND', dictionary: 'lithology' as const, code: 'SANDSTONE', labels: { ru: 'Песчаник', kz: 'Құмтас', en: 'Sandstone' }, effectiveFrom: '2026-01-01', version: 1, status: 'active' as const }, { id: 'DICT-MIN-U', dictionary: 'mineralization' as const, code: 'U-MIN', labels: { ru: 'Урановая минерализация', kz: 'Уран минералдануы', en: 'Uranium mineralization' }, effectiveFrom: '2026-01-01', version: 1, status: 'active' as const }, { id: 'DICT-COLOR-GRAY', dictionary: 'color' as const, code: 'GRAY', labels: { ru: 'Серый', kz: 'Сұр', en: 'Gray' }, effectiveFrom: '2026-01-01', version: 1, status: 'active' as const }, { id: 'DICT-STR-K2', dictionary: 'stratigraphy' as const, code: 'K2', labels: { ru: 'Верхний мел', kz: 'Жоғарғы бор', en: 'Upper Cretaceous' }, effectiveFrom: '2026-01-01', version: 1, status: 'active' as const }]
   const granulometry = samples.slice(0, 1).map((sample) => ({ id: `GRAN-${sample.id}`, sampleId: sample.id, bins: [{ sizeMm: .1, massPercent: 12 }, { sizeMm: .4, massPercent: 46 }, { sizeMm: 1.2, massPercent: 42 }], sga: 0.42, d10: .1, d60: 1.2, method: 'Synthetic SGA/d60/d10', version: 1 }))
   return { wellId: well.id, tracks, dictionaries, overrides: [], samples, labResults: getLabResults(well.id), granulometry, lims: [], version: 1, updatedAt: '2026-08-24T00:00:00.000Z' }
 }
 
+function hydrateBgdLithology(well: Well, current: WellGeologyWorkspace) {
+  const template = seed(well)
+  const coreTrack = current.tracks.find((item) => item.kind === 'core')
+  return {
+    ...current,
+    tracks: current.tracks.map((track) => {
+      const templateTrack = template.tracks.find((item) => item.kind === track.kind)
+      if (!templateTrack) return track
+      const usesLegacyBoundaries = (track.kind === 'log' || track.kind === 'composite') && track.version === 1 && track.intervals.every((interval) => {
+        const coreId = interval.id.replace(/^(LOG|COMP)-/, '')
+        const coreInterval = coreTrack?.intervals.find((item) => item.id === coreId)
+        return coreInterval?.from === interval.from && coreInterval.to === interval.to
+      })
+      return {
+        ...track,
+        label: templateTrack.label,
+        intervals: track.intervals.map((interval) => {
+          const templateInterval = templateTrack.intervals.find((item) => item.id === interval.id)
+          if (!templateInterval) return interval
+          return usesLegacyBoundaries
+            ? { ...interval, ...templateInterval, id: interval.id }
+            : { ...interval, source: track.kind === 'core' && track.version === 1 ? templateInterval.source : interval.source, mineralization: interval.mineralization ?? templateInterval.mineralization, color: interval.color ?? templateInterval.color }
+        }),
+      }
+    }),
+  }
+}
+
 export class DemoWellGeologyRepository {
-  async get(well: Well) { const current = await demoDatabase.get<DemoRecord<WellGeologyWorkspace>>('records', `well-geology-v2:${well.id}`); if (current) return structuredClone(current.data); const value = seed(well); await this.persist(well, value, 'geology.seeded'); return value }
+  async get(well: Well) { const current = await demoDatabase.get<DemoRecord<WellGeologyWorkspace>>('records', `well-geology-v2:${well.id}`); if (current) return structuredClone(hydrateBgdLithology(well, current.data)); const value = seed(well); await this.persist(well, value, 'geology.seeded'); return value }
   async save(well: Well, current: WellGeologyWorkspace, next: WellGeologyWorkspace, eventType: string) { const latest = await this.get(well); if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: геологический workspace изменён в другой вкладке.'); const value = { ...structuredClone(next), version: latest.version + 1, updatedAt: now() }; await this.persist(well, value, eventType); return value }
   private async persist(well: Well, value: WellGeologyWorkspace, eventType: string) {
     await demoDatabase.transaction(['records', 'versions', 'relations', 'auditEvents', 'jobs', 'artifacts'], async (tx) => {

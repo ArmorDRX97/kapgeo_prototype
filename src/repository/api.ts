@@ -39,6 +39,8 @@ import type { AuditEvent } from '../shared/audit'
 import { demoGeologyTourRepository } from './demo/geologyTourRepository'
 import type { GeologyTourProgress } from '../entities/geology-tour/model/types'
 import { demoWellCoreRepository } from './demo/wellCoreRepository'
+import { demoWellOreIntervalRepository } from './demo/wellOreIntervalRepository'
+import type { WellOreWorkspace } from '../entities/well-ore/model/types'
 
 const wait = (duration = 280) => new Promise((resolve) => window.setTimeout(resolve, duration))
 
@@ -146,6 +148,8 @@ export async function saveWellTechnicalData(wellId: string, data: WellTechnicalD
 
 export async function fetchWellGeologyWorkspace(wellId: string) { const well = await demoWellDataRepository.getWell(wellId); await wait(180); return demoWellGeologyRepository.get(well) }
 export async function saveWellGeologyWorkspace(wellId: string, current: WellGeologyWorkspace, next: WellGeologyWorkspace, eventType: string) { const well = await demoWellDataRepository.getWell(wellId); await wait(300); return demoWellGeologyRepository.save(well, current, next, eventType) }
+export async function fetchWellOreWorkspace(wellId: string) { const well = await demoWellDataRepository.getWell(wellId); await wait(180); return demoWellOreIntervalRepository.get(well) }
+export async function saveWellOreWorkspace(wellId: string, current: WellOreWorkspace, next: WellOreWorkspace, eventType: string) { const well = await demoWellDataRepository.getWell(wellId); await wait(300); return demoWellOreIntervalRepository.save(well, current, next, eventType) }
 export async function fetchWellGeologyData(wellId: string) {
   await wait(180)
   return demoWellDataRepository.getGeology(wellId)

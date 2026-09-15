@@ -15,6 +15,8 @@ import { createEmptyWellBgdForm, validateWellBgdForm } from '../../features/geob
 import type { BgdWellSection } from '../../features/geobase/model/bgdWellSection'
 import { BgdWellLogsTab } from './components/BgdWellLogsTab'
 import { BgdWellCoreRunsTab, BgdWellCoreSamplesTab } from './components/BgdWellCoreTabs'
+import { BgdWellLithologyTab } from './components/BgdWellLithologyTab'
+import { BgdWellOreIntervalsTab } from './components/BgdWellOreIntervalsTab'
 
 const tabs = [
   { id: 'description', label: 'Описание' },
@@ -24,6 +26,8 @@ const tabs = [
   { id: 'logs', label: 'Каротажи' },
   { id: 'core-runs', label: 'Керновые рейсы' },
   { id: 'core-samples', label: 'Керновые пробы' },
+  { id: 'lithology', label: 'Литология' },
+  { id: 'ore-intervals', label: 'Рудные интервалы' },
 ] as const
 type TabId = typeof tabs[number]['id']
 
@@ -91,6 +95,8 @@ export function WellEditorPage({ depositId, wellId, activeTab: controlledActiveT
   const canManageLogs = hasPermission(persona, 'geology.bgd.well.manage-logs')
   const canManageCore = hasPermission(persona, 'geology.bgd.well.manage-core')
   const canManageCoreMeasurements = hasPermission(persona, 'geology.bgd.well.manage-core-measurements')
+  const canManageOreIntervals = hasPermission(persona, 'geology.bgd.well.manage-ore-intervals')
+  const canManageGeophysicalOreIntervals = hasPermission(persona, 'geology.bgd.well.manage-geophysical-ore-intervals')
   const canSave = editing ? canEditAll || canEditTechnology || canEditLoggingDepth : canCreate
   const pending = masterQuery.isLoading || wellsQuery.isLoading || wellQuery.isLoading
   useEffect(() => {
@@ -141,7 +147,7 @@ export function WellEditorPage({ depositId, wellId, activeTab: controlledActiveT
   return <div className="page-stack geobase-page bgd-well-page" data-geology-tour="bgd-well-editor">
     <PageHeader eyebrow="База геологических данных · Скважины" title={editing ? `Скважина ${form.code}` : 'Создание скважины'} description={editing ? `Карточка месторождения ${currentDeposit?.nameRu ?? '—'} · версия ${wellQuery.data?.version ?? 1}` : 'Введите общие сведения, геометрию, паспорт, проходку, освоение и геологические условия.'} meta={<Badge tone={form.status === 'Работает' ? 'success' : form.status === 'Отключена' ? 'neutral' : 'warning'} dot>{form.status}</Badge>} actions={<Button variant="secondary" onClick={onCancel}><ArrowLeft size={16} /> К месторождению</Button>} />
     {!canSave && <div className="form-alert"><ShieldCheck size={17} /><span>Карточка открыта только для чтения. Доступные поля определяются назначенными правами.</span></div>}
-    {editing && !canEditAll && canSave && <div className="form-alert"><ShieldCheck size={17} /><span>{canEditTechnology ? 'Доступно изменение типа, состояния и показателей освоения. Остальные поля — только чтение.' : activeTab === 'logs' && canManageLogs ? 'Доступно управление каротажами этой скважины. Паспортные и геологические поля — только чтение.' : activeTab === 'core-runs' && canManageCoreMeasurements ? 'Доступно управление промером внутри выбранного рейса. Сами рейсы и пробы — только чтение.' : 'Доступно изменение глубины по каротажу. Остальные поля — только чтение.'}</span></div>}
+    {editing && !canEditAll && canSave && <div className="form-alert"><ShieldCheck size={17} /><span>{activeTab === 'lithology' ? 'Литология доступна для просмотра. Изменение интервалов требует права полного редактирования скважины.' : activeTab === 'ore-intervals' && canManageGeophysicalOreIntervals ? 'Доступно управление выделениями по гамма-каротажу и КНД. Керн и паспортные источники — только чтение.' : canEditTechnology ? 'Доступно изменение типа, состояния и показателей освоения. Остальные поля — только чтение.' : activeTab === 'logs' && canManageLogs ? 'Доступно управление каротажами этой скважины. Паспортные и геологические поля — только чтение.' : activeTab === 'core-runs' && canManageCoreMeasurements ? 'Доступно управление промером внутри выбранного рейса. Сами рейсы и пробы — только чтение.' : 'Доступно изменение глубины по каротажу. Остальные поля — только чтение.'}</span></div>}
     {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span><strong>Проверьте форму</strong>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}
     <nav ref={tabListRef} className="bgd-well-tabs" role="tablist" aria-label="Разделы карточки скважины">{tabs.map((tab) => <button type="button" role="tab" aria-selected={activeTab === tab.id} key={tab.id} className={activeTab === tab.id ? 'is-active' : ''} onClick={() => setActiveTab(tab.id)}>{tab.label}</button>)}</nav>
 
@@ -152,8 +158,10 @@ export function WellEditorPage({ depositId, wellId, activeTab: controlledActiveT
     {activeTab === 'logs' && (wellQuery.data ? <BgdWellLogsTab well={wellQuery.data} canEdit={canEditAll || canManageLogs} /> : <Panel title="Каротажи" description="Каротажные исследования связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся добавление, импорт и просмотр каротажей.</span></div></Panel>)}
     {activeTab === 'core-runs' && (wellQuery.data ? <BgdWellCoreRunsTab well={wellQuery.data} canEditRuns={canEditAll || canManageCore} canEditMeasurements={canEditAll || canManageCoreMeasurements} /> : <CoreRequiresSavedWell title="Керновые рейсы" />)}
     {activeTab === 'core-samples' && (wellQuery.data ? <BgdWellCoreSamplesTab well={wellQuery.data} canEdit={canEditAll || canManageCore} /> : <CoreRequiresSavedWell title="Керновые пробы" />)}
+    {activeTab === 'lithology' && (wellQuery.data ? <BgdWellLithologyTab well={wellQuery.data} canEdit={canEditAll} /> : <Panel title="Литология" description="Литологические колонки связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся колонки по керну, каротажу и сводная.</span></div></Panel>)}
+    {activeTab === 'ore-intervals' && (wellQuery.data ? <BgdWellOreIntervalsTab well={wellQuery.data} canManageAll={canManageOreIntervals || canEditAll} canManageGeophysics={canManageGeophysicalOreIntervals} /> : <Panel title="Рудные интервалы" description="Интервалы связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся рудные интервалы и объединения.</span></div></Panel>)}
 
-    {(!editing || !['logs', 'core-runs', 'core-samples'].includes(activeTab)) && <footer className="bgd-well-actions"><Button variant="secondary" onClick={onCancel}>Отмена</Button><span>{editing ? 'Изменения создадут новую версию и запись аудита.' : 'После сохранения скважина появится в карточке месторождения.'}</span><Button disabled={!canSave || mutation.isPending} onClick={() => { setErrors([]); mutation.mutate() }}><Save size={16} /> {mutation.isPending ? 'Сохраняем…' : editing ? 'Сохранить изменения' : 'Создать скважину'}</Button></footer>}
+    {(!editing || !['logs', 'core-runs', 'core-samples', 'lithology', 'ore-intervals'].includes(activeTab)) && <footer className="bgd-well-actions"><Button variant="secondary" onClick={onCancel}>Отмена</Button><span>{editing ? 'Изменения создадут новую версию и запись аудита.' : 'После сохранения скважина появится в карточке месторождения.'}</span><Button disabled={!canSave || mutation.isPending} onClick={() => { setErrors([]); mutation.mutate() }}><Save size={16} /> {mutation.isPending ? 'Сохраняем…' : editing ? 'Сохранить изменения' : 'Создать скважину'}</Button></footer>}
     <datalist id="bgd-well-people">{people.map((person) => <option key={person} value={person} />)}</datalist>
   </div>
 }

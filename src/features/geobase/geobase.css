@@ -321,6 +321,96 @@
 .bgd-core-edit-table--sample > div { grid-template-columns: minmax(150px, 1.2fr) repeat(4, minmax(86px, .72fr)) 34px; }
 .bgd-core-edit-table--results > div { grid-template-columns: minmax(110px, 1fr) 74px minmax(110px, 1fr) 60px 34px; }
 .bgd-core-edit-table--results > div > strong { align-self: center; color: var(--text-secondary); font-size: var(--font-size-sm); }
+.bgd-lithology-switch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.bgd-lithology-switch > button { display: grid; min-width: 0; min-height: 78px; padding: 11px 12px; cursor: pointer; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; color: var(--text-secondary); border: 1px solid var(--border-default); border-radius: 10px; background: var(--surface-subtle); text-align: left; font: inherit; transition: border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast), transform var(--duration-fast); }
+.bgd-lithology-switch > button:hover, .bgd-lithology-switch > button:focus-visible { border-color: var(--color-brand-300); background: var(--color-brand-50); transform: translateY(-1px); }
+.bgd-lithology-switch > button:focus-visible { outline: 3px solid color-mix(in srgb, var(--focus-ring) 24%, transparent); outline-offset: 1px; }
+.bgd-lithology-switch > button.is-active { border-color: var(--color-brand-500); background: var(--color-brand-50); box-shadow: inset 3px 0 var(--color-brand-600); }
+.bgd-lithology-switch > button > span { display: grid; min-width: 0; gap: 3px; }
+.bgd-lithology-switch > button > span:last-child { justify-items: end; }
+.bgd-lithology-switch strong { color: var(--text-primary); font-size: var(--font-size-sm); }
+.bgd-lithology-switch small { color: var(--text-tertiary); font-size: var(--font-size-xs); line-height: 1.35; }
+.bgd-lithology-layout { display: grid; min-width: 0; grid-template-columns: minmax(270px, 310px) minmax(0, 1fr); align-items: start; gap: 14px; }
+.bgd-lithology-column-panel.panel { position: sticky; top: 62px; min-width: 0; padding: 16px; }
+.bgd-lithology-column { position: relative; height: 520px; margin: 14px 5px 12px 43px; }
+.bgd-lithology-column__scale { position: absolute; inset: 0 auto 0 -43px; width: 38px; color: var(--text-tertiary); font-size: var(--font-size-xs); }
+.bgd-lithology-column__scale::after { position: absolute; top: 0; right: 0; bottom: 0; width: 1px; content: ''; background: var(--border-strong); }
+.bgd-lithology-column__scale span { position: absolute; right: 6px; transform: translateY(-50%); }
+.bgd-lithology-column__track { position: absolute; inset: 0 42px 0 0; overflow: hidden; border: 1px solid var(--border-default); border-radius: 8px; background: repeating-linear-gradient(to bottom, var(--surface-subtle), var(--surface-subtle) 51px, var(--border-default) 52px); }
+.bgd-lithology-column__track > button { position: absolute; z-index: 1; right: 5px; left: 5px; display: flex; min-height: 22px; padding: 4px 6px; cursor: pointer; justify-content: center; flex-direction: column; gap: 1px; overflow: hidden; color: var(--text-primary); border: 1px solid color-mix(in srgb, var(--border-strong) 72%, transparent); border-radius: 5px; text-align: left; font: inherit; }
+.bgd-lithology-column__track > button:hover, .bgd-lithology-column__track > button:focus-visible { z-index: 3; border-color: var(--color-brand-600); }
+.bgd-lithology-column__track > button.is-selected { z-index: 4; border-color: var(--color-brand-700); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-500) 25%, transparent); }
+.bgd-lithology-column__track strong, .bgd-lithology-column__track small { overflow: hidden; font-size: 11px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.bgd-lithology-column__stratigraphy { position: absolute; top: 0; right: 0; bottom: 0; width: 34px; overflow: hidden; border: 1px solid var(--border-default); border-radius: 7px; background: var(--surface-subtle); }
+.bgd-lithology-column__stratigraphy span { position: absolute; right: 3px; left: 3px; display: grid; min-height: 18px; place-items: center; overflow: hidden; color: var(--text-secondary); border-radius: 3px; background: color-mix(in srgb, var(--surface-panel) 78%, transparent); font-size: 10px; font-weight: 750; }
+.bgd-lithology-column__empty { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 7px; color: var(--text-tertiary); font-size: var(--font-size-sm); }
+.bgd-lithology-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; color: var(--text-secondary); font-size: var(--font-size-xs); }
+.bgd-lithology-legend span { display: flex; min-width: 0; align-items: center; gap: 6px; }
+.bgd-lithology-legend i, .bgd-lithology-table i { display: inline-block; width: 14px; height: 14px; flex: none; border: 1px solid color-mix(in srgb, var(--border-strong) 72%, transparent); border-radius: 3px; }
+.bgd-lithology-main { display: grid; min-width: 0; gap: 14px; }
+.bgd-lithology-toolbar { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+.bgd-lithology-table { min-width: 0; overflow-x: auto; border: 1px solid var(--border-default); border-radius: 9px; }
+.bgd-lithology-table__head, .bgd-lithology-table > button { display: grid; min-width: 790px; grid-template-columns: 1fr .62fr 1.2fr 1fr .9fr; align-items: center; gap: 9px; }
+.bgd-lithology-table__head { min-height: 38px; padding: 0 10px; color: var(--text-tertiary); background: var(--surface-subtle); font-size: var(--font-size-xs); font-weight: 750; text-transform: uppercase; }
+.bgd-lithology-table > button { width: 100%; min-height: 58px; padding: 8px 10px; cursor: pointer; color: var(--text-secondary); border: 0; border-top: 1px solid var(--border-default); background: var(--surface-panel); text-align: left; font: inherit; font-size: var(--font-size-sm); }
+.bgd-lithology-table > button:hover, .bgd-lithology-table > button:focus-visible { background: var(--surface-subtle); }
+.bgd-lithology-table > button.is-selected { background: var(--color-brand-50); box-shadow: inset 3px 0 var(--color-brand-600); }
+.bgd-lithology-table > button > span { display: flex; min-width: 0; align-items: center; gap: 6px; }
+.bgd-lithology-table > button > span:first-child { display: grid; gap: 2px; }
+.bgd-lithology-table strong { color: var(--text-primary); font-size: var(--font-size-sm); }
+.bgd-lithology-table small { color: var(--text-tertiary); font-size: var(--font-size-xs); }
+.bgd-lithology-editor { margin-top: 13px; padding: 13px; border: 1px solid var(--color-brand-200); border-radius: 10px; background: color-mix(in srgb, var(--color-brand-50) 42%, var(--surface-panel)); }
+.bgd-lithology-editor > header { display: flex; margin-bottom: 12px; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.bgd-lithology-editor > header > span { display: grid; gap: 3px; }
+.bgd-lithology-editor > header small { color: var(--text-tertiary); font-size: var(--font-size-xs); }
+.bgd-lithology-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.bgd-lithology-form__description { grid-column: 1 / -1; }
+.bgd-lithology-editor__actions { display: flex; margin-top: 12px; gap: 7px; flex-wrap: wrap; }
+.bgd-lithology-diff { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; color: var(--text-secondary); }
+.bgd-lithology-diff > svg { color: var(--color-brand-700); }
+.bgd-lithology-diff > span { display: grid; gap: 3px; }
+.bgd-lithology-diff small { color: var(--text-tertiary); font-size: var(--font-size-xs); }
+.bgd-lithology-savebar { position: sticky; z-index: 5; bottom: 12px; display: flex; padding: 12px 13px; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--surface-panel) 96%, transparent); box-shadow: var(--shadow-lg); backdrop-filter: blur(12px); }
+.bgd-lithology-savebar > span { display: grid; gap: 3px; }
+.bgd-lithology-savebar small { color: var(--text-tertiary); font-size: var(--font-size-xs); }
+.bgd-ore-context { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(150px, .55fr) minmax(300px, 1.4fr); align-items: end; gap: 12px; }
+.bgd-ore-context .field em, .bgd-ore-form .field em { color: var(--color-danger-600); font-style: normal; }
+.bgd-ore-differential-check { display: flex; min-height: 58px; padding: 10px 12px; cursor: pointer; align-items: center; gap: 10px; border: 1px solid var(--border-default); border-radius: 9px; background: var(--surface-subtle); }
+.bgd-ore-differential-check input { accent-color: var(--color-brand-600); }
+.bgd-ore-differential-check span { display: grid; gap: 2px; }
+.bgd-ore-differential-check strong { color: var(--text-primary); font-size: var(--font-size-sm); }
+.bgd-ore-differential-check small { color: var(--text-tertiary); font-size: var(--font-size-xs); }
+.bgd-ore-tabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--border-default); gap: 4px; }
+.bgd-ore-tabs > button { display: flex; min-height: 43px; padding: 0 13px; cursor: pointer; align-items: center; gap: 8px; color: var(--text-secondary); border: 0; border-bottom: 2px solid transparent; background: transparent; font: inherit; font-size: var(--font-size-sm); font-weight: 700; white-space: nowrap; }
+.bgd-ore-tabs > button:hover, .bgd-ore-tabs > button:focus-visible { color: var(--color-brand-700); background: var(--surface-subtle); }
+.bgd-ore-tabs > button.is-active { color: var(--color-brand-700); border-bottom-color: var(--color-brand-600); }
+.bgd-ore-layout { display: grid; min-width: 0; grid-template-columns: minmax(0, 1.6fr) minmax(310px, .8fr); align-items: start; gap: 14px; }
+.bgd-ore-layout--merged { grid-template-columns: minmax(0, 1.45fr) minmax(330px, .75fr); }
+.bgd-ore-table { min-width: 0; overflow-x: auto; border: 1px solid var(--border-default); border-radius: 9px; }
+.bgd-ore-table__head, .bgd-ore-table > button { display: grid; min-width: 800px; grid-template-columns: minmax(170px, 1.2fr) minmax(116px, .85fr) 76px 78px 78px minmax(125px, .9fr); align-items: center; gap: 8px; }
+.bgd-ore-table--merged .bgd-ore-table__head, .bgd-ore-table--merged > button { min-width: 900px; grid-template-columns: 30px minmax(165px, 1.2fr) minmax(116px, .85fr) 76px 78px 78px minmax(125px, .9fr); }
+.bgd-ore-table--differential .bgd-ore-table__head, .bgd-ore-table--differential > button { min-width: 940px; grid-template-columns: 30px minmax(165px, 1.1fr) minmax(126px, .75fr) 76px 94px minmax(132px, .9fr) minmax(142px, .95fr); }
+.bgd-ore-table__head { min-height: 39px; padding: 0 10px; color: var(--text-tertiary); background: var(--surface-subtle); font-size: var(--font-size-xs); font-weight: 750; text-transform: uppercase; }
+.bgd-ore-table > button { width: 100%; min-height: 54px; padding: 7px 10px; cursor: pointer; color: var(--text-secondary); border: 0; border-top: 1px solid var(--border-default); background: var(--surface-panel); text-align: left; font: inherit; font-size: var(--font-size-sm); }
+.bgd-ore-table > button:hover, .bgd-ore-table > button:focus-visible { background: var(--surface-subtle); }
+.bgd-ore-table > button.is-selected { box-shadow: inset 3px 0 var(--color-brand-600); }
+.bgd-ore-table--differential > button.is-selected-member { background: color-mix(in srgb, var(--color-warning-100) 74%, var(--surface-panel)); }
+.bgd-ore-table--differential > button.is-other-member { background: var(--surface-subtle); }
+.bgd-ore-table > button > span { min-width: 0; }
+.bgd-ore-table--differential > button > span:nth-child(6), .bgd-ore-table--differential > button > span:nth-child(7) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bgd-ore-table > button > span:first-child, .bgd-ore-table--merged > button > span:nth-child(2), .bgd-ore-table--differential > button > span:nth-child(2) { display: grid; gap: 2px; }
+.bgd-ore-table strong { overflow: hidden; color: var(--text-primary); text-overflow: ellipsis; white-space: nowrap; }
+.bgd-ore-table small { color: var(--text-tertiary); font-size: var(--font-size-xs); }
+.bgd-ore-table input[type='checkbox'] { accent-color: var(--color-brand-600); }
+.bgd-ore-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.bgd-ore-demo-note { margin: 11px 0 0; padding: 9px 10px; color: var(--text-secondary); border-radius: 8px; background: var(--surface-subtle); font-size: var(--font-size-xs); }
+.bgd-ore-actions { display: flex; margin-top: 12px; gap: 7px; flex-wrap: wrap; }
+.bgd-ore-members { display: grid; gap: 7px; }
+.bgd-ore-members > button { display: flex; width: 100%; min-height: 56px; padding: 8px 10px; cursor: pointer; align-items: center; justify-content: space-between; gap: 10px; color: var(--text-secondary); border: 1px solid var(--border-default); border-radius: 8px; background: var(--surface-panel); text-align: left; font: inherit; }
+.bgd-ore-members > button.is-selected { border-color: var(--color-brand-400); background: var(--color-brand-50); }
+.bgd-ore-members > button > span { display: grid; gap: 2px; }
+.bgd-ore-members strong { color: var(--text-primary); }
+.bgd-ore-members small { color: var(--text-tertiary); font-size: var(--font-size-xs); }
 
 @media (min-width: 701px) {
   .app-frame:not(.app-frame--minimum) .bgd-well-actions { margin-right: 132px; }
@@ -331,6 +421,12 @@
   .bgd-log-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bgd-logs-layout { grid-template-columns: 1fr; }
   .bgd-core-layout { grid-template-columns: 1fr; }
+  .bgd-lithology-layout { grid-template-columns: 1fr; }
+  .bgd-ore-layout, .bgd-ore-layout--merged { grid-template-columns: 1fr; }
+  .bgd-ore-context { grid-template-columns: 1fr 1fr; }
+  .bgd-ore-differential-check { grid-column: 1 / -1; }
+  .bgd-lithology-column-panel.panel { position: static; }
+  .bgd-lithology-column { max-width: 320px; }
   .bgd-well-form-grid, .bgd-well-language-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -373,6 +469,21 @@
   .bgd-log-import .button { width: 100%; }
   .bgd-log-facts { grid-template-columns: 1fr 1fr; }
   .bgd-core-facts { grid-template-columns: 1fr; }
+  .bgd-lithology-switch { grid-template-columns: 1fr; }
+  .bgd-lithology-switch > button { min-height: 68px; }
+  .bgd-lithology-toolbar { display: grid; grid-template-columns: 1fr 1fr; }
+  .bgd-lithology-toolbar .button { width: 100%; }
+  .bgd-lithology-toolbar .button:last-child { grid-column: 1 / -1; }
+  .bgd-lithology-form { grid-template-columns: 1fr 1fr; }
+  .bgd-lithology-form__description { grid-column: 1 / -1; }
+  .bgd-lithology-editor__actions { display: grid; grid-template-columns: 1fr; }
+  .bgd-lithology-editor__actions .button { width: 100%; }
+  .bgd-lithology-savebar { align-items: stretch; flex-direction: column; }
+  .bgd-lithology-savebar .button { width: 100%; }
+  .bgd-ore-context, .bgd-ore-form { grid-template-columns: 1fr; }
+  .bgd-ore-differential-check { grid-column: auto; }
+  .bgd-ore-actions { display: grid; grid-template-columns: 1fr; }
+  .bgd-ore-actions .button { width: 100%; }
   .bgd-core-measurements > header { align-items: flex-start; flex-direction: column; }
   .bgd-core-edit-table > div, .bgd-core-edit-table--sample > div, .bgd-core-edit-table--results > div { grid-template-columns: 1fr 1fr; }
   .bgd-core-form-actions { flex-wrap: wrap; }

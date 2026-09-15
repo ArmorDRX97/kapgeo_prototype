@@ -82,7 +82,7 @@
 | GEO-01 | Обзор модуля | Page | P0 | `/geology` |
 | GEO-BGD-01 | База геологических данных: витрина крупных карточек месторождений | Page | P0 | `/geology/bgd` |
 | GEO-BGD-02 | Карточка месторождения: URL-вкладки основных сведений, участков и залежей, кондиционных лимитов, скважин, редактирования и permission-based аудита | Page/Workspace | P0 | `/geology/bgd/:depositId?section=...` |
-| GEO-BGD-03 | Создание и редактирование скважины БГД: описание, геометрия, документация, паспорт, проходка, освоение, геология, каротажи, керновые рейсы с вложенным промером и керновые пробы | Page/Workspace | P0 | `/geology/bgd/:depositId/wells/new`, `/geology/bgd/:depositId/wells/:wellId?tab=...` |
+| GEO-BGD-03 | Создание и редактирование скважины БГД: описание, геометрия, документация, паспорт, проходка, освоение, геология, каротажи, керновые рейсы с вложенным промером, керновые пробы, литология и рудные/дифференциальные интервалы с объединениями | Page/Workspace | P0 | `/geology/bgd/:depositId/wells/new`, `/geology/bgd/:depositId/wells/:wellId?tab=...` |
 | GEO-02 | Месторождения, залежи, участки и кондиции | Page/Workspace | P0 | `/geology/master` |
 | GEO-03 | Карта скважин и объектов | Workspace | P0 | `/geology/map` |
 | GEO-04 | Реестр скважин | Page | P0 | `/geology/wells` |
@@ -90,7 +90,7 @@
 | GEO-06 | Паспорт, проходка, освоение, геология и конструкция скважины | Tab/Workspace | P0 | карточка скважины |
 | GEO-07 | Рейсы бурения, выход и интерпретация керна | Workspace | P0 | well tabs `drilling/core` |
 | GEO-08 | Керн, промер, коробки и фотографии | Workspace | P1 | well tab `core` |
-| GEO-09 | Литология, стратиграфия, проницаемость и фильтрация | Workspace | P0 | well tabs `lithology/technology` |
+| GEO-09 | Литология, стратиграфия, проницаемость, дифференциальные/рудные интервалы и объединения | Workspace | P0 | well tabs `lithology/ore-intervals/technology` |
 | GEO-10 | Керновые, гранулометрические, литогеохимические и технологические пробы | Workspace | P0 | карточка скважины `?tab=samples` |
 | GEO-11 | Лабораторные результаты, гранулометрия и QA/QC | Workspace | P1 | sample tab |
 | GEO-12 | Геофизические исследования и инклинометрия: реестр | Page/Workspace | P0 | `/geology/logs`, well tab `trajectory` |

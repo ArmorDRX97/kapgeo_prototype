@@ -201,6 +201,8 @@ export type GeologicalInterval = {
   to: number
   lithology: Lithology
   stratigraphy: StratigraphyUnit
+  mineralization?: string
+  color?: string
   description: string
   source: 'Ручное описание' | 'Керн' | 'ГИС'
 }

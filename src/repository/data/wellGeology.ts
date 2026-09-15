@@ -3,11 +3,11 @@ import type { Well, WellGeologyData } from '../../entities/well/model/types'
 const baseGeologyData: WellGeologyData = {
   baseVersion: 7,
   intervals: [
-    { id: 'LITH-01', from: 0, to: 120, lithology: 'Суглинок', stratigraphy: 'Q', description: 'Покровные суглинки, влажные, с редким щебнем.', source: 'Ручное описание' },
-    { id: 'LITH-02', from: 120, to: 280, lithology: 'Песчаник', stratigraphy: 'K2', description: 'Песчаник мелкозернистый, серый, слабосцементированный.', source: 'Керн' },
-    { id: 'LITH-03', from: 280, to: 320, lithology: 'Рудный песчаник', stratigraphy: 'K2', description: 'Песчаник с лимонитизацией; интервал требует уточнения границы.', source: 'Керн' },
-    { id: 'LITH-04', from: 340, to: 452, lithology: 'Алевролит', stratigraphy: 'K1', description: 'Алевролит серый, трещиноватый, местами глинистый.', source: 'ГИС' },
-    { id: 'LITH-05', from: 452, to: 612.4, lithology: 'Глина', stratigraphy: 'J3', description: 'Глина плотная, тёмно-серая, с песчаными прослоями.', source: 'ГИС' },
+    { id: 'LITH-01', from: 0, to: 120, lithology: 'Суглинок', stratigraphy: 'Q', mineralization: 'Отсутствует', color: 'Бурый', description: 'Покровные суглинки, влажные, с редким щебнем.', source: 'Ручное описание' },
+    { id: 'LITH-02', from: 120, to: 280, lithology: 'Песчаник', stratigraphy: 'K2', mineralization: 'Отсутствует', color: 'Светло-серый', description: 'Песчаник мелкозернистый, серый, слабосцементированный.', source: 'Керн' },
+    { id: 'LITH-03', from: 280, to: 320, lithology: 'Рудный песчаник', stratigraphy: 'K2', mineralization: 'Урановая', color: 'Жёлто-бурый', description: 'Песчаник с лимонитизацией; интервал требует уточнения границы.', source: 'Керн' },
+    { id: 'LITH-04', from: 340, to: 452, lithology: 'Алевролит', stratigraphy: 'K1', mineralization: 'Слабая', color: 'Серый', description: 'Алевролит серый, трещиноватый, местами глинистый.', source: 'ГИС' },
+    { id: 'LITH-05', from: 452, to: 612.4, lithology: 'Глина', stratigraphy: 'J3', mineralization: 'Отсутствует', color: 'Тёмно-серый', description: 'Глина плотная, тёмно-серая, с песчаными прослоями.', source: 'ГИС' },
   ],
 }
 
