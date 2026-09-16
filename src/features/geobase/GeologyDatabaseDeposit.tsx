@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, BadgeCheck, CheckCircle2, CircleAlert, Database, History, Info, Languages, Layers3, MapPinned, PencilLine, Plus, RadioTower, RefreshCw, ShieldCheck, SlidersHorizontal, X } from 'lucide-react'
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { BadgeCheck, CheckCircle2, CircleAlert, Database, History, Languages, MapPinned, Plus, RadioTower, RefreshCw, ShieldCheck, SlidersHorizontal, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { buildConditionLimits, getOccurrenceName, type ConditionSet, type Deposit, type GeologicalSite, type UpdateDepositPatch } from '../../entities/geology-master/model/types'
 import { useSession } from '../../entities/session/model/sessionContext'
 import {
@@ -10,13 +10,11 @@ import {
   deleteDeposit,
   fetchDemoAuditEvents,
   fetchGeologicalMasterData,
-  fetchPlatformPreferences,
   fetchWells,
   createConditionSetVersion,
   publishConditionSet,
   recordDepositViewed,
   saveConditionSet,
-  savePlatformPreferences,
   updateDeposit,
 } from '../../repository/api'
 import { hasDepositPermission, hasPermission } from '../../shared/auth/permissions'
@@ -28,24 +26,16 @@ import { DeleteDepositDialog, DepositEditor, type DepositDependencies } from './
 import type { DepositSection } from './model/depositSection'
 import './geobase.css'
 
-type DepositSectionTab = {
-  id: DepositSection
-  label: string
-  count?: number
-}
-
-export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChange, onBack, onCreateWell, onOpenWell }: {
+export function GeologyDatabaseDeposit({ depositId, activeSection, onDeleted, onCreateWell, onOpenWell }: {
   depositId: string
   activeSection: DepositSection
-  onSectionChange: (section: DepositSection) => void
-  onBack: (replace?: boolean) => void
+  onDeleted: () => void
   onCreateWell: () => void
   onOpenWell: (wellId: string) => void
 }) {
   const { persona } = useSession()
   const queryClient = useQueryClient()
   const masterQuery = useQuery({ queryKey: ['geology-master'], queryFn: fetchGeologicalMasterData })
-  const preferencesQuery = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences })
   const auditQuery = useQuery({ queryKey: ['demo-audit-events'], queryFn: fetchDemoAuditEvents, enabled: hasPermission(persona, 'geology.bgd.audit') })
   const wellsQuery = useQuery({ queryKey: ['wells'], queryFn: fetchWells })
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -127,33 +117,17 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
     mutationFn: deleteDeposit,
     onSuccess: async () => {
       await Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: ['demo-audit-events'] })])
-      onBack(true)
+      onDeleted()
     },
-  })
-  const currentDepositMutation = useMutation({
-    mutationFn: async () => {
-      const preferences = preferencesQuery.data
-      if (!preferences) throw new Error('Не удалось загрузить пользовательские настройки.')
-      return savePlatformPreferences({
-        locale: preferences.locale,
-        density: preferences.density,
-        contrast: preferences.contrast,
-        reducedMotion: preferences.reducedMotion,
-        currentDepositId: depositId,
-      })
-    },
-    onSuccess: async () => queryClient.invalidateQueries({ queryKey: ['platform-preferences'] }),
   })
 
   if (masterQuery.isLoading) return <div className="page-loading"><span /><p>Открываем карточку месторождения…</p></div>
 
   const data = masterQuery.data
   const deposit = data?.deposits.find((item) => item.id === depositId)
-  const back = () => onBack()
   const currentError = masterQuery.error
     ?? updateMutation.error
     ?? deleteMutation.error
-    ?? currentDepositMutation.error
     ?? createLimitsMutation.error
     ?? saveLimitsMutation.error
     ?? createLimitsVersionMutation.error
@@ -167,11 +141,10 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
         eyebrow="База геологических данных"
         title="Месторождение не найдено"
         description={`В БГД нет объекта ${depositId}. Возможно, он был удалён или ссылка устарела.`}
-        actions={<Button variant="secondary" onClick={back}><ArrowLeft size={16} /> К месторождениям</Button>}
       />
       {currentError && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span>{currentError.message}</span></div>}
-      <Panel className="geobase-not-found" title="Карточка недоступна" description="Откройте список и выберите существующее месторождение.">
-        <div className="geobase-empty"><Database size={22} /><strong>Объект не найден</strong><span>Вернитесь к месторождениям и откройте доступную карточку.</span></div>
+      <Panel className="geobase-not-found" title="Карточка недоступна" description="Выберите существующее месторождение в панели слева.">
+        <div className="geobase-empty"><Database size={22} /><strong>Объект не найден</strong><span>Откройте доступную карточку через селектор месторождения.</span></div>
       </Panel>
     </div>
   }
@@ -193,59 +166,27 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
     conditions: data.conditionSets.filter((item) => siteIds.has(item.siteId)).length,
     occurrences: deposit.occurrences.length,
   }
-  const isCurrent = preferencesQuery.data?.currentDepositId === deposit.id
   const auditEvents = (auditQuery.data ?? []).filter((event) => event.entityId === deposit.id).slice(0, 8)
   const depositWells = (wellsQuery.data ?? []).filter((well) => (well.bgd?.depositId ?? 'DEP-SARYTAU') === deposit.id)
   const versionConflict = currentError?.message.includes('VERSION_CONFLICT')
   const canViewAudit = hasPermission(persona, 'geology.bgd.audit')
-  const sectionTabs: DepositSectionTab[] = [
-    { id: 'overview', label: 'Основные сведения' },
-    { id: 'relations', label: 'Участки и залежи', count: sites.length + deposit.occurrences.length + lenses.length },
-    { id: 'conditions', label: 'Кондиционные лимиты', count: conditionsBySite.filter((item) => item.condition).length },
-    { id: 'wells', label: 'Скважины', count: depositWells.length },
-    { id: 'edit', label: 'Редактирование' },
-    ...(canViewAudit ? [{ id: 'audit' as const, label: 'Аудит', count: auditEvents.length }] : []),
-  ]
-  const selectedSection = sectionTabs.some((tab) => tab.id === activeSection) ? activeSection : 'overview'
-  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
-    event.preventDefault()
-    const currentIndex = sectionTabs.findIndex((tab) => tab.id === selectedSection)
-    const nextIndex = event.key === 'Home'
-      ? 0
-      : event.key === 'End'
-        ? sectionTabs.length - 1
-        : (currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + sectionTabs.length) % sectionTabs.length
-    const nextSection = sectionTabs[nextIndex]?.id ?? 'overview'
-    event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`#deposit-tab-${nextSection}`)?.focus()
-    onSectionChange(nextSection)
-  }
+  const allowedSections: DepositSection[] = ['overview', 'relations', 'conditions', 'wells', 'edit', ...(canViewAudit ? ['audit' as const] : [])]
+  const selectedSection = allowedSections.includes(activeSection) ? activeSection : 'overview'
 
   return <div className="page-stack geobase-page">
     <PageHeader
       eyebrow="База геологических данных"
       title={deposit.nameRu}
       description={`Код № ${deposit.code} · ${deposit.nameKk} · ${deposit.nameEn}`}
-      meta={<><Badge tone={deposit.isHidden ? 'neutral' : 'success'} dot>{deposit.isHidden ? 'Скрыто' : 'Используется'}</Badge>{isCurrent && <Badge tone="info" dot>Текущее месторождение</Badge>}</>}
-      actions={<><Button variant="secondary" disabled={isCurrent || currentDepositMutation.isPending} onClick={() => currentDepositMutation.mutate()}><CheckCircle2 size={16} /> {isCurrent ? 'Выбрано текущим' : 'Выбрать текущим'}</Button><Button variant="secondary" onClick={back}><ArrowLeft size={16} /> К месторождениям</Button></>}
+      meta={<Badge tone={deposit.isHidden ? 'neutral' : 'success'} dot>{deposit.isHidden ? 'Скрыто' : 'Используется'}</Badge>}
     />
 
     {!canEdit && <div className="form-alert"><ShieldCheck size={17} /><span>Карточка открыта только для чтения. Изменять этот объект может геолог с назначенным доступом или администратор.</span></div>}
     {currentError && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span>{versionConflict ? 'Карточка уже изменена в другой вкладке. Обновите данные перед повторным сохранением.' : currentError.message}</span>{versionConflict && <Button size="sm" variant="secondary" onClick={() => void refresh()}><RefreshCw size={14} /> Обновить</Button>}</div>}
     {notice && <div className="success-message" role="status"><ShieldCheck size={17} /><span><strong>БГД обновлена</strong>{notice}</span></div>}
 
-    <nav className="geobase-detail-tabs" role="tablist" aria-label="Разделы карточки месторождения">
-      {sectionTabs.map((tab) => <DepositSectionTabButton
-        key={tab.id}
-        tab={tab}
-        selected={selectedSection === tab.id}
-        onActivate={() => onSectionChange(tab.id)}
-        onKeyDown={handleTabKeyDown}
-      />)}
-    </nav>
-
     <div className="geobase-tab-content">
-      <section id="deposit-panel-overview" className="geobase-tab-panel" role="tabpanel" aria-labelledby="deposit-tab-overview" hidden={selectedSection !== 'overview'}>
+      <section id="deposit-panel-overview" className="geobase-tab-panel" aria-label="Основные сведения" hidden={selectedSection !== 'overview'}>
         <div className="geobase-detail-summary">
           <Panel title="Названия и описание" description="Локализованные сведения карточки месторождения.">
             <div className="geobase-locales">
@@ -260,7 +201,7 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
         </div>
       </section>
 
-      <section id="deposit-panel-relations" className="geobase-tab-panel" role="tabpanel" aria-labelledby="deposit-tab-relations" hidden={selectedSection !== 'relations'}>
+      <section id="deposit-panel-relations" className="geobase-tab-panel" aria-label="Участки и залежи" hidden={selectedSection !== 'relations'}>
       <Panel className="geobase-relations" title="Связанные участки и залежи" description="Дочерние объекты текущего месторождения показываются в отдельной части карточки.">
         <div className="geobase-relations__columns">
           <section><h3>Участки <Badge>{sites.length}</Badge>{canEdit && <Button size="sm" variant="secondary" onClick={() => setSiteCreateOpen(true)}><Plus size={14} /> Добавить</Button>}</h3>{sites.length ? sites.map((site) => <article key={site.id}><span><strong>{site.name}</strong><small>{site.code} · версия {site.version}</small></span><Badge tone={site.status === 'active' ? 'success' : 'neutral'}>{site.status === 'active' ? 'Активен' : 'Архив'}</Badge></article>) : <p>Участки ещё не добавлены.</p>}</section>
@@ -269,7 +210,7 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
       </Panel>
       </section>
 
-      <section id="deposit-panel-conditions" className="geobase-tab-panel" role="tabpanel" aria-labelledby="deposit-tab-conditions" hidden={selectedSection !== 'conditions'}>
+      <section id="deposit-panel-conditions" className="geobase-tab-panel" aria-label="Кондиционные лимиты" hidden={selectedSection !== 'conditions'}>
         <Panel className="geobase-condition-limits" title="Кондиционные лимиты" description="Действующие параметры по участкам." action={<Badge tone={conditionsBySite.some((item) => item.condition) ? 'success' : 'neutral'}>{conditionsBySite.some((item) => item.condition) ? `${conditionsBySite.filter((item) => item.condition).length} набор` : 'Нет набора'}</Badge>}>
           <div className="geobase-condition-limits__list">{conditionsBySite.length ? conditionsBySite.map(({ site, condition }) => (
             <article key={site.id}>
@@ -290,13 +231,13 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
         </Panel>
       </section>
 
-      <section id="deposit-panel-wells" className="geobase-tab-panel" role="tabpanel" aria-labelledby="deposit-tab-wells" hidden={selectedSection !== 'wells'}>
+      <section id="deposit-panel-wells" className="geobase-tab-panel" aria-label="Скважины" hidden={selectedSection !== 'wells'}>
         <Panel className="geobase-wells" title="Скважины" description="Скважины создаются и ведутся в контексте текущего месторождения." action={hasPermission(persona, 'geology.bgd.well.create') ? <Button size="sm" onClick={onCreateWell}><Plus size={15} /> Создать скважину</Button> : undefined}>
           {wellsQuery.isLoading ? <div className="skeleton skeleton--list" /> : depositWells.length ? <div className="geobase-well-list">{depositWells.map((well) => <button type="button" key={well.id} onClick={() => onOpenWell(well.id)}><RadioTower size={18} /><span><strong>Скважина {well.code}</strong><small>{well.type} · {well.profile} · глубина {well.depth.toLocaleString('ru-RU')} м</small></span><Badge tone={well.status === 'Работает' ? 'success' : well.status === 'Отключена' ? 'neutral' : 'warning'} dot>{well.status}</Badge></button>)}</div> : <div className="geobase-empty"><RadioTower size={22} /><strong>Скважин пока нет</strong><span>Создайте первую скважину, чтобы продолжить наполнение месторождения.</span></div>}
         </Panel>
       </section>
 
-      <section id="deposit-panel-edit" className="geobase-tab-panel" role="tabpanel" aria-labelledby="deposit-tab-edit" hidden={selectedSection !== 'edit'}>
+      <section id="deposit-panel-edit" className="geobase-tab-panel" aria-label="Редактирование" hidden={selectedSection !== 'edit'}>
         <DepositEditor
           key={`${deposit.id}-${deposit.version}`}
           deposit={deposit}
@@ -309,7 +250,7 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
         />
       </section>
 
-      {canViewAudit && <section id="deposit-panel-audit" className="geobase-tab-panel" role="tabpanel" aria-labelledby="deposit-tab-audit" hidden={selectedSection !== 'audit'}>
+      {canViewAudit && <section id="deposit-panel-audit" className="geobase-tab-panel" aria-label="Аудит" hidden={selectedSection !== 'audit'}>
         <Panel title="Аудит месторождения" description="Последние операции создания, изменения и удаления записываются автоматически." action={<History size={18} />}>
           {auditQuery.isLoading ? <p className="geobase-muted">Загружаем события…</p> : auditEvents.length ? <div className="geobase-audit">{auditEvents.map((event) => <article key={event.id}><span><strong>{event.eventType}</strong><small>{event.actor.name}</small></span><time dateTime={event.occurredAt}>{new Date(event.occurredAt).toLocaleString('ru-RU')}</time></article>)}</div> : <p className="geobase-muted">Событий по этому месторождению пока нет.</p>}
         </Panel>
@@ -343,45 +284,6 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onSectionChan
       onCreate={(input) => { setNotice(null); createSiteMutation.mutate(input) }}
     />}
   </div>
-}
-
-function DepositSectionIcon({ section }: { section: DepositSection }) {
-  if (section === 'overview') return <Info size={17} />
-  if (section === 'relations') return <Layers3 size={17} />
-  if (section === 'conditions') return <SlidersHorizontal size={17} />
-  if (section === 'wells') return <RadioTower size={17} />
-  if (section === 'edit') return <PencilLine size={17} />
-  return <History size={17} />
-}
-
-function DepositSectionTabButton({ tab, selected, onActivate, onKeyDown }: {
-  tab: DepositSectionTab
-  selected: boolean
-  onActivate: () => void
-  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void
-}) {
-  const buttonRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    if (selected) buttonRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-  }, [selected])
-
-  return <button
-    ref={buttonRef}
-    id={`deposit-tab-${tab.id}`}
-    type="button"
-    role="tab"
-    aria-selected={selected}
-    aria-controls={`deposit-panel-${tab.id}`}
-    tabIndex={selected ? 0 : -1}
-    className={selected ? 'is-active' : ''}
-    onClick={onActivate}
-    onKeyDown={onKeyDown}
-  >
-    <DepositSectionIcon section={tab.id} />
-    <span>{tab.label}</span>
-    {tab.count !== undefined && <Badge>{tab.count}</Badge>}
-  </button>
 }
 
 function CreateSiteDialog({ deposit, pending, onClose, onCreate }: {

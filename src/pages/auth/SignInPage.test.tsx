@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SignInPage } from './SignInPage'
+import { defaultPersona } from '../../entities/session/model/personas'
 
 const signIn = vi.fn()
 const navigate = vi.fn()
@@ -9,9 +10,12 @@ vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigate }))
 vi.mock('../../entities/session/model/sessionContext', () => ({ useSession: () => ({ signIn }) }))
 
 describe('SignInPage', () => {
+  signIn.mockReturnValue(defaultPersona)
+
   afterEach(() => {
     cleanup()
     signIn.mockReset()
+    signIn.mockReturnValue(defaultPersona)
     navigate.mockClear()
   })
 

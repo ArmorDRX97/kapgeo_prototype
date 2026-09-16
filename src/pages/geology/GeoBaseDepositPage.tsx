@@ -11,8 +11,7 @@ export function GeoBaseDepositPage() {
   return <GeologyDatabaseDeposit
     depositId={depositId}
     activeSection={search.section ?? 'overview'}
-    onSectionChange={(section) => void navigate({ search: { section: section === 'overview' ? undefined : section }, replace: true })}
-    onBack={(replace) => void navigate({ to: '/geology/bgd', replace })}
+    onDeleted={() => void navigate({ to: '/geology/bgd', replace: true })}
     onCreateWell={() => void navigate({ to: '/geology/bgd/$depositId/wells/new', params: { depositId } })}
     onOpenWell={(wellId) => void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId } })}
   />

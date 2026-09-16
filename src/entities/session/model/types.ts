@@ -1,4 +1,20 @@
-export type RoleId = 'R1'
+export type RoleId =
+  | 'R1'
+  | 'R2'
+  | 'R3'
+  | 'R4'
+  | 'R5'
+  | 'R6'
+  | 'R7'
+  | 'R8'
+  | 'R9'
+  | 'R10'
+  | 'R11'
+  | 'R12'
+  | 'R13'
+  | 'R14'
+
+export type PersonaHomeRoute = '/geology/bgd' | '/technology' | '/modeling' | '/analytics' | '/admin'
 
 export type SessionStatus = 'anonymous' | 'authenticated'
 
@@ -9,6 +25,7 @@ export type UserPersona = {
   position: string
   roles: RoleId[]
   scope: string
+  homeRoute: PersonaHomeRoute
 }
 
 export type SessionState = {

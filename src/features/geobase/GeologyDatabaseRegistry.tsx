@@ -10,7 +10,6 @@ import {
   Mountain,
   Plus,
   Save,
-  ShieldCheck,
   Trash2,
   X,
 } from 'lucide-react'
@@ -24,14 +23,11 @@ import {
   type DepositOccurrence,
   type UpdateDepositPatch,
 } from '../../entities/geology-master/model/types'
-import { useSession } from '../../entities/session/model/sessionContext'
 import {
-  createDeposit,
   fetchGeologicalMasterData,
   fetchPlatformPreferences,
   savePlatformPreferences,
 } from '../../repository/api'
-import { hasDepositPermission } from '../../shared/auth/permissions'
 import { Badge } from '../../shared/ui/Badge'
 import { Button } from '../../shared/ui/Button'
 import { PageHeader } from '../../shared/ui/PageHeader'
@@ -146,22 +142,9 @@ function toUpdatePatch(form: DepositFormState): UpdateDepositPatch {
 export function GeologyDatabaseRegistry({ onOpenDeposit }: {
   onOpenDeposit: (depositId: string) => void
 }) {
-  const { persona } = useSession()
-  const canCreate = hasDepositPermission(persona, 'geology.bgd.create')
   const queryClient = useQueryClient()
   const masterQuery = useQuery({ queryKey: ['geology-master'], queryFn: fetchGeologicalMasterData })
   const preferencesQuery = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences })
-  const [createOpen, setCreateOpen] = useState(false)
-
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['geology-master'] })
-  const createMutation = useMutation({
-    mutationFn: createDeposit,
-    onSuccess: async (created) => {
-      await refresh()
-      setCreateOpen(false)
-      onOpenDeposit(created.id)
-    },
-  })
   const currentDepositMutation = useMutation({
     mutationFn: async (depositId: string) => {
       const preferences = preferencesQuery.data
@@ -185,8 +168,7 @@ export function GeologyDatabaseRegistry({ onOpenDeposit }: {
     if (left.isHidden !== right.isHidden) return left.isHidden ? 1 : -1
     return left.nameRu.localeCompare(right.nameRu, 'ru') || left.code - right.code
   }), [currentDepositId, data?.deposits])
-  const nextCode = Math.max(0, ...(data?.deposits.map((item) => item.code) ?? [])) + 1
-  const currentError = masterQuery.error ?? createMutation.error ?? currentDepositMutation.error
+  const currentError = masterQuery.error ?? currentDepositMutation.error
 
   if (masterQuery.isLoading || !data) return <div className="page-loading"><span /><p>Открываем базу геологических данных…</p></div>
 
@@ -194,15 +176,9 @@ export function GeologyDatabaseRegistry({ onOpenDeposit }: {
     <PageHeader
       eyebrow="Геологический модуль"
       title="База геологических данных"
-      description="Месторождения — корневые объекты для участков, залежей, скважин и связанных геологических данных."
-      actions={<Button className="geobase-create-action" disabled={!canCreate} onClick={() => setCreateOpen(true)}>
-        <span className="geobase-create-action__icon"><Plus size={22} /></span>
-        <span className="geobase-create-action__copy"><strong>Создать месторождение</strong><small>Добавить новый корневой объект</small></span>
-        <ArrowRight className="geobase-create-action__arrow" size={19} />
-      </Button>}
+      description="Месторождения — корневые объекты для участков, залежей, скважин и связанных геологических данных. Создание новых объектов выполняется в администрировании."
     />
 
-    {!canCreate && <div className="form-alert"><ShieldCheck size={17} /><span>Список открыт только для чтения. Создание доступно геологу с назначенным разрешением или администратору.</span></div>}
     {currentError && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span>{currentError.message}</span></div>}
 
     {orderedDeposits.length ? <section className="geobase-deposit-grid" aria-label="Месторождения">
@@ -242,16 +218,7 @@ export function GeologyDatabaseRegistry({ onOpenDeposit }: {
           </footer>
         </article>
       })}
-    </section> : <div className="geobase-empty geobase-empty--cards"><Database size={24} /><strong>Месторождений пока нет</strong><span>Создайте первое месторождение, чтобы начать наполнение БГД.</span></div>}
-
-    {createOpen && <CreateDepositDialog
-      nextCode={nextCode}
-      existingCodes={data.deposits.map((item) => item.code)}
-      pending={createMutation.isPending}
-      error={createMutation.error?.message}
-      onClose={() => setCreateOpen(false)}
-      onSubmit={(input) => createMutation.mutate(input)}
-    />}
+    </section> : <div className="geobase-empty geobase-empty--cards"><Database size={24} /><strong>Месторождений пока нет</strong><span>Новые месторождения создаются администратором системы.</span></div>}
   </div>
 }
 
@@ -326,7 +293,7 @@ function DepositForm({ form, onChange, disabled, immutable = false }: { form: De
   </div>
 }
 
-function CreateDepositDialog({ nextCode, existingCodes, pending, error, onClose, onSubmit }: {
+export function CreateDepositDialog({ nextCode, existingCodes, pending, error, onClose, onSubmit }: {
   nextCode: number
   existingCodes: number[]
   pending: boolean

@@ -1,6 +1,8 @@
 import { useNavigate } from '@tanstack/react-router'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
+import { flushSync } from 'react-dom'
+import type { UserPersona } from '../../entities/session/model/types'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { Button } from '../../shared/ui/Button'
 
@@ -12,8 +14,10 @@ export function SignInPage() {
 
   const handleSignIn = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    signIn({ login, password })
-    void navigate({ to: '/geology/bgd' })
+    let persona: UserPersona | undefined
+    flushSync(() => { persona = signIn({ login, password }) })
+    if (!persona) return
+    void navigate({ to: persona.homeRoute })
   }
 
   return (
