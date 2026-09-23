@@ -5,6 +5,7 @@ describe('validateBgdWellSectionSearch', () => {
   it('accepts the logging section and other well sections', () => {
     expect(validateBgdWellSectionSearch({ tab: 'logs' })).toEqual({ tab: 'logs' })
     expect(validateBgdWellSectionSearch({ tab: 'drilling' })).toEqual({ tab: 'drilling' })
+    expect(validateBgdWellSectionSearch({ tab: 'deviation' })).toEqual({ tab: 'deviation' })
     expect(validateBgdWellSectionSearch({ tab: 'core-runs' })).toEqual({ tab: 'core-runs' })
     expect(validateBgdWellSectionSearch({ tab: 'core-samples' })).toEqual({ tab: 'core-samples' })
     expect(validateBgdWellSectionSearch({ tab: 'lithology' })).toEqual({ tab: 'lithology' })

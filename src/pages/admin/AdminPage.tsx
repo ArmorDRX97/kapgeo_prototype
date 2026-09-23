@@ -28,7 +28,7 @@ export function AdminPage() {
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({ queryKey: ['geology-master'] })
       setCreateOpen(false)
-      setNotice(`Месторождение «${getDepositName(created)}» создано и доступно в геологическом модуле.`)
+      setNotice(`Месторождение «${getDepositName(created)}» создано и доступно в БГД.`)
     },
   })
 

@@ -1,6 +1,7 @@
 import type { UserPersona, RoleId } from '../../entities/session/model/types'
 
 export type Permission =
+  | 'bgd.view'
   | 'geology.view'
   | 'geology.bgd.create'
   | 'geology.bgd.update'
@@ -11,6 +12,8 @@ export type Permission =
   | 'geology.bgd.well.update-technology'
   | 'geology.bgd.well.update-logging-depth'
   | 'geology.bgd.well.manage-logs'
+  | 'geology.bgd.well.manage-deviation'
+  | 'geology.bgd.well.administer-deviation'
   | 'geology.bgd.well.manage-core'
   | 'geology.bgd.well.manage-core-measurements'
   | 'geology.bgd.well.manage-ore-intervals'
@@ -21,20 +24,20 @@ export type Permission =
   | 'administration.view'
 
 const rolePermissions: Record<RoleId, Permission[]> = {
-  R1: ['geology.view', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.well.create', 'geology.bgd.well.update-all', 'geology.bgd.well.manage-logs', 'geology.bgd.well.manage-core', 'geology.bgd.well.manage-core-measurements', 'geology.bgd.well.manage-ore-intervals', 'modeling.view', 'analytics.view'],
-  R2: ['geology.view', 'geology.bgd.well.update-logging-depth', 'geology.bgd.well.manage-logs', 'geology.bgd.well.manage-core-measurements', 'geology.bgd.well.manage-geophysical-ore-intervals', 'technology.view'],
-  R3: ['geology.view', 'modeling.view'],
-  R4: ['geology.view', 'modeling.view', 'analytics.view'],
+  R1: ['bgd.view', 'geology.view', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.well.create', 'geology.bgd.well.update-all', 'geology.bgd.well.manage-logs', 'geology.bgd.well.manage-deviation', 'geology.bgd.well.manage-core', 'geology.bgd.well.manage-core-measurements', 'geology.bgd.well.manage-ore-intervals', 'modeling.view', 'analytics.view'],
+  R2: ['bgd.view', 'geology.view', 'geology.bgd.well.update-logging-depth', 'geology.bgd.well.manage-logs', 'geology.bgd.well.manage-deviation', 'geology.bgd.well.administer-deviation', 'geology.bgd.well.manage-core-measurements', 'geology.bgd.well.manage-geophysical-ore-intervals', 'technology.view'],
+  R3: ['bgd.view', 'geology.view', 'modeling.view'],
+  R4: ['bgd.view', 'geology.view', 'modeling.view', 'analytics.view'],
   R5: ['modeling.view', 'analytics.view'],
-  R6: ['geology.view', 'geology.bgd.well.update-technology', 'technology.view', 'modeling.view', 'analytics.view'],
+  R6: ['bgd.view', 'geology.view', 'geology.bgd.well.update-technology', 'technology.view', 'modeling.view', 'analytics.view'],
   R7: ['technology.view', 'analytics.view'],
   R8: ['technology.view'],
   R9: ['technology.view'],
   R10: ['technology.view'],
-  R11: ['geology.view', 'technology.view', 'modeling.view', 'analytics.view'],
-  R12: ['geology.view', 'geology.bgd.audit', 'technology.view', 'modeling.view', 'analytics.view'],
-  R13: ['geology.view', 'geology.bgd.create', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.audit', 'geology.bgd.well.create', 'geology.bgd.well.update-all', 'geology.bgd.well.manage-logs', 'geology.bgd.well.manage-core', 'geology.bgd.well.manage-core-measurements', 'geology.bgd.well.manage-ore-intervals', 'technology.view', 'modeling.view', 'analytics.view', 'administration.view'],
-  R14: ['geology.view', 'geology.bgd.audit', 'technology.view', 'administration.view'],
+  R11: ['bgd.view', 'geology.view', 'technology.view', 'modeling.view', 'analytics.view'],
+  R12: ['bgd.view', 'geology.view', 'geology.bgd.audit', 'technology.view', 'modeling.view', 'analytics.view'],
+  R13: ['bgd.view', 'geology.view', 'geology.bgd.create', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.audit', 'geology.bgd.well.create', 'geology.bgd.well.update-all', 'geology.bgd.well.manage-logs', 'geology.bgd.well.manage-deviation', 'geology.bgd.well.administer-deviation', 'geology.bgd.well.manage-core', 'geology.bgd.well.manage-core-measurements', 'geology.bgd.well.manage-ore-intervals', 'technology.view', 'modeling.view', 'analytics.view', 'administration.view'],
+  R14: ['bgd.view', 'geology.view', 'geology.bgd.audit', 'technology.view', 'administration.view'],
 }
 
 export function hasPermission(persona: UserPersona | null, permission: Permission) {

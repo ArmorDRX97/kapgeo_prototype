@@ -35,7 +35,7 @@ export function GeoBasePage() {
     <PageHeader
       eyebrow="База геологических данных"
       title="Нет доступных месторождений"
-      description="Для работы в геологическом модуле нужен хотя бы один доступный объект."
+      description="Для работы в БГД нужен хотя бы один доступный объект."
     />
     {error && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span>{error.message}</span></div>}
     <Panel title="Рабочий контекст не задан" description="Создать месторождение может администратор в модуле администрирования.">

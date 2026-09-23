@@ -2,6 +2,7 @@ import type { ConditionSet, CreateDepositInput, Deposit, GeologicalMasterData, G
 import type { WellCoreWorkspace } from '../entities/well-core/model/types'
 import type { WellGeologyWorkspace } from '../entities/well-geology/model/types'
 import type { WellLogWorkspace } from '../entities/well-log/model/types'
+import type { WellDeviationWorkspace } from '../entities/well-deviation/model/types'
 import type { WellOreWorkspace } from '../entities/well-ore/model/types'
 import type { CreateWellInput, UpdateWellInput, Well } from '../entities/well/model/types'
 import type { AuditEvent } from '../shared/audit/types'
@@ -13,6 +14,7 @@ import { demoWellCoreRepository } from './demo/wellCoreRepository'
 import { demoWellDataRepository } from './demo/wellDataRepository'
 import { demoWellGeologyRepository } from './demo/wellGeologyRepository'
 import { demoWellLogRepository } from './demo/wellLogRepository'
+import { demoWellDeviationRepository } from './demo/wellDeviationRepository'
 import { demoWellOreIntervalRepository } from './demo/wellOreIntervalRepository'
 
 const wait = (duration = 280) => new Promise((resolve) => window.setTimeout(resolve, duration))
@@ -118,6 +120,18 @@ export async function fetchWellLogWorkspace(wellId: string) {
   const well = await demoWellDataRepository.getWell(wellId)
   await wait(180)
   return demoWellLogRepository.get(well)
+}
+
+export async function fetchWellDeviationWorkspace(wellId: string) {
+  const well = await demoWellDataRepository.getWell(wellId)
+  await wait(160)
+  return demoWellDeviationRepository.get(well)
+}
+
+export async function saveWellDeviationWorkspace(wellId: string, current: WellDeviationWorkspace, next: WellDeviationWorkspace, eventType: string) {
+  const well = await demoWellDataRepository.getWell(wellId)
+  await wait(260)
+  return demoWellDeviationRepository.save(well, current, next, eventType)
 }
 
 export async function saveWellLogWorkspace(wellId: string, current: WellLogWorkspace, next: WellLogWorkspace, eventType: string) {

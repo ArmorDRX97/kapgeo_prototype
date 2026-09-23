@@ -8,6 +8,7 @@ import { PageHeader } from '../../shared/ui/PageHeader'
 import { Panel } from '../../shared/ui/Panel'
 
 const moduleLabels: Record<string, string> = {
+  'bgd.view': 'БГД',
   'geology.view': 'Геология',
   'technology.view': 'Технология',
   'modeling.view': 'Моделирование',

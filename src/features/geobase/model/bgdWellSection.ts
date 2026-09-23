@@ -1,4 +1,4 @@
-export const bgdWellSectionIds = ['description', 'drilling', 'development', 'geology', 'logs', 'core-runs', 'core-samples', 'lithology', 'ore-intervals'] as const
+export const bgdWellSectionIds = ['description', 'drilling', 'development', 'geology', 'deviation', 'logs', 'core-runs', 'core-samples', 'lithology', 'ore-intervals'] as const
 
 export type BgdWellSection = typeof bgdWellSectionIds[number]
 

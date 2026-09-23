@@ -75,7 +75,7 @@ export function GeologyNavigator({ mobileOpen, onClose }: { mobileOpen: boolean;
     window.localStorage.setItem(FAVORITE_WELLS_KEY, JSON.stringify([...favoriteWells]))
   }, [favoriteWells])
 
-  if (!hasPermission(persona, 'geology.view')) return null
+  if (!hasPermission(persona, 'bgd.view')) return null
 
   const sites = masterQuery.data?.sites.filter((item) => item.depositId === currentDeposit?.id) ?? []
   const siteIds = new Set(sites.map((item) => item.id))
@@ -132,7 +132,7 @@ export function GeologyNavigator({ mobileOpen, onClose }: { mobileOpen: boolean;
   ]
 
   return <>
-    <aside className={`geology-navigator${mobileOpen ? ' is-mobile-open' : ''}`} aria-label="Навигация геологического модуля">
+    <aside className={`geology-navigator${mobileOpen ? ' is-mobile-open' : ''}`} aria-label="Навигация модуля БГД">
       <button className="geology-navigator__close" type="button" onClick={onClose} aria-label="Закрыть навигацию"><X size={19} /></button>
 
       <section className="deposit-context-card">

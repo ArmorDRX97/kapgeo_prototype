@@ -7,6 +7,7 @@ import {
   ChartNoAxesCombined,
   ChevronDown,
   CircleUserRound,
+  Database,
   Ellipsis,
   LogOut,
   Menu,
@@ -24,7 +25,7 @@ import { resetDemoData } from '../../repository/demo/demoDataControl'
 import { hasPermission, type Permission } from '../../shared/auth/permissions'
 import { GeologyNavigator } from './GeologyNavigator'
 
-type ModuleRoute = '/geology/bgd' | '/technology' | '/modeling' | '/analytics' | '/admin'
+type ModuleRoute = '/geology/bgd' | '/geology' | '/technology' | '/modeling' | '/analytics' | '/admin'
 
 const moduleNavigation: Array<{
   label: string
@@ -32,7 +33,8 @@ const moduleNavigation: Array<{
   permission: Permission
   icon: typeof Mountain
 }> = [
-  { label: 'Геология', to: '/geology/bgd', permission: 'geology.view', icon: Mountain },
+  { label: 'БГД', to: '/geology/bgd', permission: 'bgd.view', icon: Database },
+  { label: 'Геология', to: '/geology', permission: 'geology.view', icon: Mountain },
   { label: 'Технология', to: '/technology', permission: 'technology.view', icon: Network },
   { label: 'Моделирование', to: '/modeling', permission: 'modeling.view', icon: Boxes },
   { label: 'Аналитика', to: '/analytics', permission: 'analytics.view', icon: ChartNoAxesCombined },
@@ -54,7 +56,7 @@ export function AppShell({ children }: PropsWithChildren) {
   const profileRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const utilitiesRef = useRef<HTMLDivElement>(null)
-  const isGeology = pathname.startsWith('/geology/bgd')
+  const isBgd = pathname.startsWith('/geology/bgd')
 
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
@@ -115,11 +117,13 @@ export function AppShell({ children }: PropsWithChildren) {
       <nav className="topbar__module-nav" aria-label="Модули системы">
         {moduleNavigation.filter((item) => hasPermission(persona, item.permission)).map((item) => {
           const Icon = item.icon
-          const active = pathname.startsWith(item.to === '/geology/bgd' ? '/geology' : item.to)
+          const active = item.to === '/geology'
+            ? pathname === '/geology'
+            : pathname.startsWith(item.to)
           return <Link key={item.to} to={item.to} className={active ? 'is-active' : ''}><Icon size={17} /><span>{item.label}</span></Link>
         })}
       </nav>
-      {isGeology && <button className="topbar__geology-toggle" type="button" onClick={() => setGeologyNavOpen((value) => !value)} aria-expanded={geologyNavOpen} aria-label="Открыть скважины"><Menu size={20} /><span>Скважины</span></button>}
+      {isBgd && <button className="topbar__geology-toggle" type="button" onClick={() => setGeologyNavOpen((value) => !value)} aria-expanded={geologyNavOpen} aria-label="Открыть скважины"><Menu size={20} /><span>Скважины</span></button>}
       <div className="global-search-wrap" ref={searchRef}>
         <label className="global-search global-search--input"><Search size={17} /><input value={searchQuery} onFocus={() => setSearchOpen(true)} onChange={(event) => { setSearchQuery(event.target.value); setSearchOpen(true) }} placeholder="Поиск скважины" aria-label="Глобальный поиск скважины" />{searchQuery && <button type="button" onClick={() => setSearchQuery('')} aria-label="Очистить поиск"><X size={15} /></button>}</label>
         {searchOpen && searchQuery.trim().length >= 2 && <div className="global-search-results" role="listbox" aria-label="Результаты поиска">
@@ -145,7 +149,7 @@ export function AppShell({ children }: PropsWithChildren) {
     </header>
 
     <div className="app-workspace">
-      {isGeology && <GeologyNavigator mobileOpen={geologyNavOpen} onClose={() => setGeologyNavOpen(false)} />}
+      {isBgd && <GeologyNavigator mobileOpen={geologyNavOpen} onClose={() => setGeologyNavOpen(false)} />}
       <main id="main-content" className="app-workspace__content content">{children}</main>
     </div>
 

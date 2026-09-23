@@ -3,6 +3,7 @@ import { router } from './router'
 
 describe('BGD route smoke', () => {
   it('builds typed deep-links for the complete BGD flow', () => {
+    expect(router.buildLocation({ to: '/geology' }).href).toBe('/geology')
     expect(router.buildLocation({ to: '/geology/bgd' }).href).toBe('/geology/bgd')
     expect(router.buildLocation({ to: '/geology/bgd/$depositId', params: { depositId: 'DEP-SARYTAU' } }).href).toBe('/geology/bgd/DEP-SARYTAU')
     expect(router.buildLocation({ to: '/geology/bgd/$depositId', params: { depositId: 'DEP-SARYTAU' }, search: { section: 'conditions' } }).href).toBe('/geology/bgd/DEP-SARYTAU?section=conditions')

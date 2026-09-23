@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { BarChart3, Boxes, Construction, Network, ShieldX } from 'lucide-react'
+import { BarChart3, Boxes, Construction, Mountain, Network, ShieldX } from 'lucide-react'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { Button } from '../../shared/ui/Button'
 import { PageHeader } from '../../shared/ui/PageHeader'
@@ -24,6 +24,10 @@ function ModulePlaceholder({ eyebrow, title, description, icon: Icon, accent }: 
 
 export function TechnologyModulePage() {
   return <ModulePlaceholder eyebrow="Производственный контур" title="Технология" description="Технологические процессы, режимы эксплуатации и оперативная работа с производственными объектами." icon={Network} accent="#0f766e" />
+}
+
+export function GeologyModulePage() {
+  return <ModulePlaceholder eyebrow="Геологический контур" title="Геология" description="Интерпретация геологических данных, разрезы, ресурсы и профильные процессы будут развиваться как самостоятельный модуль рядом с БГД." icon={Mountain} accent="#0f766e" />
 }
 
 export function ModelingModulePage() {

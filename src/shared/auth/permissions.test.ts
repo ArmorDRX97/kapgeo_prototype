@@ -4,9 +4,12 @@ import { getPermissions, hasPermission } from './permissions'
 
 describe('BGD permission model', () => {
   it('grants the fixed geologist profile the BGD workbench permissions', () => {
+    expect(hasPermission(defaultPersona, 'bgd.view')).toBe(true)
     expect(hasPermission(defaultPersona, 'geology.view')).toBe(true)
     expect(hasPermission(defaultPersona, 'geology.bgd.well.update-all')).toBe(true)
     expect(hasPermission(defaultPersona, 'geology.bgd.well.manage-core')).toBe(true)
+    expect(hasPermission(defaultPersona, 'geology.bgd.well.manage-deviation')).toBe(true)
+    expect(hasPermission(defaultPersona, 'geology.bgd.well.administer-deviation')).toBe(false)
     expect(getPermissions(defaultPersona).size).toBeGreaterThan(5)
   })
 
@@ -19,13 +22,16 @@ describe('BGD permission model', () => {
     expect(hasPermission(systemAdmin, 'administration.view')).toBe(true)
     expect(hasPermission(aiAdmin, 'administration.view')).toBe(true)
     expect(hasPermission(aiAdmin, 'geology.bgd.create')).toBe(false)
+    expect(hasPermission(systemAdmin, 'geology.bgd.well.administer-deviation')).toBe(true)
   })
 
   it('varies module access by persona permissions', () => {
     const laboratory = userPersonas.find((persona) => persona.roles.includes('R8')) ?? null
     const analyst = userPersonas.find((persona) => persona.roles.includes('R11')) ?? null
     expect(hasPermission(laboratory, 'technology.view')).toBe(true)
+    expect(hasPermission(laboratory, 'bgd.view')).toBe(false)
     expect(hasPermission(laboratory, 'geology.view')).toBe(false)
+    expect(hasPermission(analyst, 'bgd.view')).toBe(true)
     expect(hasPermission(analyst, 'geology.view')).toBe(true)
     expect(hasPermission(analyst, 'analytics.view')).toBe(true)
   })
