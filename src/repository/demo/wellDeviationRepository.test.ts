@@ -25,4 +25,17 @@ describe('DemoWellDeviationRepository', () => {
     const current = await repository.get(primaryWell)
     await expect(repository.save(primaryWell, current, { ...current, surveys: current.surveys.map((item) => ({ ...item, isPrimary: true })) }, 'deviation.updated')).rejects.toThrow('только один')
   })
+
+  it('deletes the selected survey description, points, relations and records an audit event', async () => {
+    const repository = new DemoWellDeviationRepository()
+    const current = await repository.get(primaryWell)
+    const removed = current.surveys[0]!
+    const saved = await repository.save(primaryWell, current, { ...current, surveys: current.surveys.filter((item) => item.id !== removed.id) }, 'deviation.survey.deleted')
+
+    expect(saved.surveys.some((item) => item.id === removed.id)).toBe(false)
+    expect(await demoDatabase.get('records', `deviation-survey:${removed.id}`)).toBeUndefined()
+    for (const point of removed.points) expect(await demoDatabase.get('records', `deviation-point:${point.id}`)).toBeUndefined()
+    expect(await demoDatabase.get('relations', `REL-DEVIATION-WELL-${removed.id}`)).toBeUndefined()
+    expect((await demoDatabase.getAll<{ eventType: string }>('auditEvents')).some((item) => item.eventType === 'deviation.survey.deleted')).toBe(true)
+  })
 })

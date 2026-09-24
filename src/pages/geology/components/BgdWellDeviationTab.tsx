@@ -107,11 +107,16 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults }: 
   }
 
   const deleteSurvey = (survey: DeviationSurvey) => {
-    if (!window.confirm(`Удалить промер от ${formatDateTime(survey.surveyDate)} вместе с точками?`)) return
+    const confirmation = survey.isPrimary
+      ? `Удалить основной промер от ${formatDateTime(survey.surveyDate)} вместе с результатами измерений и описанием? После удаления по скважине не останется основного набора данных инклинометрии, и расчёт геометрии ствола станет невозможен.`
+      : `Удалить промер от ${formatDateTime(survey.surveyDate)} вместе с результатами измерений и описанием?`
+    if (!window.confirm(confirmation)) return
     save.mutate({ current: workspace, next: { ...workspace, surveys: workspace.surveys.filter((item) => item.id !== survey.id) }, eventType: 'deviation.survey.deleted' }, {
       onSuccess: (next) => {
         setSelectedId(next.surveys[0]?.id ?? '')
-        setNotice('Промер и связанные точки удалены. Операция записана в аудит.')
+        setNotice(survey.isPrimary
+          ? 'Основной промер, его описание и результаты измерений удалены. Основной набор инклинометрии теперь не выбран.'
+          : 'Промер, его описание и результаты измерений удалены. Операция записана в аудит.')
       },
     })
   }
@@ -150,7 +155,7 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults }: 
     </section>
 
     <div className="bgd-deviation-layout">
-      <Panel className="bgd-deviation-registry" title="Промеры" description="Наборы измерений выбранной скважины." action={canEdit && <Button size="sm" disabled={save.isPending} onClick={() => setEditorSurvey('new')}><Plus size={15} /> Добавить</Button>}>
+      <Panel className="bgd-deviation-registry" title="Промеры" description="Наборы измерений выбранной скважины." action={canEdit && <div className="bgd-deviation-registry-actions"><Button size="sm" variant="quiet" disabled={save.isPending || !selected} onClick={() => selected && deleteSurvey(selected)} aria-label="Удалить выбранный промер"><Trash2 size={15} /> Удалить</Button><Button size="sm" disabled={save.isPending} onClick={() => setEditorSurvey('new')}><Plus size={15} /> Добавить</Button></div>}>
         {workspace.surveys.length ? <div className="bgd-deviation-list">{workspace.surveys.map((survey) => <button type="button" key={survey.id} className={survey.id === selected?.id ? 'is-selected' : ''} onClick={() => setSelectedId(survey.id)}>
           <span className="bgd-deviation-list__icon"><Compass size={18} /></span>
           <span><strong>{formatDateTime(survey.surveyDate)}</strong><small>{azimuthKindLabels[survey.azimuthKind]} азимут · {survey.device || 'Прибор не указан'}</small><em>{survey.points.length} точек · {survey.planDistance === null ? 'требует расчёта' : `R ${survey.planDistance} м`}</em></span>
@@ -159,7 +164,7 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults }: 
         {canAdminister && <div className="bgd-deviation-import"><span><FileUp size={18} /><span><strong>Импорт инклинометрии</strong><small>Макет будущего сценария с детерминированным demo-файлом</small></span></span><Button size="sm" variant="secondary" onClick={() => setImportOpen(true)}>Открыть импорт</Button></div>}
       </Panel>
 
-      {selected ? <DeviationInspector survey={selected} canEdit={canEdit} canAdminister={canAdminister} pending={save.isPending} onCalculate={() => calculate(selected)} onEdit={() => setEditorSurvey(selected)} onPrimary={() => setPrimary(selected)} onDelete={() => deleteSurvey(selected)} /> : <Panel title="Сведения о промере" description="Выберите или добавьте промер."><div className="geobase-empty"><Route size={22} /><strong>Нет выбранного промера</strong><span>Описание, точки и результаты расчёта появятся здесь.</span></div></Panel>}
+      {selected ? <DeviationInspector survey={selected} canEdit={canEdit} pending={save.isPending} onCalculate={() => calculate(selected)} onEdit={() => setEditorSurvey(selected)} onPrimary={() => setPrimary(selected)} /> : <Panel title="Сведения о промере" description="Выберите или добавьте промер."><div className="geobase-empty"><Route size={22} /><strong>Нет выбранного промера</strong><span>Описание, точки и результаты расчёта появятся здесь.</span></div></Panel>}
     </div>
 
     {editorSurvey && <DeviationSurveyDialog
@@ -180,8 +185,14 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults }: 
   </div>
 }
 
-function DeviationInspector({ survey, canEdit, canAdminister, pending, onCalculate, onEdit, onPrimary, onDelete }: { survey: DeviationSurvey; canEdit: boolean; canAdminister: boolean; pending: boolean; onCalculate: () => void; onEdit: () => void; onPrimary: () => void; onDelete: () => void }) {
-  return <Panel className="bgd-deviation-inspector" title={`Промер от ${formatDateTime(survey.surveyDate)}`} description={`${survey.id} · версия ${survey.version}`} action={survey.isPrimary ? <Badge tone="info"><Star size={12} /> Основной</Badge> : undefined}>
+function DeviationInspector({ survey, canEdit, pending, onCalculate, onEdit, onPrimary }: { survey: DeviationSurvey; canEdit: boolean; pending: boolean; onCalculate: () => void; onEdit: () => void; onPrimary: () => void }) {
+  const primaryAction = survey.isPrimary
+    ? <Badge tone="info"><Star size={12} /> Основной</Badge>
+    : canEdit
+      ? <Button size="sm" variant="secondary" disabled={pending} onClick={onPrimary}><Star size={15} /> Сделать основным</Button>
+      : undefined
+
+  return <Panel className="bgd-deviation-inspector" title={`Промер от ${formatDateTime(survey.surveyDate)}`} description={`${survey.id} · версия ${survey.version}`} action={primaryAction}>
     <div className="bgd-log-facts">
       <article><CalendarDays size={17} /><span><small>Дата проведения</small><strong>{formatDateTime(survey.surveyDate)}</strong></span></article>
       <article><Compass size={17} /><span><small>Азимут</small><strong>{azimuthKindLabels[survey.azimuthKind]} · поправка {survey.correctionAngle}°</strong></span></article>
@@ -198,9 +209,7 @@ function DeviationInspector({ survey, canEdit, canAdminister, pending, onCalcula
     </section>
     <div className="bgd-deviation-toolbar">
       {canEdit && <Button size="sm" disabled={pending} onClick={onCalculate}><Calculator size={15} /> Рассчитать</Button>}
-      {canAdminister && <Button size="sm" variant="secondary" disabled={pending || survey.isPrimary} onClick={onPrimary}><Star size={15} /> {survey.isPrimary ? 'Основной' : 'Сделать основным'}</Button>}
       {canEdit && <Button size="sm" variant="secondary" disabled={pending} onClick={onEdit}><Pencil size={15} /> Изменить</Button>}
-      {canAdminister && <Button size="sm" variant="quiet" disabled={pending} onClick={onDelete}><Trash2 size={15} /> Удалить</Button>}
     </div>
     <div className="bgd-deviation-table" role="table" aria-label="Точки инклинометрического промера">
       <div className="bgd-deviation-table__head" role="row"><span>Глубина, м</span><span>Азимут, °</span><span>Зенит, °</span><span>dX, м</span><span>dY, м</span><span>dZ, м</span></div>
