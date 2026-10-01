@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { Building2, CheckCircle2, Database, Plus, ShieldCheck, UsersRound } from 'lucide-react'
 import { useState } from 'react'
 import { getDepositName, type CreateDepositInput } from '../../entities/geology-master/model/types'
@@ -47,6 +47,7 @@ export function AdminPage() {
       <article><span><Database size={20} /></span><div><strong>{(data?.sites.length ?? 0) + (data?.lenses.length ?? 0)}</strong><small>связанных объектов</small></div></article>
     </section>
     <div className="admin-grid">
+      {hasPermission(persona, 'administration.references.view') && <Panel title="Справочники" description="Обычные и reff-справочники: записи, фиксированные поля, статусы и история изменений."><Link to="/admin/references" className="button button--primary button--md"><Database size={17} /> Открыть справочники</Link></Panel>}
       <Panel title="Управление месторождениями" description="Создание корневых объектов вынесено из ежедневной рабочей области геолога.">
         {masterQuery.isLoading ? <div className="skeleton skeleton--list" /> : <div className="admin-deposit-list">{data?.deposits.map((deposit) => <button key={deposit.id} type="button" onClick={() => void navigate({ to: '/geology/bgd/$depositId', params: { depositId: deposit.id } })}><span><strong>{getDepositName(deposit)}</strong><small>№ {deposit.code} · версия {deposit.version}</small></span><Badge tone={deposit.isHidden ? 'neutral' : 'success'} dot>{deposit.isHidden ? 'Скрыто' : 'Используется'}</Badge></button>)}</div>}
         {canCreateDeposit && <Button className="admin-deposit-list__create" variant="secondary" onClick={() => setCreateOpen(true)}><Plus size={16} /> Добавить месторождение</Button>}

@@ -120,7 +120,7 @@ export function AppShell({ children }: PropsWithChildren) {
           const active = item.to === '/geology'
             ? pathname === '/geology'
             : pathname.startsWith(item.to)
-          return <Link key={item.to} to={item.to} className={active ? 'is-active' : ''}><Icon size={17} /><span>{item.label}</span></Link>
+          return <Link key={item.to} to={item.to} title={item.label} aria-label={item.label} className={active ? 'is-active' : ''}><Icon size={17} /><span>{item.label}</span></Link>
         })}
       </nav>
       {isBgd && <button className="topbar__geology-toggle" type="button" onClick={() => setGeologyNavOpen((value) => !value)} aria-expanded={geologyNavOpen} aria-label="Открыть скважины"><Menu size={20} /><span>Скважины</span></button>}

@@ -21,5 +21,6 @@
 | приёмка | [10-acceptance-demo.md](./ui-ux/10-acceptance-demo.md) |
 | открытые вопросы | [11-traceability-open-questions.md](./ui-ux/11-traceability-open-questions.md) |
 | реализация БГД | [пакет проверок](./geology-functional-expansion/README.md) |
+| управление справочниками | [03-reference-data.md](./ui-ux/modules/03-reference-data.md) |
 
 `archive/` не используется при обычной работе и не должен попадать в широкие поиски.

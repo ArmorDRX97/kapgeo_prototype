@@ -17,5 +17,6 @@ describe('BGD route smoke', () => {
     expect(router.buildLocation({ to: '/modeling' }).href).toBe('/modeling')
     expect(router.buildLocation({ to: '/analytics' }).href).toBe('/analytics')
     expect(router.buildLocation({ to: '/admin' }).href).toBe('/admin')
+    expect(router.buildLocation({ to: '/admin/references', search: { dictionary: 'reff_device', entry: 'REF-DEVICE-1' } }).href).toBe('/admin/references?dictionary=reff_device&entry=REF-DEVICE-1')
   })
 })

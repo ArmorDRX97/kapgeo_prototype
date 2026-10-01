@@ -1,0 +1,56 @@
+.reference-workbench { display: grid; grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr); gap: 24px; align-items: start; }
+.reference-directory { min-width: 0; }
+.reference-directory-toolbar { display: grid; gap: 16px; padding-bottom: 20px; }
+.reference-tabs { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-panel); width: fit-content; max-width: 100%; }
+.reference-tabs button { cursor: pointer; display: flex; align-items: center; gap: 8px; border: 0; border-radius: var(--radius-sm); background: transparent; padding: 10px 14px; font-size: var(--font-size-base); font-weight: 600; color: var(--text-secondary); }
+.reference-tabs button[aria-selected=true] { color: var(--color-brand-800); background: var(--color-brand-50); }
+.reference-tabs span { font-size: var(--font-size-sm); opacity: .75; }
+.reference-search { display: flex; align-items: center; gap: 10px; padding: 0 14px; min-height: 44px; background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: var(--radius-md); color: var(--text-tertiary); }
+.reference-search input { min-width: 0; width: 100%; border: 0; background: transparent; color: var(--text-primary); font-size: var(--font-size-base); padding: 10px 0; }
+.reference-list-caption { display: flex; justify-content: space-between; padding: 0 16px 10px; font-size: var(--font-size-sm); color: var(--text-tertiary); }
+.reference-directory-list { display: grid; gap: 8px; max-height: calc(100dvh - 335px); min-height: 300px; overflow-y: auto; padding-right: 4px; }
+.reference-directory-row { display: flex; align-items: center; gap: 12px; min-height: 68px; flex-shrink: 0; padding: 12px 16px; text-align: left; cursor: pointer; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-panel); color: var(--text-secondary); }
+.reference-directory-row:hover { border-color: var(--color-brand-300); }
+.reference-directory-row.is-active { background: var(--color-brand-50); border-color: var(--color-brand-600); box-shadow: inset 3px 0 0 var(--color-brand-600); }
+.reference-row-icon { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: var(--radius-sm); color: var(--color-brand-700); background: var(--surface-subtle); }
+.reference-row-title { flex: 1; min-width: 0; }
+.reference-row-title strong { display: block; font-size: var(--font-size-base); font-weight: 600; color: var(--text-primary); overflow-wrap: anywhere; }
+.reference-row-title small { display: block; margin-top: 4px; color: var(--text-tertiary); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+.reference-row-count { min-width: 24px; text-align: center; font-size: var(--font-size-sm); }
+.reference-demo-note { color: var(--text-tertiary); font-size: var(--font-size-sm); }
+.reference-inspector { position: sticky; top: calc(var(--topbar-height) + 20px); display: grid; align-content: start; gap: 16px; padding: 24px; min-height: min(520px, calc(100dvh - 220px)); max-height: calc(100dvh - 220px); overflow-y: auto; border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-panel); box-shadow: var(--shadow-sm); min-width: 0; }
+.reference-empty { display: flex; min-height: 250px; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; color: var(--text-tertiary); }
+.reference-empty strong { color: var(--text-primary); font-size: 18px; }
+.reference-empty span { font-size: var(--font-size-base); }
+.reference-inspector > .reference-empty { min-height: min(450px, calc(100dvh - 270px)); }
+.reference-inspector-header h2 { font-size: 20px; margin: 12px 0 6px; overflow-wrap: anywhere; }
+.reference-inspector-header small { font-size: var(--font-size-sm); color: var(--text-tertiary); overflow-wrap: anywhere; }
+.reference-inspector-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.reference-inspector-toolbar { align-items: center; }
+.reference-primary-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.reference-history-toggle { margin-left: auto; }
+.reference-editor-content { display: grid; gap: 16px; }
+.reference-primary-actions[hidden], .reference-editor-content[hidden] { display: none; }
+.reference-entry-form { display: grid; gap: 16px; }
+.reference-form-grid { display: grid; gap: 16px; }
+.reference-form-grid .field__label small { display: block; margin-top: 4px; font-weight: 400; color: var(--text-tertiary); }
+.reference-entry-form input, .reference-entry-form textarea, .reference-inspector select { width: 100%; min-width: 0; }
+.reference-form-hint { margin: 0; color: var(--text-tertiary); font-size: var(--font-size-sm); }
+.reference-entry-form footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-default); padding-top: 16px; }
+.reference-danger-actions { border-top: 1px solid var(--border-default); padding-top: 16px; }
+.reference-draft-note { color: var(--color-amber-700); }
+.reference-field-error { color: var(--color-red-700); }
+.reference-history { display: grid; gap: 12px; }
+.reference-history h3 { margin: 0; font-size: 16px; }
+.reference-history article { padding: 12px; border: 1px solid var(--border-default); border-radius: var(--radius-md); }
+.reference-history small { display: block; margin-top: 4px; color: var(--text-tertiary); }
+.reference-history dl { display: grid; gap: 12px; }
+.reference-history dt { font-size: var(--font-size-sm); color: var(--text-secondary); }
+.reference-history dd { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.reference-dialog-backdrop { position: fixed; inset: 0; z-index: 100; background: rgb(16 33 44 / .4); display: grid; place-items: center; padding: 20px; }
+.reference-dialog { width: min(560px, 100%); max-height: 90dvh; overflow-y: auto; background: var(--surface-panel); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 24px; }
+.reference-dialog > header, .reference-dialog > footer { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.reference-dialog h2 { margin: 0; font-size: 20px; }
+.reference-dialog > footer { justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--border-default); padding-top: 16px; margin-top: 20px; }
+@media (max-width: 900px) { .reference-workbench { grid-template-columns: minmax(0, 1fr); } .reference-inspector { position: static; max-height: none; } .reference-directory-list { max-height: 380px; } }
+@media (max-width: 540px) { .reference-tabs { width: 100%; } .reference-tabs button { flex: 1; justify-content: center; padding: 10px 6px; font-size: var(--font-size-sm); } .reference-tabs span { display: none; } .reference-directory-row { gap: 8px; padding: 12px; } .reference-row-icon { display: none; } .reference-inspector { padding: 16px; } }

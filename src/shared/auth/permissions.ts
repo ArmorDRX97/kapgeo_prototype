@@ -1,6 +1,11 @@
 import type { UserPersona, RoleId } from '../../entities/session/model/types'
 
 export type Permission =
+  | 'administration.references.view'
+  | 'administration.references.create'
+  | 'administration.references.update'
+  | 'administration.references.status'
+  | 'administration.references.delete'
   | 'bgd.view'
   | 'geology.view'
   | 'geology.bgd.create'
@@ -36,8 +41,8 @@ const rolePermissions: Record<RoleId, Permission[]> = {
   R10: ['technology.view'],
   R11: ['bgd.view', 'geology.view', 'technology.view', 'modeling.view', 'analytics.view'],
   R12: ['bgd.view', 'geology.view', 'geology.bgd.audit', 'technology.view', 'modeling.view', 'analytics.view'],
-  R13: ['bgd.view', 'geology.view', 'geology.bgd.create', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.audit', 'geology.bgd.well.create', 'geology.bgd.well.update-all', 'geology.bgd.well.manage-logs', 'geology.bgd.well.manage-deviation', 'geology.bgd.well.administer-deviation', 'geology.bgd.well.manage-core', 'geology.bgd.well.manage-core-measurements', 'geology.bgd.well.manage-ore-intervals', 'technology.view', 'modeling.view', 'analytics.view', 'administration.view'],
-  R14: ['bgd.view', 'geology.view', 'geology.bgd.audit', 'technology.view', 'administration.view'],
+  R13: ['administration.references.view', 'administration.references.create', 'administration.references.update', 'administration.references.status', 'administration.references.delete', 'bgd.view', 'geology.view', 'geology.bgd.create', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.audit', 'geology.bgd.well.create', 'geology.bgd.well.update-all', 'geology.bgd.well.manage-logs', 'geology.bgd.well.manage-deviation', 'geology.bgd.well.administer-deviation', 'geology.bgd.well.manage-core', 'geology.bgd.well.manage-core-measurements', 'geology.bgd.well.manage-ore-intervals', 'technology.view', 'modeling.view', 'analytics.view', 'administration.view'],
+  R14: ['administration.references.view', 'bgd.view', 'geology.view', 'geology.bgd.audit', 'technology.view', 'administration.view'],
 }
 
 export function hasPermission(persona: UserPersona | null, permission: Permission) {

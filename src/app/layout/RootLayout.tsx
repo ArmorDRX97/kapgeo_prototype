@@ -13,6 +13,7 @@ export function RootLayout() {
   if (isAuthRoute) return <Outlet />
 
   const guardedModules: Array<{ prefix: string; permission: Permission; name: string }> = [
+    { prefix: '/admin/references', permission: 'administration.references.view', name: 'Справочники' },
     { prefix: '/geology/bgd', permission: 'bgd.view', name: 'БГД' },
     { prefix: '/geology', permission: 'geology.view', name: 'Геология' },
     { prefix: '/technology', permission: 'technology.view', name: 'Технология' },

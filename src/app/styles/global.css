@@ -332,7 +332,7 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 .topbar-brand .brand__text strong { color: #102b34; font-size: 13px; }
 .topbar-brand .brand__text small { color: #73878e; font-size: 9px; }
 .topbar__divider { width: 1px; height: 31px; flex: none; background: var(--border-default); }
-.topbar__module-nav { display: flex; min-width: 0; height: 68px; align-items: stretch; gap: 2px; }
+.topbar__module-nav { display: flex; min-width: 0; height: 68px; align-items: stretch; gap: 2px; overflow-x: auto; flex-shrink: 1; }
 .topbar__module-nav a { position: relative; display: inline-flex; min-width: max-content; align-items: center; gap: 7px; padding: 0 11px; color: #60727a; font-size: 13px; font-weight: 650; transition: color var(--duration-fast), background var(--duration-fast); }
 .topbar__module-nav a:hover { color: var(--text-primary); background: var(--surface-subtle); }
 .topbar__module-nav a.is-active { color: var(--color-brand-800); }
@@ -486,6 +486,11 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 .profile-persona-list strong { font-size: 10px; }
 .profile-persona-list small { color: var(--text-tertiary); font-size: 9px; }
 
+@media (max-width: 1700px) {
+  .topbar--modules .topbar-profile__copy { display: none; }
+  .topbar--modules .global-search-wrap { width: 190px; flex-shrink: 0; }
+  .topbar--modules { gap: 8px; }
+}
 @media (max-width: 1120px) {
   .topbar--modules { gap: 8px; padding-inline: 12px; }
   .topbar__module-nav a { padding-inline: 8px; justify-content: center; }
