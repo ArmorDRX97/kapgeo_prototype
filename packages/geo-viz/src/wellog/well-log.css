@@ -1,0 +1,17 @@
+.wellog { position: relative; min-width: 0; color: var(--text-primary); background: var(--surface-panel); --card: var(--surface-panel); --border: var(--border-default); --muted-foreground: var(--text-secondary); }
+.wellog__scroll { height: 100%; overflow-x: auto; overflow-y: hidden; }
+.wellog__headers { display: flex; width: max-content; min-width: 100%; background: var(--surface-subtle); border-bottom: 1px solid var(--border-strong); }
+.wellog__axis-heading { position: sticky; left: 0; z-index: 3; flex: none; padding: 12px 6px; background: var(--surface-subtle); font-size: 12px; color: var(--text-secondary); }
+.wellog__heading { display: flex; flex: none; flex-direction: column; gap: 2px; padding: 8px; overflow: hidden; text-align: left; border: 0; border-left: 1px solid var(--border-default); background: transparent; cursor: pointer; }
+.wellog__heading:hover { background: var(--color-brand-50); }
+.wellog__heading strong { font-size: 12px; white-space: nowrap; }
+.wellog__heading small { font-size: 12px; color: var(--text-tertiary); }
+.wellog__heading > span { display: flex; gap: 4px; font-size: 12px; }
+.wellog__body { display: flex; width: max-content; min-width: 100%; position: relative; user-select: none; touch-action: none; }
+.wellog__axis { flex: none; position: sticky; left: 0; z-index: 2; }
+.wellog__track { flex: none; cursor: crosshair; }
+.wellog__body--pan .wellog__track { cursor: grab; }
+.wellog__body--boundary .wellog__track { cursor: ns-resize; }
+.wellog__readout { position: absolute; bottom: -36px; left: 0; right: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; min-height: 36px; padding: 8px 12px; font-size: 12px; color: var(--text-secondary); background: var(--surface-subtle); border-top: 1px solid var(--border-default); }
+.wellog__readout span { display: inline-flex; gap: 6px; align-items: center; }
+.wellog__readout i { height: 6px; width: 6px; border-radius: 50%; }

@@ -6,7 +6,9 @@ import { GeoBaseDepositPage } from '../pages/geology/GeoBaseDepositPage'
 import { GeoBasePage } from '../pages/geology/GeoBasePage'
 import { ProfilePage } from '../pages/profile/ProfilePage'
 import { NotFoundPage } from '../pages/system/NotFoundPage'
-import { AccessDeniedPage, AnalyticsModulePage, GeologyModulePage, ModelingModulePage, TechnologyModulePage } from '../pages/system/ModulePlaceholderPage'
+import { AccessDeniedPage, AnalyticsModulePage, ModelingModulePage, TechnologyModulePage } from '../pages/system/ModulePlaceholderPage'
+import { InterpretationPage } from '../pages/geology/InterpretationPage'
+import { validateInterpretationSearch } from '../features/interpretation/model/search'
 import { AdminPage } from '../pages/admin/AdminPage'
 import { ReferenceDataPage } from '../pages/admin/ReferenceDataPage'
 import { userPersonas } from '../entities/session/model/personas'
@@ -35,7 +37,7 @@ const indexRoute = createRoute({
   },
 })
 const signInRoute = createRoute({ getParentRoute: () => rootRoute, path: '/auth/sign-in', component: SignInPage })
-const geologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology', component: GeologyModulePage })
+const geologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology', validateSearch: validateInterpretationSearch, component: InterpretationPage })
 const geoBaseRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd', component: GeoBasePage })
 const geoBaseDepositRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId', validateSearch: validateDepositSectionSearch, component: GeoBaseDepositPage })
 const bgdNewWellRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId/wells/new', validateSearch: validateBgdWellSectionSearch, component: BgdNewWellPage })

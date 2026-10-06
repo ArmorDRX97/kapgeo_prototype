@@ -1,0 +1,136 @@
+import { useState } from 'react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { interpretationWells } from '../../entities/interpretation/model/fixtures'
+import { userPersonas } from '../../entities/session/model/personas'
+import { interpretationStorageKey, interpretationRepository } from '../../repository/demo/interpretationRepository'
+import type { InterpretationSearch } from './model/search'
+import { InterpretationWorkbench } from './InterpretationWorkbench'
+
+vi.mock('@tanstack/react-router', () => ({ useBlocker: vi.fn() }))
+const well = interpretationWells[0]!
+function Harness({ mode = 'lithology', reader = false, locked = false, stale = false }: { mode?: InterpretationSearch['mode']; reader?: boolean; locked?: boolean; stale?: boolean }) {
+  const [search, setSearch] = useState<InterpretationSearch>({ well: well.id, mode })
+  const subject = stale ? interpretationWells[3]! : locked ? interpretationWells[1]! : well
+  return <InterpretationWorkbench well={subject} initial={structuredClone(subject.initial)} persona={userPersonas.find(p => p.id === (reader ? 'admin.ai' : 'geo.ivanova'))!} search={search} onLocationChange={setSearch} />
+}
+describe('interpretation prototype workbench', () => {
+  beforeEach(() => {
+    for (const w of interpretationWells) localStorage.removeItem(interpretationStorageKey(w.id))
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const ctx = new Proxy({ measureText: (text: string) => ({ width: text.length * 6 }) }, { get(target, key) { return key in target ? target[key as keyof typeof target] : () => undefined }, set() { return true } })
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx as unknown as CanvasRenderingContext2D)
+    vi.stubGlobal('requestAnimationFrame', (fn: FrameRequestCallback) => { fn(0); return 1 })
+    vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  })
+  afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); for (const w of interpretationWells) localStorage.removeItem(interpretationStorageKey(w.id)) })
+  it('renders the actual Canvas package, edits neighbours, undoes and saves a result', async () => {
+    render(<Harness />)
+    expect(screen.getByRole('img', { name: 'Колонка КС · основной' }).tagName).toBe('CANVAS')
+    fireEvent.click(screen.getByRole('button', { name: 'Интервал 2' }))
+    fireEvent.change(screen.getByLabelText('До, м', { exact: true }), { target: { value: '118.2' } })
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Применить' }))
+    expect(screen.getByLabelText('До, м', { exact: true })).toHaveValue(118.2)
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить действие' }))
+    expect(screen.getByLabelText('До, м', { exact: true })).toHaveValue(117.4)
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить действие' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled()
+    expect((await interpretationRepository.load(well)).logLithology[1]!.to).toBe(118.2)
+  })
+  it('keeps the calculation preview separate, marks changed parameters stale and cancels safely', () => {
+    render(<Harness mode="technology" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Рассчитать по КС' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Рассчитать' }))
+    expect(screen.getByRole('img', { name: 'Колонка Предпросмотр' })).toBeInTheDocument()
+    const firstCount = screen.getAllByRole('button', { name: /^Интервал \d+$/ }).length
+    fireEvent.change(screen.getByLabelText('Порог КС, Ом·м'), { target: { value: '45' } })
+    expect(screen.getByRole('button', { name: 'Применить результат' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Пересчитать' }))
+    expect(screen.getAllByRole('button', { name: /^Интервал \d+$/ }).length).not.toBe(firstCount)
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить расчёт' }))
+    expect(screen.queryByRole('img', { name: 'Колонка Предпросмотр' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Интервал \d+$/ })).toHaveLength(4)
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled()
+  })
+  it('applies a calculated replacement and restores the original intervals with undo', () => {
+    render(<Harness mode="technology" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Рассчитать по КС' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Рассчитать' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Применить результат' }))
+    expect(screen.queryByRole('img', { name: 'Колонка Предпросмотр' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Интервал \d+$/ }).length).toBeGreaterThan(4)
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить действие' }))
+    expect(screen.getAllByRole('button', { name: /^Интервал \d+$/ })).toHaveLength(4)
+  })
+  it('moves linked core and sample parts atomically and restores them with undo', () => {
+    render(<Harness mode="core" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Керн 1' }))
+    fireEvent.change(screen.getByLabelText('Начало в сводной колонке, м'), { target: { value: '113' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Применить привязку' }))
+    const table = within(screen.getByRole('table', { name: 'Связанные пробы' }))
+    expect(table.getByText('114.0—115.5')).toBeInTheDocument()
+    expect(table.getByText('0.024')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить действие' }))
+    expect(table.getAllByText('113.0—114.5')).toHaveLength(2)
+  })
+  it.each([{ reader: true, locked: false }, { reader: false, locked: true }])('restricts editing by permission and object status: %j', ({ reader, locked }) => {
+    render(<Harness reader={reader} locked={locked} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Интервал 2' }))
+    expect(screen.getByLabelText('До, м', { exact: true })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Новый интервал' })).toBeDisabled()
+  })
+  it('accepts a two-point range gesture without panning or saving an unfinished interval', () => {
+    vi.stubGlobal('PointerEvent', MouseEvent)
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ x: 0, y: 0, top: 0, left: 0, bottom: 536, right: 160, width: 160, height: 536, toJSON() {} })
+    render(<Harness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Новый интервал' }))
+    const canvas = screen.getByRole('img', { name: 'Колонка По каротажу' })
+    fireEvent.pointerDown(canvas, { button: 0, clientY: 160 })
+    fireEvent.pointerMove(canvas, { clientY: 230 })
+    fireEvent.pointerUp(canvas, { button: 0, clientY: 230 })
+    expect(screen.getByText('Новый интервал')).toBeInTheDocument()
+    expect(screen.getByLabelText('От, м', { exact: true })).toHaveValue(119.2)
+    expect(screen.getByLabelText('Окно от, м')).toHaveValue(112)
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить ввод' }))
+    expect(screen.queryByLabelText('От, м', { exact: true })).not.toBeInTheDocument()
+  })
+  it('splits a sample into linked parts, persists the binding and restores it with undo', async () => {
+    render(<Harness mode="core" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Керн 1' }))
+    fireEvent.click(screen.getByText('Разделить / объединить сегмент'))
+    fireEvent.change(screen.getByLabelText('Разделить керн на глубине, м'), { target: { value: '114' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Разделить сегмент' }))
+    const samples = within(screen.getByRole('table', { name: 'Связанные пробы' }))
+    expect(samples.getAllByText('0.024')).toHaveLength(2)
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+    expect((await interpretationRepository.load(well)).core).toHaveLength(6)
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить действие' }))
+    expect(samples.getAllByText('0.024')).toHaveLength(1)
+  })
+  it('creates a separate material sample and keeps other sample materials unchanged', async () => {
+    render(<Harness mode="core" />)
+    fireEvent.change(screen.getByLabelText('Показать вид проб'), { target: { value: 'GS' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Новая сводная проба' }))
+    fireEvent.change(screen.getByLabelText('Номер пробы'), { target: { value: 'DEMO-ГС-NEW' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Применить пробу' }))
+    expect(screen.getByRole('button', { name: 'Выбрать DEMO-ГС-NEW, часть 1' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+    const loaded = await interpretationRepository.load(well)
+    expect(loaded.samples?.filter(s => (s.kind ?? 'KP') === 'KP')).toHaveLength(3)
+    expect(loaded.samples?.filter(s => s.kind === 'GS')).toHaveLength(2)
+  })
+  it('blocks stale bindings until an explicit rebuild and clears undo history on rebuild', () => {
+    render(<Harness mode="core" stale />)
+    fireEvent.click(screen.getByRole('button', { name: 'Керн 1' }))
+    expect(screen.getByRole('button', { name: 'Применить привязку' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'К буровой колонке' }))
+    expect(screen.getByRole('button', { name: 'Отменить действие' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Керн 1' }))
+    expect(screen.getByRole('button', { name: 'Применить привязку' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeEnabled()
+  })
+})

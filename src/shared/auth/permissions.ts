@@ -8,6 +8,7 @@ export type Permission =
   | 'administration.references.delete'
   | 'bgd.view'
   | 'geology.view'
+  | 'geology.interpretation.edit'
   | 'geology.bgd.create'
   | 'geology.bgd.update'
   | 'geology.bgd.delete'
@@ -44,6 +45,9 @@ const rolePermissions: Record<RoleId, Permission[]> = {
   R13: ['administration.references.view', 'administration.references.create', 'administration.references.update', 'administration.references.status', 'administration.references.delete', 'bgd.view', 'geology.view', 'geology.bgd.create', 'geology.bgd.update', 'geology.bgd.delete', 'geology.bgd.audit', 'geology.bgd.well.create', 'geology.bgd.well.update-all', 'geology.bgd.well.manage-logs', 'geology.bgd.well.manage-deviation', 'geology.bgd.well.administer-deviation', 'geology.bgd.well.manage-core', 'geology.bgd.well.manage-core-measurements', 'geology.bgd.well.manage-ore-intervals', 'technology.view', 'modeling.view', 'analytics.view', 'administration.view'],
   R14: ['administration.references.view', 'bgd.view', 'geology.view', 'geology.bgd.audit', 'technology.view', 'administration.view'],
 }
+
+// Explicit prototype permission; object scope/status are checked by the editor.
+for (const role of ['R1', 'R2', 'R13'] as const) rolePermissions[role].push('geology.interpretation.edit')
 
 export function hasPermission(persona: UserPersona | null, permission: Permission) {
   return persona?.roles.some((role) => rolePermissions[role].includes(permission)) ?? false
