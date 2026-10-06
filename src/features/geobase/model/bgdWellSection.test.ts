@@ -16,4 +16,15 @@ describe('validateBgdWellSectionSearch', () => {
     expect(validateBgdWellSectionSearch({ tab: 'description' })).toEqual({ tab: undefined })
     expect(validateBgdWellSectionSearch({ tab: 'unknown' })).toEqual({ tab: undefined })
   })
+
+  it('restores real passport sections and only keeps views owned by the section', () => {
+    expect(validateBgdWellSectionSearch({ tab: 'passport' })).toEqual({ tab: 'passport' })
+    expect(validateBgdWellSectionSearch({ tab: 'geometry' })).toEqual({ tab: 'geometry' })
+    expect(validateBgdWellSectionSearch({ tab: 'documentation' })).toEqual({ tab: 'documentation' })
+    expect(validateBgdWellSectionSearch({ tab: 'core-runs', view: 'measurements' })).toEqual({ tab: 'core-runs', view: 'measurements' })
+    expect(validateBgdWellSectionSearch({ tab: 'lithology', view: 'composite' })).toEqual({ tab: 'lithology', view: 'composite' })
+    expect(validateBgdWellSectionSearch({ tab: 'description', view: 'notes' })).toEqual({ tab: undefined, view: 'notes' })
+    expect(validateBgdWellSectionSearch({ tab: 'logs', view: 'notes' })).toEqual({ tab: 'logs' })
+    expect(validateBgdWellSectionSearch({ tab: 'lithology', view: 'core' })).toEqual({ tab: 'lithology' })
+  })
 })

@@ -57,7 +57,7 @@ describe('independent interpretation demo commands', () => {
     expect(mappedCore(well, shifted).find(r => r.rock === 'clay')).toMatchObject({ from: 113, to: 117, rock: 'clay' })
     const reversed = transformCore(well, shifted, 'seg-1', 113, true)
     expect(mappedSamples(well, reversed)[0]).toMatchObject({ from: 116.5, to: 118, assay: 0.024 })
-    const multiple = mappedSamples(well, transformCore(well, well.initial, 'seg-2', 121, true)).filter(s => s.name === 'DEMO-КП-02')
+    const multiple = mappedSamples(well, transformCore(well, well.initial, 'seg-2', 121, true)).filter(s => s.name === 'КП-02')
     expect(multiple).toHaveLength(2); expect(multiple.every(s => s.assay === 0.041)).toBe(true)
     expect(validateInterpretation(well, reversed)).toBeTruthy()
     expect(() => transformCore(well, well.initial, 'seg-1', 116, false)).toThrow()

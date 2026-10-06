@@ -12,9 +12,11 @@ export function BgdNewWellPage() {
   return <WellEditorPage
     depositId={depositId}
     activeTab={search.tab ?? 'description'}
-    onTabChange={(tab) => void navigate({ search: { tab: tab === 'description' ? undefined : tab }, replace: true })}
+    activeView={search.view}
+    onViewChange={(view) => void navigate({ search: { ...search, view }, resetScroll: false })}
+    onTabChange={(tab) => void navigate({ search: { tab: tab === 'description' ? undefined : tab }, resetScroll: false })}
     onCancel={() => void navigate({ to: '/geology/bgd/$depositId', params: { depositId } })}
-    onSaved={(well) => void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId: well.id }, replace: true })}
+    onSaved={(well) => void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId: well.id }, search, replace: true, resetScroll: false })}
   />
 }
 
@@ -26,8 +28,10 @@ export function BgdWellPage() {
     depositId={depositId}
     wellId={wellId}
     activeTab={search.tab ?? 'description'}
-    onTabChange={(tab: BgdWellSection) => void navigate({ search: { tab: tab === 'description' ? undefined : tab }, replace: true })}
+    activeView={search.view}
+    onViewChange={(view) => void navigate({ search: { ...search, view }, resetScroll: false })}
+    onTabChange={(tab: BgdWellSection) => void navigate({ search: { tab: tab === 'description' ? undefined : tab }, resetScroll: false })}
     onCancel={() => void navigate({ to: '/geology/bgd/$depositId', params: { depositId } })}
-    onSaved={(well) => void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId: well.id }, replace: true })}
+    onSaved={(well) => void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId: well.id }, search, replace: true, resetScroll: false })}
   />
 }

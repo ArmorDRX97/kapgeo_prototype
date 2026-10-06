@@ -40,5 +40,5 @@ export function AnalyticsModulePage() {
 
 export function AccessDeniedPage({ moduleName }: { moduleName: string }) {
   const { persona } = useSession()
-  return <main className="state-page"><span className="state-page__icon state-page__icon--danger"><ShieldX size={30} /></span><p className="eyebrow">Доступ ограничен</p><h1>Модуль «{moduleName}» недоступен</h1><p>Для профиля «{persona?.position}» не назначено разрешение на этот раздел. Сменить демонстрационную роль можно в профиле.</p><div><Link to="/profile" className="button button--primary button--md">Открыть профиль</Link><Button variant="secondary" onClick={() => window.history.back()}>Назад</Button></div></main>
+  return <main className="state-page"><span className="state-page__icon state-page__icon--danger"><ShieldX size={30} /></span><p className="eyebrow">Доступ ограничен</p><h1>Модуль «{moduleName}» недоступен</h1><p>Для профиля «{persona?.position}» не назначено разрешение на этот раздел. Сменить роль можно в профиле.</p><div><Link to="/profile" className="button button--primary button--md">Открыть профиль</Link><Button variant="secondary" onClick={() => window.history.back()}>Назад</Button></div></main>
 }

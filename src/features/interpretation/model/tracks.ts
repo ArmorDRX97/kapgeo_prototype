@@ -24,7 +24,7 @@ export function buildTracks(well: InterpretationWell, doc: InterpretationDocumen
     if (view.source && kind !== 'core') tracks.push({ id: 'source', title: 'Литология', subtitle: 'По керну · источник', curves: [], width: 112, intervals: lithologySpecs(well.sourceLithology, selection, 'source') })
     const rows = kind === 'core' ? well.sourceLithology : kind === 'log' ? doc.logLithology : doc.compositeLithology
     tracks.push({ id: 'lithology', title: copy.kinds[kind], subtitle: kind === 'core' ? 'Исходные данные' : 'Редактируемая колонка', width: 144, curves: [], editable: editable && kind !== 'core', intervals: lithologySpecs(rows, selection, 'lithology') })
-    if (kind !== 'log') tracks.push({ id: 'core-color', title: 'Цвет керна', subtitle: 'Учебная палитра', width: 80, curves: [], intervals: rows.filter(r => r.color).map(r => ({ ...r, fill: coreColorFills[r.color!], label: copy.colors[r.color!] })) })
+    if (kind !== 'log') tracks.push({ id: 'core-color', title: 'Цвет керна', subtitle: 'Цвет породы', width: 80, curves: [], intervals: rows.filter(r => r.color).map(r => ({ ...r, fill: coreColorFills[r.color!], label: copy.colors[r.color!] })) })
     tracks.push({ id: 'minerals', title: 'Минерализации', subtitle: 'Набор свойств', width: 112, curves: [], intervals: rows.filter(r => mineralsOf(r).length).map(r => ({ ...r, label: mineralsOf(r).join(', '), fill: domainTokens.lithology.limestone })) })
   } else if (mode === 'technology') {
     if (view.source) tracks.push({ id: 'source', title: 'Литология', subtitle: 'Сводная', width: 112, curves: [], intervals: lithologySpecs(doc.compositeLithology, selection, 'source') })
@@ -56,7 +56,7 @@ export function buildTracks(well: InterpretationWell, doc: InterpretationDocumen
     const show = original.id === 'rs-main' ? view.rs : original.id === 'gr-main' ? view.gr : view.control
     if (!show) continue
     const curve: CurveSpec = { ...original, scale: scales[original.id] ?? original.scale }
-    tracks.push({ id: original.id, title: original.name, subtitle: original.id === 'rs-control' ? 'Набор DEMO-B' : 'Набор DEMO-A', curves: [curve], width: 160 })
+    tracks.push({ id: original.id, title: original.name, subtitle: original.id === 'rs-control' ? 'Набор B' : 'Набор A', curves: [curve], width: 160 })
   }
   return tracks
 }

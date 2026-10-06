@@ -43,7 +43,7 @@ export function SignInPage() {
         <form className="auth-form-card" onSubmit={handleSignIn} noValidate>
           <p className="eyebrow">AI KAPGEO</p>
           <h2>Вход в систему</h2>
-          <p className="auth-form-card__lead">Введите данные или сразу продолжите в демонстрационный режим.</p>
+          <p className="auth-form-card__lead">Введите данные для входа в систему.</p>
 
           <div className="auth-form-fields">
             <label className="field">

@@ -36,13 +36,13 @@ export function AdminPage() {
     <PageHeader
       eyebrow="Системный контур"
       title="Администрирование"
-      description="Управление структурой прототипа, пользователями и корневыми объектами данных."
+      description="Управление структурой системы, пользователями и корневыми объектами данных."
       actions={canCreateDeposit ? <Button className="admin-create-deposit" onClick={() => { setNotice(null); setCreateOpen(true) }}><Plus size={17} /> Создать месторождение</Button> : undefined}
     />
     {notice && <div className="success-message" role="status"><CheckCircle2 size={17} /><span><strong>Объект создан</strong>{notice}</span></div>}
     {!canCreateDeposit && <div className="form-alert"><ShieldCheck size={17} /><span>Эта административная роль может просматривать структуру, но создание месторождений ей не назначено.</span></div>}
     <section className="admin-stat-grid" aria-label="Сводка администрирования">
-      <article><span><UsersRound size={20} /></span><div><strong>{userPersonas.length}</strong><small>демонстрационных ролей</small></div></article>
+      <article><span><UsersRound size={20} /></span><div><strong>{userPersonas.length}</strong><small>ролей</small></div></article>
       <article><span><Building2 size={20} /></span><div><strong>{data?.deposits.length ?? '—'}</strong><small>месторождения в БГД</small></div></article>
       <article><span><Database size={20} /></span><div><strong>{(data?.sites.length ?? 0) + (data?.lenses.length ?? 0)}</strong><small>связанных объектов</small></div></article>
     </section>
@@ -52,7 +52,7 @@ export function AdminPage() {
         {masterQuery.isLoading ? <div className="skeleton skeleton--list" /> : <div className="admin-deposit-list">{data?.deposits.map((deposit) => <button key={deposit.id} type="button" onClick={() => void navigate({ to: '/geology/bgd/$depositId', params: { depositId: deposit.id } })}><span><strong>{getDepositName(deposit)}</strong><small>№ {deposit.code} · версия {deposit.version}</small></span><Badge tone={deposit.isHidden ? 'neutral' : 'success'} dot>{deposit.isHidden ? 'Скрыто' : 'Используется'}</Badge></button>)}</div>}
         {canCreateDeposit && <Button className="admin-deposit-list__create" variant="secondary" onClick={() => setCreateOpen(true)}><Plus size={16} /> Добавить месторождение</Button>}
       </Panel>
-      <Panel title="Ролевые профили" description="Полный демонстрационный набор ролей восстановлен.">
+      <Panel title="Ролевые профили" description="Доступные роли и их разрешения.">
         <div className="admin-role-list">{userPersonas.map((item) => <article key={item.id}><span className="avatar avatar--sm">{item.initials}</span><span><strong>{item.position}</strong><small>{item.name} · {item.roles.join(', ')}</small></span></article>)}</div>
       </Panel>
     </div>

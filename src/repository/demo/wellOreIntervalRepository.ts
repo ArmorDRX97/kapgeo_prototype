@@ -46,7 +46,7 @@ export class DemoWellOreIntervalRepository {
         if (interval.oreIntervalId) await tx.put('relations', { id: `REL-DIFF-${interval.id}`, fromId: `differential-ore:${interval.id}`, toId: `ore-interval:${interval.oreIntervalId}`, type: 'differential-member-of', updatedAt: value.updatedAt })
       }
       await tx.put('versions', { id: `WELL-ORE-${well.id}-V${value.version}`, objectId: `well-ore:${well.id}`, version: value.version, status: 'draft', createdAt: value.updatedAt, data: value })
-      await tx.put('auditEvents', { id: `AUD-${eventType}-${well.id}-V${value.version}`, eventType, entityType: 'well-ore-workspace', entityId: well.id, actor: { id: 'PERSON-R1-GEOLOGIST', type: 'user', name: 'Айгерим Садыкова · synthetic' }, occurredAt: value.updatedAt, status: 'accepted', payload: { metadata: { synthetic: true } } })
+      await tx.put('auditEvents', { id: `AUD-${eventType}-${well.id}-V${value.version}`, eventType, entityType: 'well-ore-workspace', entityId: well.id, actor: { id: 'PERSON-R1-GEOLOGIST', type: 'user', name: 'Айгерим Садыкова' }, occurredAt: value.updatedAt, status: 'accepted', payload: { metadata: { synthetic: true } } })
     })
   }
 }

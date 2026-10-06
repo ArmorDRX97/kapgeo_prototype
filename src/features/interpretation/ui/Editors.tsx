@@ -55,9 +55,9 @@ export function CalculationEditor({ well, parameters, onChange, onCalculate, dis
   { well: InterpretationWell; parameters: CalculationParameters; onChange: (parameters: CalculationParameters) => void; onCalculate: () => void; disabled: boolean; stale: boolean; hasPreview: boolean }) {
   const patch = (value: Partial<CalculationParameters>) => onChange({ ...parameters, ...value })
   return <form onSubmit={event => { event.preventDefault(); onCalculate() }}>
-    <div className="interpretation-inspector__summary"><span>Расчёт по КС</span><strong>{parameters.method === 'gradient' ? 'Градиент-зонд' : 'Потенциал-зонд'}</strong><small>Детерминированный demo-метод</small></div>
+    <div className="interpretation-inspector__summary"><span>Расчёт по КС</span><strong>{parameters.method === 'gradient' ? 'Градиент-зонд' : 'Потенциал-зонд'}</strong></div>
     <fieldset disabled={disabled}>
-      <Field label="Источник КС"><select value={parameters.curveId} onChange={e => patch({ curveId: e.target.value })}>{well.curves.filter(c => c.type === 'RS').map(c => <option key={c.id} value={c.id}>{c.name} · {c.id === 'rs-main' ? 'DEMO-A' : 'DEMO-B'}</option>)}</select></Field>
+      <Field label="Источник КС"><select value={parameters.curveId} onChange={e => patch({ curveId: e.target.value })}>{well.curves.filter(c => c.type === 'RS').map(c => <option key={c.id} value={c.id}>{c.name} · {c.id === 'rs-main' ? 'A' : 'B'}</option>)}</select></Field>
       <Field label="Метод КС"><select value={parameters.method ?? 'potential'} onChange={e => patch({ method: e.target.value as CalculationParameters['method'] })}><option value="potential">Потенциал-зонд</option><option value="gradient">Градиент-зонд</option></select></Field>
       <div className="interpretation-fields-pair"><Field label="Расчёт от, м"><input required type="number" min={0} max={well.depth} step="0.1" value={parameters.from} onChange={e => patch({ from: Number(e.target.value) })} /></Field><Field label="Расчёт до, м"><input required type="number" min={0} max={well.depth} step="0.1" value={parameters.to} onChange={e => patch({ to: Number(e.target.value) })} /></Field></div>
       <Field label="Порог КС, Ом·м"><input required type="number" min="0.1" step="0.1" value={parameters.threshold} onChange={e => patch({ threshold: Number(e.target.value) })} /></Field>
@@ -69,6 +69,6 @@ export function CalculationEditor({ well, parameters, onChange, onCalculate, dis
       <div className="interpretation-actions"><Button size="sm" type="submit">{hasPreview ? 'Пересчитать' : 'Рассчитать'}</Button></div>
     </fieldset>
     {stale && <p role="status" className="interpretation-error">Параметры изменены. Пересчитайте предпросмотр.</p>}
-    <p className="interpretation-note">Потенциал-зонд — пересечения порога; градиент-зонд — локальные минимумы ниже и максимумы выше порога. Тонкий прослой присоединяется к предыдущему по направлению расчёта. Пропуски КС остаются неизвестными. Результат demo, методика требует согласования.</p>
+    <p className="interpretation-note">Потенциал-зонд — пересечения порога; градиент-зонд — локальные минимумы ниже и максимумы выше порога. Тонкий прослой присоединяется к предыдущему по направлению расчёта. Пропуски КС остаются неизвестными.</p>
   </form>
 }

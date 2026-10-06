@@ -20,6 +20,7 @@
 | synthetic data | [08-mock-data.md](./ui-ux/08-mock-data.md) |
 | приёмка | [10-acceptance-demo.md](./ui-ux/10-acceptance-demo.md) |
 | открытые вопросы | [11-traceability-open-questions.md](./ui-ux/11-traceability-open-questions.md) |
+| навигация и рабочая область БГД | [обновление структуры](./task/bgd-workbench-refresh.md) |
 | реализация БГД | [пакет проверок](./geology-functional-expansion/README.md) |
 | интерпретация по РП 1.24–1.26 | [текущее состояние, проверка и исследования](./task/README.md), [геологический модуль](./ui-ux/modules/02-geology.md) |
 | управление справочниками | [03-reference-data.md](./ui-ux/modules/03-reference-data.md) |

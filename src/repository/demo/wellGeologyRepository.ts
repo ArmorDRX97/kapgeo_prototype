@@ -68,7 +68,7 @@ export class DemoWellGeologyRepository {
       await tx.put('versions', { id: `WELL-GEOLOGY-V2-${well.id}-V${value.version}`, objectId: `well-geology-v2:${well.id}`, version: value.version, status: 'draft', createdAt: value.updatedAt, data: value })
       await tx.put('jobs', { id: jobId, kind: eventType.includes('lims') ? 'lims-reconciliation' : 'granulometry', status: 'succeeded', createdAt: value.updatedAt, completedAt: value.updatedAt, synthetic: true })
       await tx.put('artifacts', { id: `ART-GEOLOGY-${well.id}-V${value.version}`, kind: eventType.includes('batch') ? 'sample-labels' : 'granulometry-chart', name: `${well.code}-geology-v${value.version}`, createdAt: value.updatedAt, synthetic: true })
-      await tx.put('auditEvents', { id: `AUD-${eventType}-${well.id}-V${value.version}`, eventType, entityType: 'well-geology', entityId: well.id, actor: { id: 'PERSON-R1-GEOLOGIST', type: 'user', name: 'Айгерим Садыкова · synthetic' }, occurredAt: value.updatedAt, status: 'accepted', payload: { metadata: { synthetic: true, jobId } } })
+      await tx.put('auditEvents', { id: `AUD-${eventType}-${well.id}-V${value.version}`, eventType, entityType: 'well-geology', entityId: well.id, actor: { id: 'PERSON-R1-GEOLOGIST', type: 'user', name: 'Айгерим Садыкова' }, occurredAt: value.updatedAt, status: 'accepted', payload: { metadata: { synthetic: true, jobId } } })
     })
   }
 }

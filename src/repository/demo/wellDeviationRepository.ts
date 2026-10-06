@@ -23,13 +23,13 @@ function seed(well: Well): WellDeviationWorkspace {
     surveys: [
       survey(well, '01', {
         surveyDate: '2026-08-18T10:30', azimuthKind: 'true', correctionAngle: 10, isPrimary: true,
-        operatorId: 'Ирина Иванова · synthetic', device: 'ИЭМ-36 №10', minZenithAngle: 0,
+        operatorId: 'Ирина Иванова', device: 'ИЭМ-36 №10', minZenithAngle: 0,
         comment: 'Основной контрольный промер после завершения бурения.',
         points: marks.map((mark, index) => ({ depth: mark, azimuth: [174, 268, 276, 301, 243, 58][index]!, zenithAngle: [1.15, 1, .3, .15, .15, .3][index]! })),
       }),
       survey(well, '02', {
         surveyDate: '2026-07-05T14:15', azimuthKind: 'magnetic', correctionAngle: 5, isPrimary: false,
-        operatorId: 'Аскар Аскаров · synthetic', device: 'ИЭМ-36 №15', minZenithAngle: 0,
+        operatorId: 'Аскар Аскаров', device: 'ИЭМ-36 №15', minZenithAngle: 0,
         comment: 'Промежуточный промер цифровой каротажной станцией.',
         points: marks.slice(0, 4).map((mark, index) => ({ depth: mark, azimuth: [168, 251, 269, 288][index]!, zenithAngle: [.8, 1.1, .7, .5][index]! })),
       }),
@@ -46,7 +46,14 @@ function record(well: Well, value: WellDeviationWorkspace): DemoRecord<WellDevia
 export class DemoWellDeviationRepository {
   async get(well: Well) {
     const existing = await demoDatabase.get<DemoRecord<WellDeviationWorkspace>>('records', `well-deviation:${well.id}`)
-    if (existing) return structuredClone(existing.data)
+    if (existing) {
+      const data = structuredClone(existing.data)
+      for (const survey of data.surveys) {
+        survey.operatorId = survey.operatorId.replace(/ · synthetic$/, '')
+        if (survey.comment === 'Демонстрационный импорт цифровой каротажной станции.') survey.comment = 'Импорт цифровой каротажной станции.'
+      }
+      return data
+    }
     const value = seed(well)
     await this.persist(well, value, 'deviation.seeded')
     return value
@@ -108,7 +115,7 @@ export class DemoWellDeviationRepository {
             eventType: 'well.geometry.updated-from-deviation',
             entityType: 'well',
             entityId: well.id,
-            actor: { id: 'PERSON-R2-GEOPHYSICIST', type: 'user', name: 'Аскар Аскаров · synthetic' },
+            actor: { id: 'PERSON-R2-GEOPHYSICIST', type: 'user', name: 'Аскар Аскаров' },
             occurredAt: value.updatedAt,
             status: 'accepted',
             payload: { metadata: { synthetic: true, deviationSurveyId: primary.id } },
@@ -120,7 +127,7 @@ export class DemoWellDeviationRepository {
         eventType,
         entityType: 'well-deviation',
         entityId: well.id,
-        actor: { id: 'PERSON-R2-GEOPHYSICIST', type: 'user', name: 'Аскар Аскаров · synthetic' },
+        actor: { id: 'PERSON-R2-GEOPHYSICIST', type: 'user', name: 'Аскар Аскаров' },
         occurredAt: value.updatedAt,
         status: 'accepted',
         payload: { metadata: { synthetic: true } },

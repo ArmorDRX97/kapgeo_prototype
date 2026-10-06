@@ -18,9 +18,9 @@ export function InterpretationPage() {
   const allowed = hasPermission(persona, 'geology.view')
   const query = useQuery({ queryKey: ['interpretation-demo', well?.id], queryFn: () => interpretationRepository.load(well!), enabled: allowed && !!well, retry: false })
   if (!allowed) return <AccessDeniedPage moduleName="Интерпретация" />
-  if (!well) return <Panel title="Демонстрационная скважина не найдена"><p>Выберите скважину из учебного набора.</p><Button onClick={() => void navigate({ to: '/geology', search: {} })}>Открыть учебный набор</Button></Panel>
-  if (query.error) return <Panel title="Не удалось открыть интерпретацию"><p role="alert">{query.error.message}</p><Button onClick={() => void query.refetch()}>Повторить</Button><Button variant="secondary" onClick={() => { if (window.confirm('Удалить только сохранённый результат интерпретации этой demo-скважины?')) { interpretationRepository.reset(well); void query.refetch() } }}>Сбросить интерпретацию</Button></Panel>
-  if (!query.data) return <div className="page-loading"><span /><p>Подготавливаем демонстрационный планшет…</p></div>
+  if (!well) return <Panel title="Скважина не найдена"><p>Выберите скважину из списка.</p><Button onClick={() => void navigate({ to: '/geology', search: {} })}>Открыть список скважин</Button></Panel>
+  if (query.error) return <Panel title="Не удалось открыть интерпретацию"><p role="alert">{query.error.message}</p><Button onClick={() => void query.refetch()}>Повторить</Button><Button variant="secondary" onClick={() => { if (window.confirm('Удалить только сохранённый результат интерпретации этой скважины?')) { interpretationRepository.reset(well); void query.refetch() } }}>Сбросить интерпретацию</Button></Panel>
+  if (!query.data) return <div className="page-loading"><span /><p>Подготавливаем планшет…</p></div>
   // Selection and depth-window updates are workbench interactions, not page changes.
   return <InterpretationWorkbench key={well.id} well={well} initial={query.data} persona={persona} search={search}
     onSaved={document => queryClient.setQueryData(['interpretation-demo', well.id], document)}

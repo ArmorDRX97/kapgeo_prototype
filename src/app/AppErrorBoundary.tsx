@@ -42,7 +42,7 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, ErrorBo
       {this.state.resetError && <small>{this.state.resetError}</small>}
       <div>
         <button type="button" className="button button--secondary button--md" onClick={this.reload} disabled={this.state.isResetting}>Перезагрузить</button>
-        <button type="button" className="button button--primary button--md" onClick={() => void this.resetAndReload()} disabled={this.state.isResetting}><RotateCcw size={16} />{this.state.isResetting ? 'Сбрасываем…' : 'Сбросить демо данные'}</button>
+        <button type="button" className="button button--primary button--md" onClick={() => void this.resetAndReload()} disabled={this.state.isResetting}><RotateCcw size={16} />{this.state.isResetting ? 'Сбрасываем…' : 'Сбросить данные'}</button>
       </div>
     </main>
   }

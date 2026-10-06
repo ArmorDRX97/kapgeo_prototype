@@ -61,7 +61,7 @@ export function ReferenceDataPage() {
   const changes = workspace.changes.filter((change) => change.dictionaryId === definition?.id).reverse()
   const exportData = () => {
     const url = URL.createObjectURL(new Blob([JSON.stringify({ synthetic: true, dictionaryId: definition?.id, entries }, null, 2)], { type: 'application/json' }))
-    const anchor = document.createElement('a'); anchor.href = url; anchor.download = (definition?.id ?? 'references') + '-demo.json'; anchor.click(); URL.revokeObjectURL(url)
+    const anchor = document.createElement('a'); anchor.href = url; anchor.download = (definition?.id ?? 'references') + '.json'; anchor.click(); URL.revokeObjectURL(url)
   }
   return <div className="page-stack reference-page">
     <PageHeader eyebrow="Администрирование · ADM-02" title="Справочники" description="Выберите справочник и измените значения в панели справа." actions={<Link to="/admin" className="button button--secondary button--md"><ArrowLeft size={16} /> Администрирование</Link>} />
@@ -76,7 +76,7 @@ export function ReferenceDataPage() {
           {catalog.map((item) => <button className={'reference-directory-row' + (item.id === definition?.id ? ' is-active' : '')} key={item.id} type="button" aria-pressed={item.id === definition?.id} onClick={() => selectDictionary(item.id)}><span className="reference-row-icon"><BookOpen size={18} /></span><span className="reference-row-title"><strong>{item.label}</strong><small>{item.id}</small></span><Badge tone={item.kind === 'reff' ? 'info' : 'neutral'}>{item.kind === 'reff' ? 'Reff' : 'Обычный'}</Badge><span className="reference-row-count" title="Количество записей">{workspace.entries.filter((entry) => entry.dictionaryId === item.id).length}</span><ChevronRight size={16} /></button>)}
           {!catalog.length && <div className="reference-empty"><Search size={28} /><strong>Справочники не найдены</strong><span>Измените поиск или выберите другой таб.</span></div>}
         </div>
-        <p className="reference-demo-note">Демо-данные · раздел не связан с БГД и другими модулями</p>
+
       </section>
       <aside className="reference-inspector" aria-label="Поля справочника">
         {!definition ? <div className="reference-empty"><BookOpen size={32} /><strong>{search.dictionary ? 'Справочник не найден' : 'Выберите справочник'}</strong><span>Его поля и записи появятся здесь.</span></div> : <>

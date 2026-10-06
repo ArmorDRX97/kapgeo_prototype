@@ -162,7 +162,7 @@ export async function savePlatformPreferences(next: Omit<PlatformPreferences, 'i
 
 export async function fetchDemoAuditEvents(): Promise<AuditEvent[]> {
   const events = await demoDatabase.getAll<AuditEvent>('auditEvents')
-  return events.sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id.localeCompare(left.id))
+  return events.map(event => ({ ...event, actor: { ...event.actor, name: event.actor.name?.replace(/ · synthetic$/, '') } })).sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id.localeCompare(left.id))
 }
 
 export async function fetchGeologicalMasterData(): Promise<GeologicalMasterData> {

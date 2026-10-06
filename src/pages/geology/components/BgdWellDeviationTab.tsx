@@ -1,3 +1,4 @@
+import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Calculator, CalendarDays, CheckCircle2, Compass, FileUp, Gauge, Pencil, Plus, Route, Ruler, ShieldCheck, Star, Trash2, UserRound, Wrench, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -20,11 +21,12 @@ const devices = ['ИЭМ-36 №10', 'ИЭМ-36 №15', 'ИЭМ-36 №10 + ИЭМ
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 const metric = (value: number | null, unit: string) => value === null ? 'Не рассчитано' : `${value.toLocaleString('ru-RU', { maximumFractionDigits: 3 })} ${unit}`
 
-export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults }: { well: Well; canEdit: boolean; canAdminister: boolean; defaults: DeviationDefaults }) {
+export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, onDirtyChange }: { well: Well; canEdit: boolean; canAdminister: boolean; defaults: DeviationDefaults; onDirtyChange?: (dirty: boolean) => void }) {
   const client = useQueryClient()
   const query = useQuery({ queryKey: ['well-deviation', well.id], queryFn: () => fetchWellDeviationWorkspace(well.id) })
   const [selectedId, setSelectedId] = useState('')
   const [editorSurvey, setEditorSurvey] = useState<DeviationSurvey | 'new' | null>(null)
+  useReportUnsavedChanges(Boolean(editorSurvey), onDirtyChange)
   const [importOpen, setImportOpen] = useState(false)
   const [notice, setNotice] = useState('')
 
@@ -126,8 +128,8 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults }: 
     const maxDepth = Math.max(50, well.depth)
     const draft: DeviationSurveyDraft = {
       surveyDate: '2026-07-05T08:00', azimuthKind: 'magnetic', correctionAngle: defaults.magneticCorrection,
-      isPrimary: false, operatorId: 'Аскар Аскаров · synthetic', device: 'ИЭМ-36 №15', minZenithAngle: defaults.minZenithAngle,
-      comment: 'Демонстрационный импорт цифровой каротажной станции.',
+      isPrimary: false, operatorId: 'Аскар Аскаров', device: 'ИЭМ-36 №15', minZenithAngle: defaults.minZenithAngle,
+      comment: 'Импорт цифровой каротажной станции.',
       points: [0, .25, .5, .75, 1].map((ratio, index) => ({ id: `${surveyId}-POINT-${index + 1}`, depth: Number((maxDepth * ratio).toFixed(1)), azimuth: [181, 205, 238, 262, 279][index]!, zenithAngle: [.2, .8, 1.3, 1.1, .7][index]! })),
     }
     const calculation = calculateDeviationSurvey(draft)
@@ -136,7 +138,7 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults }: 
       onSuccess: () => {
         setImportOpen(false)
         setSelectedId(surveyId)
-        setNotice('Демонстрационный файл выбран, распознан и импортирован в новый промер.')
+        setNotice('Файл выбран, распознан и импортирован в новый промер.')
       },
     })
   }
@@ -161,7 +163,7 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults }: 
           <span><strong>{formatDateTime(survey.surveyDate)}</strong><small>{azimuthKindLabels[survey.azimuthKind]} азимут · {survey.device || 'Прибор не указан'}</small><em>{survey.points.length} точек · {survey.planDistance === null ? 'требует расчёта' : `R ${survey.planDistance} м`}</em></span>
           <span className="bgd-deviation-list__badges">{survey.isPrimary && <Badge tone="info"><Star size={12} /> Основной</Badge>}{survey.planDistance === null ? <Badge tone="warning">Не рассчитан</Badge> : <Badge tone="success">Рассчитан</Badge>}</span>
         </button>)}</div> : <div className="geobase-empty"><Compass size={22} /><strong>Промеров пока нет</strong><span>Добавьте первый набор инклинометрических измерений.</span></div>}
-        {canAdminister && <div className="bgd-deviation-import"><span><FileUp size={18} /><span><strong>Импорт инклинометрии</strong><small>Макет будущего сценария с детерминированным demo-файлом</small></span></span><Button size="sm" variant="secondary" onClick={() => setImportOpen(true)}>Открыть импорт</Button></div>}
+        {canAdminister && <div className="bgd-deviation-import"><span><FileUp size={18} /><span><strong>Импорт инклинометрии</strong><small>Загрузка и предварительный просмотр промеров</small></span></span><Button size="sm" variant="secondary" onClick={() => setImportOpen(true)}>Открыть импорт</Button></div>}
       </Panel>
 
       {selected ? <DeviationInspector survey={selected} canEdit={canEdit} pending={save.isPending} onCalculate={() => calculate(selected)} onEdit={() => setEditorSurvey(selected)} onPrimary={() => setPrimary(selected)} /> : <Panel title="Сведения о промере" description="Выберите или добавьте промер."><div className="geobase-empty"><Route size={22} /><strong>Нет выбранного промера</strong><span>Описание, точки и результаты расчёта появятся здесь.</span></div></Panel>}
@@ -271,16 +273,16 @@ function DeviationImportDialog({ well, pending, onClose, onImport }: { well: Wel
   const [fileSelected, setFileSelected] = useState(false)
   return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
     <section className="geobase-dialog geobase-dialog--deviation-import" role="dialog" aria-modal="true" aria-labelledby="deviation-import-title">
-      <header><div><span><FileUp size={20} /></span><div><h2 id="deviation-import-title">Импорт инклинометрии по скважине</h2><p>Предварительный макет отдельного сценария импорта.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть импорт"><X size={19} /></button></header>
+      <header><div><span><FileUp size={20} /></span><div><h2 id="deviation-import-title">Импорт инклинометрии по скважине</h2><p>Выбор файла и предварительный просмотр промеров.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть импорт"><X size={19} /></button></header>
       <div className="geobase-dialog__body bgd-deviation-import-dialog">
-        <div className="form-alert"><ShieldCheck size={17} /><span><strong>Демонстрационный режим</strong><small>Production-парсер и загрузка произвольных файлов не входят в текущую постановку. Здесь используется безопасный synthetic fixture.</small></span></div>
+
         <div className="form-grid bgd-well-form-grid">
           <label className="field"><span className="field__label">Тип внешних данных</span><select disabled={pending}><option>LAS / цифровая станция</option></select></label>
           <label className="field"><span className="field__label">Кодировка</span><select disabled={pending}><option>DOS (CP866)</option><option>Windows-1251</option><option>UTF-8</option></select></label>
         </div>
         <div className="bgd-deviation-import-file">
-          <span><FileUp size={22} /><span><strong>{fileSelected ? `${well.code}_INCL_2026-07.LAS` : 'Файл не выбран'}</strong><small>{fileSelected ? '24,6 КБ · checksum demo-c18f · 5 точек' : 'Подставьте детерминированный файл прототипа'}</small></span></span>
-          <Button size="sm" variant="secondary" disabled={pending} onClick={() => setFileSelected(true)}>{fileSelected ? 'Выбран' : 'Выбрать демо-файл'}</Button>
+          <span><FileUp size={22} /><span><strong>{fileSelected ? `${well.code}_INCL_2026-07.LAS` : 'Файл не выбран'}</strong><small>{fileSelected ? '24,6 КБ · checksum c18f · 5 точек' : 'Выберите файл с промерами'}</small></span></span>
+          <Button size="sm" variant="secondary" disabled={pending} onClick={() => setFileSelected(true)}>{fileSelected ? 'Выбран' : 'Выбрать файл'}</Button>
         </div>
         {fileSelected && <div className="bgd-deviation-import-preview" role="table" aria-label="Распознанные промеры"><div role="row"><span>Файл</span><span>Скважина</span><span>Дата</span><span>Прибор</span><span>Описание</span></div><div role="row"><span>{well.code}_INCL_2026-07.LAS</span><span>{well.code}</span><span>05.07.2026</span><span>ИЭМ-36 №15</span><span>5 точек, магнитный азимут</span></div></div>}
       </div>

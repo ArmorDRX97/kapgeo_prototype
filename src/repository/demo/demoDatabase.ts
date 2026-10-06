@@ -138,7 +138,7 @@ export class DemoDatabase {
       await new Promise<void>((resolve, reject) => {
         const request = indexedDB.deleteDatabase(this.name)
         request.onsuccess = () => resolve()
-        request.onerror = () => reject(request.error ?? new Error('Не удалось удалить демонстрационные данные.'))
+        request.onerror = () => reject(request.error ?? new Error('Не удалось удалить данные.'))
         request.onblocked = () => reject(new Error('Закройте другие вкладки KAPGEO и повторите сброс.'))
       })
     }
@@ -153,7 +153,7 @@ export class DemoDatabase {
 
   async importSnapshot(snapshot: DemoSnapshot): Promise<void> {
     if (snapshot.schemaVersion !== this.schemaVersion || snapshot.seedVersion !== this.seedVersion) {
-      throw new Error('Снимок создан для другой версии демонстрационной схемы.')
+      throw new Error('Снимок создан для другой версии схемы данных.')
     }
     await this.transaction([...demoStoreNames], async (transaction) => {
       for (const store of demoStoreNames) {

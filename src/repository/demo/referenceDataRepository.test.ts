@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { defaultPersona, userPersonas } from '../../entities/session/model/personas'
 import { referenceDefinitions } from '../../entities/reference-data/model/catalog'
-import { demoDatabase } from './demoDatabase'
+import { demoDatabase, type DemoRecord } from './demoDatabase'
+import type { ReferenceWorkspace } from '../../entities/reference-data/model/types'
 import { ReferenceDataRepository } from './referenceDataRepository'
 import { demoWellDeviationRepository } from './wellDeviationRepository'
 import { primaryWell } from '../data/wells'
@@ -14,6 +15,22 @@ const names = { code: 'TEST', name_ru: 'Тест', name_kk: 'Тест', name_en:
 
 describe('ReferenceDataRepository', () => {
   afterEach(async () => { await demoDatabase.reset() })
+
+  it('updates legacy default labels without clearing stored records, user edits or references', async () => {
+    await repository.get()
+    const key = 'reference-data:standalone-workspace'
+    const stored = (await demoDatabase.get<DemoRecord<ReferenceWorkspace>>('records', key))!
+    const entry = stored.data.entries.find(item => item.id === 'REF-DEPOSIT-1')!
+    entry.values = { code: 'DEMO-1', name_ru: 'Типы месторождений · демо 1', name_kk: 'Демо жазба 1', name_en: 'Custom translated name' }
+    await demoDatabase.put('records', stored)
+    const shown = await repository.get()
+    expect(shown.version).toBe(stored.data.version)
+    expect(shown.entries.map(item => item.id)).toEqual(stored.data.entries.map(item => item.id))
+    expect(shown.entries.find(item => item.id === entry.id)?.values).toEqual({ code: 'REF-1', name_ru: 'Типы месторождений · 1', name_kk: 'Жазба 1', name_en: 'Custom translated name' })
+    expect(shown.entries.find(item => item.dictionaryId === 'reff_device')?.values).toEqual(stored.data.entries.find(item => item.dictionaryId === 'reff_device')?.values)
+    expect((await demoDatabase.get<DemoRecord<ReferenceWorkspace>>('records', key))?.data).toEqual(stored.data)
+    await expect(repository.execute({ operation: 'created', dictionaryId: 'deposit_type', values: { ...names, code: 'ref-1' }, expectedVersion: shown.version }, admin)).rejects.toThrow()
+  })
 
   it('persists CRUD, immutable schema, prior values and the actual actor in audit', async () => {
     let current = await repository.get()
@@ -32,7 +49,7 @@ describe('ReferenceDataRepository', () => {
 
   it('rejects duplicate codes, missing translations, extra attributes and wrong typed values', async () => {
     const current = await repository.get()
-    for (const [dictionaryId, values] of [['deposit_type', { ...names, code: 'demo-1' }], ['fault_type', { code: 'X', name_ru: 'Тест' }], ['fault_type', { ...names, extra: 'value' }], ['reff_coordinate_system', { code: 'CS', name: 'Demo', epsg_code: 1.5, transform_params: 'broken JSON' }]] as const) {
+    for (const [dictionaryId, values] of [['deposit_type', { ...names, code: String(current.entries.find((entry) => entry.dictionaryId === 'deposit_type')!.values.code).toLowerCase() }], ['fault_type', { code: 'X', name_ru: 'Тест' }], ['fault_type', { ...names, extra: 'value' }], ['reff_coordinate_system', { code: 'CS', name: 'Demo', epsg_code: 1.5, transform_params: 'broken JSON' }]] as const) {
       await expect(repository.execute({ operation: 'created', dictionaryId, values, expectedVersion: current.version }, admin)).rejects.toThrow()
     }
     expect((await repository.get()).version).toBe(current.version)

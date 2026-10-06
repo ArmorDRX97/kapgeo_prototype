@@ -1,3 +1,5 @@
+import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
+import { WorkspaceTabs } from '../../../shared/ui/WorkspaceTabs'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Check, Copy, GitCompareArrows, Layers3, Merge, Plus, Redo2, Save, Scissors, Trash2, Undo2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -29,16 +31,17 @@ function policyFor(depth: number): IntervalPolicy<GeologicalInterval> {
   return { coverage: { from: 0, to: depth }, overlap: 'forbidden', gap: 'warning', minimumThickness: 0.1, snapResolution: 0.1, categoryOf: (interval) => interval.lithology }
 }
 
-export function BgdWellLithologyTab({ well, canEdit }: { well: Well; canEdit: boolean }) {
+export function BgdWellLithologyTab({ well, canEdit, activeKind, onKindChange, onDirtyChange }: { well: Well; canEdit: boolean; activeKind?: string; onKindChange?: (kind: string) => void; onDirtyChange?: (dirty: boolean) => void }) {
   const query = useQuery({ queryKey: ['well-geology-v2', well.id], queryFn: () => fetchWellGeologyWorkspace(well.id) })
   if (query.isError) return <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>Не удалось загрузить литологию: {query.error.message}</span></div>
   if (query.isLoading || !query.data) return <div className="page-loading page-loading--inline"><span /><p>Загружаем литологические колонки…</p></div>
-  return <BgdLithologyEditor key={well.id} well={well} canEdit={canEdit} initialWorkspace={query.data} />
+  return <BgdLithologyEditor key={well.id} well={well} canEdit={canEdit} activeKind={activeKind} onKindChange={onKindChange} onDirtyChange={onDirtyChange} initialWorkspace={query.data} />
 }
 
-function BgdLithologyEditor({ well, canEdit, initialWorkspace }: { well: Well; canEdit: boolean; initialWorkspace: WellGeologyWorkspace }) {
+function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKindChange, onDirtyChange }: { well: Well; canEdit: boolean; initialWorkspace: WellGeologyWorkspace; activeKind?: string; onKindChange?: (kind: string) => void; onDirtyChange?: (dirty: boolean) => void }) {
   const queryClient = useQueryClient()
-  const [kind, setKind] = useState<BgdLithologyKind>('core')
+  const [internalKind, setKind] = useState<BgdLithologyKind>('core')
+  const kind = onKindChange ? activeKind === 'log' || activeKind === 'composite' ? activeKind : 'core' : internalKind
   const [draft, setDraft] = useState<WellGeologyWorkspace | null>(null)
   const [undo, setUndo] = useState<WellGeologyWorkspace[]>([])
   const [redo, setRedo] = useState<WellGeologyWorkspace[]>([])
@@ -61,6 +64,7 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace }: { well: Well; c
   }), [policy, workspace.tracks])
   const diff = useMemo(() => diffIntervals(baselineTrack.intervals, sorted), [baselineTrack.intervals, sorted])
   const changed = JSON.stringify(initialWorkspace.tracks) !== JSON.stringify(workspace.tracks)
+  useReportUnsavedChanges(changed, onDirtyChange)
   const availableGap = findFirstLithologyGap(sorted, well.depth)
 
   const mutation = useMutation({
@@ -131,20 +135,14 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace }: { well: Well; c
     replaceIntervals(track.intervals.filter((item) => item.id !== selected.id), next?.id ?? previous?.id ?? '')
   }
   const selectKind = (nextKind: BgdLithologyKind) => {
-    setKind(nextKind)
+    if (onKindChange) onKindChange(nextKind); else setKind(nextKind)
     setSelectedId(workspace.tracks.find((item) => item.kind === nextKind)?.intervals[0]?.id ?? '')
   }
 
   return <div className="bgd-well-stack bgd-lithology-workspace">
-    {saved && <div className="success-banner"><Check size={17} /><span><strong>Литология сохранена</strong>Создана новая локальная версия демо-колонки.</span><button type="button" onClick={() => setSaved(false)}>Закрыть</button></div>}
+    {saved && <div className="success-banner"><Check size={17} /><span><strong>Литология сохранена</strong>Создана новая локальная версия колонки.</span><button type="button" onClick={() => setSaved(false)}>Закрыть</button></div>}
     {!canEdit && <div className="form-alert"><Layers3 size={17} /><span>Литологические колонки доступны только для просмотра.</span></div>}
-    <Panel title="Вид литологии" description="Исходные колонки и сводный результат хранятся отдельно">
-      <div className="bgd-lithology-switch" role="group" aria-label="Вид литологии">{bgdLithologyKinds.map((item) => {
-        const candidate = workspace.tracks.find((trackItem) => trackItem.kind === item.id)!
-        return <button type="button" key={item.id} className={kind === item.id ? 'is-active' : ''} aria-pressed={kind === item.id} onClick={() => selectKind(item.id)}><span><strong>{item.label}</strong><small>{item.description}</small></span><span><Badge tone={candidate.intervals.length ? 'info' : 'neutral'}>{candidate.intervals.length} инт.</Badge><small>v{candidate.version}</small></span></button>
-      })}</div>
-    </Panel>
-
+    <WorkspaceTabs value={kind} onChange={(next) => selectKind(next as BgdLithologyKind)} label="Литологические колонки" tabs={bgdLithologyKinds.map((item) => ({ id: item.id, label: <>{item.label}<Badge tone="neutral">{workspace.tracks.find((trackItem) => trackItem.kind === item.id)?.intervals.length ?? 0}</Badge></> }))}>
     <div className="bgd-lithology-layout">
       <Panel className="bgd-lithology-column-panel" title="Литологическая колонка" description={`Скважина ${well.code} · 0–${formatDepth(well.depth)} м`}>
         <div className="bgd-lithology-column">
@@ -188,7 +186,8 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace }: { well: Well; c
       </div>
     </div>
 
-    {canEdit && <div className="bgd-lithology-savebar"><span><strong>{blockingIssues.length ? `Блокирующих ошибок: ${blockingIssues.length}` : changed ? 'Литология готова к сохранению' : 'Локальная версия не изменена'}</strong><small>После сохранения изменения останутся в браузере до сброса демо-данных.</small></span><Button disabled={!changed || blockingIssues.length > 0 || mutation.isPending} onClick={() => mutation.mutate()}><Save size={15} /> {mutation.isPending ? 'Сохраняем…' : 'Сохранить черновик'}</Button></div>}
+    {canEdit && <div className="bgd-lithology-savebar"><span><strong>{blockingIssues.length ? `Блокирующих ошибок: ${blockingIssues.length}` : changed ? 'Литология готова к сохранению' : 'Локальная версия не изменена'}</strong><small>После сохранения изменения останутся в браузере до сброса данных.</small></span><Button disabled={!changed || blockingIssues.length > 0 || mutation.isPending} onClick={() => mutation.mutate()}><Save size={15} /> {mutation.isPending ? 'Сохраняем…' : 'Сохранить черновик'}</Button></div>}
     {mutation.error && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>{mutation.error.message}</span></div>}
+    </WorkspaceTabs>
   </div>
 }

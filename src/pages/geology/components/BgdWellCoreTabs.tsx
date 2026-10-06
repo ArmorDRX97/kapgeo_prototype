@@ -1,3 +1,4 @@
+import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, CheckCircle2, ChevronRight, FlaskConical, Gauge, Pencil, Plus, Ruler, Save, ShieldCheck, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
@@ -9,8 +10,8 @@ import { Badge } from '../../../shared/ui/Badge'
 import { Button } from '../../../shared/ui/Button'
 import { Panel } from '../../../shared/ui/Panel'
 
-const people = ['Айгерим Садыкова · synthetic', 'Марат Омаров · synthetic', 'Ирина Иванова · synthetic']
-const laboratories = ['Лаборатория КАП · synthetic', 'Центральная лаборатория · synthetic', 'Полевая лаборатория · synthetic']
+const people = ['Айгерим Садыкова', 'Марат Омаров', 'Ирина Иванова']
+const laboratories = ['Лаборатория КАП', 'Центральная лаборатория', 'Полевая лаборатория']
 const analytes = [{ code: 'U', unit: '%' }, { code: 'Ra', unit: 'Бк/кг' }, { code: 'Se', unit: 'мг/кг' }, { code: 'V', unit: 'мг/кг' }]
 
 const number = (value: string) => Number.isFinite(Number(value)) ? Number(value) : 0
@@ -40,11 +41,12 @@ function WorkspaceMessage({ error, notice }: { error: Error | null; notice: stri
   </>
 }
 
-export function BgdWellCoreRunsTab({ well, canEditRuns, canEditMeasurements }: { well: Well; canEditRuns: boolean; canEditMeasurements: boolean }) {
+export function BgdWellCoreRunsTab({ well, canEditRuns, canEditMeasurements, view, onDirtyChange }: { view?: 'runs' | 'measurements'; well: Well; canEditRuns: boolean; canEditMeasurements: boolean; onDirtyChange?: (dirty: boolean) => void }) {
   const { query, save } = useCoreWorkspace(well)
   const [selectedId, setSelectedId] = useState('')
   const [runDraft, setRunDraft] = useState<CoreRun | null>(null)
   const [measurementDraft, setMeasurementDraft] = useState<CoreMeasurement | null>(null)
+  useReportUnsavedChanges(Boolean(runDraft || measurementDraft), onDirtyChange)
   const [errors, setErrors] = useState<string[]>([])
   const [notice, setNotice] = useState('')
   const workspace = query.data
@@ -124,7 +126,7 @@ export function BgdWellCoreRunsTab({ well, canEditRuns, canEditMeasurements }: {
             <article><small>Выход керна</small><strong>{displayNumber(coreRecoveryPercent(selected))}%</strong></article>
           </div>
           {canEditRuns && <div className="bgd-core-actions"><Button size="sm" variant="secondary" disabled={save.isPending} onClick={() => { setRunDraft(structuredClone(selected)); setErrors([]) }}><Pencil size={15} /> Изменить рейс</Button><Button size="sm" variant="quiet" disabled={save.isPending} onClick={() => deleteRun(selected)}><Trash2 size={15} /> Удалить</Button></div>}
-          <section className="bgd-core-measurements">
+          {(!view || view === 'measurements') && <section className="bgd-core-measurements">
             <header><div><span><Gauge size={18} /></span><div><h3>Промер керна</h3><p>Радиометрические интервалы внутри выбранного рейса.</p></div></div>{canEditMeasurements && <Button size="sm" variant="secondary" disabled={save.isPending} onClick={() => { setMeasurementDraft(emptyMeasurement(selected, workspace)); setErrors([]) }}><Plus size={15} /> Добавить промер</Button>}</header>
             {measurementDraft ? <MeasurementEditor run={selected} draft={measurementDraft} pending={save.isPending} onChange={setMeasurementDraft} onCancel={() => { setMeasurementDraft(null); setErrors([]) }} onSave={persistMeasurement} />
               : selected.measurements.length ? <div className="bgd-core-measurement-list">{selected.measurements.map((measurement) => <article key={measurement.id}>
@@ -132,7 +134,7 @@ export function BgdWellCoreRunsTab({ well, canEditRuns, canEditMeasurements }: {
                 <div className="bgd-core-interval-table"><div><span>Интервал</span><span>Мощность дозы</span></div>{measurement.intervals.map((interval) => <div key={interval.id}><span>{displayNumber(interval.depthFrom)}–{displayNumber(interval.depthTo)} м</span><strong>{interval.doseRate === null ? 'Нет замера' : `${displayNumber(interval.doseRate)} мкР/ч`}</strong></div>)}</div>
                 {measurement.note && <p>{measurement.note}</p>}
               </article>)}</div> : <div className="geobase-empty bgd-core-empty"><Gauge size={21} /><strong>Промеров нет</strong><span>Добавление доступно только внутри выбранного рейса.</span></div>}
-          </section>
+          </section>}
         </Panel> : <Panel title="Карточка рейса" description="Выберите рейс слева."><div className="geobase-empty"><Ruler size={22} /><strong>Нет выбранного рейса</strong></div></Panel>}
     </div>
   </div>
@@ -180,10 +182,11 @@ function MeasurementEditor({ run, draft, pending, onChange, onCancel, onSave }: 
   </div>
 }
 
-export function BgdWellCoreSamplesTab({ well, canEdit }: { well: Well; canEdit: boolean }) {
+export function BgdWellCoreSamplesTab({ well, canEdit, onDirtyChange }: { well: Well; canEdit: boolean; onDirtyChange?: (dirty: boolean) => void }) {
   const { query, save } = useCoreWorkspace(well)
   const [selectedId, setSelectedId] = useState('')
   const [draft, setDraft] = useState<CoreSample | null>(null)
+  useReportUnsavedChanges(Boolean(draft), onDirtyChange)
   const [errors, setErrors] = useState<string[]>([])
   const [notice, setNotice] = useState('')
   const workspace = query.data

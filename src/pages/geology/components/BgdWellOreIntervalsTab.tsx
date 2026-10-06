@@ -1,3 +1,4 @@
+import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Check, Layers3, Link2, Plus, Save, Scissors, Trash2, Unlink2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -17,14 +18,14 @@ type View = 'differential' | 'ore' | 'merged'
 const display = (value: number, digits = 4) => value.toLocaleString('ru-RU', { maximumFractionDigits: digits })
 const defaultDraft = (source: OreIntervalSource, element: OreElement, from: number): OreIntervalDraft => ({ source, element, from, to: Number((from + .1).toFixed(2)), basis: 'content', value: .01, permeability: 'Непроницаемый' })
 
-export function BgdWellOreIntervalsTab({ well, canManageAll, canManageGeophysics }: { well: Well; canManageAll: boolean; canManageGeophysics: boolean }) {
+export function BgdWellOreIntervalsTab({ well, canManageAll, canManageGeophysics, onDirtyChange }: { well: Well; canManageAll: boolean; canManageGeophysics: boolean; onDirtyChange?: (dirty: boolean) => void }) {
   const query = useQuery({ queryKey: ['well-ore', well.id], queryFn: () => fetchWellOreWorkspace(well.id) })
   if (query.isError) return <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>Не удалось загрузить рудные интервалы: {query.error.message}</span></div>
   if (query.isLoading || !query.data) return <div className="page-loading page-loading--inline"><span /><p>Загружаем рудные интервалы…</p></div>
-  return <OreWorkspaceEditor key={well.id} well={well} initial={query.data} canManageAll={canManageAll} canManageGeophysics={canManageGeophysics} />
+  return <OreWorkspaceEditor key={well.id} well={well} initial={query.data} canManageAll={canManageAll} canManageGeophysics={canManageGeophysics} onDirtyChange={onDirtyChange} />
 }
 
-function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics }: { well: Well; initial: WellOreWorkspace; canManageAll: boolean; canManageGeophysics: boolean }) {
+function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, onDirtyChange }: { well: Well; initial: WellOreWorkspace; canManageAll: boolean; canManageGeophysics: boolean; onDirtyChange?: (dirty: boolean) => void }) {
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState(initial)
   const [view, setView] = useState<View>('ore')
@@ -40,6 +41,7 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics }
   const [saved, setSaved] = useState(false)
   const selectedSourceCanEdit = canManageAll || (canManageGeophysics && (draft.selectedSource === 'Гамма-каротаж' || draft.selectedSource === 'КНД'))
   const changed = JSON.stringify(draft) !== JSON.stringify(initial)
+  useReportUnsavedChanges(changed, onDirtyChange)
   const visibleOre = useMemo(() => draft.oreIntervals.filter((item) => item.source === draft.selectedSource && item.element === draft.selectedElement).sort((a, b) => a.from - b.from), [draft])
   const visibleGroups = useMemo(() => mergedSummaries(draft).filter((item) => item.source === draft.selectedSource && item.element === draft.selectedElement), [draft])
   const visibleDiff = useMemo(() => draft.differentialIntervals.filter((item) => item.source === draft.selectedSource && item.element === draft.selectedElement).sort((a, b) => a.from - b.from), [draft])
@@ -110,7 +112,7 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics }
   }
 
   return <div className="bgd-well-stack bgd-ore-workspace">
-    {saved && <div className="success-banner"><Check size={17} /><span><strong>Рудные интервалы сохранены</strong>Создана новая локальная demo-версия.</span><button type="button" onClick={() => setSaved(false)}>Закрыть</button></div>}
+    {saved && <div className="success-banner"><Check size={17} /><span><strong>Рудные интервалы сохранены</strong>Создана новая локальная версия.</span><button type="button" onClick={() => setSaved(false)}>Закрыть</button></div>}
     <Panel title="Контекст выделения" description="Интервалы разных источников и элементов ведутся раздельно">
       <div className="bgd-ore-context">
         <label className="field"><span className="field__label">Источник выделения <em>*</em></span><select required aria-label="Источник выделения" value={draft.selectedSource} onChange={(event) => updateContext({ selectedSource: event.target.value as OreIntervalSource })}>{sources.map((item) => <option key={item}>{item}</option>)}</select></label>
@@ -138,7 +140,7 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics }
           <NumberField label={oreForm.basis === 'content' ? 'Содержание, % *' : 'Метропроцент, м% *'} value={oreForm.value} disabled={!selectedSourceCanEdit} onChange={(value) => setOreForm({ ...oreForm, value })} step="0.0001" />
           <label className="field"><span className="field__label">Тип проницаемости <em>*</em></span><select disabled={!selectedSourceCanEdit} value={oreForm.permeability} onChange={(event) => setOreForm({ ...oreForm, permeability: event.target.value as OrePermeability })}>{permeabilityOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
         </div>
-        <p className="bgd-ore-demo-note">Demo-расчёт: метропроцент = содержание × мощность; обратный показатель рассчитывается автоматически.</p>
+        <p className="bgd-ore-demo-note">Расчёт: метропроцент = содержание × мощность; обратный показатель рассчитывается автоматически.</p>
         <div className="bgd-ore-actions"><Button disabled={!selectedSourceCanEdit} onClick={submitOre}><Plus size={14} /> {selectedOre ? 'Применить' : 'Добавить'}</Button>{selectedOre && <Button variant="secondary" onClick={() => { setSelectedOreId(''); setOreForm(defaultDraft(draft.selectedSource, draft.selectedElement, selectedOre.to)) }}>Новый</Button>}{selectedOre && <Button variant="quiet" disabled={!selectedSourceCanEdit} onClick={removeOre}><Trash2 size={14} /> Удалить</Button>}</div>
       </Panel>
     </div>}
@@ -154,7 +156,7 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics }
     </div>}
 
     {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span><strong>Проверьте интервалы</strong>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}
-    <div className="bgd-lithology-savebar"><span><strong>{changed ? 'Изменения готовы к сохранению' : `Локальная версия ${draft.version}`}</strong><small>Данные synthetic и сохраняются только в браузере прототипа.</small></span><Button disabled={!changed || mutation.isPending || (!canManageAll && !canManageGeophysics)} onClick={() => mutation.mutate()}><Save size={15} /> {mutation.isPending ? 'Сохраняем…' : 'Сохранить черновик'}</Button></div>
+    <div className="bgd-lithology-savebar"><span><strong>{changed ? 'Изменения готовы к сохранению' : `Локальная версия ${draft.version}`}</strong><small>Данные сохраняются в этом браузере.</small></span><Button disabled={!changed || mutation.isPending || (!canManageAll && !canManageGeophysics)} onClick={() => mutation.mutate()}><Save size={15} /> {mutation.isPending ? 'Сохраняем…' : 'Сохранить черновик'}</Button></div>
     {mutation.error && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>{mutation.error.message}</span></div>}
   </div>
 }

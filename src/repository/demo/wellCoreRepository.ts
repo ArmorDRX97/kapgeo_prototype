@@ -20,7 +20,7 @@ function seed(well: Well): WellCoreWorkspace {
         measurements: [{
           id: `CORE-MEASURE-${well.id}-01`,
           measurementDate: '2026-08-18T10:30',
-          operator: 'Марат Омаров · synthetic',
+          operator: 'Марат Омаров',
           note: 'Контрольный радиометрический промер после укладки керна.',
           columnType: 'DRILLING',
           intervals: [
@@ -37,9 +37,9 @@ function seed(well: Well): WellCoreWorkspace {
         number: `К-${well.code}-001`,
         sampleType: 'Керновая',
         samplingDate: '2026-08-19T09:15',
-        performer: 'Айгерим Садыкова · synthetic',
-        laboratory: 'Лаборатория КАП · synthetic',
-        comment: 'Составная керновая проба для демонстрационного прототипа.',
+        performer: 'Айгерим Садыкова',
+        laboratory: 'Лаборатория КАП',
+        comment: 'Составная керновая проба.',
         intervals: [
           { id: `CORE-SAMPLE-DEPTH-${well.id}-01`, runId: run1, drillDepthFrom: base + 0.4, drillDepthTo: base + 0.8, adjustedDepthFrom: base + 0.42, adjustedDepthTo: base + 0.82 },
           { id: `CORE-SAMPLE-DEPTH-${well.id}-02`, runId: run1, drillDepthFrom: base + 1.2, drillDepthTo: base + 1.6, adjustedDepthFrom: base + 1.24, adjustedDepthTo: base + 1.64 },
@@ -65,7 +65,16 @@ export class DemoWellCoreRepository {
 
   async get(well: Well) {
     const existing = await this.database.get<DemoRecord<WellCoreWorkspace>>('records', `well-core:${well.id}`)
-    if (existing) return structuredClone(existing.data)
+    if (existing) {
+      const data = structuredClone(existing.data)
+      for (const run of data.runs) for (const measurement of run.measurements) measurement.operator = measurement.operator.replace(/ · synthetic$/, '')
+      for (const sample of data.samples) {
+        sample.performer = sample.performer.replace(/ · synthetic$/, '')
+        sample.laboratory = sample.laboratory.replace(/ · synthetic$/, '')
+        if (sample.comment === 'Составная керновая проба для демонстрационного прототипа.') sample.comment = 'Составная керновая проба.'
+      }
+      return data
+    }
     const value = seed(well)
     await this.persist(well, value, 'well-core.seeded')
     return value
@@ -88,7 +97,7 @@ export class DemoWellCoreRepository {
         eventType,
         entityType: 'well-core',
         entityId: well.id,
-        actor: { id: 'PERSON-R1-GEOLOGIST', type: 'user', name: 'Айгерим Садыкова · synthetic' },
+        actor: { id: 'PERSON-R1-GEOLOGIST', type: 'user', name: 'Айгерим Садыкова' },
         occurredAt: value.updatedAt,
         status: 'accepted',
         payload: { metadata: { synthetic: true } },

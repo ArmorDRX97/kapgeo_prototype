@@ -18,7 +18,7 @@ import {
   Settings2,
   X,
 } from 'lucide-react'
-import { type PropsWithChildren, useEffect, useMemo, useRef, useState } from 'react'
+import { type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { fetchPlatformPreferences, fetchWells } from '../../repository/api'
 import { resetDemoData } from '../../repository/demo/demoDataControl'
@@ -52,11 +52,20 @@ export function AppShell({ children }: PropsWithChildren) {
   const [searchQuery, setSearchQuery] = useState('')
   const [utilitiesOpen, setUtilitiesOpen] = useState(false)
   const [geologyNavOpen, setGeologyNavOpen] = useState(false)
+  const [geologyNavCollapsed, setGeologyNavCollapsed] = useState(false)
   const [resetting, setResetting] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const utilitiesRef = useRef<HTMLDivElement>(null)
   const isBgd = pathname.startsWith('/geology/bgd')
+  const closeGeologyNavigation = useCallback(() => setGeologyNavOpen(false), [])
+
+  useEffect(() => {
+    const media = window.matchMedia?.('(max-width: 1180px)')
+    const closeOnDesktop = () => { if (!media?.matches) setGeologyNavOpen(false) }
+    media?.addEventListener('change', closeOnDesktop)
+    return () => media?.removeEventListener('change', closeOnDesktop)
+  }, [])
 
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
@@ -91,7 +100,7 @@ export function AppShell({ children }: PropsWithChildren) {
   }
 
   const resetAndReload = async () => {
-    if (!window.confirm('Сбросить все изменения и вернуть исходные демонстрационные данные?')) return
+    if (!window.confirm('Сбросить все изменения и вернуть исходные данные?')) return
     setResetting(true)
     try {
       await resetDemoData()
@@ -106,7 +115,7 @@ export function AppShell({ children }: PropsWithChildren) {
     void navigate({ to: '/auth/sign-in' })
   }
 
-  return <div className="app-frame app-frame--top-navigation">
+  return <div className={`app-frame app-frame--top-navigation${isBgd ? ' app-frame--bgd' : ''}`}>
     <a className="skip-link" href="#main-content">Перейти к содержимому</a>
     <header className="topbar topbar--modules">
       <Link className="topbar-brand" to={persona?.homeRoute ?? '/geology/bgd'} aria-label="AI KAPGEO — рабочая область">
@@ -123,7 +132,7 @@ export function AppShell({ children }: PropsWithChildren) {
           return <Link key={item.to} to={item.to} title={item.label} aria-label={item.label} className={active ? 'is-active' : ''}><Icon size={17} /><span>{item.label}</span></Link>
         })}
       </nav>
-      {isBgd && <button className="topbar__geology-toggle" type="button" onClick={() => setGeologyNavOpen((value) => !value)} aria-expanded={geologyNavOpen} aria-label="Открыть скважины"><Menu size={20} /><span>Скважины</span></button>}
+      {isBgd && <button className="topbar__geology-toggle" type="button" onClick={() => setGeologyNavOpen((value) => !value)} aria-expanded={geologyNavOpen} aria-label={geologyNavOpen ? 'Закрыть скважины' : 'Открыть скважины'}><Menu size={20} /><span>Скважины</span></button>}
       <div className="global-search-wrap" ref={searchRef}>
         <label className="global-search global-search--input"><Search size={17} /><input value={searchQuery} onFocus={() => setSearchOpen(true)} onChange={(event) => { setSearchQuery(event.target.value); setSearchOpen(true) }} placeholder="Поиск скважины" aria-label="Глобальный поиск скважины" />{searchQuery && <button type="button" onClick={() => setSearchQuery('')} aria-label="Очистить поиск"><X size={15} /></button>}</label>
         {searchOpen && searchQuery.trim().length >= 2 && <div className="global-search-results" role="listbox" aria-label="Результаты поиска">
@@ -148,14 +157,14 @@ export function AppShell({ children }: PropsWithChildren) {
       </div>
     </header>
 
-    <div className="app-workspace">
-      {isBgd && <GeologyNavigator mobileOpen={geologyNavOpen} onClose={() => setGeologyNavOpen(false)} />}
-      <main id="main-content" className="app-workspace__content content">{children}</main>
+    <div className={`app-workspace${isBgd ? ' app-workspace--bgd' : ''}`}>
+      {isBgd && <GeologyNavigator mobileOpen={geologyNavOpen} collapsed={geologyNavCollapsed} onToggle={() => setGeologyNavCollapsed((value) => !value)} onClose={closeGeologyNavigation} />}
+      <main id="main-content" className="app-workspace__content content" tabIndex={-1} inert={isBgd && geologyNavOpen}>{children}</main>
     </div>
 
     <div className={`utility-fab${utilitiesOpen ? ' is-open' : ''}`} ref={utilitiesRef}>
-      {utilitiesOpen && <div id="prototype-utilities-menu" className="utility-fab__menu" role="menu"><p><strong>Демо-среда</strong><small>Служебные действия</small></p><button type="button" role="menuitem" disabled={resetting} onClick={() => void resetAndReload()}><span className="utility-fab__action-icon"><RotateCcw size={16} /></span><span><strong>{resetting ? 'Сбрасываем…' : 'Сбросить данные'}</strong><small>Вернуть исходное состояние</small></span></button></div>}
-      <button className="utility-fab__trigger" type="button" onClick={() => setUtilitiesOpen((value) => !value)} aria-label={utilitiesOpen ? 'Закрыть инструменты прототипа' : 'Открыть инструменты прототипа'} aria-controls="prototype-utilities-menu" aria-expanded={utilitiesOpen} title="Инструменты прототипа">{utilitiesOpen ? <X size={21} strokeWidth={2.5} /> : <Ellipsis size={25} strokeWidth={2.8} />}</button>
+      {utilitiesOpen && <div id="prototype-utilities-menu" className="utility-fab__menu" role="menu"><p><strong>Управление данными</strong><small>Служебные действия</small></p><button type="button" role="menuitem" disabled={resetting} onClick={() => void resetAndReload()}><span className="utility-fab__action-icon"><RotateCcw size={16} /></span><span><strong>{resetting ? 'Сбрасываем…' : 'Сбросить данные'}</strong><small>Вернуть исходное состояние</small></span></button></div>}
+      <button className="utility-fab__trigger" type="button" onClick={() => setUtilitiesOpen((value) => !value)} aria-label={utilitiesOpen ? 'Закрыть служебные действия' : 'Открыть служебные действия'} aria-controls="prototype-utilities-menu" aria-expanded={utilitiesOpen} title="Служебные действия">{utilitiesOpen ? <X size={21} strokeWidth={2.5} /> : <Ellipsis size={25} strokeWidth={2.8} />}</button>
     </div>
   </div>
 }

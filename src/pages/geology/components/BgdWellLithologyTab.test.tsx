@@ -13,10 +13,10 @@ describe('BgdWellLithologyTab', () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
     render(<QueryClientProvider client={queryClient}><BgdWellLithologyTab well={primaryWell} canEdit /></QueryClientProvider>)
 
-    expect(await screen.findByRole('button', { name: /По керну/ })).toHaveAttribute('aria-pressed', 'true')
-    const logView = screen.getByRole('button', { name: /По каротажу/ })
+    expect(await screen.findByRole('tab', { name: /По керну/ })).toHaveAttribute('aria-selected', 'true')
+    const logView = screen.getByRole('tab', { name: /По каротажу/ })
     fireEvent.click(logView)
-    expect(logView).toHaveAttribute('aria-pressed', 'true')
+    expect(logView).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText(/По каротажу · ГИС/)).toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText('Порода'), { target: { value: 'Глина' } })
@@ -25,7 +25,7 @@ describe('BgdWellLithologyTab', () => {
     expect(save).toBeEnabled()
     fireEvent.click(save)
     expect(await screen.findByText('Литология сохранена')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /По каротажу/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('tab', { name: /По каротажу/ })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText(/По каротажу · ГИС · версия 2/)).toBeInTheDocument()
   })
 })

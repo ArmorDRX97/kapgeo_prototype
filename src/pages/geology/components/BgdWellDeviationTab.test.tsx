@@ -23,7 +23,7 @@ describe('BgdWellDeviationTab', () => {
     expect(screen.getByRole('dialog', { name: 'Импорт инклинометрии по скважине' })).toBeInTheDocument()
     const importButton = screen.getByRole('button', { name: 'Импортировать' })
     expect(importButton).toBeDisabled()
-    fireEvent.click(screen.getByRole('button', { name: 'Выбрать демо-файл' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать файл' }))
     expect(importButton).toBeEnabled()
     fireEvent.click(importButton)
     expect(await screen.findByText(/распознан и импортирован/)).toBeInTheDocument()

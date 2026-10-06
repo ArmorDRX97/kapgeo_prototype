@@ -24,13 +24,13 @@ function seed(): ReferenceWorkspace {
       else if (field.type === 'boolean') value = field.key === 'is_active' ? active : index === 1
       else if (field.type === 'integer') value = index
       else if (field.type === 'number') value = index / 10
-      else if (field.type === 'json') value = JSON.stringify({ synthetic: true, example: index })
-      else if (field.key === 'code') value = `DEMO-${index}`
-      else if (field.key === 'name_kk') value = `Демо жазба ${index}`
-      else if (field.key === 'name_en') value = `Demo entry ${index}`
-      else if (field.key === 'name_ru' || field.key === 'name' || field.key === 'chrono_name' || field.key === 'strat_name' || field.key === 'colortxt') value = `${definition.label} · демо ${index}`
-      else if (field.type === 'textarea') value = `Вымышленное описание записи ${index}. Не используется в других модулях.`
-      else value = `Демо ${index}`
+      else if (field.type === 'json') value = JSON.stringify({ example: index })
+      else if (field.key === 'code') value = `REF-${index}`
+      else if (field.key === 'name_kk') value = `Жазба ${index}`
+      else if (field.key === 'name_en') value = `Entry ${index}`
+      else if (field.key === 'name_ru' || field.key === 'name' || field.key === 'chrono_name' || field.key === 'strat_name' || field.key === 'colortxt') value = `${definition.label} · ${index}`
+      else if (field.type === 'textarea') value = `Описание записи ${index}. Не используется в других модулях.`
+      else value = `Запись ${index}`
       if (typeof value === 'string' && field.maxLength) value = value.slice(0, field.maxLength)
       return [field.key, value]
     }))
@@ -47,11 +47,40 @@ function seed(): ReferenceWorkspace {
   return { entries, changes: [], version: 1 }
 }
 
+/** Update only recognized default labels from earlier seeds; keep IDs and user edits. */
+function currentLabels(input: ReferenceWorkspace): ReferenceWorkspace {
+  const workspace = structuredClone(input)
+  const defaults = seed()
+  const normalizeEntry = (entry: ReferenceEntry | null) => {
+    if (!entry) return
+    const original = defaults.entries.find(item => item.id === entry.id && item.dictionaryId === entry.dictionaryId)
+    if (!original) return
+    const index = Number(entry.id.match(/-(\d+)$/)?.[1])
+    const definition = referenceDefinition(entry.dictionaryId)!
+    for (const field of definition.fields) {
+      if (field.type === 'reference' || typeof entry.values[field.key] !== 'string') continue
+      let legacy: string | undefined
+      if (field.type === 'json') legacy = JSON.stringify({ synthetic: true, example: index })
+      else if (field.key === 'code') legacy = `DEMO-${index}`
+      else if (field.key === 'name_kk') legacy = `Демо жазба ${index}`
+      else if (field.key === 'name_en') legacy = `Demo entry ${index}`
+      else if (['name_ru', 'name', 'chrono_name', 'strat_name', 'colortxt'].includes(field.key)) legacy = `${definition.label} · демо ${index}`
+      else if (field.type === 'textarea') legacy = `Вымышленное описание записи ${index}. Не используется в других модулях.`
+      else legacy = `Демо ${index}`
+      if (field.maxLength) legacy = legacy.slice(0, field.maxLength)
+      if (entry.values[field.key] === legacy) entry.values[field.key] = original.values[field.key]!
+    }
+  }
+  workspace.entries.forEach(normalizeEntry)
+  workspace.changes.forEach(change => { normalizeEntry(change.before); normalizeEntry(change.after) })
+  return workspace
+}
+
 export class ReferenceDataRepository {
   async get(): Promise<ReferenceWorkspace> {
     return demoDatabase.transaction(['records'], async (transaction) => {
       const current = await transaction.get<DemoRecord<ReferenceWorkspace>>('records', key)
-      if (current) return current.data
+      if (current) return currentLabels(current.data)
       const data = seed()
       await transaction.put('records', { id: key, entityType: 'reference-workspace', objectId: key, scopeId: 'system', status: 'active', updatedAt: '2026-10-01T00:00:00Z', data } satisfies DemoRecord<ReferenceWorkspace>)
       return data
@@ -65,7 +94,7 @@ export class ReferenceDataRepository {
     await this.get()
     return demoDatabase.transaction(['records', 'versions', 'auditEvents'], async (transaction) => {
       const stored = await transaction.get<DemoRecord<ReferenceWorkspace>>('records', key)
-      const current = stored!.data
+      const current = currentLabels(stored!.data)
       if (current.version !== command.expectedVersion) throw new Error('Справочники изменены в другой вкладке. Обновите данные и повторите действие.')
       const before = current.entries.find((entry) => entry.id === command.entryId && entry.dictionaryId === command.dictionaryId) ?? null
       if (command.operation !== 'created' && !before) throw new Error('Элемент справочника не найден.')
@@ -83,7 +112,7 @@ export class ReferenceDataRepository {
         after = { id, dictionaryId: command.dictionaryId, values, active, version: (before?.version ?? 0) + 1 }
       } else {
         const related = current.entries.filter((entry) => referenceDefinition(entry.dictionaryId)!.fields.some((field) => field.type === 'reference' && field.reference === command.dictionaryId && entry.values[field.key] === id))
-        if (related.length) throw new Error('Удаление элемента невозможно, поскольку элемент используется в записях других справочников этого демо-раздела. Деактивируйте его, чтобы сохранить связи.')
+        if (related.length) throw new Error('Удаление элемента невозможно, поскольку элемент используется в записях других справочников этого раздела. Деактивируйте его, чтобы сохранить связи.')
       }
       const occurredAt = new Date().toISOString()
       const change: ReferenceChange = { id: `REF-CHANGE-${current.version + 1}`, dictionaryId: command.dictionaryId, entryId: id, operation: command.operation, actor: persona!.name, occurredAt, before, after }

@@ -1,3 +1,4 @@
+import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, CalendarDays, CheckCircle2, FileUp, Gauge, Pencil, Plus, RadioTower, Save, ScanLine, ShieldCheck, Star, Trash2, UserRound, Wrench, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -68,11 +69,12 @@ function buildCurves(codes: LogCurveCode[], runId: string, existing: LogCurve[] 
   })
 }
 
-export function BgdWellLogsTab({ well, canEdit }: { well: Well; canEdit: boolean }) {
+export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; canEdit: boolean; onDirtyChange?: (dirty: boolean) => void }) {
   const client = useQueryClient()
   const query = useQuery({ queryKey: ['well-log-v2', well.id], queryFn: () => fetchWellLogWorkspace(well.id) })
   const [selectedId, setSelectedId] = useState('')
   const [editorRun, setEditorRun] = useState<LogRunV2 | 'new' | null>(null)
+  useReportUnsavedChanges(Boolean(editorRun), onDirtyChange)
   const [viewerOpen, setViewerOpen] = useState(false)
   const [notice, setNotice] = useState('')
 
@@ -89,7 +91,7 @@ export function BgdWellLogsTab({ well, canEdit }: { well: Well; canEdit: boolean
     onSuccess: (next) => {
       client.setQueryData(['well-log-v2', well.id], next)
       setSelectedId(next.runs.at(-1)?.id ?? '')
-      setNotice('Демонстрационный LAS-файл загружен, сопоставлен и добавлен после QC-проверки.')
+      setNotice('LAS-файл загружен, сопоставлен и добавлен после QC-проверки.')
     },
   })
 
@@ -155,8 +157,8 @@ export function BgdWellLogsTab({ well, canEdit }: { well: Well; canEdit: boolean
             <span><strong>{run.name}</strong><small>{formatDate(survey.measuredAt)} · {survey.instrument}</small><em>{run.from.toLocaleString('ru-RU')}–{run.to.toLocaleString('ru-RU')} м · {run.curves.length} канала</em></span>
             <span className="bgd-log-list__status">{survey.isPrimary && <Star size={14} aria-label="Основной каротаж" />}<Badge tone={status.tone}>{status.label}</Badge></span>
           </button>
-        })}</div> : <div className="geobase-empty"><RadioTower size={22} /><strong>Каротажей пока нет</strong><span>Добавьте первый набор вручную или загрузите демонстрационный LAS.</span></div>}
-        <div className="bgd-log-import"><span><FileUp size={18} /><span><strong>Импорт каротажа</strong><small>Детерминированный LAS-файл для кликабельного прототипа</small></span></span><Button size="sm" variant="secondary" disabled={!canEdit || importDemo.isPending} onClick={() => importDemo.mutate(workspace)}>{importDemo.isPending ? 'Обрабатываем…' : 'Загрузить демо LAS'}</Button></div>
+        })}</div> : <div className="geobase-empty"><RadioTower size={22} /><strong>Каротажей пока нет</strong><span>Добавьте первый набор вручную или загрузите LAS-файл.</span></div>}
+        <div className="bgd-log-import"><span><FileUp size={18} /><span><strong>Импорт каротажа</strong><small>Загрузка и проверка LAS-файла</small></span></span><Button size="sm" variant="secondary" disabled={!canEdit || importDemo.isPending} onClick={() => importDemo.mutate(workspace)}>{importDemo.isPending ? 'Обрабатываем…' : 'Загрузить LAS'}</Button></div>
       </Panel>
 
       {selected ? <LogInspector

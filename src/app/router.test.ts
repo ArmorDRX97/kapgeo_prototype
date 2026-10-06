@@ -12,6 +12,7 @@ describe('BGD route smoke', () => {
     expect(router.buildLocation({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId: 'DEP-SARYTAU', wellId: 'WELL-1042' } }).href).toBe('/geology/bgd/DEP-SARYTAU/wells/WELL-1042')
     expect(router.buildLocation({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId: 'DEP-SARYTAU', wellId: 'WELL-1042' }, search: { tab: 'logs' } }).href).toBe('/geology/bgd/DEP-SARYTAU/wells/WELL-1042?tab=logs')
     expect(router.buildLocation({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId: 'DEP-SARYTAU', wellId: 'WELL-1042' }, search: { tab: 'lithology' } }).href).toBe('/geology/bgd/DEP-SARYTAU/wells/WELL-1042?tab=lithology')
+    expect(router.buildLocation({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId: 'DEP-SARYTAU', wellId: 'WELL-1042' }, search: { tab: 'lithology', view: 'composite' } }).href).toBe('/geology/bgd/DEP-SARYTAU/wells/WELL-1042?tab=lithology&view=composite')
     expect(router.buildLocation({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId: 'DEP-SARYTAU', wellId: 'WELL-1042' }, search: { tab: 'ore-intervals' } }).href).toBe('/geology/bgd/DEP-SARYTAU/wells/WELL-1042?tab=ore-intervals')
     expect(router.buildLocation({ to: '/profile' }).href).toBe('/profile')
     expect(router.buildLocation({ to: '/technology' }).href).toBe('/technology')

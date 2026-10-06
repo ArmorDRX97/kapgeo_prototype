@@ -19,7 +19,7 @@ const schema = z.object({ wellId: z.string(), logLithology: z.array(lithology), 
 export const interpretationStorageKey = (wellId: string) => `kapgeo.interpretation.demo.v1:${wellId}`
 export function validateInterpretation(well: InterpretationWell, input: unknown): InterpretationDocument {
   const parsed = schema.safeParse(input)
-  if (!parsed.success || parsed.data.wellId !== well.id) throw new Error('Не удалось прочитать демонстрационный результат. Сбросьте только набор интерпретации этой скважины.')
+  if (!parsed.success || parsed.data.wellId !== well.id) throw new Error('Не удалось прочитать результат. Сбросьте только набор интерпретации этой скважины.')
   const doc = parsed.data
   for (const rows of [doc.logLithology, doc.compositeLithology, doc.technology]) {
     if (validateIntervals<IntervalRecord>(rows, { ...intervalPolicy(well.depth), minimumThickness: rows === doc.compositeLithology ? 0.000001 : 0.1 }).some(issue => issue.severity === 'error')) throw new Error('Результат содержит некорректные интервалы.')
@@ -50,13 +50,13 @@ function upgradeLegacyMapping(well: InterpretationWell, doc: InterpretationDocum
 function read(well: InterpretationWell): InterpretationDocument {
   const data = window.localStorage.getItem(interpretationStorageKey(well.id))
   if (!data) return structuredClone(well.initial)
-  try { const parsed = upgradeLegacyMapping(well, validateInterpretation(well, JSON.parse(data))); return { ...parsed, samples: parsed.samples ?? structuredClone(well.samples), sourceRevision: parsed.sourceRevision ?? well.sourceRevision } }
-  catch (error) { if (error instanceof SyntaxError) throw new Error('Сохранённый demo-набор повреждён. Можно сбросить только интерпретацию этой скважины.', { cause: error }); throw error }
+  try { const parsed = upgradeLegacyMapping(well, validateInterpretation(well, JSON.parse(data))); return { ...parsed, samples: (parsed.samples ?? structuredClone(well.samples)).map(sample => ({ ...sample, name: sample.name.replace(/^DEMO-(КП|ГС|ЛГХ|ТП)-(0\d)$/, '$1-$2') })), sourceRevision: parsed.sourceRevision ?? well.sourceRevision } }
+  catch (error) { if (error instanceof SyntaxError) throw new Error('Сохранённый результат повреждён. Можно сбросить только интерпретацию этой скважины.', { cause: error }); throw error }
 }
 export const interpretationRepository = {
   async load(well: InterpretationWell) { const issues = sourceIssues(well); if (issues.length) throw new Error(issues.join(' ')); return read(well) },
   save(well: InterpretationWell, document: InterpretationDocument, expectedRevision: number) {
-    if (well.status !== 'draft') throw new Error('Зафиксированный пример доступен только для просмотра.')
+    if (well.status !== 'draft') throw new Error('Зафиксированная скважина доступна только для просмотра.')
     if (read(well).revision !== expectedRevision) throw new Error('Результат изменён в другой вкладке. Перезагрузите страницу перед сохранением.')
     const result = validateInterpretation(well, { ...document, revision: expectedRevision + 1 })
     window.localStorage.setItem(interpretationStorageKey(well.id), JSON.stringify(result))
