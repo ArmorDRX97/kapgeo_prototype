@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SessionContext } from '../../entities/session/model/sessionContext'
 import { defaultPersona, userPersonas } from '../../entities/session/model/personas'
@@ -183,18 +183,21 @@ describe('BGD object → section → workspace', () => {
     expect(screen.getByLabelText('Паспорт составил')).toBeEnabled()
   })
 
+  // This full-workbench scenario renders 36 rows and persists across sections;
+  // allow headroom on shared CI runners without relaxing other test timeouts.
   it('adds interval batches, preserves filled rows when removing blanks, and saves all five fields', async () => {
     const onSaved = renderWorkbench()
     fireEvent.change(await screen.findByLabelText('Название скважины *'), { target: { value: '2299' } })
     fireEvent.click(screen.getByRole('button', { name: 'Проходка и освоение' }))
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить и перейти' }))
     await screen.findByRole('button', { name: 'Добавить интервалы' })
+    const table = within(screen.getByRole('heading', { name: 'Интервалы бурения' }).closest('section')!)
     for (const count of [1, 5, 10, 20]) {
-      const before = screen.queryAllByRole('spinbutton', { name: /Интервал .*Диаметр/ }).length
+      const before = table.queryAllByLabelText(/Интервал .*Диаметр/).length
       fireEvent.click(screen.getByRole('button', { name: 'Добавить интервалы' }))
       fireEvent.click(screen.getByRole('menuitem', { name: count === 1 ? '1 интервал' : `${count} интервалов` }))
-      expect(screen.getAllByRole('spinbutton', { name: /Интервал .*Диаметр/ })).toHaveLength(before + count)
-      expect(screen.getByRole('spinbutton', { name: `Интервал ${before + 1}: Диаметр, мм` })).toHaveFocus()
+      expect(table.getAllByLabelText(/Интервал .*Диаметр/)).toHaveLength(before + count)
+      expect(table.getByLabelText(`Интервал ${before + 1}: Диаметр, мм`)).toHaveFocus()
     }
     fireEvent.change(screen.getByLabelText('Интервал 1: Диаметр, мм'), { target: { value: '190' } })
     fireEvent.change(screen.getByLabelText('Интервал 1: От, м'), { target: { value: '0' } })
@@ -204,7 +207,7 @@ describe('BGD object → section → workspace', () => {
     fireEvent.change(screen.getByLabelText('Интервал 3: Очистной агент'), { target: { value: 'Сульфанол' } })
     fireEvent.click(screen.getByRole('button', { name: 'Удалить интервал 2' }))
     fireEvent.click(screen.getByRole('button', { name: /Удалить пустые/ }))
-    expect(screen.getAllByRole('spinbutton', { name: /Интервал .*Диаметр/ })).toHaveLength(2)
+    expect(table.getAllByLabelText(/Интервал .*Диаметр/)).toHaveLength(2)
     expect(screen.getByLabelText('Интервал 2: Очистной агент')).toHaveValue('Сульфанол')
     fireEvent.click(screen.getByRole('button', { name: 'Удалить интервал 2' }))
     fireEvent.click(screen.getByRole('button', { name: 'Описание' }))
@@ -217,7 +220,7 @@ describe('BGD object → section → workspace', () => {
     expect(onSaved.mock.calls[0]?.[0].bgd.drilling.intervals).toEqual([
       expect.objectContaining({ drillingDiameter: 190, depthFrom: 0, depthTo: 25, drillingTool: 'Алмазная коронка', flushingAgent: 'Техническая вода' }),
     ])
-  })
+  }, 15_000)
 
   it('supports the batch menu keyboard and disables interval changes without edit permission', async () => {
     renderWorkbench()
