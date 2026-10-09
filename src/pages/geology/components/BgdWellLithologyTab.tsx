@@ -1,7 +1,8 @@
+import { BgdSaveBar } from '../../../features/geobase/ui/BgdSaveBar'
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { WorkspaceTabs } from '../../../shared/ui/WorkspaceTabs'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, Check, Copy, GitCompareArrows, Layers3, Merge, Plus, Redo2, Save, Scissors, Trash2, Undo2 } from 'lucide-react'
+import { AlertTriangle, Check, Copy, GitCompareArrows, Layers3, Merge, Plus, Redo2, Scissors, Trash2, Undo2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { GeologicalInterval, Lithology, Well } from '../../../entities/well/model/types'
 import type { WellGeologyWorkspace } from '../../../entities/well-geology/model/types'
@@ -113,7 +114,7 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
     if (!availableGap) return
     const above = [...sorted].reverse().find((item) => item.to <= availableGap.from)
     const id = `BGD-LITH-${kind}-${Date.now()}`
-    const interval: GeologicalInterval = { id, from: availableGap.from, to: availableGap.to, lithology: above?.lithology ?? 'Песчаник', stratigraphy: above?.stratigraphy ?? 'K2', mineralization: above?.mineralization ?? 'Отсутствует', color: above?.color ?? 'Серый', description: 'Новый интервал — уточните описание.', source: sourceFor(kind) }
+    const interval: GeologicalInterval = { id, from: availableGap.from, to: availableGap.to, lithology: above?.lithology ?? 'Песчаник', stratigraphy: above?.stratigraphy ?? 'K2', mineralization: above?.mineralization ?? 'Отсутствует', color: above?.color ?? 'Серый', colorDescription: above?.colorDescription ?? '', description: 'Новый интервал — уточните описание.', source: sourceFor(kind) }
     replaceIntervals([...track.intervals, interval], id)
   }
   const splitInterval = () => {
@@ -130,7 +131,7 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
   }
   const copyAbove = () => {
     if (!selected || !previous) return
-    updateSelected({ lithology: previous.lithology, stratigraphy: previous.stratigraphy, mineralization: previous.mineralization, color: previous.color, description: previous.description })
+    updateSelected({ lithology: previous.lithology, stratigraphy: previous.stratigraphy, mineralization: previous.mineralization, color: previous.color, colorDescription: previous.colorDescription, description: previous.description })
   }
   const removeInterval = () => {
     if (!selected) return
@@ -162,6 +163,7 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
               <label className="field"><span className="field__label">Порода</span><select aria-label="Порода" disabled={!canEdit} value={selected.lithology} onChange={(event) => updateSelected({ lithology: event.target.value as Lithology })}>{lithologyOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
               <label className="field"><span className="field__label">Минерализация</span><select disabled={!canEdit} value={selected.mineralization ?? 'Отсутствует'} onChange={(event) => updateSelected({ mineralization: event.target.value })}>{mineralizationOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
               <label className="field"><span className="field__label">Цвет</span><select disabled={!canEdit} value={selected.color ?? 'Серый'} onChange={(event) => updateSelected({ color: event.target.value })}>{colorOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
+              <label className="field bgd-lithology-form__description"><span className="field__label">Описание цвета</span><textarea disabled={!canEdit} rows={2} value={selected.colorDescription ?? ''} onChange={(event) => updateSelected({ colorDescription: event.target.value })} /></label>
               <label className="field bgd-lithology-form__description"><span className="field__label">Описание породы</span><textarea disabled={!canEdit} rows={3} value={selected.description} onChange={(event) => updateSelected({ description: event.target.value })} /></label>
             </div>
             {canEdit && <div className="bgd-lithology-editor__actions"><Button size="sm" variant="secondary" onClick={splitInterval}><Scissors size={14} /> Разделить</Button><Button size="sm" variant="secondary" disabled={!next || Math.abs(selected.to - next.from) > 0.001} onClick={mergeInterval}><Merge size={14} /> Объединить со следующим</Button><Button size="sm" variant="quiet" disabled={!previous} onClick={copyAbove}><Copy size={14} /> Скопировать сверху</Button><Button size="sm" variant="quiet" onClick={removeInterval}><Trash2 size={14} /> Удалить</Button></div>}
@@ -174,7 +176,7 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
       </div>
     </div>
 
-    {canEdit && <div className="bgd-lithology-savebar"><span><strong>{blockingIssues.length ? `Блокирующих ошибок: ${blockingIssues.length}` : changed ? 'Литология готова к сохранению' : 'Нет несохранённых изменений'}</strong><small>После сохранения изменения останутся в браузере до сброса данных.</small></span><Button disabled={!changed || blockingIssues.length > 0 || mutation.isPending} onClick={() => mutation.mutate()}><Save size={15} /> {mutation.isPending ? 'Сохраняем…' : 'Сохранить изменения'}</Button></div>}
+    {canEdit && <BgdSaveBar ready={changed && !blockingIssues.length} status={blockingIssues.length ? `Блокирующих ошибок: ${blockingIssues.length}` : changed ? 'Изменения готовы к сохранению' : 'Нет несохранённых изменений'} pending={mutation.isPending} disabled={!changed || blockingIssues.length > 0} onSave={() => mutation.mutate()} />}
     {mutation.error && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>{mutation.error.message}</span></div>}
     </WorkspaceTabs>
   </div>

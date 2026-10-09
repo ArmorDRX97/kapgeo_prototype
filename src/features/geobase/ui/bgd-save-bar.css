@@ -1,0 +1,8 @@
+.bgd-save-bar { position: sticky; z-index: 5; bottom: 0; display: flex; box-sizing: border-box; width: fit-content; max-width: 100%; margin-inline-start: auto; padding: var(--space-3); align-items: center; gap: var(--space-4); border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-panel); box-shadow: var(--shadow-md); }
+.bgd-save-bar > span { min-width: 0; max-width: 22ch; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.4; text-align: right; white-space: normal; overflow-wrap: anywhere; }
+.bgd-save-bar[data-state="ready"] > span { color: var(--color-green-700); }
+.bgd-save-bar > .button { flex: none; }
+@media (max-width: 680px) {
+  .bgd-save-bar { flex-wrap: wrap; }
+  .bgd-save-bar > .button { margin-inline-start: auto; }
+}

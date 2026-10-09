@@ -8,12 +8,10 @@ import {
   ChevronDown,
   CircleUserRound,
   Database,
-  Ellipsis,
   LogOut,
   Menu,
   Mountain,
   Network,
-  RotateCcw,
   Search,
   Settings2,
   X,
@@ -21,7 +19,6 @@ import {
 import { type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { fetchPlatformPreferences, fetchWells } from '../../repository/api'
-import { resetDemoData } from '../../repository/demo/demoDataControl'
 import { hasPermission, type Permission } from '../../shared/auth/permissions'
 import { GeologyNavigator } from './GeologyNavigator'
 import { LanguageSwitcher } from './LanguageSwitcher'
@@ -51,13 +48,10 @@ export function AppShell({ children }: PropsWithChildren) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [utilitiesOpen, setUtilitiesOpen] = useState(false)
   const [geologyNavOpen, setGeologyNavOpen] = useState(false)
   const [geologyNavCollapsed, setGeologyNavCollapsed] = useState(false)
-  const [resetting, setResetting] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
-  const utilitiesRef = useRef<HTMLDivElement>(null)
   const isBgd = pathname.startsWith('/geology/bgd')
   const closeGeologyNavigation = useCallback(() => setGeologyNavOpen(false), [])
 
@@ -73,7 +67,6 @@ export function AppShell({ children }: PropsWithChildren) {
       const target = event.target as Node
       if (!profileRef.current?.contains(target)) setProfileOpen(false)
       if (!searchRef.current?.contains(target)) setSearchOpen(false)
-      if (!utilitiesRef.current?.contains(target)) setUtilitiesOpen(false)
     }
     document.addEventListener('pointerdown', onPointerDown)
     return () => document.removeEventListener('pointerdown', onPointerDown)
@@ -98,17 +91,6 @@ export function AppShell({ children }: PropsWithChildren) {
     setSearchOpen(false)
     setSearchQuery('')
     void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId } })
-  }
-
-  const resetAndReload = async () => {
-    if (!window.confirm('Сбросить все изменения и вернуть исходные данные?')) return
-    setResetting(true)
-    try {
-      await resetDemoData()
-      window.location.reload()
-    } finally {
-      setResetting(false)
-    }
   }
 
   const logOut = () => {
@@ -164,9 +146,6 @@ export function AppShell({ children }: PropsWithChildren) {
       <main id="main-content" className="app-workspace__content content" tabIndex={-1} inert={isBgd && geologyNavOpen}>{children}</main>
     </div>
 
-    <div className={`utility-fab${utilitiesOpen ? ' is-open' : ''}`} ref={utilitiesRef}>
-      {utilitiesOpen && <div id="prototype-utilities-menu" className="utility-fab__menu" role="menu"><p><strong>Управление данными</strong><small>Служебные действия</small></p><button type="button" role="menuitem" disabled={resetting} onClick={() => void resetAndReload()}><span className="utility-fab__action-icon"><RotateCcw size={16} /></span><span><strong>{resetting ? 'Сбрасываем…' : 'Сбросить данные'}</strong><small>Вернуть исходное состояние</small></span></button></div>}
-      <button className="utility-fab__trigger" type="button" onClick={() => setUtilitiesOpen((value) => !value)} aria-label={utilitiesOpen ? 'Закрыть служебные действия' : 'Открыть служебные действия'} aria-controls="prototype-utilities-menu" aria-expanded={utilitiesOpen} title="Служебные действия">{utilitiesOpen ? <X size={21} strokeWidth={2.5} /> : <Ellipsis size={25} strokeWidth={2.8} />}</button>
-    </div>
+
   </div>
 }

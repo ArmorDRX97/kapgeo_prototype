@@ -74,10 +74,17 @@
 .bgd-well-workbench > .bgd-well-page { display: flex; min-width: 0; flex: 1; height: 100%; flex-direction: column; gap: var(--space-4); padding: var(--space-6); overflow: auto; container-type: inline-size; scrollbar-gutter: stable; }
 .bgd-well-page > * { flex-shrink: 0; }
 .bgd-well-page .panel { min-width: 0; }
-.bgd-well-page .bgd-well-actions { bottom: 0; margin-right: calc(var(--space-10) + var(--space-4)); }
-.bgd-well-page .bgd-lithology-savebar { margin-right: calc(var(--space-10) + var(--space-4)); }
 .bgd-well-page .bgd-well-language-grid { margin-top: 0; }
 .bgd-well-page .bgd-log-registry, .bgd-well-page .bgd-core-registry { position: static; }
+.form-grid.bgd-well-paired-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.form-grid.bgd-well-paired-grid > .field, .form-grid.bgd-well-paired-grid > .field:first-child { min-width: 0; grid-column: auto; }
+.form-grid.bgd-passport-people-grid > .field:first-child { grid-column: auto; }
+@container (max-width: 540px) {
+  .form-grid.bgd-well-paired-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 680px) {
+  .form-grid.bgd-well-paired-grid { grid-template-columns: minmax(0, 1fr); }
+}
 
 @container (max-width: 880px) {
   .bgd-logs-layout, .bgd-core-layout, .bgd-lithology-layout, .bgd-deviation-layout, .bgd-ore-layout, .bgd-ore-layout--merged { grid-template-columns: minmax(0, 1fr); }
@@ -88,8 +95,7 @@
   .bgd-lithology-main { order: -1; }
 }
 @container (max-width: 540px) {
-  .bgd-well-form-grid, .bgd-well-language-grid, .bgd-well-coordinate-grid, .bgd-well-coordinate-grid section > div, .bgd-well-actions { grid-template-columns: minmax(0, 1fr); }
-  .bgd-well-actions > span { text-align: left; }
+  .bgd-well-form-grid, .bgd-well-language-grid, .bgd-well-coordinate-grid, .bgd-well-coordinate-grid section > div { grid-template-columns: minmax(0, 1fr); }
   .bgd-log-summary { grid-template-columns: minmax(0, 1fr); }
   .bgd-ore-context { grid-template-columns: minmax(0, 1fr); }
   .bgd-well-page .form-grid .field:first-child { grid-column: auto; }
@@ -148,6 +154,10 @@
 .bgd-drilling-table input, .bgd-drilling-table select { width: 100%; min-width: 0; height: var(--space-8); padding: var(--space-1) var(--space-2); color: var(--text-primary); background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: var(--radius-sm); font: inherit; }
 .bgd-drilling-table input:disabled, .bgd-drilling-table select:disabled { cursor: not-allowed; color: var(--text-secondary); background: var(--surface-subtle); }
 .bgd-drilling-table .bgd-drilling-table__remove { width: var(--space-8); min-width: var(--space-8); min-height: var(--space-8); padding: 0; color: var(--color-danger-600); }
+.bgd-impermeable-intervals.panel { padding: var(--space-3); }
+.bgd-impermeable-intervals .panel__header { margin-bottom: var(--space-2); }
+.bgd-drilling-table.bgd-impermeable-table { min-width: 280px; }
+.bgd-impermeable-table tr { grid-template-columns: var(--space-8) repeat(2, minmax(0, 1fr)) var(--space-10); }
 @container (max-width: 880px) {
   .bgd-construction-compact .bgd-well-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

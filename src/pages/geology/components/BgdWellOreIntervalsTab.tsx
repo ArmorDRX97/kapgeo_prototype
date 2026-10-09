@@ -1,7 +1,8 @@
+import { BgdSaveBar } from '../../../features/geobase/ui/BgdSaveBar'
 import { UnsavedChangesContext } from '../../../shared/lib/unsavedChangesContext'
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, Check, Layers3, Link2, Plus, Save, Scissors, Trash2, Unlink2 } from 'lucide-react'
+import { AlertTriangle, Check, Layers3, Link2, Plus, Scissors, Trash2, Unlink2 } from 'lucide-react'
 import { useContext, useMemo, useState } from 'react'
 import type { DifferentialOreInterval, OreElement, OreInterval, OreIntervalDraft, OreIntervalSource, OrePermeability, OreValueBasis, WellOreWorkspace } from '../../../entities/well-ore/model/types'
 import type { Well } from '../../../entities/well/model/types'
@@ -190,7 +191,7 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, 
     </div>}
 
     {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span><strong>Проверьте интервалы</strong>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}
-    <div className="bgd-lithology-savebar"><span><strong>{changed ? 'Изменения готовы к сохранению' : 'Нет несохранённых изменений'}</strong><small>Данные сохраняются в этом браузере.</small></span><Button disabled={!changed || mutation.isPending || (!canManageAll && !canManageGeophysics)} onClick={() => mutation.mutate()}><Save size={15} /> {mutation.isPending ? 'Сохраняем…' : 'Сохранить изменения'}</Button></div>
+    <BgdSaveBar ready={changed && (canManageAll || canManageGeophysics)} status={changed ? 'Изменения готовы к сохранению' : 'Нет несохранённых изменений'} pending={mutation.isPending} disabled={!changed || (!canManageAll && !canManageGeophysics)} onSave={() => mutation.mutate()} />
     {mutation.error && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>{mutation.error.message}</span></div>}
   </div>
 }

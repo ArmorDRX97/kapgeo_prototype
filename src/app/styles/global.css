@@ -423,21 +423,6 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 .well-status--attention { background: #d98b19; }
 .well-navigator__empty { display: block; padding: 23px 12px; color: var(--text-tertiary); font-size: 12px; line-height: 1.45; text-align: center; }
 
-.utility-fab { position: fixed; right: 24px; bottom: 24px; z-index: 70; }
-.utility-fab__trigger { position: relative; z-index: 2; display: grid; width: 52px; height: 52px; cursor: pointer; place-items: center; color: white; border: 0; border-radius: 50%; background: var(--color-brand-700); box-shadow: 0 8px 20px rgb(15 79 74 / .28), 0 0 0 4px rgb(255 255 255 / .9); transition: transform var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast); }
-.utility-fab__trigger:hover { background: var(--color-brand-800); box-shadow: 0 12px 26px rgb(15 79 74 / .34), 0 0 0 4px rgb(255 255 255 / .9); transform: translateY(-2px); }
-.utility-fab.is-open .utility-fab__trigger { color: white; background: #0a4d48; box-shadow: 0 10px 24px rgb(8 66 61 / .34), 0 0 0 4px rgb(255 255 255 / .96); }
-.utility-fab__menu { position: absolute; right: -4px; bottom: 28px; width: 250px; padding: 10px 10px 38px; border: 1px solid #dce6e5; border-radius: 16px; background: white; box-shadow: 0 16px 34px rgb(24 47 55 / .18); }
-.utility-fab__menu > p { display: grid; margin: 0; padding: 2px 5px 8px; }
-.utility-fab__menu > p strong { color: var(--text-primary); font-size: 12px; }
-.utility-fab__menu > p small { margin-top: 1px; color: var(--text-tertiary); font-size: 10px; }
-.utility-fab__menu > button { display: flex; width: 100%; min-height: 48px; cursor: pointer; align-items: center; gap: 9px; padding: 7px; color: var(--text-primary); border: 1px solid transparent; border-radius: 10px; background: var(--surface-subtle); text-align: left; }
-.utility-fab__menu > button:hover:not(:disabled) { border-color: #f3c9c5; background: #fff6f5; }
-.utility-fab__menu > button:disabled { cursor: wait; opacity: .55; }
-.utility-fab__action-icon { display: grid; width: 30px; height: 30px; flex: none; place-items: center; color: #ad3f37; border-radius: 9px; background: #fff0ee; }
-.utility-fab__menu > button > span:last-child { display: grid; }
-.utility-fab__menu > button strong { color: #9d3b34; font-size: 11px; }
-.utility-fab__menu > button small { color: var(--text-tertiary); font-size: 9px; }
 
 .module-placeholder { min-height: calc(100vh - 166px); }
 .module-placeholder__hero { position: relative; display: grid; min-height: 380px; place-content: center; justify-items: center; overflow: hidden; padding: 54px; text-align: center; border: 1px solid var(--border-default); border-radius: 20px; background: radial-gradient(circle at 50% 0, color-mix(in srgb, var(--module-accent) 13%, white), white 52%); box-shadow: var(--shadow-sm); }
@@ -524,5 +509,4 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
   .geology-navigator { width: min(348px, calc(100vw - 48px)); flex-basis: auto; }
   .admin-stat-grid, .profile-persona-list { grid-template-columns: 1fr; }
   .module-placeholder__hero { min-height: 330px; padding: 32px 20px; }
-  .utility-fab { right: 16px; bottom: 16px; }
 }

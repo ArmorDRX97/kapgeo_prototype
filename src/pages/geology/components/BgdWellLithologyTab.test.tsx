@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { primaryWell } from '../../../repository/data/wells'
 import { demoDatabase } from '../../../repository/demo/demoDatabase'
+import { fetchWellGeologyWorkspace } from '../../../repository/api'
 import { BgdWellLithologyTab } from './BgdWellLithologyTab'
 
 describe('BgdWellLithologyTab', () => {
@@ -20,11 +21,15 @@ describe('BgdWellLithologyTab', () => {
     expect(screen.getByText(/По каротажу · ГИС/)).toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText('Порода'), { target: { value: 'Глина' } })
+    fireEvent.change(screen.getByLabelText('Описание цвета'), { target: { value: 'Серый с бурыми вкраплениями' } })
     expect(screen.getByText('Изменено интервалов: 1')).toBeInTheDocument()
     const save = screen.getByRole('button', { name: /Сохранить изменения/ })
     expect(save).toBeEnabled()
     fireEvent.click(save)
     expect(await screen.findByText('Литология сохранена')).toBeInTheDocument()
+    const persisted = await fetchWellGeologyWorkspace(primaryWell.id)
+    expect(persisted.tracks.find((track) => track.kind === 'log')?.intervals[0]?.colorDescription).toBe('Серый с бурыми вкраплениями')
+    expect(screen.getByLabelText('Описание цвета')).toHaveValue('Серый с бурыми вкраплениями')
     expect(screen.getByRole('tab', { name: /По каротажу/ })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('По каротажу · ГИС')).toBeInTheDocument()
     expect(screen.queryByText(/верси/i)).not.toBeInTheDocument()

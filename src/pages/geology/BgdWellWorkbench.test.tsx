@@ -5,6 +5,7 @@ import { SessionContext } from '../../entities/session/model/sessionContext'
 import { defaultPersona, userPersonas } from '../../entities/session/model/personas'
 import { demoDatabase } from '../../repository/demo/demoDatabase'
 import { primaryWell } from '../../repository/data/wells'
+import { fetchWell } from '../../repository/api'
 import { WellEditorPage } from './NewWellPage'
 
 const blocker = vi.fn()
@@ -21,12 +22,40 @@ describe('BGD object → section → workspace', () => {
   beforeEach(async () => { await demoDatabase.reset(); blocker.mockClear() })
   afterEach(async () => { cleanup(); vi.unstubAllGlobals(); await demoDatabase.reset() })
 
+  it('edits impermeable intervals in a compact table and persists added and removed rows', async () => {
+    const onSaved = renderWorkbench(false, primaryWell.id)
+    await screen.findByLabelText('Название скважины *')
+    fireEvent.click(screen.getByRole('button', { name: 'Геологические условия' }))
+    expect(screen.getByLabelText('Геологические осложнения')).toHaveValue(primaryWell.bgd!.geology.complications)
+    fireEvent.click(screen.getByRole('tab', { name: 'Непроницаемые интервалы' }))
+    expect(screen.getByRole('table', { name: 'Непроницаемые интервалы' })).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Непроницаемый интервал 1: От, м' }), { target: { value: '51' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить интервал' }))
+    expect(screen.getByRole('spinbutton', { name: 'Непроницаемый интервал 4: От, м' })).toHaveFocus()
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Непроницаемый интервал 4: От, м' }), { target: { value: '500' } })
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Непроницаемый интервал 4: До, м' }), { target: { value: '510' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Удалить непроницаемый интервал 2' }))
+    expect(screen.getByRole('spinbutton', { name: 'Непроницаемый интервал 2: От, м' })).toHaveValue(340)
+    fireEvent.click(screen.getByRole('tab', { name: 'Условия и уровни' }))
+    expect(screen.getByRole('dialog', { name: 'Есть несохранённые изменения' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Остаться' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить изменения' }))
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1))
+    const saved = await fetchWell(primaryWell.id)
+    expect(saved.bgd?.geology.impermeableIntervals.map(({ depthFrom, depthTo }) => [depthFrom, depthTo])).toEqual([[51, 67], [340, 352], [500, 510]])
+  })
+
   it('keeps a legacy occurrence selected after consolidation into the deposit list', async () => {
     renderWorkbench(false, primaryWell.id)
     const selector = await screen.findByLabelText('Залежь')
+    expect(screen.queryByRole('button', { name: 'Отмена' })).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Нет несохранённых изменений')
+    expect(screen.getByRole('status').closest('footer')).toHaveAttribute('data-state', 'idle')
     expect(selector).toHaveValue('OCC-SARYTAU-01')
     expect(screen.getAllByRole('option', { name: 'PR-07' }).length).toBeGreaterThan(0)
     fireEvent.change(screen.getByLabelText('Месторождение *'), { target: { value: 'DEP-SEVERNOE' } })
+    expect(screen.getByRole('status')).toHaveTextContent('Изменения готовы к сохранению')
+    expect(screen.getByRole('status').closest('footer')).toHaveAttribute('data-state', 'ready')
     expect(selector).toHaveValue('')
   })
 

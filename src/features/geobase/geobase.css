@@ -305,8 +305,6 @@
 .bgd-well-repeat-list > article > header { display: flex; margin-bottom: 12px; align-items: center; justify-content: space-between; gap: 10px; }
 .bgd-well-repeat-list > article > header button { display: grid; width: 34px; height: 34px; cursor: pointer; place-items: center; color: var(--color-red-700); border: 1px solid var(--border-default); border-radius: 8px; background: var(--surface-panel); }
 .bgd-well-empty { display: flex; min-height: 84px; align-items: center; justify-content: center; gap: 8px; color: var(--text-tertiary); border: 1px dashed var(--border-default); border-radius: 9px; }
-.bgd-well-actions { position: sticky; z-index: 5; bottom: 12px; display: grid; padding: 12px; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--surface-panel) 96%, transparent); box-shadow: var(--shadow-lg); backdrop-filter: blur(12px); }
-.bgd-well-actions > span { color: var(--text-tertiary); font-size: var(--font-size-sm); text-align: center; }
 .bgd-well-page .form-alert > span small { display: block; margin-top: 4px; }
 .bgd-well-page .field input:disabled, .bgd-well-page .field select:disabled, .bgd-well-page .field textarea:disabled { cursor: not-allowed; color: var(--text-secondary); background: var(--surface-subtle); }
 .bgd-core-layout { display: grid; grid-template-columns: minmax(310px, .76fr) minmax(0, 1.5fr); align-items: start; gap: 14px; }
@@ -406,9 +404,6 @@
 .bgd-lithology-diff > svg { color: var(--color-brand-700); }
 .bgd-lithology-diff > span { display: grid; gap: 3px; }
 .bgd-lithology-diff small { color: var(--text-tertiary); font-size: var(--font-size-xs); }
-.bgd-lithology-savebar { position: sticky; z-index: 5; bottom: 12px; display: flex; padding: 12px 13px; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--surface-panel) 96%, transparent); box-shadow: var(--shadow-lg); backdrop-filter: blur(12px); }
-.bgd-lithology-savebar > span { display: grid; gap: 3px; }
-.bgd-lithology-savebar small { color: var(--text-tertiary); font-size: var(--font-size-xs); }
 .bgd-ore-context { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(150px, .55fr) minmax(300px, 1.4fr); align-items: end; gap: 12px; }
 .bgd-ore-context .field em, .bgd-ore-form .field em { color: var(--color-danger-600); font-style: normal; }
 .bgd-ore-differential-check { display: flex; min-height: 58px; padding: 10px 12px; cursor: pointer; align-items: center; gap: 10px; border: 1px solid var(--border-default); border-radius: 9px; background: var(--surface-subtle); }
@@ -596,8 +591,6 @@
   .bgd-lithology-form__description { grid-column: 1 / -1; }
   .bgd-lithology-editor__actions { display: grid; grid-template-columns: 1fr; }
   .bgd-lithology-editor__actions .button { width: 100%; }
-  .bgd-lithology-savebar { align-items: stretch; flex-direction: column; }
-  .bgd-lithology-savebar .button { width: 100%; }
   .bgd-ore-context, .bgd-ore-form { grid-template-columns: 1fr; }
   .bgd-ore-differential-check { grid-column: auto; }
   .bgd-ore-actions { display: grid; grid-template-columns: 1fr; }
@@ -612,8 +605,7 @@
   .bgd-log-viewer > header { min-width: 570px; }
   .bgd-log-viewer__canvas { min-width: 570px; }
   .bgd-log-channel-picker { grid-template-columns: 1fr; }
-  .bgd-well-form-grid, .bgd-well-language-grid, .bgd-well-coordinate-grid, .bgd-well-coordinate-grid section > div, .bgd-well-actions { grid-template-columns: 1fr; }
-  .bgd-well-actions > span { display: none; }
+  .bgd-well-form-grid, .bgd-well-language-grid, .bgd-well-coordinate-grid, .bgd-well-coordinate-grid section > div { grid-template-columns: 1fr; }
   .geobase-well-list > button { grid-template-columns: auto minmax(0, 1fr); }
   .geobase-well-list > button > .badge { grid-column: 2; justify-self: start; }
   .geobase-condition-limits__list > article { grid-template-columns: auto minmax(0, 1fr); }

@@ -202,6 +202,7 @@ export type GeologicalInterval = {
   stratigraphy: StratigraphyUnit
   mineralization?: string
   color?: string
+  colorDescription?: string
   description: string
   source: 'Ручное описание' | 'Керн' | 'ГИС'
 }
