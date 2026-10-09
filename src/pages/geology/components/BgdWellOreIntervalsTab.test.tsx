@@ -19,7 +19,7 @@ describe('BgdWellOreIntervalsTab', () => {
     const toggle = screen.getByRole('checkbox', { name: /Использовать дифференциальный каротаж/ })
     fireEvent.click(toggle)
     expect(screen.getByRole('tab', { name: /Дифференциальный каротаж/ })).toBeInTheDocument()
-    const save = screen.getByRole('button', { name: /Сохранить черновик/ })
+    const save = screen.getByRole('button', { name: /Сохранить изменения/ })
     expect(save).toBeEnabled()
     fireEvent.click(save)
     expect(await screen.findByText('Рудные интервалы сохранены')).toBeInTheDocument()

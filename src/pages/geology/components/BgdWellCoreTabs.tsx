@@ -46,7 +46,7 @@ export function BgdWellCoreRunsTab({ well, canEditRuns, canEditMeasurements, vie
   const [selectedId, setSelectedId] = useState('')
   const [runDraft, setRunDraft] = useState<CoreRun | null>(null)
   const [measurementDraft, setMeasurementDraft] = useState<CoreMeasurement | null>(null)
-  useReportUnsavedChanges(Boolean(runDraft || measurementDraft), onDirtyChange)
+  useReportUnsavedChanges(Boolean(runDraft || measurementDraft), onDirtyChange, { save: () => runDraft ? persistRun() : persistMeasurement(), discard: () => { setRunDraft(null); setMeasurementDraft(null); setErrors([]) } })
   const [errors, setErrors] = useState<string[]>([])
   const [notice, setNotice] = useState('')
   const workspace = query.data
@@ -60,17 +60,19 @@ export function BgdWellCoreRunsTab({ well, canEditRuns, canEditMeasurements, vie
     const start = workspace.runs.length ? Math.max(...workspace.runs.map((run) => run.depthTo)) : 0
     setErrors([])
     setMeasurementDraft(null)
-    setRunDraft({ id: `CORE-RUN-${well.id}-DRAFT-${workspace.version + 1}`, number: String(nextNumber), depthFrom: start, depthTo: Math.min(well.depth, start + 1), recoveredLength: 0, measurements: [] })
+    setRunDraft({ id: `CORE-RUN-${well.id}-DRAFT-${crypto.randomUUID()}`, number: String(nextNumber), depthFrom: start, depthTo: Math.min(well.depth, start + 1), recoveredLength: 0, measurements: [] })
   }
 
-  const persistRun = () => {
-    if (!runDraft) return
+  const persistRun = async () => {
+    if (!runDraft) return false
     const nextErrors = validateCoreRun(runDraft, workspace.runs, well.depth)
     setErrors(nextErrors)
-    if (nextErrors.length) return
+    if (nextErrors.length) return false
     const exists = workspace.runs.some((run) => run.id === runDraft.id)
     const nextRuns = exists ? workspace.runs.map((run) => run.id === runDraft.id ? runDraft : run) : [...workspace.runs, runDraft]
-    save.mutate({ current: workspace, next: { ...workspace, runs: nextRuns }, eventType: exists ? 'core.run.updated' : 'core.run.created' }, { onSuccess: () => { setSelectedId(runDraft.id); setRunDraft(null); setNotice(exists ? 'Рейс сохранён как новая версия.' : 'Керновый рейс добавлен.') } })
+    await save.mutateAsync({ current: workspace, next: { ...workspace, runs: nextRuns }, eventType: exists ? 'core.run.updated' : 'core.run.created' })
+    setSelectedId(runDraft.id); setRunDraft(null); setNotice(exists ? 'Рейс сохранён.' : 'Керновый рейс добавлен.')
+    return true
   }
 
   const deleteRun = (run: CoreRun) => {
@@ -85,15 +87,17 @@ export function BgdWellCoreRunsTab({ well, canEditRuns, canEditMeasurements, vie
     save.mutate({ current: workspace, next: { ...workspace, runs: workspace.runs.filter((item) => item.id !== run.id) }, eventType: 'core.run.deleted' }, { onSuccess: (next) => { setSelectedId(next.runs[0]?.id ?? ''); setNotice('Керновый рейс удалён.'); setErrors([]) } })
   }
 
-  const persistMeasurement = () => {
-    if (!selected || !measurementDraft) return
+  const persistMeasurement = async () => {
+    if (!selected || !measurementDraft) return false
     const nextErrors = validateCoreMeasurement(measurementDraft, selected)
     setErrors(nextErrors)
-    if (nextErrors.length) return
+    if (nextErrors.length) return false
     const exists = selected.measurements.some((item) => item.id === measurementDraft.id)
     const measurements = exists ? selected.measurements.map((item) => item.id === measurementDraft.id ? measurementDraft : item) : [...selected.measurements, measurementDraft]
     const runs = workspace.runs.map((run) => run.id === selected.id ? { ...run, measurements } : run)
-    save.mutate({ current: workspace, next: { ...workspace, runs }, eventType: exists ? 'core.measurement.updated' : 'core.measurement.created' }, { onSuccess: () => { setMeasurementDraft(null); setNotice(exists ? 'Промер керна обновлён.' : 'Промер добавлен к выбранному рейсу.') } })
+    await save.mutateAsync({ current: workspace, next: { ...workspace, runs }, eventType: exists ? 'core.measurement.updated' : 'core.measurement.created' })
+    setMeasurementDraft(null); setNotice(exists ? 'Промер керна обновлён.' : 'Промер добавлен к выбранному рейсу.')
+    return true
   }
 
   const deleteMeasurement = (measurement: CoreMeasurement) => {
@@ -118,7 +122,7 @@ export function BgdWellCoreRunsTab({ well, canEditRuns, canEditMeasurements, vie
         </div> : <div className="geobase-empty"><Ruler size={22} /><strong>Рейсов пока нет</strong><span>Добавьте первый керновый рейс.</span></div>}
       </Panel>
 
-      {runDraft ? <RunEditor draft={runDraft} well={well} pending={save.isPending} isNew={!workspace.runs.some((run) => run.id === runDraft.id)} onChange={setRunDraft} onCancel={() => { setRunDraft(null); setErrors([]) }} onSave={persistRun} />
+      {runDraft ? <RunEditor draft={runDraft} well={well} pending={save.isPending} isNew={!workspace.runs.some((run) => run.id === runDraft.id)} onChange={setRunDraft} onCancel={() => { setRunDraft(null); setErrors([]) }} onSave={() => { void persistRun().catch(() => undefined) }} />
         : selected ? <Panel className="bgd-core-detail" title={`Рейс № ${selected.number}`} description={`${displayNumber(selected.depthFrom)}–${displayNumber(selected.depthTo)} м по буровому журналу`} action={<Badge tone="success" dot>{displayNumber(coreRecoveryPercent(selected))}% выхода</Badge>}>
           <div className="bgd-core-facts">
             <article><small>Длина рейса</small><strong>{displayNumber(coreRunLength(selected))} м</strong></article>
@@ -128,7 +132,7 @@ export function BgdWellCoreRunsTab({ well, canEditRuns, canEditMeasurements, vie
           {canEditRuns && <div className="bgd-core-actions"><Button size="sm" variant="secondary" disabled={save.isPending} onClick={() => { setRunDraft(structuredClone(selected)); setErrors([]) }}><Pencil size={15} /> Изменить рейс</Button><Button size="sm" variant="quiet" disabled={save.isPending} onClick={() => deleteRun(selected)}><Trash2 size={15} /> Удалить</Button></div>}
           {(!view || view === 'measurements') && <section className="bgd-core-measurements">
             <header><div><span><Gauge size={18} /></span><div><h3>Промер керна</h3><p>Радиометрические интервалы внутри выбранного рейса.</p></div></div>{canEditMeasurements && <Button size="sm" variant="secondary" disabled={save.isPending} onClick={() => { setMeasurementDraft(emptyMeasurement(selected, workspace)); setErrors([]) }}><Plus size={15} /> Добавить промер</Button>}</header>
-            {measurementDraft ? <MeasurementEditor run={selected} draft={measurementDraft} pending={save.isPending} onChange={setMeasurementDraft} onCancel={() => { setMeasurementDraft(null); setErrors([]) }} onSave={persistMeasurement} />
+            {measurementDraft ? <MeasurementEditor run={selected} draft={measurementDraft} pending={save.isPending} onChange={setMeasurementDraft} onCancel={() => { setMeasurementDraft(null); setErrors([]) }} onSave={() => { void persistMeasurement().catch(() => undefined) }} />
               : selected.measurements.length ? <div className="bgd-core-measurement-list">{selected.measurements.map((measurement) => <article key={measurement.id}>
                 <div className="bgd-core-measurement-list__title"><span><strong>{measurement.columnType === 'DRILLING' ? 'По бурению' : 'Сводная колонка'}</strong><small>{formatDate(measurement.measurementDate)} · {measurement.operator || 'Оператор не указан'}</small></span>{canEditMeasurements && <span><button type="button" aria-label="Изменить промер" onClick={() => setMeasurementDraft(structuredClone(measurement))}><Pencil size={15} /></button><button type="button" aria-label="Удалить промер" onClick={() => deleteMeasurement(measurement)}><Trash2 size={15} /></button></span>}</div>
                 <div className="bgd-core-interval-table"><div><span>Интервал</span><span>Мощность дозы</span></div>{measurement.intervals.map((interval) => <div key={interval.id}><span>{displayNumber(interval.depthFrom)}–{displayNumber(interval.depthTo)} м</span><strong>{interval.doseRate === null ? 'Нет замера' : `${displayNumber(interval.doseRate)} мкР/ч`}</strong></div>)}</div>
@@ -155,7 +159,7 @@ function RunEditor({ draft, well, isNew, pending, onChange, onCancel, onSave }: 
 }
 
 function emptyMeasurement(run: CoreRun, workspace: WellCoreWorkspace): CoreMeasurement {
-  return { id: `CORE-MEASURE-${workspace.wellId}-DRAFT-${workspace.version + 1}`, measurementDate: new Date().toISOString().slice(0, 16), operator: '', note: '', columnType: 'DRILLING', intervals: [{ id: `CORE-MEASURE-DEPTH-DRAFT-${workspace.version + 1}`, depthFrom: run.depthFrom, depthTo: Math.min(run.depthTo, run.depthFrom + 0.1), doseRate: null }] }
+  return { id: `CORE-MEASURE-${workspace.wellId}-DRAFT-${crypto.randomUUID()}`, measurementDate: new Date().toISOString().slice(0, 16), operator: '', note: '', columnType: 'DRILLING', intervals: [{ id: `CORE-MEASURE-DEPTH-DRAFT-${crypto.randomUUID()}`, depthFrom: run.depthFrom, depthTo: Math.min(run.depthTo, run.depthFrom + 0.1), doseRate: null }] }
 }
 
 function MeasurementEditor({ run, draft, pending, onChange, onCancel, onSave }: { run: CoreRun; draft: CoreMeasurement; pending: boolean; onChange: (value: CoreMeasurement) => void; onCancel: () => void; onSave: () => void }) {
@@ -186,7 +190,7 @@ export function BgdWellCoreSamplesTab({ well, canEdit, onDirtyChange }: { well: 
   const { query, save } = useCoreWorkspace(well)
   const [selectedId, setSelectedId] = useState('')
   const [draft, setDraft] = useState<CoreSample | null>(null)
-  useReportUnsavedChanges(Boolean(draft), onDirtyChange)
+  useReportUnsavedChanges(Boolean(draft), onDirtyChange, { save: () => persist(), discard: () => { setDraft(null); setErrors([]) } })
   const [errors, setErrors] = useState<string[]>([])
   const [notice, setNotice] = useState('')
   const workspace = query.data
@@ -197,17 +201,19 @@ export function BgdWellCoreSamplesTab({ well, canEdit, onDirtyChange }: { well: 
   const createSample = () => {
     const firstRun = workspace.runs[0]
     setErrors([])
-    setDraft({ id: `CORE-SAMPLE-${well.id}-DRAFT-${workspace.version + 1}`, number: `К-${well.code}-${String(workspace.samples.length + 1).padStart(3, '0')}`, sampleType: 'Керновая', samplingDate: new Date().toISOString().slice(0, 16), performer: '', laboratory: '', comment: '', intervals: firstRun ? [{ id: `CORE-SAMPLE-DEPTH-DRAFT-${workspace.version + 1}`, runId: firstRun.id, drillDepthFrom: firstRun.depthFrom, drillDepthTo: Math.min(firstRun.depthTo, firstRun.depthFrom + 0.2), adjustedDepthFrom: null, adjustedDepthTo: null }] : [], results: [] })
+    setDraft({ id: `CORE-SAMPLE-${well.id}-DRAFT-${crypto.randomUUID()}`, number: `К-${well.code}-${String(workspace.samples.length + 1).padStart(3, '0')}`, sampleType: 'Керновая', samplingDate: new Date().toISOString().slice(0, 16), performer: '', laboratory: '', comment: '', intervals: firstRun ? [{ id: `CORE-SAMPLE-DEPTH-DRAFT-${crypto.randomUUID()}`, runId: firstRun.id, drillDepthFrom: firstRun.depthFrom, drillDepthTo: Math.min(firstRun.depthTo, firstRun.depthFrom + 0.2), adjustedDepthFrom: null, adjustedDepthTo: null }] : [], results: [] })
   }
 
-  const persist = () => {
-    if (!draft) return
+  const persist = async () => {
+    if (!draft) return false
     const nextErrors = validateCoreSample(draft, workspace.samples, workspace.runs)
     setErrors(nextErrors)
-    if (nextErrors.length) return
+    if (nextErrors.length) return false
     const exists = workspace.samples.some((sample) => sample.id === draft.id)
     const samples = exists ? workspace.samples.map((sample) => sample.id === draft.id ? draft : sample) : [...workspace.samples, draft]
-    save.mutate({ current: workspace, next: { ...workspace, samples }, eventType: exists ? 'core.sample.updated' : 'core.sample.created' }, { onSuccess: () => { setSelectedId(draft.id); setDraft(null); setNotice(exists ? 'Керновая проба обновлена.' : 'Керновая проба добавлена.') } })
+    await save.mutateAsync({ current: workspace, next: { ...workspace, samples }, eventType: exists ? 'core.sample.updated' : 'core.sample.created' })
+    setSelectedId(draft.id); setDraft(null); setNotice(exists ? 'Керновая проба обновлена.' : 'Керновая проба добавлена.')
+    return true
   }
 
   const remove = (sample: CoreSample) => {
@@ -226,7 +232,7 @@ export function BgdWellCoreSamplesTab({ well, canEdit, onDirtyChange }: { well: 
           <span><FlaskConical size={18} /></span><span><strong>{sample.number}</strong><small>{sample.sampleType} · {formatDate(sample.samplingDate)}</small><em>{sample.intervals.length} {pluralRu(sample.intervals.length, 'интервал', 'интервала', 'интервалов')} · {sample.laboratory || 'Лаборатория не указана'}</em></span><ChevronRight size={16} />
         </button>)}</div> : <div className="geobase-empty"><FlaskConical size={22} /><strong>Проб пока нет</strong><span>Добавьте первую керновую пробу.</span></div>}
       </Panel>
-      {draft ? <SampleEditor draft={draft} runs={workspace.runs} pending={save.isPending} isNew={!workspace.samples.some((sample) => sample.id === draft.id)} onChange={setDraft} onCancel={() => { setDraft(null); setErrors([]) }} onSave={persist} />
+      {draft ? <SampleEditor draft={draft} runs={workspace.runs} pending={save.isPending} isNew={!workspace.samples.some((sample) => sample.id === draft.id)} onChange={setDraft} onCancel={() => { setDraft(null); setErrors([]) }} onSave={() => { void persist().catch(() => undefined) }} />
         : selected ? <Panel className="bgd-core-detail" title={selected.number} description={`${selected.sampleType} проба · ${formatDate(selected.samplingDate)}`} action={(() => { const count = selected.results.filter((result) => result.value !== null).length; return <Badge tone="info">{count} {pluralRu(count, 'результат', 'результата', 'результатов')}</Badge> })()}>
           <div className="bgd-core-facts"><article><small>Исполнитель</small><strong>{selected.performer || 'Не указан'}</strong></article><article><small>Лаборатория</small><strong>{selected.laboratory || 'Не указана'}</strong></article><article><small>Интервалов</small><strong>{selected.intervals.length}</strong></article></div>
           {selected.comment && <p className="bgd-core-comment">{selected.comment}</p>}

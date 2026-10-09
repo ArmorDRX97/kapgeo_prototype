@@ -1,4 +1,3 @@
-import type { DomainVersion } from '../../../shared/domain/versioning'
 import type { Position2D, SpatialPoint } from '../../../shared/scientific/geometry'
 
 export type WellPurpose = 'Эксплуатационная' | 'Разведочная' | 'Наблюдательная'
@@ -10,5 +9,3 @@ export type WellPassportData = {
   depth: number
   casingDiameter: number
 }
-
-export type WellPassportVersion = DomainVersion<WellPassportData>

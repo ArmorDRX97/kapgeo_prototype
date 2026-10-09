@@ -5,6 +5,20 @@
 .workspace-tab-panel { min-width: 0; }
 .discard-changes-dialog { width: min(480px, calc(100vw - 32px)); padding: var(--space-6); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-panel); box-shadow: var(--shadow-lg); }
 .discard-changes-dialog::backdrop { background: color-mix(in srgb, var(--surface-dark) 45%, transparent); }
+.discard-changes-dialog--save { width: min(680px, calc(100vw - 32px)); }
 .discard-changes-dialog h2 { font-size: 20px; }
 .discard-changes-dialog p { color: var(--text-secondary); }
 .discard-changes-dialog footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-6); }
+.workspace-dialog { width: min(980px, calc(100vw - var(--space-8))); max-height: calc(100dvh - var(--space-8)); padding: 0; color: var(--text-primary); background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+.workspace-dialog--compact { width: min(560px, calc(100vw - var(--space-8))); }
+.workspace-dialog[open] { display: flex; flex-direction: column; }
+.workspace-dialog::backdrop { background: color-mix(in srgb, var(--surface-dark) 45%, transparent); }
+.workspace-dialog > header, .workspace-dialog > footer { display: flex; flex: none; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5); }
+.workspace-dialog > header { justify-content: space-between; border-bottom: 1px solid var(--border-default); }
+.workspace-dialog > header > h2 { margin: 0; font-size: 18px; }
+.workspace-dialog > footer { justify-content: flex-end; border-top: 1px solid var(--border-default); }
+.workspace-dialog__body { min-height: 0; padding: var(--space-5); overflow: auto; overscroll-behavior: contain; }
+.row-actions-menu { position: fixed; z-index: 120; display: grid; min-width: 180px; padding: var(--space-1); border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-panel); box-shadow: var(--shadow-lg); }
+.row-actions-menu > button { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-primary); font: inherit; font-size: var(--font-size-sm); text-align: left; cursor: pointer; }
+.row-actions-menu > button:hover, .row-actions-menu > button:focus-visible { background: var(--surface-subtle); }
+.row-actions-menu > button.is-danger { color: var(--color-red-700); }

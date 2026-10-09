@@ -24,6 +24,7 @@ import { fetchPlatformPreferences, fetchWells } from '../../repository/api'
 import { resetDemoData } from '../../repository/demo/demoDataControl'
 import { hasPermission, type Permission } from '../../shared/auth/permissions'
 import { GeologyNavigator } from './GeologyNavigator'
+import { LanguageSwitcher } from './LanguageSwitcher'
 
 type ModuleRoute = '/geology/bgd' | '/geology' | '/technology' | '/modeling' | '/analytics' | '/admin'
 
@@ -144,6 +145,7 @@ export function AppShell({ children }: PropsWithChildren) {
         <button type="button" aria-label="Фоновые процессы" aria-disabled="true"><BriefcaseBusiness size={19} /><span className="activity-pulse" /></button>
         <button type="button" aria-label="Уведомления" aria-disabled="true"><Bell size={19} /></button>
       </div>
+      <LanguageSwitcher />
       <div className="topbar-profile" ref={profileRef}>
         <button className="topbar-profile__trigger" type="button" onClick={() => setProfileOpen((value) => !value)} aria-haspopup="menu" aria-expanded={profileOpen}>
           <span className="avatar avatar--sm">{persona?.initials}</span><span className="topbar-profile__copy"><strong>{persona?.name}</strong><small>{persona?.position}</small></span><ChevronDown size={15} />

@@ -51,7 +51,7 @@ function seed(well: Well): WellCoreWorkspace {
         ],
       },
     ],
-    version: 1,
+
     updatedAt: seededAt,
   }
 }
@@ -80,20 +80,18 @@ export class DemoWellCoreRepository {
     return value
   }
 
-  async save(well: Well, current: WellCoreWorkspace, next: WellCoreWorkspace, eventType: string) {
-    const latest = await this.get(well)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: керновые данные изменены в другой вкладке.')
-    const value = { ...structuredClone(next), wellId: well.id, version: latest.version + 1, updatedAt: new Date().toISOString() }
+  async save(well: Well, _current: WellCoreWorkspace, next: WellCoreWorkspace, eventType: string) {
+    const value = { ...structuredClone(next), wellId: well.id, updatedAt: new Date().toISOString() }
     await this.persist(well, value, eventType)
     return value
   }
 
   private async persist(well: Well, value: WellCoreWorkspace, eventType: string) {
-    await this.database.transaction(['records', 'versions', 'auditEvents'], async (transaction) => {
+    await this.database.transaction(['records', 'auditEvents'], async (transaction) => {
       await transaction.put('records', record(well, value))
-      await transaction.put('versions', { id: `WELL-CORE-${well.id}-V${value.version}`, objectId: `well-core:${well.id}`, version: value.version, status: 'draft', createdAt: value.updatedAt, data: value })
+
       await transaction.put('auditEvents', {
-        id: `AUD-${eventType}-${well.id}-V${value.version}`,
+        id: `AUD-${eventType}-${well.id}-${crypto.randomUUID()}`,
         eventType,
         entityType: 'well-core',
         entityId: well.id,

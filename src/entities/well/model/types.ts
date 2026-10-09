@@ -140,7 +140,7 @@ export type CreateWellInput = {
   bgd?: WellBgdData
 }
 
-export type UpdateWellInput = CreateWellInput & { wellId: string; expectedVersion: number }
+export type UpdateWellInput = CreateWellInput & { wellId: string }
 
 export type Well = {
   id: string
@@ -162,7 +162,6 @@ export type Well = {
   completeness: number
   activeTask?: string
   aiConflicts: number
-  version?: number
   bgd?: WellBgdData
 }
 
@@ -209,7 +208,6 @@ export type GeologicalInterval = {
 
 export type WellGeologyData = {
   intervals: GeologicalInterval[]
-  baseVersion: number
 }
 
 export type SampleType = 'Керновая' | 'Контрольная' | 'Пустая' | 'Дубликат'

@@ -1,6 +1,6 @@
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CalendarDays, CheckCircle2, FileUp, Gauge, Pencil, Plus, RadioTower, Save, ScanLine, ShieldCheck, Star, Trash2, UserRound, Wrench, X } from 'lucide-react'
+import { AlertTriangle, CalendarDays, CheckCircle2, FileUp, Gauge, Pencil, Plus, RadioTower, Save, ScanLine, Star, Trash2, UserRound, Wrench, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { LogCurve, LogCurveCode, LogRunV2, WellLogWorkspace } from '../../../entities/well-log/model/types'
 import type { Well } from '../../../entities/well/model/types'
@@ -65,7 +65,7 @@ function buildCurves(codes: LogCurveCode[], runId: string, existing: LogCurve[] 
     const found = existing.find((curve) => curve.code === code)
     if (found) return [found]
     const spec = curveCatalog[code as keyof typeof curveCatalog]
-    return [{ id: `CURVE-${runId}-${code}`, code, label: spec.label, unit: spec.unit, scale: spec.scale, color: spec.color, version: 1 }]
+    return [{ id: `CURVE-${runId}-${code}`, code, label: spec.label, unit: spec.unit, scale: spec.scale, color: spec.color, }]
   })
 }
 
@@ -103,21 +103,19 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
 
   if (query.isLoading || !workspace) return <div className="page-loading page-loading--inline"><span /><p>Загружаем каротажи…</p></div>
 
-  const saveEditor = (draft: BgdWellLogDraft, currentRun: LogRunV2 | 'new') => {
-    if (validateBgdWellLogDraft(draft, well.depth).length) return
-    const runId = currentRun === 'new' ? `LOGV2-${well.id}-MANUAL-${workspace.version + 1}` : currentRun.id
+  const saveEditor = async (draft: BgdWellLogDraft, currentRun: LogRunV2 | 'new') => {
+    if (validateBgdWellLogDraft(draft, well.depth).length) return false
+    const runId = currentRun === 'new' ? `LOGV2-${well.id}-MANUAL-${crypto.randomUUID()}` : currentRun.id
     const nextRun: LogRunV2 = currentRun === 'new'
-      ? { id: runId, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, status: 'draft', version: 1, curves: buildCurves(draft.curveCodes, runId), rawArtifactId: `RAW-${runId}`, parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: { measuredAt: draft.measuredAt, operator: draft.operator.trim(), instrument: draft.instrument.trim(), zone: draft.zone.trim(), isPrimary: draft.isPrimary, comment: draft.comment.trim() } }
-      : { ...currentRun, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, version: currentRun.version + 1, curves: buildCurves(draft.curveCodes, runId, currentRun.curves), parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: { measuredAt: draft.measuredAt, operator: draft.operator.trim(), instrument: draft.instrument.trim(), zone: draft.zone.trim(), isPrimary: draft.isPrimary, comment: draft.comment.trim() } }
+      ? { id: runId, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, status: 'draft', curves: buildCurves(draft.curveCodes, runId), rawArtifactId: `RAW-${runId}`, parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: { measuredAt: draft.measuredAt, operator: draft.operator.trim(), instrument: draft.instrument.trim(), zone: draft.zone.trim(), isPrimary: draft.isPrimary, comment: draft.comment.trim() } }
+      : { ...currentRun, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, curves: buildCurves(draft.curveCodes, runId, currentRun.curves), parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: { measuredAt: draft.measuredAt, operator: draft.operator.trim(), instrument: draft.instrument.trim(), zone: draft.zone.trim(), isPrimary: draft.isPrimary, comment: draft.comment.trim() } }
     const others = workspace.runs.map((run) => draft.isPrimary && run.id !== runId ? { ...run, survey: { ...getLogSurveyMetadata(run), isPrimary: false } } : run)
     const nextRuns = currentRun === 'new' ? [...others, nextRun] : others.map((run) => run.id === runId ? nextRun : run)
-    save.mutate({ current: workspace, next: { ...workspace, runs: nextRuns }, eventType: currentRun === 'new' ? 'log.run.created' : 'log.run.updated' }, {
-      onSuccess: () => {
-        setSelectedId(runId)
-        setEditorRun(null)
-        setNotice(currentRun === 'new' ? 'Каротаж добавлен в карточку скважины.' : 'Каротаж сохранён как новая версия.')
-      },
-    })
+    await save.mutateAsync({ current: workspace, next: { ...workspace, runs: nextRuns }, eventType: currentRun === 'new' ? 'log.run.created' : 'log.run.updated' })
+    setSelectedId(runId)
+    setEditorRun(null)
+    setNotice(currentRun === 'new' ? 'Каротаж добавлен в карточку скважины.' : 'Каротаж сохранён.')
+    return true
   }
 
   const setPrimary = (run: LogRunV2) => {
@@ -144,7 +142,7 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
       <article><span><RadioTower size={19} /></span><div><strong>{workspace.runs.length}</strong><small>каротажных набора</small></div></article>
       <article><span><ScanLine size={19} /></span><div><strong>{curveCount}</strong><small>типов каналов</small></div></article>
       <article><span><Star size={19} /></span><div><strong>{primary?.name ?? 'Не выбран'}</strong><small>основной каротаж</small></div></article>
-      <article><span><Gauge size={19} /></span><div><strong>v{workspace.version}</strong><small>версия workspace</small></div></article>
+
     </section>
 
     <div className="bgd-logs-layout">
@@ -188,7 +186,7 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
 function LogInspector({ run, canEdit, pending, viewerOpen, onToggleViewer, onEdit, onPrimary, onDelete }: { run: LogRunV2; canEdit: boolean; pending: boolean; viewerOpen: boolean; onToggleViewer: () => void; onEdit: () => void; onPrimary: () => void; onDelete: () => void }) {
   const survey = getLogSurveyMetadata(run)
   const status = statusPresentation[run.status]
-  return <Panel className="bgd-log-inspector" title={run.name} description={`${run.id} · версия ${run.version}`} action={<Badge tone={status.tone} dot>{status.label}</Badge>}>
+  return <Panel className="bgd-log-inspector" title={run.name} description={`${run.id}`} action={<Badge tone={status.tone} dot>{status.label}</Badge>}>
     <div className="bgd-log-facts">
       <article><CalendarDays size={17} /><span><small>Дата</small><strong>{formatDate(survey.measuredAt)}</strong></span></article>
       <article><UserRound size={17} /><span><small>Оператор</small><strong>{survey.operator}</strong></span></article>
@@ -227,15 +225,19 @@ function LogCurvePreview({ run }: { run: LogRunV2 }) {
   </section>
 }
 
-function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }: { initial: BgdWellLogDraft; title: string; wellDepth: number; pending: boolean; onClose: () => void; onSave: (draft: BgdWellLogDraft) => void }) {
+function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }: { initial: BgdWellLogDraft; title: string; wellDepth: number; pending: boolean; onClose: () => void; onSave: (draft: BgdWellLogDraft) => Promise<boolean> }) {
   const [draft, setDraft] = useState(initial)
   const [errors, setErrors] = useState<string[]>([])
   const update = <Key extends keyof BgdWellLogDraft>(key: Key, value: BgdWellLogDraft[Key]) => setDraft((current) => ({ ...current, [key]: value }))
-  const submit = () => {
+  const saveDraft = async () => {
     const nextErrors = validateBgdWellLogDraft(draft, wellDepth)
     setErrors(nextErrors)
-    if (!nextErrors.length) onSave(draft)
+    if (nextErrors.length) return false
+    return onSave(draft)
   }
+  useReportUnsavedChanges(JSON.stringify(draft) !== JSON.stringify(initial), undefined, { save: saveDraft, discard: onClose })
+  const submit = () => { void saveDraft().catch(() => undefined) }
+
   return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
     <section className="geobase-dialog geobase-dialog--log" role="dialog" aria-modal="true" aria-labelledby="log-editor-title">
       <header><div><span><RadioTower size={20} /></span><div><h2 id="log-editor-title">{title}</h2><p>Сведения об исследовании, интервале и каналах данных.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть форму каротажа"><X size={19} /></button></header>
@@ -256,7 +258,7 @@ function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }
         <label className="field"><span className="field__label">Комментарий</span><textarea rows={3} disabled={pending} value={draft.comment} onChange={(event) => update('comment', event.target.value)} placeholder="Уточнения по прибору, качеству или условиям измерения" /></label>
         <label className="bgd-log-primary-check"><input type="checkbox" checked={draft.isPrimary} disabled={pending} onChange={(event) => update('isPrimary', event.target.checked)} /><Star size={16} /><span><strong>Основной каротаж</strong><small>Использовать как приоритетный набор скважины</small></span></label>
       </div>
-      <footer><span><ShieldCheck size={15} /> Изменение создаст новую версию и запись аудита.</span><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={pending} onClick={submit}><Save size={15} /> Сохранить</Button></footer>
+      <footer><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={pending} onClick={submit}><Save size={15} /> Сохранить</Button></footer>
     </section>
   </div>
 }

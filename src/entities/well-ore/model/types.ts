@@ -39,7 +39,6 @@ export type WellOreWorkspace = {
   oreIntervals: OreInterval[]
   mergedIntervals: MergedOreInterval[]
   differentialIntervals: DifferentialOreInterval[]
-  version: number
   updatedAt: string
 }
 

@@ -6,7 +6,7 @@ export type BgdLithologyKind = Extract<GeologyTrackKind, 'core' | 'log' | 'compo
 export const bgdLithologyKinds: Array<{ id: BgdLithologyKind; label: string; description: string }> = [
   { id: 'core', label: 'По керну', description: 'Полевое описание кернового материала' },
   { id: 'log', label: 'По каротажу', description: 'Интервалы, интерпретированные по ГИС' },
-  { id: 'composite', label: 'Сводная', description: 'Итоговая согласованная литологическая колонка' },
+  { id: 'composite', label: 'Сводная', description: 'Итоговое сводное описание интервалов' },
 ]
 
 export function findFirstLithologyGap(intervals: GeologicalInterval[], wellDepth: number) {
@@ -25,7 +25,7 @@ export function prepareBgdLithologySave(current: WellGeologyWorkspace, draft: We
     tracks: draft.tracks.map((track) => {
       const baseline = current.tracks.find((item) => item.id === track.id)
       const changed = JSON.stringify(baseline?.intervals ?? []) !== JSON.stringify(track.intervals)
-      return changed ? { ...track, version: (baseline?.version ?? track.version) + 1, status: 'draft' as const } : track
+      return changed ? { ...track, status: 'draft' as const } : track
     }),
   }
 }

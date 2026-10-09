@@ -11,7 +11,7 @@ function seed(well: Well): WellOreWorkspace {
   const oreIntervals: OreInterval[] = raw.map((item, index) => ({ id: `ORE-${well.id}-${index + 1}`, source: index < 3 ? 'Гамма-каротаж' : 'Керн и опробование', element: 'Уран', from: round(base + item[0]), to: round(base + item[1]), content: item[2], meterPercent: round((item[1] - item[0]) * item[2]), permeability: item[3], differentialIds: index === 0 ? [`DIFF-${well.id}-1`, `DIFF-${well.id}-2`] : [] }))
   const contents = [.014, .012, .009, .017, .02, .011, .006, .018]
   const differentialIntervals: DifferentialOreInterval[] = Array.from({ length: 8 }, (_, index) => ({ id: `DIFF-${well.id}-${index + 1}`, source: 'Гамма-каротаж', element: 'Уран', from: round(base + index * .1), to: round(base + (index + 1) * .1), content: round(contents[index] ?? 0), permeability: index > 4 ? 'Проницаемый' : 'Непроницаемый', oreIntervalId: index < 2 ? `ORE-${well.id}-1` : undefined }))
-  return { wellId: well.id, useDifferentialLogging: false, selectedSource: 'Гамма-каротаж', selectedElement: 'Уран', oreIntervals, mergedIntervals: oreIntervals.map((item, index) => ({ id: `ORI-${well.id}-${index + 1}`, oreIntervalIds: [item.id] })), differentialIntervals, version: 1, updatedAt: '2026-09-15T00:00:00.000Z' }
+  return { wellId: well.id, useDifferentialLogging: false, selectedSource: 'Гамма-каротаж', selectedElement: 'Уран', oreIntervals, mergedIntervals: oreIntervals.map((item, index) => ({ id: `ORI-${well.id}-${index + 1}`, oreIntervalIds: [item.id] })), differentialIntervals, updatedAt: '2026-09-15T00:00:00.000Z' }
 }
 
 const record = (well: Well, value: WellOreWorkspace): DemoRecord<WellOreWorkspace> => ({ id: `well-ore:${well.id}`, entityType: 'well-ore-workspace', objectId: well.id, scopeId: well.site, status: 'draft', updatedAt: value.updatedAt, data: structuredClone(value) })
@@ -25,16 +25,14 @@ export class DemoWellOreIntervalRepository {
     return value
   }
 
-  async save(well: Well, current: WellOreWorkspace, next: WellOreWorkspace, eventType: string) {
-    const latest = await this.get(well)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: рудные интервалы изменены в другой вкладке.')
-    const value = { ...structuredClone(next), version: latest.version + 1, updatedAt: now() }
+  async save(well: Well, _current: WellOreWorkspace, next: WellOreWorkspace, eventType: string) {
+    const value = { ...structuredClone(next), updatedAt: now() }
     await this.persist(well, value, eventType)
     return value
   }
 
   private async persist(well: Well, value: WellOreWorkspace, eventType: string) {
-    await demoDatabase.transaction(['records', 'versions', 'relations', 'auditEvents'], async (tx) => {
+    await demoDatabase.transaction(['records', 'relations', 'auditEvents'], async (tx) => {
       await tx.put('records', record(well, value))
       for (const interval of value.oreIntervals) await tx.put('records', { id: `ore-interval:${interval.id}`, entityType: 'ore-interval', objectId: well.id, scopeId: well.site, status: 'draft', updatedAt: value.updatedAt, data: interval })
       for (const group of value.mergedIntervals) {
@@ -45,8 +43,8 @@ export class DemoWellOreIntervalRepository {
         await tx.put('records', { id: `differential-ore:${interval.id}`, entityType: 'differential-ore-interval', objectId: well.id, scopeId: well.site, status: interval.oreIntervalId ? 'assigned' : 'free', updatedAt: value.updatedAt, data: interval })
         if (interval.oreIntervalId) await tx.put('relations', { id: `REL-DIFF-${interval.id}`, fromId: `differential-ore:${interval.id}`, toId: `ore-interval:${interval.oreIntervalId}`, type: 'differential-member-of', updatedAt: value.updatedAt })
       }
-      await tx.put('versions', { id: `WELL-ORE-${well.id}-V${value.version}`, objectId: `well-ore:${well.id}`, version: value.version, status: 'draft', createdAt: value.updatedAt, data: value })
-      await tx.put('auditEvents', { id: `AUD-${eventType}-${well.id}-V${value.version}`, eventType, entityType: 'well-ore-workspace', entityId: well.id, actor: { id: 'PERSON-R1-GEOLOGIST', type: 'user', name: 'Айгерим Садыкова' }, occurredAt: value.updatedAt, status: 'accepted', payload: { metadata: { synthetic: true } } })
+
+      await tx.put('auditEvents', { id: `AUD-${eventType}-${well.id}-${crypto.randomUUID()}`, eventType, entityType: 'well-ore-workspace', entityId: well.id, actor: { id: 'PERSON-R1-GEOLOGIST', type: 'user', name: 'Айгерим Садыкова' }, occurredAt: value.updatedAt, status: 'accepted', payload: { metadata: { synthetic: true } } })
     })
   }
 }

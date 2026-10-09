@@ -50,9 +50,9 @@ export class DemoWellDataRepository {
       && (item.bgd?.depositId ?? 'DEP-SARYTAU') === (well.bgd?.depositId ?? 'DEP-SARYTAU'))
     if (existing) throw new Error('Скважина с таким кодом уже существует в выбранной области.')
     const occurredAt = new Date().toISOString()
-    await demoDatabase.transaction(['records', 'versions', 'auditEvents'], async (transaction) => {
+    await demoDatabase.transaction(['records', 'auditEvents'], async (transaction) => {
       await transaction.put('records', wellRecord(well, occurredAt))
-      await transaction.put('versions', { id: `VERSION:well:${well.id}:1`, objectId: well.id, version: 1, status: 'draft', createdAt: occurredAt, data: well })
+
       await transaction.put('auditEvents', wellAudit('well.created', well, occurredAt, 'Создана скважина в БГД.'))
     })
     wells.unshift(structuredClone(well))
@@ -61,16 +61,16 @@ export class DemoWellDataRepository {
 
   async updateWell(current: Well, nextValue: Well): Promise<Well> {
     const latest = await this.getWell(current.id)
-    if ((latest.version ?? 1) !== (current.version ?? 1)) throw new Error('VERSION_CONFLICT: скважина изменена в другой вкладке.')
+
     const duplicate = (await this.listWells()).some((item) => item.id !== current.id
       && item.code.toLocaleLowerCase() === nextValue.code.toLocaleLowerCase()
       && (item.bgd?.depositId ?? 'DEP-SARYTAU') === (nextValue.bgd?.depositId ?? 'DEP-SARYTAU'))
     if (duplicate) throw new Error('Скважина с таким названием уже существует в выбранном месторождении.')
     const occurredAt = new Date().toISOString()
-    const next: Well = { ...structuredClone(nextValue), id: latest.id, version: (latest.version ?? 1) + 1, updatedAt: 'Только что' }
-    await demoDatabase.transaction(['records', 'versions', 'auditEvents'], async (transaction) => {
+    const next: Well = { ...structuredClone(nextValue), id: latest.id, updatedAt: 'Только что' }
+    await demoDatabase.transaction(['records', 'auditEvents'], async (transaction) => {
       await transaction.put('records', wellRecord(next, occurredAt))
-      await transaction.put('versions', { id: `VERSION:well:${next.id}:${next.version}`, objectId: next.id, version: next.version, status: 'in_review', createdAt: occurredAt, data: next })
+
       await transaction.put('auditEvents', wellAudit('well.updated', next, occurredAt, 'Изменены сведения скважины в БГД.'))
     })
     const index = wells.findIndex((item) => item.id === next.id)
@@ -91,6 +91,6 @@ function wellAudit(eventType: string, well: Well, occurredAt: string, reason: st
     actor: { id: 'PERSON-R1-GEOLOGIST', type: 'user', name: 'Ирина Иванова' },
     occurredAt,
     status: 'accepted',
-    payload: { metadata: { reason, depositId: well.bgd?.depositId ?? 'DEP-SARYTAU', version: String(well.version ?? 1) } },
+    payload: { metadata: { reason, depositId: well.bgd?.depositId ?? 'DEP-SARYTAU' } },
   }
 }

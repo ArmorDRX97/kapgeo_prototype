@@ -48,14 +48,14 @@ export function mergeOreGroups(ids: string[], workspace: WellOreWorkspace): Well
   if (!canMergeOreGroups(ids, workspace)) return workspace
   const selected = workspace.mergedIntervals.filter((item) => ids.includes(item.id))
   const oreIntervalIds = selected.flatMap((item) => item.oreIntervalIds).sort((a, b) => (workspace.oreIntervals.find((item) => item.id === a)?.from ?? 0) - (workspace.oreIntervals.find((item) => item.id === b)?.from ?? 0))
-  const merged: MergedOreInterval = { id: `ORI-${workspace.version}-${workspace.mergedIntervals.length + 1}`, oreIntervalIds }
+  const merged: MergedOreInterval = { id: `ORI-${crypto.randomUUID()}-${workspace.mergedIntervals.length + 1}`, oreIntervalIds }
   return { ...workspace, mergedIntervals: [...workspace.mergedIntervals.filter((item) => !ids.includes(item.id)), merged] }
 }
 
 export function splitOreGroup(id: string, workspace: WellOreWorkspace): WellOreWorkspace {
   const group = workspace.mergedIntervals.find((item) => item.id === id)
   if (!group || group.oreIntervalIds.length < 2) return workspace
-  const singletons = group.oreIntervalIds.map((oreId, index) => ({ id: `ORI-${workspace.version}-${workspace.mergedIntervals.length + index + 1}`, oreIntervalIds: [oreId] }))
+  const singletons = group.oreIntervalIds.map((oreId, index) => ({ id: `ORI-${crypto.randomUUID()}-${workspace.mergedIntervals.length + index + 1}`, oreIntervalIds: [oreId] }))
   return { ...workspace, mergedIntervals: [...workspace.mergedIntervals.filter((item) => item.id !== id), ...singletons] }
 }
 
@@ -68,7 +68,7 @@ export function detachFromOreGroup(groupId: string, boundaryOreId: string, direc
   const detached = direction === 'top' ? ordered.slice(0, boundary + 1) : ordered.slice(boundary)
   const kept = ordered.filter((id) => !detached.includes(id))
   if (!kept.length) return workspace
-  const singletons = detached.map((oreId, index) => ({ id: `ORI-${workspace.version}-${workspace.mergedIntervals.length + index + 1}`, oreIntervalIds: [oreId] }))
+  const singletons = detached.map((oreId, index) => ({ id: `ORI-${crypto.randomUUID()}-${workspace.mergedIntervals.length + index + 1}`, oreIntervalIds: [oreId] }))
   return { ...workspace, mergedIntervals: [...workspace.mergedIntervals.filter((item) => item.id !== groupId), { ...group, oreIntervalIds: kept }, ...singletons] }
 }
 

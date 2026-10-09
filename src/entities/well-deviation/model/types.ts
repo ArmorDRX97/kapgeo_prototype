@@ -26,13 +26,10 @@ export type DeviationSurvey = {
   bearingTopBottom: number | null
   points: DeviationPoint[]
   calculatedAt?: string
-  version: number
 }
 
 export type WellDeviationWorkspace = {
   wellId: string
   surveys: DeviationSurvey[]
-  version: number
   updatedAt: string
 }
-

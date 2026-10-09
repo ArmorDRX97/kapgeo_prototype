@@ -8,7 +8,6 @@ import {
   Layers3,
   MapPinned,
   Mountain,
-  Plus,
   Save,
   Trash2,
   X,
@@ -20,7 +19,6 @@ import {
   type CreateDepositInput,
   type Deposit,
   type DepositObjectType,
-  type DepositOccurrence,
   type UpdateDepositPatch,
 } from '../../entities/geology-master/model/types'
 import {
@@ -31,7 +29,6 @@ import {
 import { Badge } from '../../shared/ui/Badge'
 import { Button } from '../../shared/ui/Button'
 import { PageHeader } from '../../shared/ui/PageHeader'
-import { Panel } from '../../shared/ui/Panel'
 import './geobase.css'
 
 const objectTypeLabels: Record<DepositObjectType, string> = {
@@ -52,7 +49,6 @@ type DepositFormState = {
   descriptionEn: string
   coordinateSystem: string
   isHidden: boolean
-  occurrences: DepositOccurrence[]
 }
 
 export type DepositDependencies = {
@@ -75,7 +71,6 @@ function formFromDeposit(deposit: Deposit): DepositFormState {
     descriptionEn: deposit.descriptionEn,
     coordinateSystem: deposit.coordinateSystem,
     isHidden: deposit.isHidden,
-    occurrences: deposit.occurrences.map((item) => ({ ...item })),
   }
 }
 
@@ -92,7 +87,6 @@ function createForm(nextCode: number): DepositFormState {
     descriptionEn: '',
     coordinateSystem: '',
     isHidden: false,
-    occurrences: [],
   }
 }
 
@@ -103,7 +97,6 @@ function formValid(form: DepositFormState) {
     && Boolean(form.nameKk.trim())
     && Boolean(form.nameEn.trim())
     && (form.objectType !== 'custom' || Boolean(form.customType.trim()))
-    && form.occurrences.every((item) => item.type.trim() && item.nameRu.trim() && item.nameKk.trim() && item.nameEn.trim())
 }
 
 function toCreateInput(form: DepositFormState): CreateDepositInput {
@@ -119,7 +112,6 @@ function toCreateInput(form: DepositFormState): CreateDepositInput {
     descriptionEn: form.descriptionEn,
     coordinateSystem: form.coordinateSystem,
     isHidden: form.isHidden,
-    occurrences: form.occurrences,
   }
 }
 
@@ -135,7 +127,6 @@ function toUpdatePatch(form: DepositFormState): UpdateDepositPatch {
     descriptionEn: form.descriptionEn,
     coordinateSystem: form.coordinateSystem,
     isHidden: form.isHidden,
-    occurrences: form.occurrences,
   }
 }
 
@@ -185,9 +176,7 @@ export function GeologyDatabaseRegistry({ onOpenDeposit }: {
       {orderedDeposits.map((item) => {
         const current = currentDepositId === item.id
         const sites = data.sites.filter((site) => site.depositId === item.id)
-        const siteIds = new Set(sites.map((site) => site.id))
         const lensCount = new Set([
-          ...data.lenses.filter((lens) => siteIds.has(lens.siteId)).map((lens) => lens.code.trim().toLocaleLowerCase('ru')),
           ...item.occurrences.map((occurrence) => occurrence.nameRu.trim().toLocaleLowerCase('ru')),
         ].filter(Boolean)).size
         return <article className={`geobase-deposit-card${current ? ' is-current' : ''}${item.isHidden ? ' is-hidden' : ''}`} key={item.id}>
@@ -210,7 +199,7 @@ export function GeologyDatabaseRegistry({ onOpenDeposit }: {
           </dl>
 
           <footer className="geobase-deposit-card__footer">
-            <span><CalendarDays size={15} /> Обновлено {new Date(item.updatedAt).toLocaleDateString('ru-RU')} · версия {item.version}</span>
+            <span><CalendarDays size={15} /> Обновлено {new Date(item.updatedAt).toLocaleDateString('ru-RU')}</span>
             <div>
               <Button size="sm" variant={current ? 'secondary' : 'quiet'} disabled={current || currentDepositMutation.isPending || item.isHidden} onClick={() => currentDepositMutation.mutate(item.id)} aria-label={`Выбрать ${item.nameRu} текущим`}><CheckCircle2 size={14} /> {current ? 'Текущее' : 'Выбрать'}</Button>
               <Button size="sm" variant="secondary" onClick={() => onOpenDeposit(item.id)} aria-label={`Открыть ${getDepositName(item)}`}>Открыть карточку <ArrowRight size={15} /></Button>
@@ -222,12 +211,11 @@ export function GeologyDatabaseRegistry({ onOpenDeposit }: {
   </div>
 }
 
-export function DepositEditor({ deposit, canEdit, canDelete, pending, dependencies, onSave, onDelete }: {
+export function DepositEditor({ deposit, canEdit, canDelete, pending, onSave, onDelete }: {
   deposit: Deposit
   canEdit: boolean
   canDelete: boolean
   pending: boolean
-  dependencies: DepositDependencies
   onSave: (patch: UpdateDepositPatch) => void
   onDelete: () => void
 }) {
@@ -235,61 +223,37 @@ export function DepositEditor({ deposit, canEdit, canDelete, pending, dependenci
   const baseline = useMemo(() => formFromDeposit(deposit), [deposit])
   const dirty = JSON.stringify(form) !== JSON.stringify(baseline)
   const readOnly = !canEdit || deposit.status === 'archived'
-  const dependencyTotal = dependencies.sites + dependencies.lenses + dependencies.conditions + dependencies.occurrences
 
-  return <Panel
-    className="geobase-editor"
-    title={`Месторождение № ${deposit.code} · ${deposit.nameRu}`}
-    description={`Код доступен только для чтения · версия ${deposit.version} · изменил(а) ${deposit.updatedBy}`}
-    action={<Badge tone={deposit.isHidden ? 'neutral' : 'success'}>{deposit.isHidden ? 'Скрыто' : 'Используется'}</Badge>}
-  >
+  return <div className="geobase-editor">
     <DepositForm form={form} onChange={setForm} disabled={readOnly || pending} immutable />
-    <div className="geobase-dependencies">
-      <MapPinned size={18} />
-      <div><strong>Проверка связей перед удалением</strong><span>Участки: {dependencies.sites} · Залежи: {dependencies.lenses + dependencies.occurrences} · Наборы кондиций: {dependencies.conditions}</span></div>
-      <Badge tone={dependencyTotal ? 'warning' : 'success'}>{dependencyTotal ? 'Удаление заблокировано' : 'Можно удалить'}</Badge>
-    </div>
     <div className="geobase-editor__actions">
-      <Button variant="danger" disabled={!canDelete || deposit.status === 'archived' || pending} onClick={onDelete}><Trash2 size={15} /> Удалить</Button>
+      {canDelete && <Button variant="danger" disabled={deposit.status === 'archived' || pending} onClick={onDelete}><Trash2 size={15} />Удалить месторождение</Button>}
       <span />
       <Button variant="secondary" disabled={readOnly || pending || !dirty} onClick={() => setForm(baseline)}>Отменить изменения</Button>
-      <Button disabled={readOnly || pending || !dirty || !formValid(form)} onClick={() => onSave(toUpdatePatch(form))}><Save size={15} /> Сохранить изменения</Button>
+      <Button disabled={readOnly || pending || !dirty || !formValid(form)} onClick={() => onSave(toUpdatePatch(form))}><Save size={15} />Сохранить изменения</Button>
     </div>
-  </Panel>
+  </div>
 }
 
 function DepositForm({ form, onChange, disabled, immutable = false }: { form: DepositFormState; onChange: (next: DepositFormState) => void; disabled: boolean; immutable?: boolean }) {
   const set = <K extends keyof DepositFormState>(key: K, value: DepositFormState[K]) => onChange({ ...form, [key]: value })
-  const updateOccurrence = (index: number, patch: Partial<DepositOccurrence>) => set('occurrences', form.occurrences.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item))
-  const addOccurrence = () => set('occurrences', [...form.occurrences, { id: '', type: 'Рудная залежь', nameRu: '', nameKk: '', nameEn: '' }])
-  const removeOccurrence = (index: number) => set('occurrences', form.occurrences.filter((_, itemIndex) => itemIndex !== index))
-
   return <div className="geobase-form">
-    <div className="geobase-form__grid">
-      <label className="field"><span className="field__label">Код (ID) <em>*</em></span><input disabled={disabled || immutable} type="number" min="1" step="1" value={form.code} onChange={(event) => set('code', event.target.value)} /><span className="field__hint">Уникальный числовой код. После создания не изменяется.</span></label>
+    <div className="geobase-form__identity">
+      <label className="field"><span className="field__label">Код (ID) <em>*</em></span><input disabled={disabled || immutable} type="number" min="1" step="1" value={form.code} onChange={(event) => set('code', event.target.value)} /><span className="field__hint">После создания не изменяется.</span></label>
       <label className="field"><span className="field__label">Тип объекта <em>*</em></span><select disabled={disabled} value={form.objectType} onChange={(event) => set('objectType', event.target.value as DepositObjectType)}><option value="field">Месторождение</option><option value="area">Площадь</option><option value="custom">Другой тип</option></select></label>
+      <label className="field"><span className="field__label">Система координат</span><input disabled={disabled} value={form.coordinateSystem} onChange={(event) => set('coordinateSystem', event.target.value)} placeholder="Например: EPSG:32642" /></label>
       {form.objectType === 'custom' && <label className="field geobase-form__wide"><span className="field__label">Наименование пользовательского типа <em>*</em></span><input disabled={disabled} value={form.customType} onChange={(event) => set('customType', event.target.value)} /></label>}
-      <label className="field"><span className="field__label">Название (RU) <em>*</em></span><input disabled={disabled} value={form.nameRu} onChange={(event) => set('nameRu', event.target.value)} /></label>
-      <label className="field"><span className="field__label">Название (KZ) <em>*</em></span><input disabled={disabled} value={form.nameKk} onChange={(event) => set('nameKk', event.target.value)} /></label>
-      <label className="field geobase-form__wide"><span className="field__label">Название (EN) <em>*</em></span><input disabled={disabled} value={form.nameEn} onChange={(event) => set('nameEn', event.target.value)} /></label>
-      <label className="field geobase-form__wide"><span className="field__label">Система координат</span><input disabled={disabled} value={form.coordinateSystem} onChange={(event) => set('coordinateSystem', event.target.value)} placeholder="Например: WGS 84 / UTM zone 42N (EPSG:32642)" /><span className="field__hint">Необязательное текстовое поле.</span></label>
-      <label className="field"><span className="field__label">Описание (RU)</span><textarea disabled={disabled} rows={3} value={form.descriptionRu} onChange={(event) => set('descriptionRu', event.target.value)} /></label>
-      <label className="field"><span className="field__label">Описание (KZ)</span><textarea disabled={disabled} rows={3} value={form.descriptionKk} onChange={(event) => set('descriptionKk', event.target.value)} /></label>
-      <label className="field geobase-form__wide"><span className="field__label">Описание (EN)</span><textarea disabled={disabled} rows={3} value={form.descriptionEn} onChange={(event) => set('descriptionEn', event.target.value)} /></label>
-      <label className="geobase-visibility geobase-form__wide"><input disabled={disabled} type="checkbox" checked={!form.isHidden} onChange={(event) => set('isHidden', !event.target.checked)} /><span><strong>Использовать месторождение</strong><small>Если выключить, объект исчезнет из обычных списков выбора, но сохранит данные и историю.</small></span></label>
     </div>
-
-    <section className="geobase-occurrences">
-      <header><div><strong>Список залежей</strong><small>Тип и названия на трёх языках можно задать сразу или добавить позднее.</small></div><Button size="sm" variant="secondary" disabled={disabled} onClick={addOccurrence}><Plus size={14} /> Добавить залежь</Button></header>
-      {form.occurrences.length ? <div className="geobase-occurrences__rows">{form.occurrences.map((item, index) => <div key={`${item.id || 'new'}-${index}`}>
-        <span>{index + 1}</span>
-        <label><small>Тип</small><input disabled={disabled} value={item.type} onChange={(event) => updateOccurrence(index, { type: event.target.value })} /></label>
-        <label><small>Название (RU)</small><input disabled={disabled} value={item.nameRu} onChange={(event) => updateOccurrence(index, { nameRu: event.target.value })} /></label>
-        <label><small>Название (KZ)</small><input disabled={disabled} value={item.nameKk} onChange={(event) => updateOccurrence(index, { nameKk: event.target.value })} /></label>
-        <label><small>Название (EN)</small><input disabled={disabled} value={item.nameEn} onChange={(event) => updateOccurrence(index, { nameEn: event.target.value })} /></label>
-        <Button size="sm" variant="quiet" disabled={disabled} aria-label={`Удалить залежь ${index + 1}`} onClick={() => removeOccurrence(index)}><X size={15} /></Button>
-      </div>)}</div> : <div className="geobase-occurrences__empty">Залежи пока не заданы. Месторождение можно создать без них.</div>}
-    </section>
+    {([
+      { locale: 'RU', title: 'Русский', name: 'nameRu', description: 'descriptionRu' },
+      { locale: 'KZ', title: 'Қазақша', name: 'nameKk', description: 'descriptionKk' },
+      { locale: 'EN', title: 'English', name: 'nameEn', description: 'descriptionEn' },
+    ] as const).map(({ locale, title, name, description }) => <fieldset className="geobase-form__locale" key={locale}>
+      <legend>{title}</legend>
+      <div><label className="field"><span className="field__label">Название ({locale}) <em>*</em></span><input disabled={disabled} value={form[name]} onChange={(event) => set(name, event.target.value)} /></label>
+        <label className="field"><span className="field__label">Описание ({locale})</span><textarea disabled={disabled} rows={2} value={form[description]} onChange={(event) => set(description, event.target.value)} /></label></div>
+    </fieldset>)}
+    <label className="geobase-visibility"><input disabled={disabled} type="checkbox" checked={!form.isHidden} onChange={(event) => set('isHidden', !event.target.checked)} /><span><strong>Использовать месторождение</strong><small>Если выключить, объект исчезнет из обычных списков выбора, но сохранит данные и историю.</small></span></label>
   </div>
 }
 

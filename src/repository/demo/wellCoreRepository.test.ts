@@ -17,9 +17,12 @@ describe('DemoWellCoreRepository', () => {
     expect((await database.getAll<{ eventType: string }>('auditEvents')).some((item) => item.eventType === 'core.run.deleted')).toBe(true)
   })
 
-  it('rejects a stale workspace save', async () => {
+  it('saves current data repeatedly without record versions', async () => {
     const current = await repository.get(well)
     await repository.save(well, current, current, 'core.saved')
-    await expect(repository.save(well, current, current, 'core.saved')).rejects.toThrow('VERSION_CONFLICT')
+    const saved = await repository.save(well, current, { ...current, runs: current.runs.slice(1) }, 'core.saved')
+    expect(saved).not.toHaveProperty('version')
+    expect((await repository.get(well)).runs).toHaveLength(1)
+    expect(await database.getAll('versions')).toEqual([])
   })
 })

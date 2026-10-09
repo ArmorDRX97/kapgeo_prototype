@@ -1,7 +1,8 @@
+import { UnsavedChangesContext } from '../../../shared/lib/unsavedChangesContext'
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Check, Layers3, Link2, Plus, Save, Scissors, Trash2, Unlink2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useContext, useMemo, useState } from 'react'
 import type { DifferentialOreInterval, OreElement, OreInterval, OreIntervalDraft, OreIntervalSource, OrePermeability, OreValueBasis, WellOreWorkspace } from '../../../entities/well-ore/model/types'
 import type { Well } from '../../../entities/well/model/types'
 import { areContinuousDifferentials, canMergeOreGroups, createOreInterval, detachFromOreGroup, mergeOreGroups, mergedSummaries, oreThickness, splitOreGroup, validateOreInterval } from '../../../features/geobase/model/bgdWellOreIntervals'
@@ -17,6 +18,8 @@ type View = 'differential' | 'ore' | 'merged'
 
 const display = (value: number, digits = 4) => value.toLocaleString('ru-RU', { maximumFractionDigits: digits })
 const defaultDraft = (source: OreIntervalSource, element: OreElement, from: number): OreIntervalDraft => ({ source, element, from, to: Number((from + .1).toFixed(2)), basis: 'content', value: .01, permeability: 'Непроницаемый' })
+const oreDraftFor = (item: OreInterval): OreIntervalDraft => ({ source: item.source, element: item.element, from: item.from, to: item.to, basis: 'content', value: item.content, permeability: item.permeability })
+const differentialDraftFor = (item?: DifferentialOreInterval) => ({ from: item?.from ?? 0, to: item?.to ?? .1, content: item?.content ?? .01, permeability: item?.permeability ?? 'Непроницаемый' as OrePermeability })
 
 export function BgdWellOreIntervalsTab({ well, canManageAll, canManageGeophysics, onDirtyChange }: { well: Well; canManageAll: boolean; canManageGeophysics: boolean; onDirtyChange?: (dirty: boolean) => void }) {
   const query = useQuery({ queryKey: ['well-ore', well.id], queryFn: () => fetchWellOreWorkspace(well.id) })
@@ -27,6 +30,7 @@ export function BgdWellOreIntervalsTab({ well, canManageAll, canManageGeophysics
 
 function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, onDirtyChange }: { well: Well; initial: WellOreWorkspace; canManageAll: boolean; canManageGeophysics: boolean; onDirtyChange?: (dirty: boolean) => void }) {
   const queryClient = useQueryClient()
+  const navigationGuard = useContext(UnsavedChangesContext)
   const [draft, setDraft] = useState(initial)
   const [view, setView] = useState<View>('ore')
   const [selectedOreId, setSelectedOreId] = useState(initial.oreIntervals[0]?.id ?? '')
@@ -35,13 +39,18 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, 
   const [selectedGroupChildId, setSelectedGroupChildId] = useState('')
   const [selectedDiffIds, setSelectedDiffIds] = useState<string[]>([])
   const [selectedDiffId, setSelectedDiffId] = useState(initial.differentialIntervals[0]?.id ?? '')
-  const [oreForm, setOreForm] = useState(() => defaultDraft(initial.selectedSource, initial.selectedElement, initial.oreIntervals.at(-1)?.to ?? 0))
-  const [diffForm, setDiffForm] = useState(() => ({ from: initial.differentialIntervals.at(-1)?.to ?? 0, to: Number(((initial.differentialIntervals.at(-1)?.to ?? 0) + .1).toFixed(2)), content: .01, permeability: 'Непроницаемый' as OrePermeability }))
+  const [oreForm, writeOreForm] = useState(() => initial.oreIntervals[0] ? oreDraftFor(initial.oreIntervals[0]) : defaultDraft(initial.selectedSource, initial.selectedElement, 0))
+  const [diffForm, writeDiffForm] = useState(() => differentialDraftFor(initial.differentialIntervals[0]))
+  const [oreFormDirty, setOreFormDirty] = useState(false)
+  const [diffFormDirty, setDiffFormDirty] = useState(false)
+  const resetOreForm = (value: OreIntervalDraft) => { writeOreForm(value); setOreFormDirty(false) }
+  const resetDiffForm = (value: typeof diffForm) => { writeDiffForm(value); setDiffFormDirty(false) }
+  const setOreForm = (value: OreIntervalDraft) => { writeOreForm(value); setOreFormDirty(true) }
+  const setDiffForm = (value: typeof diffForm) => { writeDiffForm(value); setDiffFormDirty(true) }
   const [errors, setErrors] = useState<string[]>([])
   const [saved, setSaved] = useState(false)
   const selectedSourceCanEdit = canManageAll || (canManageGeophysics && (draft.selectedSource === 'Гамма-каротаж' || draft.selectedSource === 'КНД'))
-  const changed = JSON.stringify(draft) !== JSON.stringify(initial)
-  useReportUnsavedChanges(changed, onDirtyChange)
+  const changed = JSON.stringify(draft) !== JSON.stringify(initial) || oreFormDirty || diffFormDirty
   const visibleOre = useMemo(() => draft.oreIntervals.filter((item) => item.source === draft.selectedSource && item.element === draft.selectedElement).sort((a, b) => a.from - b.from), [draft])
   const visibleGroups = useMemo(() => mergedSummaries(draft).filter((item) => item.source === draft.selectedSource && item.element === draft.selectedElement), [draft])
   const visibleDiff = useMemo(() => draft.differentialIntervals.filter((item) => item.source === draft.selectedSource && item.element === draft.selectedElement).sort((a, b) => a.from - b.from), [draft])
@@ -50,8 +59,25 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, 
   const selectedDiff = draft.differentialIntervals.find((item) => item.id === selectedDiffId)
 
   const mutation = useMutation({
-    mutationFn: () => saveWellOreWorkspace(well.id, initial, draft, 'geology.bgd.ore.saved'),
-    onSuccess: (value) => { queryClient.setQueryData(['well-ore', well.id], value); setDraft(value); setSaved(true) },
+    mutationFn: () => {
+      let next = draft
+      if (oreFormDirty) next = applyOreForm(next)
+      if (diffFormDirty) next = applyDiffForm(next)
+      return saveWellOreWorkspace(well.id, initial, next, 'geology.bgd.ore.saved')
+    },
+    onSuccess: (value) => { queryClient.setQueryData(['well-ore', well.id], value); setDraft(value); setOreFormDirty(false); setDiffFormDirty(false); setSaved(true) },
+  })
+
+  useReportUnsavedChanges(changed, onDirtyChange, {
+    save: async () => { if (!canManageAll && !canManageGeophysics) return false; await mutation.mutateAsync(); return true },
+    discard: () => {
+      setDraft(initial)
+      setSelectedOreId(initial.oreIntervals[0]?.id ?? '')
+      setSelectedDiffId(initial.differentialIntervals[0]?.id ?? '')
+      resetOreForm(initial.oreIntervals[0] ? oreDraftFor(initial.oreIntervals[0]) : defaultDraft(initial.selectedSource, initial.selectedElement, 0))
+      resetDiffForm(differentialDraftFor(initial.differentialIntervals[0]))
+      setErrors([])
+    },
   })
 
   const updateContext = (patch: Partial<Pick<WellOreWorkspace, 'selectedSource' | 'selectedElement' | 'useDifferentialLogging'>>) => {
@@ -62,40 +88,48 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, 
     setSelectedGroupId('')
     setSelectedDiffIds([])
     setSelectedDiffId('')
-    setOreForm(defaultDraft(next.selectedSource, next.selectedElement, next.oreIntervals.filter((item) => item.source === next.selectedSource && item.element === next.selectedElement).at(-1)?.to ?? 0))
+    resetOreForm(defaultDraft(next.selectedSource, next.selectedElement, next.oreIntervals.filter((item) => item.source === next.selectedSource && item.element === next.selectedElement).at(-1)?.to ?? 0))
     if (patch.useDifferentialLogging === false && view === 'differential') setView('ore')
   }
   const editOre = (item: OreInterval) => {
     setSelectedOreId(item.id)
-    setOreForm({ source: item.source, element: item.element, from: item.from, to: item.to, basis: 'content', value: item.content, permeability: item.permeability })
+    resetOreForm({ source: item.source, element: item.element, from: item.from, to: item.to, basis: 'content', value: item.content, permeability: item.permeability })
     setErrors([])
+  }
+  const applyOreForm = (workspace: WellOreWorkspace) => {
+    if (!selectedSourceCanEdit) throw new Error('Нет прав на изменение выбранного источника.')
+    const id = selectedOre?.id ?? `ORE-${crypto.randomUUID()}`
+    const next = createOreInterval(id, oreForm, selectedOre?.differentialIds ?? [])
+    const validation = validateOreInterval(next, workspace, selectedOre?.id)
+    if (next.to > well.depth) validation.push(`Конечная глубина не может превышать глубину скважины ${display(well.depth, 2)} м.`)
+    if (validation.length) throw new Error(validation.join('\n'))
+    const oreIntervals = selectedOre ? workspace.oreIntervals.map((item) => item.id === selectedOre.id ? next : item) : [...workspace.oreIntervals, next]
+    const mergedIntervals = selectedOre ? workspace.mergedIntervals : [...workspace.mergedIntervals, { id: `ORI-${crypto.randomUUID()}`, oreIntervalIds: [id] }]
+    return { ...workspace, oreIntervals, mergedIntervals }
   }
   const submitOre = () => {
-    const id = selectedOre?.id ?? `ORE-${well.id}-U${draft.oreIntervals.length + 1}`
-    const next = createOreInterval(id, oreForm, selectedOre?.differentialIds ?? [])
-    const validation = validateOreInterval(next, draft, selectedOre?.id)
-    if (next.to > well.depth) validation.push(`Конечная глубина не может превышать глубину скважины ${display(well.depth, 2)} м.`)
-    if (validation.length) return setErrors(validation)
-    const oreIntervals = selectedOre ? draft.oreIntervals.map((item) => item.id === selectedOre.id ? next : item) : [...draft.oreIntervals, next]
-    const mergedIntervals = selectedOre ? draft.mergedIntervals : [...draft.mergedIntervals, { id: `ORI-${well.id}-U${draft.mergedIntervals.length + 1}`, oreIntervalIds: [id] }]
-    setDraft({ ...draft, oreIntervals, mergedIntervals })
-    setSelectedOreId(id)
-    setErrors([])
+    try { const next = applyOreForm(draft); setDraft(next); setSelectedOreId(selectedOre?.id ?? next.oreIntervals.at(-1)!.id); setOreFormDirty(false); setErrors([]) }
+    catch (error) { setErrors([(error as Error).message]) }
   }
+
   const removeOre = () => {
     if (!selectedOre || !selectedSourceCanEdit) return
     setDraft({ ...draft, oreIntervals: draft.oreIntervals.filter((item) => item.id !== selectedOre.id), mergedIntervals: draft.mergedIntervals.map((item) => ({ ...item, oreIntervalIds: item.oreIntervalIds.filter((id) => id !== selectedOre.id) })).filter((item) => item.oreIntervalIds.length), differentialIntervals: draft.differentialIntervals.map((item) => item.oreIntervalId === selectedOre.id ? { ...item, oreIntervalId: undefined } : item) })
     setSelectedOreId('')
   }
-  const submitDiff = () => {
-    const item: DifferentialOreInterval = { id: selectedDiff?.id ?? `DIFF-${well.id}-U${draft.differentialIntervals.length + 1}`, source: draft.selectedSource, element: draft.selectedElement, ...diffForm, oreIntervalId: selectedDiff?.oreIntervalId }
-    const overlap = draft.differentialIntervals.find((candidate) => candidate.id !== selectedDiff?.id && candidate.source === item.source && candidate.element === item.element && item.from < candidate.to && item.to > candidate.from)
+  const applyDiffForm = (workspace: WellOreWorkspace) => {
+    if (!selectedSourceCanEdit || selectedDiff?.oreIntervalId) throw new Error('Этот дифференциальный интервал недоступен для изменения.')
+    const item: DifferentialOreInterval = { id: selectedDiff?.id ?? `DIFF-${crypto.randomUUID()}`, source: workspace.selectedSource, element: workspace.selectedElement, ...diffForm }
+    const overlap = workspace.differentialIntervals.find((candidate) => candidate.id !== selectedDiff?.id && candidate.source === item.source && candidate.element === item.element && item.from < candidate.to && item.to > candidate.from)
     const validation = item.to <= item.from ? ['Конечная глубина должна быть больше начальной.'] : item.to > well.depth ? [`Глубина не может превышать ${display(well.depth, 2)} м.`] : overlap ? [`Интервал пересекается с ${display(overlap.from)}–${display(overlap.to)} м.`] : []
-    if (validation.length) return setErrors(validation)
-    setDraft({ ...draft, differentialIntervals: selectedDiff ? draft.differentialIntervals.map((candidate) => candidate.id === selectedDiff.id ? item : candidate) : [...draft.differentialIntervals, item] })
-    setSelectedDiffId(item.id)
-    setErrors([])
+    if (validation.length) throw new Error(validation.join('\n'))
+    return { ...workspace, differentialIntervals: selectedDiff ? workspace.differentialIntervals.map((candidate) => candidate.id === selectedDiff.id ? item : candidate) : [...workspace.differentialIntervals, item] }
   }
+  const submitDiff = () => {
+    try { const next = applyDiffForm(draft); setDraft(next); setSelectedDiffId(selectedDiff?.id ?? next.differentialIntervals.at(-1)!.id); setDiffFormDirty(false); setErrors([]) }
+    catch (error) { setErrors([(error as Error).message]) }
+  }
+
   const combineDifferentials = () => {
     if (!areContinuousDifferentials(selectedDiffIds, draft) || !selectedSourceCanEdit) return setErrors(['Выберите непрерывную последовательность свободных дифференциальных интервалов.'])
     const members = draft.differentialIntervals.filter((item) => selectedDiffIds.includes(item.id)).sort((a, b) => a.from - b.from)
@@ -112,7 +146,7 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, 
   }
 
   return <div className="bgd-well-stack bgd-ore-workspace">
-    {saved && <div className="success-banner"><Check size={17} /><span><strong>Рудные интервалы сохранены</strong>Создана новая локальная версия.</span><button type="button" onClick={() => setSaved(false)}>Закрыть</button></div>}
+    {saved && <div className="success-banner"><Check size={17} /><span><strong>Рудные интервалы сохранены</strong>Изменения сохранены.</span><button type="button" onClick={() => setSaved(false)}>Закрыть</button></div>}
     <Panel title="Контекст выделения" description="Интервалы разных источников и элементов ведутся раздельно">
       <div className="bgd-ore-context">
         <label className="field"><span className="field__label">Источник выделения <em>*</em></span><select required aria-label="Источник выделения" value={draft.selectedSource} onChange={(event) => updateContext({ selectedSource: event.target.value as OreIntervalSource })}>{sources.map((item) => <option key={item}>{item}</option>)}</select></label>
@@ -122,9 +156,9 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, 
     </Panel>
     {!selectedSourceCanEdit && <div className="form-alert"><Layers3 size={17} /><span>Источник «{draft.selectedSource}» доступен только для просмотра с текущими правами.</span></div>}
     <div className="bgd-ore-tabs" role="tablist" aria-label="Разделы рудных интервалов">
-      {draft.useDifferentialLogging && <button type="button" role="tab" aria-selected={view === 'differential'} className={view === 'differential' ? 'is-active' : ''} onClick={() => setView('differential')}>Дифференциальный каротаж <Badge tone="neutral">{visibleDiff.length}</Badge></button>}
-      <button type="button" role="tab" aria-selected={view === 'ore'} className={view === 'ore' ? 'is-active' : ''} onClick={() => setView('ore')}>Рудные интервалы <Badge tone="info">{visibleOre.length}</Badge></button>
-      <button type="button" role="tab" aria-selected={view === 'merged'} className={view === 'merged' ? 'is-active' : ''} onClick={() => setView('merged')}>Рудные объединения <Badge tone="warning">{visibleGroups.length}</Badge></button>
+      {draft.useDifferentialLogging && <button type="button" role="tab" aria-selected={view === 'differential'} className={view === 'differential' ? 'is-active' : ''} onClick={() => { if (view !== 'differential') { if (navigationGuard) navigationGuard.requestTransition(() => setView('differential')); else setView('differential') } }}>Дифференциальный каротаж <Badge tone="neutral">{visibleDiff.length}</Badge></button>}
+      <button type="button" role="tab" aria-selected={view === 'ore'} className={view === 'ore' ? 'is-active' : ''} onClick={() => { if (view !== 'ore') { if (navigationGuard) navigationGuard.requestTransition(() => setView('ore')); else setView('ore') } }}>Рудные интервалы <Badge tone="info">{visibleOre.length}</Badge></button>
+      <button type="button" role="tab" aria-selected={view === 'merged'} className={view === 'merged' ? 'is-active' : ''} onClick={() => { if (view !== 'merged') { if (navigationGuard) navigationGuard.requestTransition(() => setView('merged')); else setView('merged') } }}>Рудные объединения <Badge tone="warning">{visibleGroups.length}</Badge></button>
     </div>
 
     {view === 'ore' && <div className="bgd-ore-layout">
@@ -141,7 +175,7 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, 
           <label className="field"><span className="field__label">Тип проницаемости <em>*</em></span><select disabled={!selectedSourceCanEdit} value={oreForm.permeability} onChange={(event) => setOreForm({ ...oreForm, permeability: event.target.value as OrePermeability })}>{permeabilityOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
         </div>
         <p className="bgd-ore-demo-note">Расчёт: метропроцент = содержание × мощность; обратный показатель рассчитывается автоматически.</p>
-        <div className="bgd-ore-actions"><Button disabled={!selectedSourceCanEdit} onClick={submitOre}><Plus size={14} /> {selectedOre ? 'Применить' : 'Добавить'}</Button>{selectedOre && <Button variant="secondary" onClick={() => { setSelectedOreId(''); setOreForm(defaultDraft(draft.selectedSource, draft.selectedElement, selectedOre.to)) }}>Новый</Button>}{selectedOre && <Button variant="quiet" disabled={!selectedSourceCanEdit} onClick={removeOre}><Trash2 size={14} /> Удалить</Button>}</div>
+        <div className="bgd-ore-actions"><Button disabled={!selectedSourceCanEdit} onClick={submitOre}><Plus size={14} /> {selectedOre ? 'Применить' : 'Добавить'}</Button>{selectedOre && <Button variant="secondary" onClick={() => { setSelectedOreId(''); resetOreForm(defaultDraft(draft.selectedSource, draft.selectedElement, selectedOre.to)) }}>Новый</Button>}{selectedOre && <Button variant="quiet" disabled={!selectedSourceCanEdit} onClick={removeOre}><Trash2 size={14} /> Удалить</Button>}</div>
       </Panel>
     </div>}
 
@@ -151,12 +185,12 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, 
     </div>}
 
     {view === 'differential' && <div className="bgd-ore-layout">
-      <Panel title="Дифференциальные интервалы" description="Белый — свободный; жёлтый — выбранное рудное выделение; серый — другое"><div className="bgd-ore-table bgd-ore-table--differential" role="table"><div className="bgd-ore-table__head" role="row"><span /><span>Источник / элемент</span><span>Интервал</span><span>Мощн., м</span><span>Сод., %</span><span>Тип</span><span>Связь</span></div>{visibleDiff.map((item) => { const status = !item.oreIntervalId ? 'free' : item.oreIntervalId === selectedOreId ? 'selected-member' : 'other-member'; return <button type="button" role="row" key={item.id} className={`is-${status} ${selectedDiffId === item.id ? 'is-selected' : ''}`} onClick={() => { setSelectedDiffId(item.id); setDiffForm({ from: item.from, to: item.to, content: item.content, permeability: item.permeability }) }}><span role="cell"><input aria-label={`Выбрать ${item.id}`} type="checkbox" disabled={Boolean(item.oreIntervalId)} checked={selectedDiffIds.includes(item.id)} onClick={(event) => event.stopPropagation()} onChange={() => setSelectedDiffIds((ids) => ids.includes(item.id) ? ids.filter((id) => id !== item.id) : [...ids, item.id])} /></span><span role="cell"><strong>{item.source}</strong><small>{item.element}</small></span><span role="cell">{display(item.from)}–{display(item.to)}</span><span role="cell">{display(item.to - item.from, 2)}</span><span role="cell">{display(item.content)}</span><span role="cell">{item.permeability}</span><span role="cell"><Badge tone={status === 'free' ? 'success' : status === 'selected-member' ? 'warning' : 'neutral'}>{status === 'free' ? 'Свободен' : item.oreIntervalId}</Badge></span></button>})}</div><div className="bgd-ore-actions"><Button disabled={!selectedSourceCanEdit || !areContinuousDifferentials(selectedDiffIds, draft)} onClick={combineDifferentials}><Link2 size={14} /> Создать рудный интервал</Button></div></Panel>
-      <Panel title={selectedDiff ? 'Изменение дифференциального интервала' : 'Новый дифференциальный интервал'} description={`${draft.selectedSource} · ${draft.selectedElement}`}><div className="bgd-ore-form"><label className="field"><span className="field__label">Источник выделения <em>*</em></span><input disabled value={draft.selectedSource} /></label><label className="field"><span className="field__label">Элемент <em>*</em></span><input disabled value={draft.selectedElement} /></label><NumberField label="Начальная глубина, м *" value={diffForm.from} disabled={!selectedSourceCanEdit || Boolean(selectedDiff?.oreIntervalId)} onChange={(from) => setDiffForm({ ...diffForm, from })} /><NumberField label="Конечная глубина, м *" value={diffForm.to} disabled={!selectedSourceCanEdit || Boolean(selectedDiff?.oreIntervalId)} onChange={(to) => setDiffForm({ ...diffForm, to })} /><NumberField label="Содержание, % *" value={diffForm.content} step="0.0001" disabled={!selectedSourceCanEdit || Boolean(selectedDiff?.oreIntervalId)} onChange={(content) => setDiffForm({ ...diffForm, content })} /><label className="field"><span className="field__label">Тип проницаемости <em>*</em></span><select disabled={!selectedSourceCanEdit || Boolean(selectedDiff?.oreIntervalId)} value={diffForm.permeability} onChange={(event) => setDiffForm({ ...diffForm, permeability: event.target.value as OrePermeability })}>{permeabilityOptions.map((item) => <option key={item}>{item}</option>)}</select></label></div>{selectedDiff?.oreIntervalId && <p className="bgd-ore-demo-note">Связанный интервал редактируется через его рудное выделение.</p>}<div className="bgd-ore-actions"><Button disabled={!selectedSourceCanEdit || Boolean(selectedDiff?.oreIntervalId)} onClick={submitDiff}><Plus size={14} /> {selectedDiff ? 'Применить' : 'Добавить'}</Button>{selectedDiff && <Button variant="secondary" onClick={() => { setSelectedDiffId(''); setDiffForm({ from: selectedDiff.to, to: Number((selectedDiff.to + .1).toFixed(2)), content: .01, permeability: 'Непроницаемый' }) }}>Новый</Button>}{selectedDiff && <Button variant="quiet" disabled={!selectedSourceCanEdit || Boolean(selectedDiff.oreIntervalId)} onClick={() => { setDraft({ ...draft, differentialIntervals: draft.differentialIntervals.filter((item) => item.id !== selectedDiff.id) }); setSelectedDiffId('') }}><Trash2 size={14} /> Удалить</Button>}</div></Panel>
+      <Panel title="Дифференциальные интервалы" description="Белый — свободный; жёлтый — выбранное рудное выделение; серый — другое"><div className="bgd-ore-table bgd-ore-table--differential" role="table"><div className="bgd-ore-table__head" role="row"><span /><span>Источник / элемент</span><span>Интервал</span><span>Мощн., м</span><span>Сод., %</span><span>Тип</span><span>Связь</span></div>{visibleDiff.map((item) => { const status = !item.oreIntervalId ? 'free' : item.oreIntervalId === selectedOreId ? 'selected-member' : 'other-member'; return <button type="button" role="row" key={item.id} className={`is-${status} ${selectedDiffId === item.id ? 'is-selected' : ''}`} onClick={() => { setSelectedDiffId(item.id); resetDiffForm({ from: item.from, to: item.to, content: item.content, permeability: item.permeability }) }}><span role="cell"><input aria-label={`Выбрать ${item.id}`} type="checkbox" disabled={Boolean(item.oreIntervalId)} checked={selectedDiffIds.includes(item.id)} onClick={(event) => event.stopPropagation()} onChange={() => setSelectedDiffIds((ids) => ids.includes(item.id) ? ids.filter((id) => id !== item.id) : [...ids, item.id])} /></span><span role="cell"><strong>{item.source}</strong><small>{item.element}</small></span><span role="cell">{display(item.from)}–{display(item.to)}</span><span role="cell">{display(item.to - item.from, 2)}</span><span role="cell">{display(item.content)}</span><span role="cell">{item.permeability}</span><span role="cell"><Badge tone={status === 'free' ? 'success' : status === 'selected-member' ? 'warning' : 'neutral'}>{status === 'free' ? 'Свободен' : item.oreIntervalId}</Badge></span></button>})}</div><div className="bgd-ore-actions"><Button disabled={!selectedSourceCanEdit || !areContinuousDifferentials(selectedDiffIds, draft)} onClick={combineDifferentials}><Link2 size={14} /> Создать рудный интервал</Button></div></Panel>
+      <Panel title={selectedDiff ? 'Изменение дифференциального интервала' : 'Новый дифференциальный интервал'} description={`${draft.selectedSource} · ${draft.selectedElement}`}><div className="bgd-ore-form"><label className="field"><span className="field__label">Источник выделения <em>*</em></span><input disabled value={draft.selectedSource} /></label><label className="field"><span className="field__label">Элемент <em>*</em></span><input disabled value={draft.selectedElement} /></label><NumberField label="Начальная глубина, м *" value={diffForm.from} disabled={!selectedSourceCanEdit || Boolean(selectedDiff?.oreIntervalId)} onChange={(from) => setDiffForm({ ...diffForm, from })} /><NumberField label="Конечная глубина, м *" value={diffForm.to} disabled={!selectedSourceCanEdit || Boolean(selectedDiff?.oreIntervalId)} onChange={(to) => setDiffForm({ ...diffForm, to })} /><NumberField label="Содержание, % *" value={diffForm.content} step="0.0001" disabled={!selectedSourceCanEdit || Boolean(selectedDiff?.oreIntervalId)} onChange={(content) => setDiffForm({ ...diffForm, content })} /><label className="field"><span className="field__label">Тип проницаемости <em>*</em></span><select disabled={!selectedSourceCanEdit || Boolean(selectedDiff?.oreIntervalId)} value={diffForm.permeability} onChange={(event) => setDiffForm({ ...diffForm, permeability: event.target.value as OrePermeability })}>{permeabilityOptions.map((item) => <option key={item}>{item}</option>)}</select></label></div>{selectedDiff?.oreIntervalId && <p className="bgd-ore-demo-note">Связанный интервал редактируется через его рудное выделение.</p>}<div className="bgd-ore-actions"><Button disabled={!selectedSourceCanEdit || Boolean(selectedDiff?.oreIntervalId)} onClick={submitDiff}><Plus size={14} /> {selectedDiff ? 'Применить' : 'Добавить'}</Button>{selectedDiff && <Button variant="secondary" onClick={() => { setSelectedDiffId(''); resetDiffForm({ from: selectedDiff.to, to: Number((selectedDiff.to + .1).toFixed(2)), content: .01, permeability: 'Непроницаемый' }) }}>Новый</Button>}{selectedDiff && <Button variant="quiet" disabled={!selectedSourceCanEdit || Boolean(selectedDiff.oreIntervalId)} onClick={() => { setDraft({ ...draft, differentialIntervals: draft.differentialIntervals.filter((item) => item.id !== selectedDiff.id) }); setSelectedDiffId('') }}><Trash2 size={14} /> Удалить</Button>}</div></Panel>
     </div>}
 
     {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span><strong>Проверьте интервалы</strong>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}
-    <div className="bgd-lithology-savebar"><span><strong>{changed ? 'Изменения готовы к сохранению' : `Локальная версия ${draft.version}`}</strong><small>Данные сохраняются в этом браузере.</small></span><Button disabled={!changed || mutation.isPending || (!canManageAll && !canManageGeophysics)} onClick={() => mutation.mutate()}><Save size={15} /> {mutation.isPending ? 'Сохраняем…' : 'Сохранить черновик'}</Button></div>
+    <div className="bgd-lithology-savebar"><span><strong>{changed ? 'Изменения готовы к сохранению' : 'Нет несохранённых изменений'}</strong><small>Данные сохраняются в этом браузере.</small></span><Button disabled={!changed || mutation.isPending || (!canManageAll && !canManageGeophysics)} onClick={() => mutation.mutate()}><Save size={15} /> {mutation.isPending ? 'Сохраняем…' : 'Сохранить изменения'}</Button></div>
     {mutation.error && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>{mutation.error.message}</span></div>}
   </div>
 }

@@ -1,4 +1,4 @@
-import type { ConditionSet, CreateDepositInput, Deposit, GeologicalMasterData, GeologicalSite, UpdateDepositPatch } from '../entities/geology-master/model/types'
+import type { ConditionSet, CreateDepositInput, Deposit, DepositOccurrence, GeologicalMasterData, GeologicalSite, UpdateDepositPatch } from '../entities/geology-master/model/types'
 import type { WellCoreWorkspace } from '../entities/well-core/model/types'
 import type { WellGeologyWorkspace } from '../entities/well-geology/model/types'
 import type { WellLogWorkspace } from '../entities/well-log/model/types'
@@ -61,22 +61,22 @@ export async function createWell(input: CreateWellInput): Promise<Well> {
     completeness: 68,
     activeTask: 'Заполнить паспорт и проверить координаты',
     aiConflicts: 0,
-    version: 1,
+
   })
 }
 
 export async function updateWell(input: UpdateWellInput): Promise<Well> {
   await wait(360)
-  const { wellId, expectedVersion, ...data } = input
+  const { wellId, ...data } = input
   const current = await demoWellDataRepository.getWell(wellId)
-  if ((current.version ?? 1) !== expectedVersion) throw new Error('VERSION_CONFLICT: скважина изменена в другой вкладке.')
+
   return demoWellDataRepository.updateWell(current, {
     ...current,
     ...data,
     id: current.id,
     code: data.bgd ? String(data.bgd.name) : data.code,
     status: data.bgd?.statusHistory.at(-1)?.status ?? current.status,
-    version: current.version,
+
   })
 }
 
@@ -189,22 +189,22 @@ export async function createSite(input: Pick<GeologicalSite, 'depositId' | 'code
   return demoGeologyMasterRepository.createSite(input)
 }
 
-export async function createConditionSet(input: Omit<ConditionSet, 'id' | 'status' | 'version'>): Promise<ConditionSet> {
-  return demoGeologyMasterRepository.createConditionSet(input)
+export async function saveConditionSet(input: Omit<ConditionSet, 'id'>): Promise<ConditionSet> {
+  return demoGeologyMasterRepository.saveConditionSet(input)
 }
 
-export async function createConditionSetVersion(source: ConditionSet): Promise<ConditionSet> {
-  return demoGeologyMasterRepository.createConditionSetVersion(source)
+export async function updateSite(current: GeologicalSite, patch: Pick<GeologicalSite, 'name'>) {
+  return demoGeologyMasterRepository.updateSite(current, patch)
 }
 
-export async function saveConditionSet(current: ConditionSet, patch: Omit<ConditionSet, 'id' | 'siteId' | 'code' | 'version' | 'status'>): Promise<ConditionSet> {
-  return demoGeologyMasterRepository.saveConditionSet(current, patch)
+export async function deleteSite(current: GeologicalSite) {
+  return demoGeologyMasterRepository.deleteSite(current)
 }
 
-export async function approveConditionSet(current: ConditionSet): Promise<ConditionSet> {
-  return demoGeologyMasterRepository.approveConditionSet(current)
+export async function saveOccurrence(current: Deposit, input: Omit<DepositOccurrence, 'id'> & { id?: string }) {
+  return demoGeologyMasterRepository.saveOccurrence(current, input)
 }
 
-export async function publishConditionSet(current: ConditionSet): Promise<ConditionSet> {
-  return demoGeologyMasterRepository.publishConditionSet(current)
+export async function deleteOccurrence(current: Deposit, occurrenceId: string) {
+  return demoGeologyMasterRepository.deleteOccurrence(current, occurrenceId)
 }

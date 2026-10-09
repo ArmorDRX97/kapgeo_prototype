@@ -34,7 +34,7 @@ function policyFor(depth: number): IntervalPolicy<GeologicalInterval> {
 export function BgdWellLithologyTab({ well, canEdit, activeKind, onKindChange, onDirtyChange }: { well: Well; canEdit: boolean; activeKind?: string; onKindChange?: (kind: string) => void; onDirtyChange?: (dirty: boolean) => void }) {
   const query = useQuery({ queryKey: ['well-geology-v2', well.id], queryFn: () => fetchWellGeologyWorkspace(well.id) })
   if (query.isError) return <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>Не удалось загрузить литологию: {query.error.message}</span></div>
-  if (query.isLoading || !query.data) return <div className="page-loading page-loading--inline"><span /><p>Загружаем литологические колонки…</p></div>
+  if (query.isLoading || !query.data) return <div className="page-loading page-loading--inline"><span /><p>Загружаем литологические интервалы…</p></div>
   return <BgdLithologyEditor key={well.id} well={well} canEdit={canEdit} activeKind={activeKind} onKindChange={onKindChange} onDirtyChange={onDirtyChange} initialWorkspace={query.data} />
 }
 
@@ -64,7 +64,6 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
   }), [policy, workspace.tracks])
   const diff = useMemo(() => diffIntervals(baselineTrack.intervals, sorted), [baselineTrack.intervals, sorted])
   const changed = JSON.stringify(initialWorkspace.tracks) !== JSON.stringify(workspace.tracks)
-  useReportUnsavedChanges(changed, onDirtyChange)
   const availableGap = findFirstLithologyGap(sorted, well.depth)
 
   const mutation = useMutation({
@@ -76,6 +75,11 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
       setRedo([])
       setSaved(true)
     },
+  })
+
+  useReportUnsavedChanges(changed, onDirtyChange, {
+    save: async () => { if (!canEdit || blockingIssues.length) return false; await mutation.mutateAsync(); return true },
+    discard: () => { setDraft(null); setUndo([]); setRedo([]) },
   })
 
   const change = (nextWorkspace: WellGeologyWorkspace, focusId = selected?.id ?? '') => {
@@ -136,32 +140,19 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
   }
   const selectKind = (nextKind: BgdLithologyKind) => {
     if (onKindChange) onKindChange(nextKind); else setKind(nextKind)
-    setSelectedId(workspace.tracks.find((item) => item.kind === nextKind)?.intervals[0]?.id ?? '')
   }
 
   return <div className="bgd-well-stack bgd-lithology-workspace">
-    {saved && <div className="success-banner"><Check size={17} /><span><strong>Литология сохранена</strong>Создана новая локальная версия колонки.</span><button type="button" onClick={() => setSaved(false)}>Закрыть</button></div>}
-    {!canEdit && <div className="form-alert"><Layers3 size={17} /><span>Литологические колонки доступны только для просмотра.</span></div>}
-    <WorkspaceTabs value={kind} onChange={(next) => selectKind(next as BgdLithologyKind)} label="Литологические колонки" tabs={bgdLithologyKinds.map((item) => ({ id: item.id, label: <>{item.label}<Badge tone="neutral">{workspace.tracks.find((trackItem) => trackItem.kind === item.id)?.intervals.length ?? 0}</Badge></> }))}>
+    {saved && <div className="success-banner"><Check size={17} /><span><strong>Литология сохранена</strong>Изменения сохранены.</span><button type="button" onClick={() => setSaved(false)}>Закрыть</button></div>}
+    {!canEdit && <div className="form-alert"><Layers3 size={17} /><span>Литологические интервалы доступны только для просмотра.</span></div>}
+    <WorkspaceTabs value={kind} onChange={(next) => selectKind(next as BgdLithologyKind)} label="Виды литологических данных" tabs={bgdLithologyKinds.map((item) => ({ id: item.id, label: <>{item.label}<Badge tone="neutral">{workspace.tracks.find((trackItem) => trackItem.kind === item.id)?.intervals.length ?? 0}</Badge></> }))}>
     <div className="bgd-lithology-layout">
-      <Panel className="bgd-lithology-column-panel" title="Литологическая колонка" description={`Скважина ${well.code} · 0–${formatDepth(well.depth)} м`}>
-        <div className="bgd-lithology-column">
-          <div className="bgd-lithology-column__scale">{[0, .25, .5, .75, 1].map((ratio) => <span key={ratio} style={{ top: `${ratio * 100}%` }}>{formatDepth(well.depth * ratio)}</span>)}</div>
-          <div className="bgd-lithology-column__track">
-            {sorted.map((item) => <button type="button" key={item.id} title={`${item.lithology}: ${formatDepth(item.from)}–${formatDepth(item.to)} м`} aria-label={`${item.lithology}, ${formatDepth(item.from)}–${formatDepth(item.to)} м`} className={`${lithologyTone[item.lithology]} ${selected?.id === item.id ? 'is-selected' : ''}`} style={{ top: `${well.depth ? item.from / well.depth * 100 : 0}%`, height: `${well.depth ? Math.max(2.5, (item.to - item.from) / well.depth * 100) : 0}%` }} onClick={() => setSelectedId(item.id)}><strong>{item.lithology}</strong><small>{formatDepth(item.from)}–{formatDepth(item.to)} м</small></button>)}
-            {!sorted.length && <div className="bgd-lithology-column__empty"><Layers3 size={22} /><span>Нет интервалов</span></div>}
-          </div>
-          <div className="bgd-lithology-column__stratigraphy">{sorted.map((item) => <span key={item.id} style={{ top: `${well.depth ? item.from / well.depth * 100 : 0}%`, height: `${well.depth ? Math.max(2.5, (item.to - item.from) / well.depth * 100) : 0}%` }}>{item.stratigraphy}</span>)}</div>
-        </div>
-        <div className="bgd-lithology-legend"><span><i className="lithology--sandstone" />Песчаник</span><span><i className="lithology--ore" />Рудный</span><span><i className="lithology--siltstone" />Алевролит</span><span><i className="lithology--clay" />Глина</span></div>
-      </Panel>
-
       <div className="bgd-lithology-main">
-        <Panel title="Интервалы" description={`${bgdLithologyKinds.find((item) => item.id === kind)?.label} · ${track.source} · версия ${track.version}`} action={canEdit ? <div className="bgd-lithology-toolbar"><Button size="sm" variant="quiet" disabled={!undo.length} onClick={undoChange} aria-label="Отменить изменение"><Undo2 size={14} /> Отменить</Button><Button size="sm" variant="quiet" disabled={!redo.length} onClick={redoChange} aria-label="Повторить изменение"><Redo2 size={14} /> Повторить</Button><Button size="sm" variant="secondary" disabled={!availableGap} onClick={addInterval}><Plus size={14} /> Добавить интервал</Button></div> : undefined}>
+        <Panel title="Интервалы" description={`${bgdLithologyKinds.find((item) => item.id === kind)?.label} · ${track.source}`} action={canEdit ? <div className="bgd-lithology-toolbar"><Button size="sm" variant="quiet" disabled={!undo.length} onClick={undoChange} aria-label="Отменить изменение"><Undo2 size={14} /> Отменить</Button><Button size="sm" variant="quiet" disabled={!redo.length} onClick={redoChange} aria-label="Повторить изменение"><Redo2 size={14} /> Повторить</Button><Button size="sm" variant="secondary" disabled={!availableGap} onClick={addInterval}><Plus size={14} /> Добавить интервал</Button></div> : undefined}>
           <div className="bgd-lithology-table" role="table" aria-label="Интервалы литологии">
             <div className="bgd-lithology-table__head" role="row"><span>Интервал</span><span>Мощность</span><span>Порода</span><span>Минерализация</span><span>Цвет</span></div>
             {sorted.map((item) => <button type="button" role="row" key={item.id} className={selected?.id === item.id ? 'is-selected' : ''} onClick={() => setSelectedId(item.id)}><span role="cell"><strong>{formatDepth(item.from)}–{formatDepth(item.to)} м</strong><small>{item.stratigraphy} · {item.source}</small></span><span role="cell">{formatDepth(item.to - item.from)} м</span><span role="cell"><i className={lithologyTone[item.lithology]} />{item.lithology}</span><span role="cell">{item.mineralization ?? '—'}</span><span role="cell">{item.color ?? '—'}</span></button>)}
-            {!sorted.length && <div className="bgd-core-empty geobase-empty"><Layers3 size={19} /><strong>Колонка пока не описана</strong><span>{canEdit ? 'Добавьте первый интервал.' : 'Данные для этого вида ещё не внесены.'}</span></div>}
+            {!sorted.length && <div className="bgd-core-empty geobase-empty"><Layers3 size={19} /><strong>Интервалов пока нет</strong><span>{canEdit ? 'Добавьте первый интервал.' : 'Данные для этого вида ещё не внесены.'}</span></div>}
           </div>
 
           {selected && <section className="bgd-lithology-editor" aria-label="Редактор литологического интервала">
@@ -182,11 +173,11 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
           {issues.length > 0 && <div className="validation-list" aria-label="Проверка интервалов">{issues.map((issue, index) => <div key={`${issue.code}-${index}`} className={`validation-item validation-item--${issue.severity}`}><AlertTriangle size={15} /><span>{issue.message}</span></div>)}</div>}
         </Panel>
 
-        <Panel title="Изменения" description="Сравнение с текущей локальной версией"><div className="bgd-lithology-diff"><GitCompareArrows size={19} /><span><strong>{diff.length ? `Изменено интервалов: ${diff.length}` : 'В этой колонке изменений нет'}</strong><small>{diff.length ? `${diff.filter((item) => item.type === 'added').length} добавлено · ${diff.filter((item) => item.type === 'modified').length} изменено · ${diff.filter((item) => item.type === 'removed').length} удалено` : 'Выберите интервал, чтобы уточнить его описание.'}</small></span>{diff.length > 0 && <Badge tone="warning">Черновик</Badge>}</div></Panel>
+        <Panel title="Изменения" description="Несохранённые изменения"><div className="bgd-lithology-diff"><GitCompareArrows size={19} /><span><strong>{diff.length ? `Изменено интервалов: ${diff.length}` : 'В этих интервалах изменений нет'}</strong><small>{diff.length ? `${diff.filter((item) => item.type === 'added').length} добавлено · ${diff.filter((item) => item.type === 'modified').length} изменено · ${diff.filter((item) => item.type === 'removed').length} удалено` : 'Выберите интервал, чтобы уточнить его описание.'}</small></span>{diff.length > 0 && <Badge tone="warning">Черновик</Badge>}</div></Panel>
       </div>
     </div>
 
-    {canEdit && <div className="bgd-lithology-savebar"><span><strong>{blockingIssues.length ? `Блокирующих ошибок: ${blockingIssues.length}` : changed ? 'Литология готова к сохранению' : 'Локальная версия не изменена'}</strong><small>После сохранения изменения останутся в браузере до сброса данных.</small></span><Button disabled={!changed || blockingIssues.length > 0 || mutation.isPending} onClick={() => mutation.mutate()}><Save size={15} /> {mutation.isPending ? 'Сохраняем…' : 'Сохранить черновик'}</Button></div>}
+    {canEdit && <div className="bgd-lithology-savebar"><span><strong>{blockingIssues.length ? `Блокирующих ошибок: ${blockingIssues.length}` : changed ? 'Литология готова к сохранению' : 'Нет несохранённых изменений'}</strong><small>После сохранения изменения останутся в браузере до сброса данных.</small></span><Button disabled={!changed || blockingIssues.length > 0 || mutation.isPending} onClick={() => mutation.mutate()}><Save size={15} /> {mutation.isPending ? 'Сохраняем…' : 'Сохранить изменения'}</Button></div>}
     {mutation.error && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>{mutation.error.message}</span></div>}
     </WorkspaceTabs>
   </div>

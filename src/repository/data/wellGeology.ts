@@ -1,7 +1,6 @@
 import type { Well, WellGeologyData } from '../../entities/well/model/types'
 
 const baseGeologyData: WellGeologyData = {
-  baseVersion: 7,
   intervals: [
     { id: 'LITH-01', from: 0, to: 120, lithology: 'Суглинок', stratigraphy: 'Q', mineralization: 'Отсутствует', color: 'Бурый', description: 'Покровные суглинки, влажные, с редким щебнем.', source: 'Ручное описание' },
     { id: 'LITH-02', from: 120, to: 280, lithology: 'Песчаник', stratigraphy: 'K2', mineralization: 'Отсутствует', color: 'Светло-серый', description: 'Песчаник мелкозернистый, серый, слабосцементированный.', source: 'Керн' },
@@ -14,13 +13,13 @@ const baseGeologyData: WellGeologyData = {
 const geologyStore = new Map<string, WellGeologyData>()
 
 function cloneGeology(data: WellGeologyData): WellGeologyData {
-  return { baseVersion: data.baseVersion, intervals: data.intervals.map((item) => ({ ...item })) }
+  return { intervals: data.intervals.map((item) => ({ ...item })) }
 }
 
 export function getGeologyData(well: Well) {
   const stored = geologyStore.get(well.id)
   if (stored) return cloneGeology(stored)
-  const seeded = ['WELL-1042', 'WELL-1010-FULL'].includes(well.id) ? { ...cloneGeology(baseGeologyData), baseVersion: well.version ?? 7 } : { baseVersion: well.version ?? 1, intervals: [] }
+  const seeded = ['WELL-1042', 'WELL-1010-FULL'].includes(well.id) ? cloneGeology(baseGeologyData) : { intervals: [] }
   geologyStore.set(well.id, cloneGeology(seeded))
   return seeded
 }

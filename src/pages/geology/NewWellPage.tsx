@@ -1,7 +1,7 @@
 import { useBlocker } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Calculator, CircleAlert, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CreateWellInput, UpdateWellInput, Well, WellBgdData, WellPurpose, WellType } from '../../entities/well/model/types'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { createWell, fetchGeologicalMasterData, fetchPlatformPreferences, fetchWell, fetchWells, updateWell } from '../../repository/api'
@@ -15,6 +15,7 @@ import { normalizeBgdWellView, type BgdWellSection } from '../../features/geobas
 import { BgdWellNavigation } from '../../features/geobase/ui/BgdWellNavigation'
 import { getBgdSectionLabel } from '../../features/geobase/model/bgdWellNavigation'
 import { WorkspaceTabs } from '../../shared/ui/WorkspaceTabs'
+import { UnsavedChangesContext, type UnsavedEditor } from '../../shared/lib/unsavedChangesContext'
 import { DiscardChangesDialog } from '../../shared/ui/DiscardChangesDialog'
 import '../../features/geobase/bgd-workbench.css'
 import { BgdWellLogsTab } from './components/BgdWellLogsTab'
@@ -49,7 +50,9 @@ function numberValue(value: string): number | null {
   return Number.isFinite(result) ? result : null
 }
 
-export function WellEditorPage({ depositId, wellId, activeTab: controlledActiveTab, activeView: controlledView, onViewChange, onTabChange, onCancel, onSaved }: { depositId?: string; wellId?: string; activeTab?: BgdWellSection; activeView?: string; onViewChange?: (view: string) => void; onTabChange?: (tab: BgdWellSection) => void; onCancel: () => void; onSaved: (well: Well) => void }) {
+export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: controlledActiveTab, activeView: controlledView, onViewChange, onTabChange, onCancel, onSaved }: { depositId?: string; wellId?: string; activeTab?: BgdWellSection; activeView?: string; onViewChange?: (view: string) => void; onTabChange?: (tab: BgdWellSection) => void; onCancel: () => void; onSaved: (well: Well) => void }) {
+  const [createdWellId, setCreatedWellId] = useState<string>()
+  const wellId = requestedWellId ?? createdWellId
   const { persona } = useSession()
   const queryClient = useQueryClient()
   const masterQuery = useQuery({ queryKey: ['geology-master'], queryFn: fetchGeologicalMasterData })
@@ -64,15 +67,29 @@ export function WellEditorPage({ depositId, wellId, activeTab: controlledActiveT
   const [internalView, setInternalView] = useState('')
   const [baseline, setBaseline] = useState('')
   const [dataDirty, setDataDirty] = useState(false)
-  const [pendingSection, setPendingSection] = useState<BgdWellSection | null>(null)
+  const [pendingTransition, setPendingTransition] = useState<(() => void) | null>(null)
+  const [transitionError, setTransitionError] = useState('')
+  const [transitionSaving, setTransitionSaving] = useState(false)
+  const editors = useRef(new Set<{ current: UnsavedEditor }>())
+  const bypassNavigation = useRef(false)
+  const savingForNavigation = useRef(false)
+  const register = useCallback((editor: { current: UnsavedEditor }) => { editors.current.add(editor); return () => { editors.current.delete(editor) } }, [])
   const editing = Boolean(wellId)
   const activeTab = controlledActiveTab ?? internalActiveTab
   const view = normalizeBgdWellView(activeTab, controlledView ?? internalView)
-  const setView = (next: string) => onViewChange ? onViewChange(next) : setInternalView(next)
-  const setActiveTab = (tab: BgdWellSection) => { if (!onTabChange && tab !== activeTab && dataDirty) { setPendingSection(tab); return } if (onTabChange) onTabChange(tab); else { setInternalActiveTab(tab); setInternalView('') } }
+  const dirty = Boolean(baseline) && JSON.stringify(form) !== baseline
+  const requestTransition = useCallback((transition: () => void) => {
+    if (dirty || dataDirty || [...editors.current].some((editor) => editor.current.dirty)) { setTransitionError(''); setPendingTransition(() => transition) }
+    else transition()
+  }, [dirty, dataDirty])
+  const guardContext = useMemo(() => ({ register, requestTransition }), [register, requestTransition])
+  useEffect(() => { bypassNavigation.current = false }, [activeTab, view, wellId])
+  const setView = (next: string) => { if (next !== view) requestTransition(() => { if (onViewChange) { bypassNavigation.current = dirty || dataDirty; onViewChange(next) } else setInternalView(next) }) }
+  const setActiveTab = (tab: BgdWellSection) => { if (tab !== activeTab) requestTransition(() => { if (onTabChange) { bypassNavigation.current = dirty || dataDirty; onTabChange(tab) } else { setInternalActiveTab(tab); setInternalView('') } }) }
+
 
   useEffect(() => {
-    const key = wellId ? `edit:${wellId}:${wellQuery.data?.version ?? ''}` : `new:${resolvedDepositId}`
+    const key = wellId ? `edit:${wellId}` : `new:${resolvedDepositId}`
     if (initialized.current === key || (wellId && !wellQuery.data)) return
     const next = wellQuery.data ? formFromWell(wellQuery.data, resolvedDepositId) : createEmptyWellBgdForm(resolvedDepositId)
     const deposit = masterQuery.data?.deposits.find((item) => item.id === resolvedDepositId)
@@ -104,28 +121,56 @@ export function WellEditorPage({ depositId, wellId, activeTab: controlledActiveT
       if (!editing || wellQuery.data?.status !== status) bgd.statusHistory = [...(editing ? bgd.statusHistory : []), { status, changedAt: bgd.statusChangedAt }]
       const payload: CreateWellInput = { ...form, code: String(bgd.name), purpose: purposeFor(form.type), coordinates: { x: bgd.geometry.headX ?? 0, y: bgd.geometry.headY ?? 0 }, depth: bgd.geometry.acceptedDepth ?? bgd.drilling.loggingDepth ?? bgd.drilling.designDepth ?? 0, depositId: bgd.depositId, lensId: bgd.lensId || undefined, bgd }
       if (!editing) return createWell(payload)
-      return updateWell({ ...payload, wellId: wellId!, expectedVersion: wellQuery.data?.version ?? 1 } satisfies UpdateWellInput)
+      return updateWell({ ...payload, wellId: wellId! } satisfies UpdateWellInput)
     },
-    onSuccess: async (well) => { await Promise.all([queryClient.invalidateQueries({ queryKey: ['wells'] }), queryClient.invalidateQueries({ queryKey: ['well', well.id] }), queryClient.invalidateQueries({ queryKey: ['demo-audit-events'] })]); onSaved(well) },
+    onSuccess: async (well) => { if (!wellId) setCreatedWellId(well.id); await Promise.all([queryClient.invalidateQueries({ queryKey: ['wells'] }), queryClient.invalidateQueries({ queryKey: ['well', well.id] }), queryClient.invalidateQueries({ queryKey: ['demo-audit-events'] })]); setBaseline(JSON.stringify(form)); if (!savingForNavigation.current) { bypassNavigation.current = true; onSaved(well) } },
     onError: (error) => setErrors(error.message.split('\n')),
   })
 
-  const dirty = Boolean(baseline) && JSON.stringify(form) !== baseline
-  const routeBlocker = useBlocker({ withResolver: true, disabled: !(dirty || dataDirty) || mutation.isPending, enableBeforeUnload: dirty || dataDirty, shouldBlockFn: ({ current, next }) => current.pathname !== next.pathname || (dataDirty && (current.search as { tab?: string }).tab !== (next.search as { tab?: string }).tab) })
+  const routeBlocker = useBlocker({ withResolver: true, disabled: !(dirty || dataDirty), enableBeforeUnload: dirty || dataDirty, shouldBlockFn: ({ current, next }) => {
+    if (bypassNavigation.current) { bypassNavigation.current = false; return false }
+    return current.pathname !== next.pathname || JSON.stringify(current.search) !== JSON.stringify(next.search)
+  } })
+  const continueTransition = () => {
+    setPendingTransition(null)
+    setTransitionError('')
+    if (routeBlocker?.status === 'blocked') routeBlocker.proceed()
+    else pendingTransition?.()
+  }
+  const discardAndContinue = () => {
+    if (baseline) setForm(JSON.parse(baseline) as CreateWellInput)
+    for (const editor of editors.current) if (editor.current.dirty) editor.current.discard()
+    setDataDirty(false)
+    continueTransition()
+  }
+  const saveAndContinue = async () => {
+    setTransitionSaving(true)
+    setTransitionError('')
+    savingForNavigation.current = true
+    try {
+      for (const editor of editors.current) if (editor.current.dirty && !await editor.current.save()) {
+        setTransitionError('Проверьте поля текущей вкладки. Изменения не сохранены.')
+        return
+      }
+      if (dirty) await mutation.mutateAsync()
+      setDataDirty(false)
+      continueTransition()
+    } catch (error) { setTransitionError(error instanceof Error ? error.message : 'Не удалось сохранить изменения. Повторите попытку.') }
+    finally { savingForNavigation.current = false; setTransitionSaving(false) }
+  }
+
 
   const master = masterQuery.data
   const bgd = form.bgd!
   const currentDeposit = master?.deposits.find((item) => item.id === bgd.depositId)
-  const sites = master?.sites.filter((site) => site.depositId === bgd.depositId && site.status === 'active') ?? []
-  const siteIds = new Set(sites.map((site) => site.id))
-  const lenses = master?.lenses.filter((lens) => siteIds.has(lens.siteId) && lens.status === 'active') ?? []
-  const publishedCondition = master?.conditionSets.find((condition) => siteIds.has(condition.siteId) && condition.status === 'published')
+  const depositCondition = master?.conditionSets.find((condition) => condition.depositId === bgd.depositId)
   const conditionValue = (id: string, fallback = 0) => {
-    const value = Number(publishedCondition?.limits?.find((limit) => limit.id === id)?.value)
+    const rawValue = depositCondition?.limits.find((limit) => limit.id === id)?.value
+    const value = rawValue?.trim() ? Number(rawValue) : NaN
     return Number.isFinite(value) ? value : fallback
   }
   const deviationDefaults = {
-    trueCorrection: conditionValue('true-azimuth-correction', publishedCondition?.azimuthCorrection ?? 0),
+    trueCorrection: conditionValue('true-azimuth-correction', depositCondition?.azimuthCorrection ?? 0),
     magneticCorrection: conditionValue('magnetic-azimuth-correction'),
     minZenithAngle: conditionValue('min-zenith-angle'),
   }
@@ -158,7 +203,7 @@ export function WellEditorPage({ depositId, wellId, activeTab: controlledActiveT
   if (editing && wellQuery.error) return <div className="page-stack"><PageHeader eyebrow="База геологических данных" title="Скважина не найдена" description={wellQuery.error.message} actions={<Button variant="secondary" onClick={onCancel}><ArrowLeft size={16} /> Назад</Button>} /></div>
 
   const content = <>
-    {(['description', 'geometry', 'passport', 'documentation'] as BgdWellSection[]).includes(activeTab) && <DescriptionTab section={activeTab} view={view} form={form} master={master} currentDeposit={currentDeposit} lenses={lenses} disabled={generalDisabled} technologyDisabled={technologyDisabled} setFormField={setFormField} setBgd={setBgd} setGeometry={setGeometry} setPassport={setPassport} calculateBottom={calculateBottom} />}
+    {(['description', 'geometry', 'passport', 'documentation'] as BgdWellSection[]).includes(activeTab) && <DescriptionTab section={activeTab} view={view} form={form} master={master} currentDeposit={currentDeposit} disabled={generalDisabled} technologyDisabled={technologyDisabled} setFormField={setFormField} setBgd={setBgd} setGeometry={setGeometry} setPassport={setPassport} calculateBottom={calculateBottom} />}
     {activeTab === 'drilling' && <DrillingTab bgd={bgd} disabled={generalDisabled} loggingDisabled={loggingDisabled} setDrilling={setDrilling} />}
     {activeTab === 'development' && <DevelopmentTab bgd={bgd} disabled={technologyDisabled} setDevelopment={setDevelopment} />}
     {activeTab === 'geology' && <GeologyTab view={view} bgd={bgd} disabled={generalDisabled} setGeology={setGeology} />}
@@ -166,20 +211,20 @@ export function WellEditorPage({ depositId, wellId, activeTab: controlledActiveT
     {activeTab === 'logs' && (wellQuery.data ? <BgdWellLogsTab key={wellId} onDirtyChange={setDataDirty} well={wellQuery.data} canEdit={canEditAll || canManageLogs} /> : <Panel title="Каротажи" description="Каротажные исследования связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся добавление, импорт и просмотр каротажей.</span></div></Panel>)}
     {activeTab === 'core-runs' && (wellQuery.data ? <BgdWellCoreRunsTab key={wellId} onDirtyChange={setDataDirty} view={view === 'measurements' ? 'measurements' : 'runs'} well={wellQuery.data} canEditRuns={canEditAll || canManageCore} canEditMeasurements={canEditAll || canManageCoreMeasurements} /> : <CoreRequiresSavedWell title="Керновые рейсы" />)}
     {activeTab === 'core-samples' && (wellQuery.data ? <BgdWellCoreSamplesTab key={wellId} onDirtyChange={setDataDirty} well={wellQuery.data} canEdit={canEditAll || canManageCore} /> : <CoreRequiresSavedWell title="Керновые пробы" />)}
-    {activeTab === 'lithology' && (wellQuery.data ? <BgdWellLithologyTab key={wellId} onDirtyChange={setDataDirty} activeKind={view} onKindChange={setView} well={wellQuery.data} canEdit={canEditAll} /> : <Panel title="Литология" description="Литологические колонки связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся колонки по керну, каротажу и сводная.</span></div></Panel>)}
+    {activeTab === 'lithology' && (wellQuery.data ? <BgdWellLithologyTab key={wellId} onDirtyChange={setDataDirty} activeKind={view} onKindChange={setView} well={wellQuery.data} canEdit={canEditAll} /> : <Panel title="Литология" description="Литологические интервалы связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся интервалы по керну, каротажу и сводные.</span></div></Panel>)}
     {activeTab === 'ore-intervals' && (wellQuery.data ? <BgdWellOreIntervalsTab key={wellId} onDirtyChange={setDataDirty} well={wellQuery.data} canManageAll={canManageOreIntervals || canEditAll} canManageGeophysics={canManageGeophysicalOreIntervals} /> : <Panel title="Рудные интервалы" description="Интервалы связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся рудные интервалы и объединения.</span></div></Panel>)}
 
   </>
 
-  return <div className="bgd-well-workbench"><BgdWellNavigation section={activeTab} onChange={setActiveTab} wellCode={editing ? `WELL-${form.code}` : 'Новая скважина'} /><div className="page-stack geobase-page bgd-well-page">
+  return <UnsavedChangesContext.Provider value={guardContext}><div className="bgd-well-workbench"><BgdWellNavigation section={activeTab} onChange={setActiveTab} wellCode={editing ? `WELL-${form.code}` : 'Новая скважина'} /><div className="page-stack geobase-page bgd-well-page">
     {!canSave && <div className="form-alert"><ShieldCheck size={17} /><span>Карточка открыта только для чтения. Доступные поля определяются назначенными правами.</span></div>}
     {editing && !canEditAll && canSave && <div className="form-alert"><ShieldCheck size={17} /><span>{activeTab === 'lithology' ? 'Литология доступна для просмотра. Изменение интервалов требует права полного редактирования скважины.' : activeTab === 'ore-intervals' && canManageGeophysicalOreIntervals ? 'Доступно управление выделениями по гамма-каротажу и КНД. Керн и паспортные источники — только чтение.' : activeTab === 'deviation' && canManageDeviation ? canAdministerDeviation ? 'Доступны промеры, расчёт, удаление, выбор основного промера и импорт инклинометрии.' : 'Доступны ввод, редактирование, расчёт, удаление и выбор основного промера. Импорт требует расширенного права.' : canEditTechnology ? 'Доступно изменение типа, состояния и показателей освоения. Остальные поля — только чтение.' : activeTab === 'logs' && canManageLogs ? 'Доступно управление каротажами этой скважины. Паспортные и геологические поля — только чтение.' : activeTab === 'core-runs' && canManageCoreMeasurements ? 'Доступно управление промером внутри выбранного рейса. Сами рейсы и пробы — только чтение.' : 'Доступно изменение глубины по каротажу. Остальные поля — только чтение.'}</span></div>}
     {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span><strong>Проверьте форму</strong>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}
     {workTabs.length ? <WorkspaceTabs tabs={workTabs} value={tabValue} label={getBgdSectionLabel(activeTab)} onChange={(id) => { if (activeTab === 'drilling' || activeTab === 'development') setActiveTab(id as BgdWellSection); else setView(id) }}>{content}</WorkspaceTabs> : <div className="workspace-tab-panel">{content}</div>}
-    {(dirty || !editing || !['deviation', 'logs', 'core-runs', 'core-samples', 'lithology', 'ore-intervals'].includes(activeTab)) && <footer className="bgd-well-actions"><Button variant="secondary" onClick={onCancel}>Отмена</Button><span>{editing ? 'Изменения создадут новую версию и запись аудита.' : 'После сохранения скважина появится в карточке месторождения.'}</span><Button disabled={!canSave || mutation.isPending} onClick={() => { setErrors([]); mutation.mutate() }}><Save size={16} /> {mutation.isPending ? 'Сохраняем…' : editing ? 'Сохранить изменения' : 'Создать скважину'}</Button></footer>}
+    {(dirty || !editing || !['deviation', 'logs', 'core-runs', 'core-samples', 'lithology', 'ore-intervals'].includes(activeTab)) && <footer className="bgd-well-actions"><Button variant="secondary" onClick={onCancel}>Отмена</Button><span>{!editing && 'После сохранения скважина появится в карточке месторождения.'}</span><Button disabled={!canSave || mutation.isPending} onClick={() => { setErrors([]); mutation.mutate() }}><Save size={16} /> {mutation.isPending ? 'Сохраняем…' : editing ? 'Сохранить изменения' : 'Создать скважину'}</Button></footer>}
     <datalist id="bgd-well-people">{people.map((person) => <option key={person} value={person} />)}</datalist>
-    {(routeBlocker?.status === 'blocked' || pendingSection) && <DiscardChangesDialog onStay={() => { routeBlocker?.reset?.(); setPendingSection(null) }} onDiscard={() => { if (routeBlocker?.status === 'blocked') routeBlocker.proceed(); else if (pendingSection) { setDataDirty(false); setInternalActiveTab(pendingSection); setInternalView('') } setPendingSection(null) }} />}
-  </div></div>
+    {(routeBlocker?.status === 'blocked' || pendingTransition) && <DiscardChangesDialog pending={transitionSaving} error={transitionError} onSave={() => void saveAndContinue()} onStay={() => { routeBlocker?.reset?.(); setPendingTransition(null); setTransitionError('') }} onDiscard={discardAndContinue} />}
+  </div></div></UnsavedChangesContext.Provider>
 }
 
 function CoreRequiresSavedWell({ title }: { title: string }) {
@@ -189,13 +234,14 @@ function CoreRequiresSavedWell({ title }: { title: string }) {
 type FormSetter = <Key extends keyof CreateWellInput>(key: Key, value: CreateWellInput[Key]) => void
 type BgdSetter = <Key extends keyof WellBgdData>(key: Key, value: WellBgdData[Key]) => void
 
-function DescriptionTab({ section, view, form, master, currentDeposit, lenses, disabled, technologyDisabled, setFormField, setBgd, setGeometry, setPassport, calculateBottom }: { section: BgdWellSection; view?: string; form: CreateWellInput; master: Awaited<ReturnType<typeof fetchGeologicalMasterData>> | undefined; currentDeposit: Awaited<ReturnType<typeof fetchGeologicalMasterData>>['deposits'][number] | undefined; lenses: Awaited<ReturnType<typeof fetchGeologicalMasterData>>['lenses']; disabled: boolean; technologyDisabled: boolean; setFormField: FormSetter; setBgd: BgdSetter; setGeometry: (key: keyof WellBgdData['geometry'], value: number | null) => void; setPassport: (key: keyof WellBgdData['passport'], value: string) => void; calculateBottom: () => void }) {
+function DescriptionTab({ section, view, form, master, currentDeposit, disabled, technologyDisabled, setFormField, setBgd, setGeometry, setPassport, calculateBottom }: { section: BgdWellSection; view?: string; form: CreateWellInput; master: Awaited<ReturnType<typeof fetchGeologicalMasterData>> | undefined; currentDeposit: Awaited<ReturnType<typeof fetchGeologicalMasterData>>['deposits'][number] | undefined; disabled: boolean; technologyDisabled: boolean; setFormField: FormSetter; setBgd: BgdSetter; setGeometry: (key: keyof WellBgdData['geometry'], value: number | null) => void; setPassport: (key: keyof WellBgdData['passport'], value: string) => void; calculateBottom: () => void }) {
   const bgd = form.bgd!
+  const selectedOccurrenceId = currentDeposit?.occurrences.find((item) => item.id === bgd.lensId || item.legacyIds?.includes(bgd.lensId))?.id ?? bgd.lensId
   return <div className="bgd-well-stack">
     {section === 'description' && <Panel title={view === 'notes' ? 'Описание и примечание' : 'Общие сведения'} description="Название скважины уникально в пределах выбранного месторождения.">{view !== 'notes' && <div className="form-grid bgd-well-form-grid">
       <NumericField label="Название скважины" required value={bgd.name} disabled={disabled} onChange={(value) => { setBgd('name', value ?? 0); setFormField('code', String(value ?? '')) }} />
-      <label className="field"><span className="field__label">Месторождение <em>*</em></span><select disabled={disabled} value={bgd.depositId} onChange={(event) => { const next = master?.deposits.find((item) => item.id === event.target.value); setBgd('depositId', event.target.value); setFormField('depositId', event.target.value); if (next?.coordinateSystem) setFormField('crs', next.coordinateSystem) }}><option value="">Выберите</option>{master?.deposits.filter((item) => !item.isHidden && item.status === 'active').map((item) => <option key={item.id} value={item.id}>{item.nameRu}</option>)}</select></label>
-      <label className="field"><span className="field__label">Залежь</span><select disabled={disabled} value={bgd.lensId} onChange={(event) => setBgd('lensId', event.target.value)}><option value="">Не выбрана</option>{currentDeposit?.occurrences.map((item) => <option key={item.id} value={item.id}>{item.nameRu}</option>)}{lenses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+      <label className="field"><span className="field__label">Месторождение <em>*</em></span><select disabled={disabled} value={bgd.depositId} onChange={(event) => { const next = master?.deposits.find((item) => item.id === event.target.value); setBgd('depositId', event.target.value); setBgd('lensId', ''); setFormField('depositId', event.target.value); if (next?.coordinateSystem) setFormField('crs', next.coordinateSystem) }}><option value="">Выберите</option>{master?.deposits.filter((item) => !item.isHidden && item.status === 'active').map((item) => <option key={item.id} value={item.id}>{item.nameRu}</option>)}</select></label>
+      <label className="field"><span className="field__label">Залежь</span><select disabled={disabled} value={selectedOccurrenceId} onChange={(event) => setBgd('lensId', event.target.value)}><option value="">Не выбрана</option>{currentDeposit?.occurrences.filter((item) => item.status !== 'archived' || item.id === selectedOccurrenceId).map((item) => <option key={item.id} value={item.id}>{item.nameRu}</option>)}</select></label>
       <SelectField label="Профиль" value={bgd.profileId} disabled={disabled} options={['PR-07', 'PR-06', 'CN-02']} onChange={(value) => { setBgd('profileId', value); setFormField('profile', value || 'Не назначен') }} />
       <label className="field"><span className="field__label">Тип скважины <em>*</em></span><select disabled={technologyDisabled} value={form.type} onChange={(event) => setFormField('type', event.target.value as WellType)}>{wellTypes.map((item) => <option key={item}>{item}</option>)}</select></label>
       <SelectField label="Геологический блок" value={bgd.geoBlockId} disabled={disabled} options={['BLK-07-11', 'BLK-07-12', 'BLK-07-13']} onChange={(value) => { setBgd('geoBlockId', value); setFormField('block', value || '—') }} />

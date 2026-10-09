@@ -1,6 +1,6 @@
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, Calculator, CalendarDays, CheckCircle2, Compass, FileUp, Gauge, Pencil, Plus, Route, Ruler, ShieldCheck, Star, Trash2, UserRound, Wrench, X } from 'lucide-react'
+import { AlertTriangle, Calculator, CalendarDays, CheckCircle2, Compass, FileUp, Gauge, Pencil, Plus, Route, Ruler, Star, Trash2, UserRound, Wrench, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { DeviationSurvey, WellDeviationWorkspace } from '../../../entities/well-deviation/model/types'
 import type { Well } from '../../../entities/well/model/types'
@@ -48,10 +48,10 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, on
 
   if (query.isLoading || !workspace) return <div className="page-loading page-loading--inline"><span /><p>Загружаем инклинометрию…</p></div>
 
-  const persistSurvey = (draft: DeviationSurveyDraft, currentSurvey: DeviationSurvey | 'new') => {
+  const persistSurvey = async (draft: DeviationSurveyDraft, currentSurvey: DeviationSurvey | 'new') => {
     const errors = validateDeviationSurveyDraft(draft, well.depth)
-    if (errors.length) return errors
-    const surveyId = currentSurvey === 'new' ? `DEVIATION-${well.id}-MANUAL-${workspace.version + 1}` : currentSurvey.id
+    if (errors.length) return false
+    const surveyId = currentSurvey === 'new' ? `DEVIATION-${well.id}-MANUAL-${crypto.randomUUID()}` : currentSurvey.id
     const points = [...draft.points]
       .sort((left, right) => left.depth - right.depth)
       .map((point, index) => ({
@@ -59,7 +59,7 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, on
         id: currentSurvey === 'new'
           ? `${surveyId}-POINT-${String(index + 1).padStart(2, '0')}`
           : point.id.startsWith('POINT-DRAFT-')
-            ? `${surveyId}-POINT-NEW-${workspace.version + 1}-${String(index + 1).padStart(2, '0')}`
+            ? `${surveyId}-POINT-NEW-${crypto.randomUUID()}-${String(index + 1).padStart(2, '0')}`
             : point.id,
         dx: null,
         dy: null,
@@ -80,23 +80,20 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, on
       zenithTopBottom: null,
       bearingTopBottom: null,
       points,
-      version: currentSurvey === 'new' ? 1 : currentSurvey.version + 1,
+
     }
     const others = workspace.surveys.map((item) => nextSurvey.isPrimary && item.id !== surveyId ? { ...item, isPrimary: false } : item)
     const surveys = currentSurvey === 'new' ? [...others, nextSurvey] : others.map((item) => item.id === surveyId ? nextSurvey : item)
-    save.mutate({ current: workspace, next: { ...workspace, surveys }, eventType: currentSurvey === 'new' ? 'deviation.survey.created' : 'deviation.survey.updated' }, {
-      onSuccess: () => {
-        setSelectedId(surveyId)
-        setEditorSurvey(null)
-        setNotice(currentSurvey === 'new' ? 'Промер добавлен. Выполните расчёт хода ствола.' : 'Промер сохранён. Расчётные значения очищены и требуют пересчёта.')
-      },
-    })
-    return []
+    await save.mutateAsync({ current: workspace, next: { ...workspace, surveys }, eventType: currentSurvey === 'new' ? 'deviation.survey.created' : 'deviation.survey.updated' })
+    setSelectedId(surveyId)
+    setEditorSurvey(null)
+    setNotice(currentSurvey === 'new' ? 'Промер добавлен. Выполните расчёт хода ствола.' : 'Промер сохранён. Расчётные значения очищены и требуют пересчёта.')
+    return true
   }
 
   const calculate = (survey: DeviationSurvey) => {
     const calculation = calculateDeviationSurvey({ correctionAngle: survey.correctionAngle, minZenithAngle: survey.minZenithAngle, points: survey.points })
-    const updated = { ...survey, ...calculation, calculatedAt: new Date().toISOString(), version: survey.version + 1 }
+    const updated = { ...survey, ...calculation, calculatedAt: new Date().toISOString(), }
     save.mutate({ current: workspace, next: { ...workspace, surveys: workspace.surveys.map((item) => item.id === survey.id ? updated : item) }, eventType: 'deviation.calculated' }, {
       onSuccess: () => setNotice(`Промер от ${formatDateTime(survey.surveyDate)} рассчитан методом среднего угла.`),
     })
@@ -124,7 +121,7 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, on
   }
 
   const importFixture = () => {
-    const surveyId = `DEVIATION-${well.id}-IMPORT-${workspace.version + 1}`
+    const surveyId = `DEVIATION-${well.id}-IMPORT-${crypto.randomUUID()}`
     const maxDepth = Math.max(50, well.depth)
     const draft: DeviationSurveyDraft = {
       surveyDate: '2026-07-05T08:00', azimuthKind: 'magnetic', correctionAngle: defaults.magneticCorrection,
@@ -133,7 +130,7 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, on
       points: [0, .25, .5, .75, 1].map((ratio, index) => ({ id: `${surveyId}-POINT-${index + 1}`, depth: Number((maxDepth * ratio).toFixed(1)), azimuth: [181, 205, 238, 262, 279][index]!, zenithAngle: [.2, .8, 1.3, 1.1, .7][index]! })),
     }
     const calculation = calculateDeviationSurvey(draft)
-    const nextSurvey: DeviationSurvey = { ...draft, ...calculation, id: surveyId, wellId: well.id, calculatedAt: new Date().toISOString(), version: 1 }
+    const nextSurvey: DeviationSurvey = { ...draft, ...calculation, id: surveyId, wellId: well.id, calculatedAt: new Date().toISOString(), }
     save.mutate({ current: workspace, next: { ...workspace, surveys: [...workspace.surveys, nextSurvey] }, eventType: 'deviation.import.applied' }, {
       onSuccess: () => {
         setImportOpen(false)
@@ -153,7 +150,7 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, on
       <article><span><Compass size={19} /></span><div><strong>{workspace.surveys.length}</strong><small>промеров</small></div></article>
       <article><span><Route size={19} /></span><div><strong>{pointCount}</strong><small>точек измерения</small></div></article>
       <article><span><Star size={19} /></span><div><strong>{primary ? formatDateTime(primary.surveyDate) : 'Не выбран'}</strong><small>основной промер</small></div></article>
-      <article><span><Gauge size={19} /></span><div><strong>v{workspace.version}</strong><small>версия набора</small></div></article>
+
     </section>
 
     <div className="bgd-deviation-layout">
@@ -178,10 +175,7 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, on
       allowPrimary={canAdminister}
       pending={save.isPending}
       onClose={() => setEditorSurvey(null)}
-      onSave={(draft, setErrors) => {
-        const errors = persistSurvey(draft, editorSurvey)
-        setErrors(errors)
-      }}
+      onSave={(draft) => persistSurvey(draft, editorSurvey)}
     />}
     {importOpen && <DeviationImportDialog well={well} pending={save.isPending} onClose={() => setImportOpen(false)} onImport={importFixture} />}
   </div>
@@ -194,7 +188,7 @@ function DeviationInspector({ survey, canEdit, pending, onCalculate, onEdit, onP
       ? <Button size="sm" variant="secondary" disabled={pending} onClick={onPrimary}><Star size={15} /> Сделать основным</Button>
       : undefined
 
-  return <Panel className="bgd-deviation-inspector" title={`Промер от ${formatDateTime(survey.surveyDate)}`} description={`${survey.id} · версия ${survey.version}`} action={primaryAction}>
+  return <Panel className="bgd-deviation-inspector" title={`Промер от ${formatDateTime(survey.surveyDate)}`} description={`${survey.id}`} action={primaryAction}>
     <div className="bgd-log-facts">
       <article><CalendarDays size={17} /><span><small>Дата проведения</small><strong>{formatDateTime(survey.surveyDate)}</strong></span></article>
       <article><Compass size={17} /><span><small>Азимут</small><strong>{azimuthKindLabels[survey.azimuthKind]} · поправка {survey.correctionAngle}°</strong></span></article>
@@ -220,7 +214,7 @@ function DeviationInspector({ survey, canEdit, pending, onCalculate, onEdit, onP
   </Panel>
 }
 
-function DeviationSurveyDialog({ initial, title, wellDepth, defaults, allowPrimary, pending, onClose, onSave }: { initial: DeviationSurveyDraft; title: string; wellDepth: number; defaults: DeviationDefaults; allowPrimary: boolean; pending: boolean; onClose: () => void; onSave: (draft: DeviationSurveyDraft, setErrors: (errors: string[]) => void) => void }) {
+function DeviationSurveyDialog({ initial, title, wellDepth, defaults, allowPrimary, pending, onClose, onSave }: { initial: DeviationSurveyDraft; title: string; wellDepth: number; defaults: DeviationDefaults; allowPrimary: boolean; pending: boolean; onClose: () => void; onSave: (draft: DeviationSurveyDraft) => Promise<boolean> }) {
   const [draft, setDraft] = useState(initial)
   const [errors, setErrors] = useState<string[]>([])
   const expectedCorrection = draft.azimuthKind === 'true' ? defaults.trueCorrection : defaults.magneticCorrection
@@ -232,11 +226,15 @@ function DeviationSurveyDialog({ initial, title, wellDepth, defaults, allowPrima
     while (draft.points.some((point) => point.id === `POINT-DRAFT-${index}`)) index += 1
     update('points', [...draft.points, { id: `POINT-DRAFT-${index}`, depth: Math.min(wellDepth, (draft.points.at(-1)?.depth ?? 0) + 25), azimuth: draft.points.at(-1)?.azimuth ?? 0, zenithAngle: draft.points.at(-1)?.zenithAngle ?? 0 }])
   }
-  const submit = () => {
+  const saveDraft = async () => {
     const nextErrors = validateDeviationSurveyDraft(draft, wellDepth)
     setErrors(nextErrors)
-    if (!nextErrors.length) onSave(draft, setErrors)
+    if (nextErrors.length) return false
+    return onSave(draft)
   }
+  useReportUnsavedChanges(JSON.stringify(draft) !== JSON.stringify(initial), undefined, { save: saveDraft, discard: onClose })
+  const submit = () => { void saveDraft().catch(() => undefined) }
+
   return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
     <section className="geobase-dialog geobase-dialog--deviation" role="dialog" aria-modal="true" aria-labelledby="deviation-editor-title">
       <header><div><span><Compass size={20} /></span><div><h2 id="deviation-editor-title">{title}</h2><p>Описание промера и результаты измерений по глубине.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть форму промера"><X size={19} /></button></header>
@@ -264,7 +262,7 @@ function DeviationSurveyDialog({ initial, title, wellDepth, defaults, allowPrima
           </div>)}
         </section>
       </div>
-      <footer><span><ShieldCheck size={15} /> Сохранение создаст версию и запись аудита.</span><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={pending} onClick={submit}>Сохранить промер</Button></footer>
+      <footer><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={pending} onClick={submit}>Сохранить промер</Button></footer>
     </section>
   </div>
 }

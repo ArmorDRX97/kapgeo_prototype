@@ -6,6 +6,8 @@ export type BgdLocale = 'ru' | 'kk' | 'en'
 
 export type DepositOccurrence = {
   id: string
+  legacyIds?: string[]
+  status?: MasterStatus
   type: string
   nameRu: string
   nameKk: string
@@ -27,7 +29,6 @@ export type Deposit = {
   isHidden: boolean
   occurrences: DepositOccurrence[]
   status: MasterStatus
-  version: number
   createdAt: string
   createdBy: string
   updatedAt: string
@@ -36,7 +37,7 @@ export type Deposit = {
 
 export type CreateDepositInput = Pick<Deposit, 'code' | 'nameRu' | 'nameKk' | 'nameEn'> & Partial<Pick<Deposit, 'objectType' | 'customType' | 'descriptionRu' | 'descriptionKk' | 'descriptionEn' | 'coordinateSystem' | 'isHidden' | 'occurrences'>>
 
-export type UpdateDepositPatch = Pick<Deposit, 'nameRu' | 'nameKk' | 'nameEn' | 'objectType' | 'customType' | 'descriptionRu' | 'descriptionKk' | 'descriptionEn' | 'coordinateSystem' | 'isHidden' | 'occurrences'>
+export type UpdateDepositPatch = Pick<Deposit, 'nameRu' | 'nameKk' | 'nameEn' | 'objectType' | 'customType' | 'descriptionRu' | 'descriptionKk' | 'descriptionEn' | 'coordinateSystem' | 'isHidden'> & { occurrences?: DepositOccurrence[] }
 
 export function getDepositName(deposit: Pick<Deposit, 'nameRu' | 'nameKk' | 'nameEn'>, locale: BgdLocale = 'ru'): string {
   return deposit[locale === 'kk' ? 'nameKk' : locale === 'en' ? 'nameEn' : 'nameRu'] || deposit.nameRu || deposit.nameKk || deposit.nameEn
@@ -56,7 +57,6 @@ export type GeologicalSite = {
   code: string
   name: string
   status: MasterStatus
-  version: number
 }
 
 export type GeologicalLens = {
@@ -65,7 +65,6 @@ export type GeologicalLens = {
   code: string
   name: string
   status: MasterStatus
-  version: number
 }
 
 export type ConditionLimit = {
@@ -89,7 +88,6 @@ export const conditionLimitDefinitions: ConditionLimitDefinition[] = [
   { id: 'filter-bottom-percent', parameter: 'Добавлять процент мощности фильтра при формировании пересечения снизу', unit: '%' },
   { id: 'section-bottom', parameter: 'Нижняя высота разрезов по умолчанию', unit: 'м' },
   { id: 'uranium-cutoff', parameter: 'Бортовое содержание урана', unit: 'м%' },
-  { id: 'permafrost-boundary', parameter: 'Граница вечной мерзлоты' },
   { id: 'effective-thickness-addition', parameter: 'Добавка к эффективной мощности ниже зоны оруденения в проницаемых породах', unit: 'м' },
   { id: 'gamma-barren', parameter: 'Значение ГК безрудных прослоев', unit: 'мкР/ч' },
   { id: 'resistivity-impermeable', parameter: 'Значение КС непроницаемых прослоев', unit: 'Ом·м' },
@@ -124,17 +122,13 @@ export function buildConditionLimits(initial = '', values: Partial<Record<string
 
 export type ConditionSet = {
   id: string
-  siteId: string
-  code: string
-  effectiveFrom: string
+  depositId: string
   density: number
   balanceThreshold: number
   offBalanceThreshold: number
   azimuthCorrection: number
   geometryTolerance: number
-  limits?: ConditionLimit[]
-  status: 'draft' | 'in_review' | 'approved' | 'published'
-  version: number
+  limits: ConditionLimit[]
 }
 
 export type GeologicalMasterData = {

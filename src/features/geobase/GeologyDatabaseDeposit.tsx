@@ -1,18 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BadgeCheck, CheckCircle2, CircleAlert, Database, History, Languages, MapPinned, Plus, RadioTower, RefreshCw, ShieldCheck, SlidersHorizontal, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { buildConditionLimits, getOccurrenceName, type ConditionSet, type Deposit, type GeologicalSite, type UpdateDepositPatch } from '../../entities/geology-master/model/types'
+import { ArrowRightLeft, Check, CircleAlert, Database, History, Languages, Mountain, PencilLine, ShieldCheck, SlidersHorizontal } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { buildConditionLimits, getDepositName, type ConditionSet, type Deposit, type UpdateDepositPatch } from '../../entities/geology-master/model/types'
 import { useSession } from '../../entities/session/model/sessionContext'
 import {
-  approveConditionSet,
-  createConditionSet,
-  createSite,
   deleteDeposit,
   fetchDemoAuditEvents,
   fetchGeologicalMasterData,
-  fetchWells,
-  createConditionSetVersion,
-  publishConditionSet,
+  fetchPlatformPreferences,
+  savePlatformPreferences,
   recordDepositViewed,
   saveConditionSet,
   updateDeposit,
@@ -23,25 +19,24 @@ import { Button } from '../../shared/ui/Button'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { Panel } from '../../shared/ui/Panel'
 import { DeleteDepositDialog, DepositEditor, type DepositDependencies } from './GeologyDatabaseRegistry'
-import type { DepositSection } from './model/depositSection'
+import { WorkspaceDialog } from '../../shared/ui/WorkspaceDialog'
+import { DepositCollections } from './DepositCollections'
 import './geobase.css'
 
-export function GeologyDatabaseDeposit({ depositId, activeSection, onDeleted, onCreateWell, onOpenWell }: {
+export function GeologyDatabaseDeposit({ depositId, onDeleted, onOpenDeposit }: {
   depositId: string
-  activeSection: DepositSection
   onDeleted: () => void
-  onCreateWell: () => void
-  onOpenWell: (wellId: string) => void
+  onOpenDeposit: (depositId: string) => void
 }) {
   const { persona } = useSession()
   const queryClient = useQueryClient()
   const masterQuery = useQuery({ queryKey: ['geology-master'], queryFn: fetchGeologicalMasterData })
   const auditQuery = useQuery({ queryKey: ['demo-audit-events'], queryFn: fetchDemoAuditEvents, enabled: hasPermission(persona, 'geology.bgd.audit') })
-  const wellsQuery = useQuery({ queryKey: ['wells'], queryFn: fetchWells })
+  const [editOpen, setEditOpen] = useState(false)
+  const [switchOpen, setSwitchOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
-  const [limitsCondition, setLimitsCondition] = useState<{ site: GeologicalSite; condition: ConditionSet; isCreate: boolean } | null>(null)
-  const [siteCreateOpen, setSiteCreateOpen] = useState(false)
+  const [limitsCondition, setLimitsCondition] = useState<ConditionSet | null>(null)
 
   useEffect(() => {
     if (!persona || !masterQuery.data?.deposits.some((item) => item.id === depositId)) return
@@ -52,65 +47,34 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onDeleted, on
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['geology-master'] })
 
-  const createLimitsMutation = useMutation({
-    mutationFn: (next: Omit<ConditionSet, 'id' | 'status' | 'version'>) => createConditionSet(next),
-    onSuccess: async (created, input) => {
-      const openSite = limitsCondition?.site
-      await refresh()
-      if (openSite) setLimitsCondition({ site: openSite, condition: created, isCreate: false })
-      setNotice(`Набор кондиций ${input.code} сохранён как черновик v${created.version}.`)
-    },
-  })
-  const createSiteMutation = useMutation({
-    mutationFn: createSite,
-    onSuccess: async (site) => {
-      await refresh()
-      setSiteCreateOpen(false)
-      setNotice(`Участок «${site.name}» добавлен. Теперь для него можно создать набор кондиционных лимитов.`)
-    },
-  })
   const saveLimitsMutation = useMutation({
-    mutationFn: ({ current, next }: { current: ConditionSet; next: Omit<ConditionSet, 'id' | 'siteId' | 'code' | 'version' | 'status'> }) => saveConditionSet(current, next),
-    onSuccess: async (updated) => {
+    mutationFn: (input: Omit<ConditionSet, 'id'>) => saveConditionSet(input),
+    onSuccess: async () => {
       await refresh()
-      setLimitsCondition((current) => current ? { ...current, condition: updated, isCreate: false } : null)
-      setNotice(`Набор кондиций сохранён как черновик v${updated.version}.`)
+      setLimitsCondition(null)
+      setNotice('Кондиционные лимиты сохранены.')
     },
   })
-  const createLimitsVersionMutation = useMutation({
-    mutationFn: (source: ConditionSet) => createConditionSetVersion(source),
-    onSuccess: async (next, source) => {
-      await refresh()
-      const site = data?.sites.find((item) => item.id === source.siteId)
-      if (site) setLimitsCondition({ site, condition: next, isCreate: false })
-      setNotice(`Создана новая версия кондиций v${next.version} (черновик).`)
+  const switchDepositMutation = useMutation({
+    mutationFn: async (nextDepositId: string) => {
+      const preferences = await fetchPlatformPreferences()
+      return savePlatformPreferences({
+        locale: preferences.locale, density: preferences.density, contrast: preferences.contrast,
+        reducedMotion: preferences.reducedMotion, currentDepositId: nextDepositId,
+      })
     },
-  })
-  const approveLimitsMutation = useMutation({
-    mutationFn: (current: ConditionSet) => approveConditionSet(current),
-    onSuccess: async (updated) => {
-      await refresh()
-      setLimitsCondition((current) => current ? { ...current, condition: updated, isCreate: false } : null)
-      setNotice(`Набор кондиций утверждён как v${updated.version}.`)
-    },
-  })
-  const publishLimitsMutation = useMutation({
-    mutationFn: (current: ConditionSet) => {
-      if (!window.confirm('Опубликовать набор кондиционных лимитов? Это завершит цикл согласования.')) return Promise.reject(new Error('Публикация отменена пользователем.'))
-      return publishConditionSet(current)
-    },
-    onError: () => undefined,
-    onSuccess: async (updated) => {
-      await refresh()
-      setLimitsCondition((current) => current ? { ...current, condition: updated, isCreate: false } : null)
-      setNotice(`Набор кондиций опубликован как v${updated.version}.`)
+    onSuccess: (preferences) => {
+      queryClient.setQueryData(['platform-preferences'], preferences)
+      setSwitchOpen(false)
+      onOpenDeposit(preferences.currentDepositId!)
     },
   })
   const updateMutation = useMutation({
     mutationFn: ({ current, patch }: { current: Deposit; patch: UpdateDepositPatch }) => updateDeposit(current, patch),
     onSuccess: async (updated) => {
       await Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: ['demo-audit-events'] })])
-      setNotice(`Изменения «${updated.nameRu}» сохранены как версия ${updated.version}.`)
+      setEditOpen(false)
+      setNotice(`Изменения «${updated.nameRu}» сохранены.`)
     },
   })
   const deleteMutation = useMutation({
@@ -128,12 +92,7 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onDeleted, on
   const currentError = masterQuery.error
     ?? updateMutation.error
     ?? deleteMutation.error
-    ?? createLimitsMutation.error
     ?? saveLimitsMutation.error
-    ?? createLimitsVersionMutation.error
-    ?? approveLimitsMutation.error
-    ?? publishLimitsMutation.error
-    ?? createSiteMutation.error
 
   if (!deposit || !data) {
     return <div className="page-stack geobase-page">
@@ -152,111 +111,79 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onDeleted, on
   const canEdit = hasDepositPermission(persona, 'geology.bgd.update', deposit)
   const canDelete = hasDepositPermission(persona, 'geology.bgd.delete', deposit)
   const sites = data.sites.filter((item) => item.depositId === deposit.id)
-  const siteIds = new Set(sites.map((item) => item.id))
-  const lenses = data.lenses.filter((item) => siteIds.has(item.siteId))
-  const conditionsBySite = sites.map((site) => {
-    const condition = data.conditionSets
-      .filter((item) => item.siteId === site.id)
-      .sort((left, right) => getConditionStatusPriority(right.status) - getConditionStatusPriority(left.status) || right.version - left.version)[0]
-    return { site, condition: condition ?? null }
-  })
+  const depositCondition = data.conditionSets.find((item) => item.depositId === deposit.id)
   const dependencies: DepositDependencies = {
     sites: sites.length,
-    lenses: lenses.length,
-    conditions: data.conditionSets.filter((item) => siteIds.has(item.siteId)).length,
+    lenses: 0,
+    conditions: depositCondition ? 1 : 0,
     occurrences: deposit.occurrences.length,
   }
-  const auditEvents = (auditQuery.data ?? []).filter((event) => event.entityId === deposit.id).slice(0, 8)
-  const depositWells = (wellsQuery.data ?? []).filter((well) => (well.bgd?.depositId ?? 'DEP-SARYTAU') === deposit.id)
-  const versionConflict = currentError?.message.includes('VERSION_CONFLICT')
+  const auditEvents = (auditQuery.data ?? []).filter((event) => event.entityId === deposit.id)
   const canViewAudit = hasPermission(persona, 'geology.bgd.audit')
-  const allowedSections: DepositSection[] = ['overview', 'relations', 'conditions', 'wells', 'edit', ...(canViewAudit ? ['audit' as const] : [])]
-  const selectedSection = allowedSections.includes(activeSection) ? activeSection : 'overview'
 
-  return <div className="page-stack geobase-page">
+  return <div className="page-stack geobase-page geobase-overview">
     <PageHeader
       eyebrow="База геологических данных"
       title={deposit.nameRu}
       description={`Код № ${deposit.code} · ${deposit.nameKk} · ${deposit.nameEn}`}
-      meta={<Badge tone={deposit.isHidden ? 'neutral' : 'success'} dot>{deposit.isHidden ? 'Скрыто' : 'Используется'}</Badge>}
+      meta={<Badge tone={deposit.status === 'archived' || deposit.isHidden ? 'neutral' : 'success'} dot>{deposit.status === 'archived' ? 'Архив' : deposit.isHidden ? 'Скрыто' : 'Используется'}</Badge>}
+      actions={<>
+        {canEdit && <Button variant="secondary" disabled={deposit.status === 'archived'} onClick={() => { updateMutation.reset(); setEditOpen(true) }}><PencilLine size={17} />Редактировать</Button>}
+        <Button variant="secondary" onClick={() => { switchDepositMutation.reset(); setSwitchOpen(true) }}><ArrowRightLeft size={17} />Сменить месторождение</Button>
+      </>}
     />
 
     {!canEdit && <div className="form-alert"><ShieldCheck size={17} /><span>Карточка открыта только для чтения. Изменять этот объект может геолог с назначенным доступом или администратор.</span></div>}
-    {currentError && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span>{versionConflict ? 'Карточка уже изменена в другой вкладке. Обновите данные перед повторным сохранением.' : currentError.message}</span>{versionConflict && <Button size="sm" variant="secondary" onClick={() => void refresh()}><RefreshCw size={14} /> Обновить</Button>}</div>}
+    {currentError && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span>{currentError.message}</span></div>}
     {notice && <div className="success-message" role="status"><ShieldCheck size={17} /><span><strong>БГД обновлена</strong>{notice}</span></div>}
 
-    <div className="geobase-tab-content">
-      <section id="deposit-panel-overview" className="geobase-tab-panel" aria-label="Основные сведения" hidden={selectedSection !== 'overview'}>
-        <div className="geobase-detail-summary">
-          <Panel title="Названия и описание" description="Локализованные сведения карточки месторождения.">
-            <div className="geobase-locales">
-              <article><Languages size={17} /><span><small>Русский</small><strong>{deposit.nameRu}</strong><p>{deposit.descriptionRu || 'Описание не задано'}</p></span></article>
-              <article><Languages size={17} /><span><small>Қазақша</small><strong>{deposit.nameKk}</strong><p>{deposit.descriptionKk || 'Сипаттама берілмеген'}</p></span></article>
-              <article><Languages size={17} /><span><small>English</small><strong>{deposit.nameEn}</strong><p>{deposit.descriptionEn || 'No description'}</p></span></article>
-            </div>
-          </Panel>
-          <Panel title="Пространственный контекст" description="Система координат является необязательным атрибутом.">
-            <div className="geobase-coordinate"><MapPinned size={22} /><span><small>Система координат</small><strong>{deposit.coordinateSystem || 'Не указана'}</strong><p>{deposit.objectType === 'custom' ? deposit.customType : deposit.objectType === 'area' ? 'Площадь' : 'Месторождение'}</p></span></div>
-          </Panel>
-        </div>
-      </section>
+    <div className="geobase-overview__content">
+      <div className="geobase-detail-summary">
+        <Panel title="Названия и описание">
+          <div className="geobase-locales">
+            <article><Languages size={17} /><span><small>Русский</small><strong>{deposit.nameRu}</strong><p>{deposit.descriptionRu || 'Описание не задано'}</p></span></article>
+            <article><Languages size={17} /><span><small>Қазақша</small><strong>{deposit.nameKk}</strong><p>{deposit.descriptionKk || 'Сипаттама берілмеген'}</p></span></article>
+            <article><Languages size={17} /><span><small>English</small><strong>{deposit.nameEn}</strong><p>{deposit.descriptionEn || 'No description'}</p></span></article>
+          </div>
+        </Panel>
+        <Panel title="Сведения об объекте">
+          <dl className="geobase-object-facts">
+            <div><dt>Код месторождения</dt><dd>№ {deposit.code}</dd></div>
+            <div><dt>Тип объекта</dt><dd>{deposit.objectType === 'custom' ? deposit.customType || 'Другой тип' : deposit.objectType === 'area' ? 'Площадь' : 'Месторождение'}</dd></div>
+            <div><dt>Система координат</dt><dd>{deposit.coordinateSystem || 'Не указана'}</dd></div>
+            <div><dt>Использование</dt><dd>{deposit.isHidden ? 'Скрыто из списков выбора' : 'Используется'}</dd></div>
+          </dl>
+        </Panel>
+      </div>
 
-      <section id="deposit-panel-relations" className="geobase-tab-panel" aria-label="Участки и залежи" hidden={selectedSection !== 'relations'}>
-      <Panel className="geobase-relations" title="Связанные участки и залежи" description="Дочерние объекты текущего месторождения показываются в отдельной части карточки.">
-        <div className="geobase-relations__columns">
-          <section><h3>Участки <Badge>{sites.length}</Badge>{canEdit && <Button size="sm" variant="secondary" onClick={() => setSiteCreateOpen(true)}><Plus size={14} /> Добавить</Button>}</h3>{sites.length ? sites.map((site) => <article key={site.id}><span><strong>{site.name}</strong><small>{site.code} · версия {site.version}</small></span><Badge tone={site.status === 'active' ? 'success' : 'neutral'}>{site.status === 'active' ? 'Активен' : 'Архив'}</Badge></article>) : <p>Участки ещё не добавлены.</p>}</section>
-          <section><h3>Залежи <Badge>{deposit.occurrences.length + lenses.length}</Badge></h3>{deposit.occurrences.map((occurrence) => <article key={occurrence.id}><span><strong>{getOccurrenceName(occurrence)}</strong><small>{occurrence.nameKk} · {occurrence.nameEn}</small></span><Badge>{occurrence.type}</Badge></article>)}{lenses.map((lens) => <article key={lens.id}><span><strong>{lens.name}</strong><small>{lens.code} · участок {data.sites.find((site) => site.id === lens.siteId)?.name ?? '—'}</small></span><Badge tone={lens.status === 'active' ? 'success' : 'neutral'}>{lens.status === 'active' ? 'Активна' : 'Архив'}</Badge></article>)}{!deposit.occurrences.length && !lenses.length && <p>Залежи ещё не добавлены.</p>}</section>
-        </div>
+      <DepositCollections deposit={deposit} sites={sites} canEdit={canEdit} canDelete={canDelete} />
+
+      <Panel title={`Кондиционные лимиты ${deposit.nameRu}`} action={<Button size="sm" variant="secondary" onClick={() => { saveLimitsMutation.reset(); setLimitsCondition(depositCondition ?? getEmptyConditionSet(deposit.id)) }}><PencilLine size={16} />Изменить</Button>}>
+        <dl className="geobase-condition-values">{(depositCondition ?? getEmptyConditionSet(deposit.id)).limits.map((limit) => <div key={limit.id}>
+          <dt>{limit.parameter}</dt><dd>{limit.value || 'Не задано'}{limit.value && limit.unit && <small>{limit.unit}</small>}</dd>
+        </div>)}</dl>
       </Panel>
-      </section>
 
-      <section id="deposit-panel-conditions" className="geobase-tab-panel" aria-label="Кондиционные лимиты" hidden={selectedSection !== 'conditions'}>
-        <Panel className="geobase-condition-limits" title="Кондиционные лимиты" description="Действующие параметры по участкам." action={<Badge tone={conditionsBySite.some((item) => item.condition) ? 'success' : 'neutral'}>{conditionsBySite.some((item) => item.condition) ? `${conditionsBySite.filter((item) => item.condition).length} набор` : 'Нет набора'}</Badge>}>
-          <div className="geobase-condition-limits__list">{conditionsBySite.length ? conditionsBySite.map(({ site, condition }) => (
-            <article key={site.id}>
-              <span className="geobase-condition-limits__icon"><SlidersHorizontal size={18} /></span>
-              <div>
-                <strong>{site.name}</strong>
-                {condition ? <>
-                  <small>{condition.code} · действует с {new Date(`${condition.effectiveFrom}T00:00:00`).toLocaleDateString('ru-RU')} · версия {condition.version}</small>
-                  <p>Плотность {condition.limits?.find((item) => item.id === 'rock-density')?.value ?? condition.density.toLocaleString('ru-RU')} {condition.limits?.find((item) => item.id === 'rock-density')?.unit ?? 'т/м³'} · бортовое содержание {condition.limits?.find((item) => item.id === 'uranium-cutoff')?.value ?? condition.balanceThreshold} м%</p>
-                </> : <small>Набор кондиций для участка ещё не создан.</small>}
-              </div>
-              <Badge tone={condition?.status === 'published' ? 'success' : condition?.status === 'approved' ? 'info' : condition?.status === 'draft' ? 'warning' : 'neutral'} dot>{condition?.status === 'published' ? 'Опубликован' : condition?.status === 'approved' ? 'Утверждён' : condition?.status === 'draft' ? 'Ожидает утверждения' : 'Не задан'}</Badge>
-              <Button size="sm" variant={condition?.status === 'draft' ? 'primary' : 'secondary'} className={condition?.status === 'draft' ? 'geobase-condition-limits__review-button' : undefined} onClick={() => setLimitsCondition({ site, condition: condition ?? getEmptyConditionSet(site), isCreate: !condition })}>
-                {condition?.status === 'draft' ? <><BadgeCheck size={15} /> Открыть и утвердить</> : condition ? 'Полный перечень' : 'Создать набор'}
-              </Button>
-            </article>
-          )) : <div className="geobase-empty"><SlidersHorizontal size={22} /><strong>Участки отсутствуют</strong><span>Добавьте участки, затем создайте кондиционные лимиты.</span></div>}</div>
-        </Panel>
-      </section>
-
-      <section id="deposit-panel-wells" className="geobase-tab-panel" aria-label="Скважины" hidden={selectedSection !== 'wells'}>
-        <Panel className="geobase-wells" title="Скважины" description="Скважины создаются и ведутся в контексте текущего месторождения." action={hasPermission(persona, 'geology.bgd.well.create') ? <Button size="sm" onClick={onCreateWell}><Plus size={15} /> Создать скважину</Button> : undefined}>
-          {wellsQuery.isLoading ? <div className="skeleton skeleton--list" /> : depositWells.length ? <div className="geobase-well-list">{depositWells.map((well) => <button type="button" key={well.id} onClick={() => onOpenWell(well.id)}><RadioTower size={18} /><span><strong>Скважина {well.code}</strong><small>{well.type} · {well.profile} · глубина {well.depth.toLocaleString('ru-RU')} м</small></span><Badge tone={well.status === 'Работает' ? 'success' : well.status === 'Отключена' ? 'neutral' : 'warning'} dot>{well.status}</Badge></button>)}</div> : <div className="geobase-empty"><RadioTower size={22} /><strong>Скважин пока нет</strong><span>Создайте первую скважину, чтобы продолжить наполнение месторождения.</span></div>}
-        </Panel>
-      </section>
-
-      <section id="deposit-panel-edit" className="geobase-tab-panel" aria-label="Редактирование" hidden={selectedSection !== 'edit'}>
-        <DepositEditor
-          key={`${deposit.id}-${deposit.version}`}
-          deposit={deposit}
-          canEdit={canEdit}
-          canDelete={canDelete}
-          pending={updateMutation.isPending || deleteMutation.isPending}
-          dependencies={dependencies}
-          onSave={(patch) => { setNotice(null); updateMutation.mutate({ current: deposit, patch }) }}
-          onDelete={() => { setNotice(null); setDeleteOpen(true) }}
-        />
-      </section>
-
-      {canViewAudit && <section id="deposit-panel-audit" className="geobase-tab-panel" aria-label="Аудит" hidden={selectedSection !== 'audit'}>
-        <Panel title="Аудит месторождения" description="Последние операции создания, изменения и удаления записываются автоматически." action={<History size={18} />}>
-          {auditQuery.isLoading ? <p className="geobase-muted">Загружаем события…</p> : auditEvents.length ? <div className="geobase-audit">{auditEvents.map((event) => <article key={event.id}><span><strong>{event.eventType}</strong><small>{event.actor.name}</small></span><time dateTime={event.occurredAt}>{new Date(event.occurredAt).toLocaleString('ru-RU')}</time></article>)}</div> : <p className="geobase-muted">Событий по этому месторождению пока нет.</p>}
-        </Panel>
-      </section>}
+      {canViewAudit && <Panel title="Аудит месторождения" action={<History size={18} />}>
+        {auditQuery.isLoading ? <p className="geobase-muted">Загружаем события…</p> : auditQuery.isError ? <div className="form-alert form-alert--error" role="alert">{auditQuery.error.message}<Button size="sm" variant="secondary" onClick={() => void auditQuery.refetch()}>Повторить</Button></div> : auditEvents.length ? <div className="geobase-audit">{auditEvents.map((event) => <article key={event.id}><span><strong>{event.eventType}</strong><small>{event.actor.name}</small></span><time dateTime={event.occurredAt}>{new Date(event.occurredAt).toLocaleString('ru-RU')}</time></article>)}</div> : <p className="geobase-muted">Событий по этому месторождению пока нет.</p>}
+      </Panel>}
     </div>
 
+    {editOpen && <WorkspaceDialog title={`Редактирование месторождения ${deposit.nameRu}`} pending={updateMutation.isPending} onClose={() => setEditOpen(false)}>
+      {updateMutation.error && <div className="form-alert form-alert--error" role="alert">{updateMutation.error.message}</div>}
+      <DepositEditor key={deposit.id} deposit={deposit} canEdit={canEdit} canDelete={canDelete}
+        pending={updateMutation.isPending || deleteMutation.isPending}
+        onSave={(patch) => { setNotice(null); updateMutation.mutate({ current: deposit, patch }) }}
+        onDelete={() => { setEditOpen(false); setNotice(null); setDeleteOpen(true) }} />
+    </WorkspaceDialog>}
+    {switchOpen && <WorkspaceDialog title="Сменить месторождение" pending={switchDepositMutation.isPending} onClose={() => setSwitchOpen(false)} footer={<Button variant="secondary" disabled={switchDepositMutation.isPending} onClick={() => setSwitchOpen(false)}>Отменить</Button>}>
+      {switchDepositMutation.error && <div className="form-alert form-alert--error" role="alert">{switchDepositMutation.error.message}</div>}
+      <div className="geobase-deposit-picker">{data.deposits.filter((item) => !item.isHidden).map((item) => <button key={item.id} type="button" disabled={switchDepositMutation.isPending} aria-current={item.id === deposit.id ? 'true' : undefined}
+        onClick={() => { if (item.id !== deposit.id) switchDepositMutation.mutate(item.id); else setSwitchOpen(false) }}>
+        <Mountain size={20} /><span><strong>{getDepositName(item)}</strong><small>Месторождение № {item.code}</small></span>{item.id === deposit.id && <Check size={18} aria-label="Текущее месторождение" />}
+      </button>)}</div>
+      {!data.deposits.some((item) => !item.isHidden) && <p className="geobase-muted">Доступных месторождений пока нет.</p>}
+    </WorkspaceDialog>}
     {deleteOpen && <DeleteDepositDialog
       deposit={deposit}
       dependencies={dependencies}
@@ -265,147 +192,81 @@ export function GeologyDatabaseDeposit({ depositId, activeSection, onDeleted, on
       onClose={() => setDeleteOpen(false)}
       onConfirm={() => deleteMutation.mutate(deposit)}
     />}
-    {limitsCondition && <ConditionLimitsDialog
-      key={`${limitsCondition.condition.id}-${limitsCondition.condition.version}-${limitsCondition.isCreate ? 'new' : 'edit'}`}
+    {limitsCondition?.depositId === deposit.id && <ConditionLimitsDialog
+      key={limitsCondition.id}
       canEdit={canEdit}
       input={limitsCondition}
+      depositName={deposit.nameRu}
       onClose={() => setLimitsCondition(null)}
-      onCreate={(next) => createLimitsMutation.mutate(next)}
-      onSave={(patch) => saveLimitsMutation.mutate(patch)}
-      onCreateVersion={(source) => createLimitsVersionMutation.mutate(source)}
-      onApprove={(source) => approveLimitsMutation.mutate(source)}
-      onPublish={(source) => publishLimitsMutation.mutate(source)}
-      pending={createLimitsMutation.isPending || saveLimitsMutation.isPending || createLimitsVersionMutation.isPending || approveLimitsMutation.isPending || publishLimitsMutation.isPending}
-    />}
-    {siteCreateOpen && <CreateSiteDialog
-      deposit={deposit}
-      pending={createSiteMutation.isPending}
-      onClose={() => setSiteCreateOpen(false)}
-      onCreate={(input) => { setNotice(null); createSiteMutation.mutate(input) }}
+      onSave={(next) => saveLimitsMutation.mutate(next)}
+      pending={saveLimitsMutation.isPending}
+      error={saveLimitsMutation.error?.message}
     />}
   </div>
 }
 
-function CreateSiteDialog({ deposit, pending, onClose, onCreate }: {
-  deposit: Deposit
-  pending: boolean
-  onClose: () => void
-  onCreate: (input: Pick<GeologicalSite, 'depositId' | 'code' | 'name'>) => void
-}) {
-  const [code, setCode] = useState('')
-  const [name, setName] = useState('')
-  const normalizedCode = code.trim().toUpperCase().replace(/\s+/g, '-')
-  const canSubmit = Boolean(normalizedCode && name.trim())
-
-  return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
-    <section className="geobase-dialog geobase-dialog--site" role="dialog" aria-modal="true" aria-labelledby="site-create-title">
-      <header><div><span><MapPinned size={20} /></span><div><h2 id="site-create-title">Добавить участок</h2><p>Участок будет создан внутри месторождения «{deposit.nameRu}».</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть форму создания участка"><X size={19} /></button></header>
-      <form className="geobase-site-form" onSubmit={(event) => { event.preventDefault(); if (canSubmit) onCreate({ depositId: deposit.id, code: normalizedCode, name: name.trim() }) }}>
-        <label className="field"><span>Код участка</span><input autoFocus value={code} disabled={pending} onChange={(event) => setCode(event.target.value)} placeholder="Например, SOUTH" required /><small>Код нельзя будет изменить после создания.</small></label>
-        <label className="field"><span>Наименование участка</span><input value={name} disabled={pending} onChange={(event) => setName(event.target.value)} placeholder="Например, Южный" required /></label>
-      </form>
-      <footer><span>После создания участка для него станет доступно заполнение кондиционных лимитов.</span><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={!canSubmit || pending} onClick={() => onCreate({ depositId: deposit.id, code: normalizedCode, name: name.trim() })}><Plus size={15} /> Создать участок</Button></footer>
-    </section>
-  </div>
-}
-
-function getEmptyConditionSet(site: GeologicalSite): ConditionSet {
+function getEmptyConditionSet(depositId: string): ConditionSet {
   return {
-    id: `new-${site.id}`,
-    siteId: site.id,
-    code: `COND-${site.code}`,
-    effectiveFrom: new Date().toISOString().slice(0, 10),
+    id: `CONDITIONS-${depositId}`,
+    depositId,
     density: 0,
     balanceThreshold: 0,
     offBalanceThreshold: 0,
     azimuthCorrection: 0,
     geometryTolerance: 0,
     limits: buildConditionLimits(''),
-    status: 'draft',
-    version: 1,
   }
 }
 
-function getConditionStatusPriority(status: ConditionSet['status']) {
-  return status === 'draft' ? 3 : status === 'approved' ? 2 : status === 'published' ? 1 : 0
-}
-
-function makeConditionPatch(condition: ConditionSet): Omit<ConditionSet, 'id' | 'siteId' | 'code' | 'version' | 'status'> {
-  return {
-    effectiveFrom: condition.effectiveFrom,
-    density: condition.density,
-    balanceThreshold: condition.balanceThreshold,
-    offBalanceThreshold: condition.offBalanceThreshold,
-    azimuthCorrection: condition.azimuthCorrection,
-    geometryTolerance: condition.geometryTolerance,
-    limits: condition.limits?.map((item) => ({ ...item })) ?? [],
-  }
-}
-
-function ConditionLimitsDialog({
-  input,
-  canEdit,
-  onClose,
-  onCreate,
-  onSave,
-  onCreateVersion,
-  onApprove,
-  onPublish,
-  pending,
-}: {
-  input: {
-    site: GeologicalSite
-    condition: ConditionSet
-    isCreate: boolean
-  }
+function ConditionLimitsDialog({ input, depositName, canEdit, onClose, onSave, pending, error }: {
+  input: ConditionSet
+  depositName: string
   canEdit: boolean
   onClose: () => void
-  onCreate: (next: Omit<ConditionSet, 'id' | 'status' | 'version'>) => void
-  onSave: (patch: { current: ConditionSet; next: Omit<ConditionSet, 'id' | 'siteId' | 'code' | 'version' | 'status'> }) => void
-  onCreateVersion: (source: ConditionSet) => void
-  onApprove: (source: ConditionSet) => void
-  onPublish: (source: ConditionSet) => void
+  onSave: (next: Omit<ConditionSet, 'id'>) => void
   pending: boolean
+  error?: string
 }) {
-  const [condition, setCondition] = useState<ConditionSet>(input.condition)
-  const limits = condition.limits ?? []
-  const siteName = input.site.name
-  const canMutate = canEdit && (condition.status === 'draft' || input.isCreate)
-  const canApprove = canEdit && condition.status === 'draft'
-  const canPublish = canEdit && condition.status === 'approved'
-  const canCreateVersion = canEdit && condition.status !== 'draft' && !input.isCreate
-  const canSubmitSave = canEdit && canMutate && limits.length > 0
+  const [condition, setCondition] = useState(input)
+  const dialogRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    const previousFocus = document.activeElement as HTMLElement | null
+    dialogRef.current?.querySelector<HTMLElement>('input:not(:disabled), button:not(:disabled)')?.focus()
+    return () => previousFocus?.focus({ preventScroll: true })
+  }, [])
 
   return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
-    <section className="geobase-dialog geobase-dialog--limits" role="dialog" aria-modal="true" aria-labelledby="condition-limits-title">
-      <header><div><span><SlidersHorizontal size={20} /></span><div><h2 id="condition-limits-title">Кондиционные лимиты</h2><p>{siteName} · {condition.code} · действует с {new Date(`${condition.effectiveFrom}T00:00:00`).toLocaleDateString('ru-RU')} · версия {condition.version}</p></div></div><button type="button" onClick={onClose} aria-label="Закрыть список кондиционных лимитов"><X size={19} /></button></header>
+    <form ref={dialogRef} className="geobase-dialog geobase-dialog--limits" role="dialog" aria-modal="true" aria-labelledby="condition-limits-title"
+      onSubmit={(event) => { event.preventDefault(); if (canEdit && !pending) onSave(condition) }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') { event.preventDefault(); if (!pending) onClose() }
+        if (event.key !== 'Tab') return
+        const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled)')]
+        const first = controls[0]; const last = controls.at(-1)
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+      }}>
+      <header><div><span><SlidersHorizontal size={20} /></span><div><h2 id="condition-limits-title">Кондиционные лимиты {depositName}</h2></div></div></header>
       <div className="geobase-dialog__body">
+        {error && <div className="form-alert form-alert--error" role="alert">{error}</div>}
+        {!canEdit && <div className="form-alert">Нет прав для редактирования кондиционных лимитов.</div>}
         <div className="geobase-limits-table">
           <div className="geobase-limits-table__head"><span>Параметр</span><span>Значение</span><span>Ед. изм.</span></div>
-          {limits.map((limit, index) => <div key={`${limit.id}-${index}`} className="geobase-limits-table__row">
-            <span>{limit.parameter}</span>
-            <span><input type="text" value={limit.value} disabled={!canMutate || pending} onChange={(event) => setCondition({
+          {condition.limits.map((limit) => <div key={limit.id} className="geobase-limits-table__row">
+            <label htmlFor={`condition-limit-${limit.id}`}>{limit.parameter}</label>
+            <span><input id={`condition-limit-${limit.id}`} type="text" value={limit.value} disabled={!canEdit || pending} onChange={(event) => setCondition({
               ...condition,
-              limits: condition.limits?.map((item, itemIndex) => itemIndex === index ? { ...item, value: event.target.value } : item),
+              limits: condition.limits.map((item) => item.id === limit.id ? { ...item, value: event.target.value } : item),
             })} /></span>
             <small>{limit.unit ?? '—'}</small>
           </div>)}
         </div>
       </div>
       <footer>
-        <Badge tone={condition.status === 'published' ? 'success' : condition.status === 'approved' ? 'info' : 'warning'} dot>
-          {condition.status === 'published' ? 'Опубликованная версия' : condition.status === 'approved' ? 'Утверждённая версия' : condition.status === 'draft' ? 'Ожидает утверждения' : 'Черновик (новый)'}
-        </Badge>
-        <div className="geobase-limits-table__actions">
-          {!canEdit && <span style={{ color: 'var(--text-tertiary)', fontSize: 'var(--font-size-sm)' }}>Нет прав для редактирования набора кондиций.</span>}
-          {input.isCreate && <Button size="sm" disabled={!canSubmitSave || pending} onClick={() => onCreate(makeConditionPatch(condition) as Omit<ConditionSet, 'id' | 'status' | 'version'>)}><Plus size={15} /> Создать набор</Button>}
-          {canMutate && <Button size="sm" disabled={!canSubmitSave || pending} onClick={() => onSave({ current: input.condition, next: makeConditionPatch(condition) })}><CheckCircle2 size={14} /> Сохранить</Button>}
-          {canApprove && <Button size="sm" className="geobase-condition-limits__approve-button" disabled={pending} onClick={() => onApprove(condition)}><BadgeCheck size={15} /> Утвердить версию</Button>}
-          {canCreateVersion && <Button size="sm" disabled={pending} onClick={() => onCreateVersion(condition)}>Новая версия</Button>}
-          {canPublish && <Button size="sm" disabled={pending} onClick={() => onPublish(condition)}>Опубликовать</Button>}
-        </div>
-        <Button disabled={pending} variant="secondary" onClick={onClose}>Закрыть</Button>
+        <Button type="submit" disabled={!canEdit || pending}>Сохранить</Button>
+        <Button disabled={pending} variant="secondary" onClick={onClose}>Отменить</Button>
       </footer>
-    </section>
+    </form>
   </div>
 }

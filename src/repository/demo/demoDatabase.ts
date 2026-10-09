@@ -1,5 +1,6 @@
 import { getSeedWells } from '../data/wells'
 import type { Well } from '../../entities/well/model/types'
+import { migrateBgdCurrentData } from './bgdCurrentDataMigration'
 
 export const DEMO_DATABASE_NAME = 'kapgeo-demo'
 export const DEMO_SCHEMA_VERSION = 1
@@ -160,6 +161,7 @@ export class DemoDatabase {
         await transaction.clear(store)
         for (const value of snapshot.stores[store] ?? []) await transaction.put(store, value)
       }
+      await migrateBgdCurrentData(transaction)
     })
   }
 
@@ -167,7 +169,10 @@ export class DemoDatabase {
     if (!this.memory) this.database = await this.open()
     const schema = await this.read<DemoMeta>('meta', 'schemaVersion')
     const seed = await this.read<DemoMeta>('meta', 'seedVersion')
-    if (schema?.value === this.schemaVersion && seed?.value === this.seedVersion) return
+    if (schema?.value === this.schemaVersion && seed?.value === this.seedVersion) {
+      await this.write(['records', 'versions', 'preferences', 'auditEvents'], migrateBgdCurrentData)
+      return
+    }
     await this.write([...demoStoreNames], async (transaction) => {
       for (const store of demoStoreNames) await transaction.clear(store)
       for (const well of getSeedWells()) await transaction.put('records', wellRecord(well))

@@ -8,6 +8,7 @@ import type {
   GeologicalSite,
   UpdateDepositPatch,
 } from '../../entities/geology-master/model/types'
+import type { Well } from '../../entities/well/model/types'
 import { buildConditionLimits } from '../../entities/geology-master/model/types'
 import { DemoDatabase, demoDatabase, type DemoRecord } from './demoDatabase'
 
@@ -22,7 +23,6 @@ const seededConditionLimits = buildConditionLimits('', {
   'filter-bottom-percent': '20',
   'section-bottom': '-570',
   'uranium-cutoff': '0.012',
-  'permafrost-boundary': 'Не задана',
   'effective-thickness-addition': '2',
   'gamma-barren': '100',
   'resistivity-impermeable': '24',
@@ -56,42 +56,41 @@ const seed: GeologicalMasterData = {
         { id: 'OCC-SARYTAU-01', type: 'Рудная залежь', nameRu: 'PR-07', nameKk: 'PR-07', nameEn: 'PR-07' },
         { id: 'OCC-SARYTAU-02', type: 'Рудная залежь', nameRu: 'CN-02', nameKk: 'CN-02', nameEn: 'CN-02' },
       ],
-      status: 'active', version: 4, createdAt: seedTimestamp, createdBy: 'Ирина Иванова', updatedAt: seedTimestamp, updatedBy: 'Ирина Иванова',
+      status: 'active', createdAt: seedTimestamp, createdBy: 'Ирина Иванова', updatedAt: seedTimestamp, updatedBy: 'Ирина Иванова',
     },
     {
       id: 'DEP-SEVERNOE', code: 2, objectType: 'field', nameRu: 'Северное', nameKk: 'Солтүстік', nameEn: 'Severnoye',
       descriptionRu: 'Месторождение северного производственного контура.', descriptionKk: 'Солтүстік өндірістік контурдың кен орны.', descriptionEn: 'Deposit of the northern production area.',
       coordinateSystem: 'Локальная система координат Северного участка', isHidden: false, occurrences: [],
-      status: 'active', version: 1, createdAt: seedTimestamp, createdBy: 'Ирина Иванова', updatedAt: seedTimestamp, updatedBy: 'Ирина Иванова',
+      status: 'active', createdAt: seedTimestamp, createdBy: 'Ирина Иванова', updatedAt: seedTimestamp, updatedBy: 'Ирина Иванова',
     },
     {
       id: 'DEP-VOSTOCHNAYA', code: 4, objectType: 'area', nameRu: 'Восточная', nameKk: 'Шығыс', nameEn: 'Vostochnaya',
       descriptionRu: 'Восточная геологоразведочная площадь.', descriptionKk: 'Шығыс геологиялық барлау алаңы.', descriptionEn: 'Eastern exploration area.',
-      coordinateSystem: 'WGS 84 / UTM zone 42N (EPSG:32642)', isHidden: true, occurrences: [], status: 'active', version: 1,
+      coordinateSystem: 'WGS 84 / UTM zone 42N (EPSG:32642)', isHidden: true, occurrences: [], status: 'active',
       createdAt: seedTimestamp, createdBy: 'Ирина Иванова', updatedAt: seedTimestamp, updatedBy: 'Ирина Иванова',
     },
   ],
   sites: [
-    { id: 'SITE-NORTH', depositId: 'DEP-SARYTAU', code: 'NORTH', name: 'Северный', status: 'active', version: 2 },
-    { id: 'SITE-CENTRAL', depositId: 'DEP-SARYTAU', code: 'CENTRAL', name: 'Центральный', status: 'active', version: 1 },
+    { id: 'SITE-NORTH', depositId: 'DEP-SARYTAU', code: 'NORTH', name: 'Северный', status: 'active', },
+    { id: 'SITE-CENTRAL', depositId: 'DEP-SARYTAU', code: 'CENTRAL', name: 'Центральный', status: 'active', },
   ],
   lenses: [
-    { id: 'LENS-PR07', siteId: 'SITE-NORTH', code: 'PR-07', name: 'Залежь PR-07', status: 'active', version: 3 },
-    { id: 'LENS-CN02', siteId: 'SITE-CENTRAL', code: 'CN-02', name: 'Залежь CN-02', status: 'active', version: 1 },
+    { id: 'LENS-PR07', siteId: 'SITE-NORTH', code: 'PR-07', name: 'Залежь PR-07', status: 'active', },
+    { id: 'LENS-CN02', siteId: 'SITE-CENTRAL', code: 'CN-02', name: 'Залежь CN-02', status: 'active', },
   ],
-  conditionSets: [{ id: 'CONDITIONS-NORTH-2026', siteId: 'SITE-NORTH', code: 'COND-NORTH-2026', effectiveFrom: '2026-01-01', density: 2.71, balanceThreshold: 1.2, offBalanceThreshold: 0.6, azimuthCorrection: 0, geometryTolerance: 0.25, limits: seededConditionLimits, status: 'published', version: 3 }],
+  conditionSets: [{ id: 'CONDITIONS-DEP-SARYTAU', depositId: 'DEP-SARYTAU', density: 2.71, balanceThreshold: 1.2, offBalanceThreshold: 0.6, azimuthCorrection: 0, geometryTolerance: 0.25, limits: seededConditionLimits }],
 }
 
 type MasterKind = 'deposit' | 'site' | 'lens' | 'condition-set'
-type Versioned = Deposit | ConditionSet
-type StoredVersion = { id: string; objectId: string }
+type LegacyConditionSet = Partial<ConditionSet> & { id: string; siteId?: string; status?: string }
 
 function record<T>(kind: MasterKind, value: T & { id: string }, status = 'active'): DemoRecord<T> {
   return {
     id: `${kind}:${value.id}`,
     entityType: kind,
     objectId: value.id,
-    scopeId: kind === 'deposit' ? value.id : 'DEP-SARYTAU',
+    scopeId: kind === 'deposit' ? value.id : kind === 'condition-set' || kind === 'site' ? (value as unknown as { depositId: string }).depositId : 'DEP-SARYTAU',
     status,
     updatedAt: new Date().toISOString(),
     data: structuredClone(value),
@@ -112,6 +111,8 @@ function normalizeOccurrence(value: LegacyOccurrence, code: number, index: numbe
   const fallbackName = String(value.name ?? '').trim()
   return {
     id: value.id || `OCC-${code}-${String(index + 1).padStart(2, '0')}`,
+    legacyIds: value.legacyIds?.filter((id) => typeof id === 'string'),
+    status: value.status,
     type: String(value.type ?? '').trim(),
     nameRu: String(value.nameRu ?? fallbackName).trim(),
     nameKk: String(value.nameKk ?? fallbackName).trim(),
@@ -139,7 +140,7 @@ function normalizeDeposit(value: LegacyDeposit, fallbackCode: number): Deposit {
     isHidden: Boolean(value.isHidden),
     occurrences: (value.occurrences ?? []).map((item, index) => normalizeOccurrence(item, code, index)),
     status: value.status ?? 'active',
-    version: Number(value.version ?? 1),
+
     createdAt: value.createdAt ?? seedTimestamp,
     createdBy: value.createdBy ?? 'Ирина Иванова',
     updatedAt: value.updatedAt ?? seedTimestamp,
@@ -161,14 +162,28 @@ function validateDepositValues(value: Pick<Deposit, 'nameRu' | 'nameKk' | 'nameE
   }
 }
 
-function migrateConditionLimits(condition: ConditionSet) {
-  const seededMatch = seed.conditionSets.find((item) => item.id === condition.id)
+function migrateConditionLimits(condition: LegacyConditionSet) {
+  const seededMatch = seed.conditionSets.find((item) => item.id === condition.id || condition.id === 'CONDITIONS-NORTH-2026')
   if (seededMatch?.limits) return seededMatch.limits.map((item) => ({ ...item }))
   return buildConditionLimits('', {
-    'uranium-cutoff': String(condition.balanceThreshold),
-    'rock-density': condition.density > 0 ? String(condition.density < 100 ? condition.density * 1000 : condition.density) : '',
-    'true-azimuth-correction': String(condition.azimuthCorrection),
+    'uranium-cutoff': String(condition.balanceThreshold ?? ''),
+    'rock-density': (condition.density ?? 0) > 0 ? String(condition.density! < 100 ? condition.density! * 1000 : condition.density) : '',
+    'true-azimuth-correction': String(condition.azimuthCorrection ?? ''),
   })
+}
+
+function normalizeConditionSet(source: LegacyConditionSet, depositId: string): ConditionSet {
+  const limits = source.limits?.length ? source.limits : migrateConditionLimits(source)
+  return {
+    id: `CONDITIONS-${depositId}`,
+    depositId,
+    density: source.density ?? 0,
+    balanceThreshold: source.balanceThreshold ?? 0,
+    offBalanceThreshold: source.offBalanceThreshold ?? 0,
+    azimuthCorrection: source.azimuthCorrection ?? 0,
+    geometryTolerance: source.geometryTolerance ?? 0,
+    limits: buildConditionLimits('', Object.fromEntries(limits.map((limit) => [limit.id, limit.value]))),
+  }
 }
 
 export class DemoGeologyMasterRepository {
@@ -187,29 +202,64 @@ export class DemoGeologyMasterRepository {
       return {
         deposits: [],
         sites: records.filter((item) => item.entityType === 'site').map((item) => structuredClone(item.data as GeologicalSite)),
-        lenses: records.filter((item) => item.entityType === 'lens').map((item) => structuredClone(item.data as GeologicalLens)),
-        conditionSets: records.filter((item) => item.entityType === 'condition-set').map((item) => structuredClone(item.data as ConditionSet)),
+        lenses: [],
+        conditionSets: [],
       }
     }
     const deposits = rawDeposits
       .map((item, index) => normalizeDeposit(item, item.id === 'DEP-SARYTAU' ? 1 : index + 1))
       .sort((left, right) => left.nameRu.localeCompare(right.nameRu, 'ru') || left.code - right.code)
-    const rawConditions = records.filter((item) => item.entityType === 'condition-set').map((item) => item.data as ConditionSet)
-    const conditionSets = rawConditions.map((item) => ({ ...structuredClone(item), limits: Array.isArray(item.limits) && item.limits.length ? item.limits : migrateConditionLimits(item) }))
+    const conditionRecords = records.filter((item) => item.entityType === 'condition-set') as DemoRecord<LegacyConditionSet>[]
+    const sites = records.filter((item) => item.entityType === 'site').map((item) => item.data as GeologicalSite)
+    // Move legacy site lenses into the deposit list, retaining old well identifiers as aliases.
+    const legacyLensRecords = records.filter((item) => item.entityType === 'lens') as DemoRecord<GeologicalLens>[]
+    const migratedLenses = legacyLensRecords.filter(({ data }) => {
+      const deposit = deposits.find((item) => item.id === sites.find((site) => site.id === data.siteId)?.depositId)
+      if (!deposit) return false
+      const existing = deposit.occurrences.find((item) => item.id === data.id || item.legacyIds?.includes(data.id)
+        || item.nameRu.trim().toLocaleLowerCase('ru') === data.code.trim().toLocaleLowerCase('ru'))
+      if (existing) existing.legacyIds = [...new Set([...(existing.legacyIds ?? []), data.id])]
+      else deposit.occurrences.push({ id: data.id, type: 'Рудная залежь', nameRu: data.name, nameKk: data.name, nameEn: data.name, status: data.status })
+      return true
+    })
+    // Prefer an existing deposit set, then the most recently edited legacy set.
+    // Retain all replaced source records in meta so consolidation is recoverable.
+    const conditionSets = deposits.flatMap((deposit) => {
+      const candidates = conditionRecords.filter(({ data }) => (data.depositId ?? sites.find((site) => site.id === data.siteId)?.depositId) === deposit.id)
+        .sort((left, right) => Number(Boolean(right.data.depositId)) - Number(Boolean(left.data.depositId))
+          || right.updatedAt.localeCompare(left.updatedAt)
+          || Number(right.data.status === 'draft') - Number(left.data.status === 'draft')
+          || left.id.localeCompare(right.id))
+      return candidates[0] ? [normalizeConditionSet(candidates[0].data, deposit.id)] : []
+    })
     const needsMigration = rawDeposits.some((item) => typeof item.code !== 'number' || !item.nameRu || !item.nameKk || !item.nameEn)
-    const needsConditionMigration = rawConditions.some((item) => !Array.isArray(item.limits) || item.limits.length === 0)
+    const needsConditionMigration = conditionRecords.some((item) => {
+      const normalized = conditionSets.find((condition) => condition.id === item.data.id)
+      return !normalized || JSON.stringify(normalized) !== JSON.stringify(item.data)
+    })
     const marker = await this.database.get<{ key: string; value: boolean }>('meta', seedMarkerKey)
-    if (needsMigration || needsConditionMigration || !marker?.value) {
+    if (needsMigration || needsConditionMigration || migratedLenses.length || !marker?.value) {
       await this.database.transaction(['records', 'meta'], async (transaction) => {
         for (const deposit of deposits) await transaction.put('records', record('deposit', deposit, deposit.status))
-        for (const condition of conditionSets) await transaction.put('records', record('condition-set', condition, condition.status))
+        for (const previous of migratedLenses) {
+          await transaction.put('meta', { key: `legacy-lens:${previous.id}`, value: previous })
+          await transaction.delete('records', previous.id)
+        }
+        if (needsConditionMigration) {
+          for (const previous of conditionRecords) {
+            const key = `legacy-condition-set:${previous.id}`
+            if (!await transaction.get('meta', key)) await transaction.put('meta', { key, value: previous })
+            await transaction.delete('records', previous.id)
+          }
+          for (const condition of conditionSets) await transaction.put('records', record('condition-set', condition))
+        }
         await transaction.put('meta', { key: seedMarkerKey, value: true })
       })
     }
     return {
       deposits: deposits.map((item) => structuredClone(item)),
       sites: records.filter((item) => item.entityType === 'site').map((item) => structuredClone(item.data as GeologicalSite)),
-      lenses: records.filter((item) => item.entityType === 'lens').map((item) => structuredClone(item.data as GeologicalLens)),
+      lenses: [],
       conditionSets: conditionSets.map((item) => structuredClone(item)),
     }
   }
@@ -236,16 +286,16 @@ export class DemoGeologyMasterRepository {
       isHidden: input.isHidden ?? false,
       occurrences,
       status: 'active',
-      version: 1,
+
       createdAt: now,
       createdBy: 'Ирина Иванова',
       updatedAt: now,
       updatedBy: 'Ирина Иванова',
     }
     validateDepositValues(deposit)
-    await this.database.transaction(['records', 'versions', 'auditEvents'], async (transaction) => {
+    await this.database.transaction(['records', 'auditEvents'], async (transaction) => {
       await transaction.put('records', record('deposit', deposit, deposit.status))
-      await transaction.put('versions', { id: `VERSION:deposit:${deposit.id}:1`, objectId: deposit.id, version: 1, status: 'draft', createdAt: now, data: deposit })
+
       await transaction.put('auditEvents', this.audit('deposit.created', deposit.id, 'Создано месторождение в БГД.'))
     })
     return structuredClone(deposit)
@@ -253,9 +303,17 @@ export class DemoGeologyMasterRepository {
 
   async updateDeposit(current: Deposit, patch: UpdateDepositPatch): Promise<Deposit> {
     const latest = await this.requireDeposit(current.id)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: месторождение изменено в другой вкладке.')
+
     if (latest.status === 'archived') throw new Error('ARCHIVED_READ_ONLY: архивное месторождение доступно только для чтения.')
-    const occurrences = patch.occurrences.map((item, index) => normalizeOccurrence(item, latest.code, index))
+    const occurrences = (patch.occurrences ?? latest.occurrences).map((item, index) => normalizeOccurrence(item, latest.code, index))
+    const removed = latest.occurrences.filter((item) => !occurrences.some((next) => next.id === item.id))
+    if (removed.length) {
+      const ids = new Set(removed.flatMap((item) => [item.id, ...(item.legacyIds ?? [])]))
+      const wells = await this.database.getAll<DemoRecord<Well>>('records')
+      if (wells.some((item) => item.entityType === 'well' && (item.data.bgd?.depositId ?? 'DEP-SARYTAU') === latest.id && ids.has(item.data.bgd?.lensId ?? ''))) {
+        throw new Error('Залежь используется скважинами. Измените их привязку перед удалением.')
+      }
+    }
     const next: Deposit = {
       ...latest,
       ...patch,
@@ -268,29 +326,26 @@ export class DemoGeologyMasterRepository {
       descriptionEn: patch.descriptionEn.trim(),
       coordinateSystem: patch.coordinateSystem.trim(),
       occurrences,
-      version: latest.version + 1,
+
       updatedAt: new Date().toISOString(),
       updatedBy: 'Ирина Иванова',
     }
     validateDepositValues(next)
-    await this.persistVersion('deposit', next, 'in_review', 'deposit.updated', 'Изменены сведения месторождения в БГД.')
+    await this.persistDeposit('deposit', next, 'deposit.updated', 'Изменены сведения месторождения в БГД.')
     return structuredClone(next)
   }
 
   async deleteDeposit(current: Deposit): Promise<void> {
     const latest = await this.requireDeposit(current.id)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: месторождение изменено в другой вкладке.')
+
     const data = await this.getMasterData()
     const sites = data.sites.filter((site) => site.depositId === latest.id)
-    const siteIds = new Set(sites.map((site) => site.id))
-    const lenses = data.lenses.filter((lens) => siteIds.has(lens.siteId))
-    const conditions = data.conditionSets.filter((condition) => siteIds.has(condition.siteId))
-    if (sites.length || lenses.length || conditions.length || latest.occurrences.length) {
-      throw new Error(`DEPENDENCY_WARNING: удаление отменено. Связанные данные: участки — ${sites.length}, залежи — ${lenses.length + latest.occurrences.length}, наборы кондиций — ${conditions.length}. Используйте «Скрыть» или сначала перенесите дочерние объекты.`)
+    const conditions = data.conditionSets.filter((condition) => condition.depositId === latest.id)
+    if (sites.length || conditions.length || latest.occurrences.length) {
+      throw new Error(`DEPENDENCY_WARNING: удаление отменено. Связанные данные: участки — ${sites.length}, залежи — ${latest.occurrences.length}, наборы кондиций — ${conditions.length}. Используйте «Скрыть» или сначала перенесите дочерние объекты.`)
     }
-    await this.database.transaction(['records', 'versions', 'auditEvents'], async (transaction) => {
-      const versions = await transaction.getAll<StoredVersion>('versions')
-      for (const version of versions.filter((item) => item.objectId === latest.id)) await transaction.delete('versions', version.id)
+    await this.database.transaction(['records', 'auditEvents'], async (transaction) => {
+
       await transaction.delete('records', `deposit:${latest.id}`)
       await transaction.put('auditEvents', this.audit('deposit.deleted', latest.id, 'Месторождение удалено из БГД после проверки зависимостей.'))
     })
@@ -312,138 +367,102 @@ export class DemoGeologyMasterRepository {
     const activeSites = data.sites.filter((site) => site.depositId === current.id && site.status === 'active')
     if (activeSites.length > 0) throw new Error(`DEPENDENCY_WARNING: сначала архивируйте или перенесите ${activeSites.length} активных участк(а/ов).`)
     const latest = await this.requireDeposit(current.id)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: месторождение изменено в другой вкладке.')
-    const next: Deposit = { ...latest, status: 'archived', version: latest.version + 1, updatedAt: new Date().toISOString() }
-    await this.persistVersion('deposit', next, 'withdrawn', 'deposit.archived', 'Объект переведён в архив без удаления истории.')
+
+    const next: Deposit = { ...latest, status: 'archived', updatedAt: new Date().toISOString() }
+    await this.persistDeposit('deposit', next, 'deposit.archived', 'Объект переведён в архив без удаления истории.')
     return structuredClone(next)
   }
 
   async createSite(input: Pick<GeologicalSite, 'depositId' | 'code' | 'name'>): Promise<GeologicalSite> {
     const data = await this.getMasterData()
     const code = input.code.trim().toUpperCase()
-    if (!data.deposits.some((item) => item.id === input.depositId)) throw new Error('Сначала выберите существующее месторождение.')
+    const deposit = await this.requireDeposit(input.depositId)
+    if (deposit.status === 'archived') throw new Error('Архивное месторождение доступно только для чтения.')
+    if (!code || !input.name.trim()) throw new Error('Укажите код и наименование участка.')
     if (data.sites.some((item) => item.depositId === input.depositId && item.code === code)) throw new Error('Участок с таким immutable code уже существует в месторождении.')
-    const site: GeologicalSite = { id: `SITE-${code}`, depositId: input.depositId, code, name: input.name.trim(), status: 'active', version: 1 }
+    const site: GeologicalSite = { id: `SITE-${input.depositId}-${code}`, depositId: input.depositId, code, name: input.name.trim(), status: 'active', }
     await this.persistHierarchy('site', site, 'site.created', 'Создан участок месторождения.')
     return structuredClone(site)
   }
 
   async updateSite(current: GeologicalSite, patch: Pick<GeologicalSite, 'name'>): Promise<GeologicalSite> {
     const latest = await this.requireSite(current.id)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: участок изменён в другой вкладке.')
+
     if (latest.status === 'archived') throw new Error('ARCHIVED_READ_ONLY: архивный участок доступен только для чтения.')
-    const next = { ...latest, ...patch, version: latest.version + 1 }
+    const deposit = await this.requireDeposit(latest.depositId)
+    if (deposit.status === 'archived') throw new Error('Архивное месторождение доступно только для чтения.')
+    if (!patch.name.trim()) throw new Error('Укажите наименование участка.')
+    const next = { ...latest, name: patch.name.trim(), }
     await this.persistHierarchy('site', next, 'site.updated', 'Изменено наименование участка.')
     return structuredClone(next)
   }
 
-  async archiveSite(current: GeologicalSite): Promise<GeologicalSite> {
-    const data = await this.getMasterData()
-    if (data.lenses.some((item) => item.siteId === current.id && item.status === 'active')) throw new Error('DEPENDENCY_WARNING: сначала архивируйте или перенесите активные залежи участка.')
+  async deleteSite(current: GeologicalSite): Promise<void> {
+    await this.getMasterData()
     const latest = await this.requireSite(current.id)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: участок изменён в другой вкладке.')
-    const next = { ...latest, status: 'archived' as const, version: latest.version + 1 }
-    await this.persistHierarchy('site', next, 'site.archived', 'Участок архивирован без удаления истории.')
-    return structuredClone(next)
+
+    const deposit = await this.requireDeposit(latest.depositId)
+    if (deposit.status === 'archived') throw new Error('Архивное месторождение доступно только для чтения.')
+    await this.database.transaction(['records', 'meta', 'auditEvents'], async (transaction) => {
+      await transaction.put('meta', { key: `deleted-site:${latest.id}`, value: latest })
+      await transaction.delete('records', `site:${latest.id}`)
+      await transaction.put('auditEvents', this.audit('site.deleted', deposit.id, `Удалён участок «${latest.name}».`))
+    })
   }
 
-  async createLens(input: Pick<GeologicalLens, 'siteId' | 'code' | 'name'>): Promise<GeologicalLens> {
-    const data = await this.getMasterData()
-    const code = input.code.trim().toUpperCase()
-    if (!data.sites.some((item) => item.id === input.siteId && item.status === 'active')) throw new Error('Выберите активный участок для залежи.')
-    if (data.lenses.some((item) => item.siteId === input.siteId && item.code === code)) throw new Error('Залежь с таким immutable code уже существует на участке.')
-    const lens: GeologicalLens = { id: `LENS-${code}`, siteId: input.siteId, code, name: input.name.trim(), status: 'active', version: 1 }
-    await this.persistHierarchy('lens', lens, 'lens.created', 'Создана залежь участка.')
-    return structuredClone(lens)
+  async saveOccurrence(deposit: Deposit, input: Omit<DepositOccurrence, 'id'> & { id?: string }): Promise<Deposit> {
+    const current = await this.requireDeposit(deposit.id)
+    if (input.id && !current.occurrences.some((item) => item.id === input.id)) throw new Error('Залежь не найдена.')
+    const existing = current.occurrences.find((item) => item.id === input.id)
+    const next: DepositOccurrence = { ...existing, ...input, id: existing?.id ?? `OCC-${crypto.randomUUID()}` }
+    return this.updateDeposit(current, { ...current, occurrences: existing
+      ? current.occurrences.map((item) => item.id === existing.id ? next : item)
+      : [...current.occurrences, next] })
   }
 
-  async updateLens(current: GeologicalLens, patch: Pick<GeologicalLens, 'name'>): Promise<GeologicalLens> {
-    const latest = await this.requireLens(current.id)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: залежь изменена в другой вкладке.')
-    if (latest.status === 'archived') throw new Error('ARCHIVED_READ_ONLY: архивная залежь доступна только для чтения.')
-    const next = { ...latest, ...patch, version: latest.version + 1 }
-    await this.persistHierarchy('lens', next, 'lens.updated', 'Изменено наименование залежи.')
-    return structuredClone(next)
+  async deleteOccurrence(deposit: Deposit, occurrenceId: string): Promise<Deposit> {
+    const current = await this.requireDeposit(deposit.id)
+    if (!current.occurrences.some((item) => item.id === occurrenceId)) throw new Error('Залежь не найдена.')
+    return this.updateDeposit(current, { ...current, occurrences: current.occurrences.filter((item) => item.id !== occurrenceId) })
   }
 
-  async archiveLens(current: GeologicalLens): Promise<GeologicalLens> {
-    const latest = await this.requireLens(current.id)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: залежь изменена в другой вкладке.')
-    const next = { ...latest, status: 'archived' as const, version: latest.version + 1 }
-    await this.persistHierarchy('lens', next, 'lens.archived', 'Залежь архивирована без удаления истории.')
-    return structuredClone(next)
-  }
-
-  async saveConditionSet(current: ConditionSet, patch: Omit<ConditionSet, 'id' | 'siteId' | 'code' | 'version' | 'status'>): Promise<ConditionSet> {
-    const latest = await this.requireConditionSet(current.id)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: набор кондиций изменён в другой вкладке.')
-    if (latest.status === 'published') throw new Error('PUBLISHED_IMMUTABLE: создайте новую версию кондиций вместо изменения опубликованной.')
-    const next: ConditionSet = { ...latest, ...patch, version: latest.version + 1, status: 'draft' }
-    await this.persistVersion('condition-set', next, 'draft', 'conditions.saved', 'Сохранён новый черновик кондиций.')
-    return structuredClone(next)
-  }
-
-  async createConditionSet(input: Omit<ConditionSet, 'id' | 'status' | 'version'>): Promise<ConditionSet> {
-    const data = await this.getMasterData()
-    if (!data.sites.some((item) => item.id === input.siteId)) throw new Error('Сначала выберите существующий участок.')
-    const next: ConditionSet = { ...input, id: `CONDITIONS-${input.siteId}-${Date.now()}`, status: 'draft', version: 1 }
-    await this.persistVersion('condition-set', next, 'draft', 'conditions.created', 'Создан новый черновик кондиционных параметров.')
-    return structuredClone(next)
-  }
-
-  async createConditionSetVersion(source: ConditionSet): Promise<ConditionSet> {
-    const next: ConditionSet = { ...source, id: `${source.id}-V${source.version + 1}`, code: `${source.code}-V${source.version + 1}`, status: 'draft', version: 1 }
-    await this.persistVersion('condition-set', next, 'draft', 'conditions.version_created', 'Создана новая версия набора кондиций.')
-    return structuredClone(next)
-  }
-
-  async approveConditionSet(current: ConditionSet): Promise<ConditionSet> {
-    const latest = await this.requireConditionSet(current.id)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: набор кондиций изменён в другой вкладке.')
-    if (latest.status !== 'draft') throw new Error('Утвердить можно только черновик кондиций.')
-    const next: ConditionSet = { ...latest, version: latest.version + 1, status: 'approved' }
-    await this.persistVersion('condition-set', next, 'approved', 'conditions.approved', 'Кондиции утверждены.')
-    return structuredClone(next)
-  }
-
-  async publishConditionSet(current: ConditionSet): Promise<ConditionSet> {
-    const latest = await this.requireConditionSet(current.id)
-    if (latest.version !== current.version) throw new Error('VERSION_CONFLICT: набор кондиций изменён в другой вкладке.')
-    if (latest.status !== 'approved') throw new Error('Опубликовать можно только утверждённый набор кондиций.')
-    const next: ConditionSet = { ...latest, version: latest.version + 1, status: 'published' }
-    await this.persistVersion('condition-set', next, 'published', 'conditions.published', 'Кондиции опубликованы.')
+  async saveConditionSet(input: Omit<ConditionSet, 'id'>): Promise<ConditionSet> {
+    await this.getMasterData()
+    await this.requireDeposit(input.depositId)
+    // A deterministic key makes saves an upsert: a deposit can never get a second set.
+    const next = normalizeConditionSet({ ...input, id: `CONDITIONS-${input.depositId}` }, input.depositId)
+    await this.database.put('records', record('condition-set', next))
     return structuredClone(next)
   }
 
   private async seed(): Promise<void> {
-    await this.database.transaction(['records', 'versions', 'meta'], async (transaction) => {
+    await this.database.transaction(['records', 'meta'], async (transaction) => {
       for (const deposit of seed.deposits) {
         await transaction.put('records', record('deposit', deposit, deposit.status))
-        await transaction.put('versions', { id: `VERSION:deposit:${deposit.id}:${deposit.version}`, objectId: deposit.id, version: deposit.version, status: 'published', createdAt: seedTimestamp, data: deposit })
+
       }
       for (const site of seed.sites) await transaction.put('records', record('site', site, site.status))
       for (const lens of seed.lenses) await transaction.put('records', record('lens', lens, lens.status))
       for (const condition of seed.conditionSets) {
-        await transaction.put('records', record('condition-set', condition, condition.status))
-        await transaction.put('versions', { id: `VERSION:condition-set:${condition.id}:${condition.version}`, objectId: condition.id, version: condition.version, status: condition.status, createdAt: seedTimestamp, data: condition })
+        await transaction.put('records', record('condition-set', condition))
       }
       await transaction.put('meta', { key: seedMarkerKey, value: true })
     })
   }
 
-  private async persistVersion(kind: 'deposit' | 'condition-set', value: Versioned, status: string, action: string, reason: string): Promise<void> {
-    await this.database.transaction(['records', 'versions', 'auditEvents'], async (transaction) => {
+  private async persistDeposit(kind: 'deposit', value: Deposit, action: string, reason: string): Promise<void> {
+    await this.database.transaction(['records', 'auditEvents'], async (transaction) => {
       await transaction.put('records', record(kind, value, value.status))
-      await transaction.put('versions', { id: `VERSION:${kind}:${value.id}:${value.version}`, objectId: value.id, version: value.version, status, createdAt: new Date().toISOString(), data: value })
+
       await transaction.put('auditEvents', this.audit(action, value.id, reason))
     })
   }
 
-  private async persistHierarchy(kind: 'site' | 'lens', value: GeologicalSite | GeologicalLens, action: string, reason: string): Promise<void> {
-    await this.database.transaction(['records', 'versions', 'auditEvents'], async (transaction) => {
+  private async persistHierarchy(kind: 'site', value: GeologicalSite, action: string, reason: string): Promise<void> {
+    await this.database.transaction(['records', 'auditEvents'], async (transaction) => {
       await transaction.put('records', record(kind, value, value.status))
-      await transaction.put('versions', { id: `VERSION:${kind}:${value.id}:${value.version}`, objectId: value.id, version: value.version, status: value.status === 'active' ? 'in_review' : 'withdrawn', createdAt: new Date().toISOString(), data: value })
-      await transaction.put('auditEvents', this.audit(action, value.id, reason))
+
+      await transaction.put('auditEvents', this.audit(action, value.depositId, reason))
     })
   }
 
@@ -453,22 +472,10 @@ export class DemoGeologyMasterRepository {
     return stored.data
   }
 
-  private async requireLens(id: string): Promise<GeologicalLens> {
-    const stored = await this.database.get<DemoRecord<GeologicalLens>>('records', `lens:${id}`)
-    if (!stored) throw new Error('Залежь не найдена.')
-    return stored.data
-  }
-
   private async requireDeposit(id: string): Promise<Deposit> {
     const stored = await this.database.get<DemoRecord<LegacyDeposit>>('records', `deposit:${id}`)
     if (!stored) throw new Error('Месторождение не найдено.')
     return normalizeDeposit(stored.data, 1)
-  }
-
-  private async requireConditionSet(id: string): Promise<ConditionSet> {
-    const stored = await this.database.get<DemoRecord<ConditionSet>>('records', `condition-set:${id}`)
-    if (!stored) throw new Error('Набор кондиций не найден.')
-    return stored.data
   }
 
   private audit(action: string, entityId: string, reason: string, actor = { id: 'PERSON-R1-GEOLOGIST', name: 'Ирина Иванова' }) {

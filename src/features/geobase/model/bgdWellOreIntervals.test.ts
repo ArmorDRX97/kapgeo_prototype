@@ -3,7 +3,7 @@ import type { WellOreWorkspace } from '../../../entities/well-ore/model/types'
 import { areContinuousDifferentials, createOreInterval, mergeOreGroups, mergedSummaries, validateOreInterval } from './bgdWellOreIntervals'
 
 const workspace: WellOreWorkspace = {
-  wellId: 'W-1', useDifferentialLogging: true, selectedSource: 'Гамма-каротаж', selectedElement: 'Уран', version: 1, updatedAt: '2026-09-15',
+  wellId: 'W-1', useDifferentialLogging: true, selectedSource: 'Гамма-каротаж', selectedElement: 'Уран', updatedAt: '2026-09-15',
   oreIntervals: [
     { id: 'O1', source: 'Гамма-каротаж', element: 'Уран', from: 10, to: 11, content: .02, meterPercent: .02, permeability: 'Проницаемый', differentialIds: [] },
     { id: 'O2', source: 'Гамма-каротаж', element: 'Уран', from: 12, to: 14, content: .01, meterPercent: .02, permeability: 'Непроницаемый', differentialIds: [] },

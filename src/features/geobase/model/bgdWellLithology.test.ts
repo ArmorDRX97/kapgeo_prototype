@@ -9,7 +9,7 @@ const intervals: GeologicalInterval[] = [
 ]
 
 function workspace(): WellGeologyWorkspace {
-  return { wellId: 'WELL-DEMO', tracks: [{ id: 'CORE', kind: 'core', label: 'По керну', source: 'Керн', intervals, version: 2, status: 'draft' }], dictionaries: [], overrides: [], samples: [], labResults: [], granulometry: [], lims: [], version: 3, updatedAt: '2026-09-15T00:00:00.000Z' }
+  return { wellId: 'WELL-DEMO', tracks: [{ id: 'CORE', kind: 'core', label: 'По керну', source: 'Керн', intervals, status: 'draft' }], dictionaries: [], overrides: [], samples: [], labResults: [], granulometry: [], lims: [], updatedAt: '2026-09-15T00:00:00.000Z' }
 }
 
 describe('BGD lithology helpers', () => {
@@ -18,11 +18,12 @@ describe('BGD lithology helpers', () => {
     expect(findFirstLithologyGap([{ ...intervals[0]!, to: 30 }], 30)).toBeNull()
   })
 
-  it('increments only a changed source track version before save', () => {
+  it('prepares changed values without record versions', () => {
     const current = workspace()
     const draft = structuredClone(current)
     draft.tracks[0]!.intervals[0]!.description = 'Уточнённое описание'
-    expect(prepareBgdLithologySave(current, draft).tracks[0]!.version).toBe(3)
-    expect(current.tracks[0]!.version).toBe(2)
+    expect(prepareBgdLithologySave(current, draft).tracks[0]!.intervals[0]!.description).toBe('Уточнённое описание')
+    expect(prepareBgdLithologySave(current, draft).tracks[0]).not.toHaveProperty('version')
+    expect(current.tracks[0]!.intervals[0]!.description).toBe('')
   })
 })

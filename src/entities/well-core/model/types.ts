@@ -58,7 +58,6 @@ export type WellCoreWorkspace = {
   wellId: string
   runs: CoreRun[]
   samples: CoreSample[]
-  version: number
   updatedAt: string
 }
 
