@@ -622,5 +622,3 @@
   .geobase-limits-table { overflow-x: auto; }
   .geobase-limits-table__head, .geobase-limits-table__row { min-width: 560px; }
 }
-
-.bgd-lithology-table i { display: inline-block; width: var(--space-4); height: var(--space-4); flex: none; border: 1px solid var(--border-default); border-radius: var(--radius-sm); }

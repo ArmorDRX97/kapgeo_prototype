@@ -3,7 +3,7 @@ import { WorkspaceTabs } from '../../../shared/ui/WorkspaceTabs'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Check, Copy, GitCompareArrows, Layers3, Merge, Plus, Redo2, Save, Scissors, Trash2, Undo2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import type { GeologicalInterval, Lithology, StratigraphyUnit, Well } from '../../../entities/well/model/types'
+import type { GeologicalInterval, Lithology, Well } from '../../../entities/well/model/types'
 import type { WellGeologyWorkspace } from '../../../entities/well-geology/model/types'
 import { bgdLithologyKinds, findFirstLithologyGap, prepareBgdLithologySave, type BgdLithologyKind } from '../../../features/geobase/model/bgdWellLithology'
 import { fetchWellGeologyWorkspace, saveWellGeologyWorkspace } from '../../../repository/api'
@@ -14,10 +14,8 @@ import { Button } from '../../../shared/ui/Button'
 import { Panel } from '../../../shared/ui/Panel'
 
 const lithologyOptions: Lithology[] = ['Суглинок', 'Песчаник', 'Алевролит', 'Глина', 'Рудный песчаник']
-const stratigraphyOptions: StratigraphyUnit[] = ['Q', 'K2', 'K1', 'J3']
 const mineralizationOptions = ['Отсутствует', 'Слабая', 'Урановая']
 const colorOptions = ['Бурый', 'Светло-серый', 'Серый', 'Тёмно-серый', 'Жёлто-бурый']
-const lithologyTone: Record<Lithology, string> = { 'Суглинок': 'lithology--loam', 'Песчаник': 'lithology--sandstone', 'Алевролит': 'lithology--siltstone', 'Глина': 'lithology--clay', 'Рудный песчаник': 'lithology--ore' }
 
 function sourceFor(kind: BgdLithologyKind): GeologicalInterval['source'] {
   return kind === 'core' ? 'Керн' : kind === 'log' ? 'ГИС' : 'Ручное описание'
@@ -151,7 +149,7 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
         <Panel title="Интервалы" description={`${bgdLithologyKinds.find((item) => item.id === kind)?.label} · ${track.source}`} action={canEdit ? <div className="bgd-lithology-toolbar"><Button size="sm" variant="quiet" disabled={!undo.length} onClick={undoChange} aria-label="Отменить изменение"><Undo2 size={14} /> Отменить</Button><Button size="sm" variant="quiet" disabled={!redo.length} onClick={redoChange} aria-label="Повторить изменение"><Redo2 size={14} /> Повторить</Button><Button size="sm" variant="secondary" disabled={!availableGap} onClick={addInterval}><Plus size={14} /> Добавить интервал</Button></div> : undefined}>
           <div className="bgd-lithology-table" role="table" aria-label="Интервалы литологии">
             <div className="bgd-lithology-table__head" role="row"><span>Интервал</span><span>Мощность</span><span>Порода</span><span>Минерализация</span><span>Цвет</span></div>
-            {sorted.map((item) => <button type="button" role="row" key={item.id} className={selected?.id === item.id ? 'is-selected' : ''} onClick={() => setSelectedId(item.id)}><span role="cell"><strong>{formatDepth(item.from)}–{formatDepth(item.to)} м</strong><small>{item.stratigraphy} · {item.source}</small></span><span role="cell">{formatDepth(item.to - item.from)} м</span><span role="cell"><i className={lithologyTone[item.lithology]} />{item.lithology}</span><span role="cell">{item.mineralization ?? '—'}</span><span role="cell">{item.color ?? '—'}</span></button>)}
+            {sorted.map((item) => <button type="button" role="row" key={item.id} className={selected?.id === item.id ? 'is-selected' : ''} onClick={() => setSelectedId(item.id)}><span role="cell"><strong>{formatDepth(item.from)}–{formatDepth(item.to)} м</strong><small>{item.source}</small></span><span role="cell">{formatDepth(item.to - item.from)} м</span><span role="cell">{item.lithology}</span><span role="cell">{item.mineralization ?? '—'}</span><span role="cell">{item.color ?? '—'}</span></button>)}
             {!sorted.length && <div className="bgd-core-empty geobase-empty"><Layers3 size={19} /><strong>Интервалов пока нет</strong><span>{canEdit ? 'Добавьте первый интервал.' : 'Данные для этого вида ещё не внесены.'}</span></div>}
           </div>
 
@@ -164,7 +162,6 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
               <label className="field"><span className="field__label">Порода</span><select aria-label="Порода" disabled={!canEdit} value={selected.lithology} onChange={(event) => updateSelected({ lithology: event.target.value as Lithology })}>{lithologyOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
               <label className="field"><span className="field__label">Минерализация</span><select disabled={!canEdit} value={selected.mineralization ?? 'Отсутствует'} onChange={(event) => updateSelected({ mineralization: event.target.value })}>{mineralizationOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
               <label className="field"><span className="field__label">Цвет</span><select disabled={!canEdit} value={selected.color ?? 'Серый'} onChange={(event) => updateSelected({ color: event.target.value })}>{colorOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
-              <label className="field"><span className="field__label">Стратиграфия</span><select disabled={!canEdit} value={selected.stratigraphy} onChange={(event) => updateSelected({ stratigraphy: event.target.value as StratigraphyUnit })}>{stratigraphyOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
               <label className="field bgd-lithology-form__description"><span className="field__label">Описание породы</span><textarea disabled={!canEdit} rows={3} value={selected.description} onChange={(event) => updateSelected({ description: event.target.value })} /></label>
             </div>
             {canEdit && <div className="bgd-lithology-editor__actions"><Button size="sm" variant="secondary" onClick={splitInterval}><Scissors size={14} /> Разделить</Button><Button size="sm" variant="secondary" disabled={!next || Math.abs(selected.to - next.from) > 0.001} onClick={mergeInterval}><Merge size={14} /> Объединить со следующим</Button><Button size="sm" variant="quiet" disabled={!previous} onClick={copyAbove}><Copy size={14} /> Скопировать сверху</Button><Button size="sm" variant="quiet" onClick={removeInterval}><Trash2 size={14} /> Удалить</Button></div>}
