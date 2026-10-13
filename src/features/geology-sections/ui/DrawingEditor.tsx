@@ -4,7 +4,7 @@ import type { GeologySection, SectionDrawing, SectionLayer } from '../../../enti
 import { drawingLayout, drawingTable, newDrawing } from '../../../entities/geology-section/lib/drawing'
 import { profileLength } from '../../../entities/geology-section/lib/profile'
 import { pointAtDepth, projectToProfile } from '../../../entities/geology-section/lib/profile'
-import { sectionWellSources } from '../../../entities/geology-section/model/fixtures'
+import { sectionSources } from '../../../entities/geology-section/lib/correlation'
 import { Button } from '../../../shared/ui/Button'
 import { SectionSvg } from './SectionCanvas'
 import { nextLocalId } from '../model/presentation'
@@ -18,7 +18,7 @@ const layerLabels: Record<string, string> = { technology: 'Технологич�
 function DrawingPage({ section, drawing, page }: { section: GeologySection; drawing: SectionDrawing; page: number }) {
   const uid = useId().replace(/:/g, ''), table = drawingTable(section, drawing), layout = drawingLayout(drawing, table.lineCount), tile = layout.pages[page]!, d = drawing
   const filtered = { ...section, graphics: section.graphics.filter(g => d.layers.includes(g.type)) }
-  const wells = sectionWellSources.filter(w => section.wellIds.includes(w.id)), mapPoints = [...section.profile, ...wells.map(w => w.collar)]
+  const wells = sectionSources(section).filter(w => section.wellIds.includes(w.id)), mapPoints = [...section.profile, ...wells.map(w => w.collar)]
   const oreLayer = table.layer
   const minX = Math.min(...mapPoints.map(p => p.x)), maxY = Math.max(...mapPoints.map(p => p.y)), minY = Math.min(...mapPoints.map(p => p.y))
   const planScale = Math.max(d.horizontalScale, Math.ceil((maxY - minY) * 1000 / Math.max(5, d.planHeight - 10) / 100) * 100)

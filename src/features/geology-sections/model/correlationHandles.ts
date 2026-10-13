@@ -1,5 +1,5 @@
 import type { GeologySection, SectionLayer, XZ } from '../../../entities/geology-section/model/types'
-import { boundaryInterval, layerAnchors, pinchBounds, pinchPoint } from '../../../entities/geology-section/lib/correlation'
+import { boundaryInterval, layerAnchors, linksAtAnchor, pinchBounds, pinchPoint } from '../../../entities/geology-section/lib/correlation'
 
 export type CorrelationHandle = { id: string; label: string; point: XZ; target:
   { type: 'pinch'; anchorId: string; side: 'left' | 'right' } |
@@ -7,13 +7,14 @@ export type CorrelationHandle = { id: string; label: string; point: XZ; target:
   { type: 'arc'; linkId: string; edge: 'top' | 'bottom'; index: number } }
 
 export function correlationHandles(section: GeologySection, layer: SectionLayer, selection?: string): CorrelationHandle[] {
-  const anchor = layerAnchors(section, layer).find(a => a.id === selection)
+  const anchors = layerAnchors(section, layer), anchor = anchors.find(a => a.id === selection)
   if (!anchor) return []
   const handles: CorrelationHandle[] = []
+  const linked = linksAtAnchor(section, layer, anchor, anchors)
   for (const side of ['left', 'right'] as const) {
     const boundary = boundaryInterval(section, layer, anchor, side), label = side === 'left' ? 'Слева' : 'Справа'
     if (boundary) for (const edge of ['top', 'bottom'] as const) handles.push({ id: `boundary-${side}-${edge}`, label: `${label}: ${edge === 'top' ? 'верх' : 'низ'} граничного интервала`, point: boundary[edge], target: { type: 'boundary', anchorId: anchor.id, side, edge } })
-    else handles.push({ id: `pinch-${side}`, label: `${label}: точка выклинивания`, point: pinchPoint(section, layer, anchor, side), target: { type: 'pinch', anchorId: anchor.id, side } })
+    else if (!section.demoPreset || !linked[side]) handles.push({ id: `pinch-${side}`, label: `${label}: точка выклинивания`, point: pinchPoint(section, layer, anchor, side), target: { type: 'pinch', anchorId: anchor.id, side } })
   }
   for (const edit of section.arcEdits?.[layer] ?? []) {
     const link = section.links[layer].find(l => l.id === edit.linkId)
@@ -40,6 +41,7 @@ export function moveCorrelationHandle(section: GeologySection, layer: SectionLay
   if (!anchor) return section
   const bounds = pinchBounds(section, layer, anchor, target.side), edits = section.contourEdits?.[layer] ?? [], existing = edits.find(e => e.anchorId === anchor.id && e.side === target.side)
   const boundary = boundaryInterval(section, layer, anchor, target.side)
+  if (target.type === 'pinch' && section.demoPreset && !boundary && linksAtAnchor(section, layer, anchor, anchors)[target.side]) return section
   const moved = target.type === 'boundary' && existing && boundary ? { ...existing, boundaryTop: target.edge === 'top' ? z : boundary.top.z, boundaryBottom: target.edge === 'bottom' ? z : boundary.bottom.z } :
     { anchorId: anchor.id, side: target.side, x: clamp(point.x, bounds.min, bounds.max), z, boundary: false }
   return { ...section, contourEdits: { ...section.contourEdits, [layer]: [...edits.filter(e => !(e.anchorId === anchor.id && e.side === target.side)), moved] } }

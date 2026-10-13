@@ -12,6 +12,8 @@
 
 | Задача | Документ |
 |---|---|
+| интерпретация по «Альфа 2018» | [рабочий этап 1 и его границы](../geo-module-refs/Interpretation/implementation-stage-1.md), [исследование/контекст](../geo-module-refs/Interpretation/README.md) |
+| реалистичный общий пример разреза по кадрам видео | [визуальная сверка, данные, техническое устройство и проверка](../geo-module-refs/reference-reconstruction.md) |
 | роли и доступ | [02-roles-access.md](./ui-ux/02-roles-access.md) |
 | маршруты и экраны | [03-information-architecture.md](./ui-ux/03-information-architecture.md), [04-screen-catalog.md](./ui-ux/04-screen-catalog.md) |
 | сценарии | [05-cross-module-flows.md](./ui-ux/05-cross-module-flows.md) |

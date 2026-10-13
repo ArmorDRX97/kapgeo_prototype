@@ -1,8 +1,7 @@
 import type { GeologySection, SectionGraphic, XZ } from '../model/types'
 import { profileLength } from './profile'
 import { resolveGraphicPoints } from './boundaries'
-import { sectionWellSources } from '../model/fixtures'
-import { stationAtDepth } from './correlation'
+import { sectionSources, stationAtDepth } from './correlation'
 
 const cross = (a: XZ, b: XZ, c: XZ) => (b.x - a.x) * (c.z - a.z) - (b.z - a.z) * (c.x - a.x)
 function intersects(a: XZ, b: XZ, c: XZ, d: XZ) {
@@ -50,7 +49,7 @@ export function graphicIssues(graphic: SectionGraphic, section: GeologySection):
 export function snappedPoint(point: XZ, section: GeologySection, tolerance = 3): { point: XZ; label?: string } {
   let best = tolerance, result = point, label: string | undefined
   const length = profileLength(section.profile)
-  for (const well of sectionWellSources.filter(w => section.wellIds.includes(w.id))) {
+  for (const well of sectionSources(section).filter(w => section.wellIds.includes(w.id))) {
     const depths = new Set(well.lithology.flatMap(interval => [interval.from, interval.to]))
     for (const md of depths) {
       const contact = stationAtDepth(section, well, md), distance = Math.hypot(contact.x - point.x, contact.z - point.z)

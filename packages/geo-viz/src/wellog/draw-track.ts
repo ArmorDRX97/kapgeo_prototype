@@ -114,12 +114,25 @@ export function drawTrack(ctx: CanvasRenderingContext2D, options: TrackDrawOptio
     ctx.stroke();
   }
 
-  for (const curve of track.curves) {
-    drawCurve(ctx, curve, options);
-  }
-
   ctx.strokeStyle = colors.axis;
   if (track.intervals) drawIntervals(ctx, track.intervals, range, width, height, colors);
+  for (const curve of track.curves) drawCurve(ctx, curve, options);
+  const depthScale = createDepthScale(range, height);
+  for (const bar of track.bars ?? []) {
+    if (bar.to <= range[0] || bar.from >= range[1]) continue;
+    const y = Math.max(0, depthScale(bar.from)), bottom = Math.min(height, depthScale(bar.to));
+    const w = Math.min(width - 4, (width - 4) * bar.value / (track.barMax || 1));
+    ctx.fillStyle = bar.fill; ctx.fillRect(1, y, w, Math.max(1, bottom - y - 1));
+    if (bottom - y > 15) { ctx.fillStyle = colors.text; ctx.font = '11px Segoe UI, sans-serif'; ctx.fillText(bar.label, 4, (y + bottom) / 2 + 4); }
+  }
+  for (const guide of track.guides ?? []) {
+    if (guide.depth !== undefined && (guide.depth < range[0] || guide.depth > range[1])) continue;
+    ctx.save(); ctx.strokeStyle = guide.color; ctx.fillStyle = colors.text; ctx.font = '11px Segoe UI, sans-serif';
+    if (guide.dashed) ctx.setLineDash([5, 4]); ctx.beginPath();
+    if (guide.depth !== undefined) { const y = depthScale(guide.depth); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.fillText(guide.label, 4, Math.min(height - 3, Math.max(12, y - 4))); }
+    else if (guide.value !== undefined && guide.scale) { const x = valueToX(guide.value, guide.scale, width); if (x !== undefined) { ctx.moveTo(x, 0); ctx.lineTo(x, height); } }
+    ctx.stroke(); ctx.restore();
+  }
   ctx.lineWidth = 1;
   ctx.strokeRect(0.5, 0.5, width - 1, height - 1);
 

@@ -56,6 +56,10 @@ export type TrackSpec = {
   intervals?: IntervalSpec[];
   subtitle?: string;
   editable?: boolean;
+  /** Non-destructive annotations on a common depth/value grid. */
+  guides?: { depth?: number; value?: number; label: string; color: string; dashed?: boolean; scale?: CurveScale }[];
+  bars?: { id: string; from: number; to: number; value: number; label: string; fill: string }[];
+  barMax?: number;
 };
 
 /** Display geometry only; geological operations belong to the host application. */
@@ -96,5 +100,6 @@ export type WellLogProps = {
   onRangeSelect?: (trackId: string, range: DepthRange) => void;
   onBoundaryChange?: (trackId: string, intervalId: string, edge: 'from' | 'to', depth: number) => void;
   onTrackHeaderClick?: (trackId: string) => void;
+  onContextSelect?: (event: TrackInteraction) => void;
   labels?: { axis: string; depthAxis: string; unit: string; track: string };
 };

@@ -1,7 +1,7 @@
 export type XY = { x: number; y: number }
 export type XZ = { x: number; z: number }
 export type SectionLayer = 'technology' | 'ore' | 'uncorrected' | 'offbalance'
-export type SectionView = 'overview' | 'profile' | 'wells' | 'map' | 'technology' | 'lithology' | 'ore' | 'offbalance' | 'oxidation' | 'drawing'
+export type SectionView = 'overview' | 'map' | 'technology' | 'lithology' | 'ore' | 'offbalance' | 'oxidation' | 'drawing'
 export type SectionInterval = { id: string; from: number; to: number; kind: 'permeable' | 'impermeable'; grade?: number }
 export type SectionWellSource = {
   id: string; name: string; collar: XY & { z: number }; depth: number; revision: number
@@ -27,6 +27,7 @@ export type SectionGraphic = {
 }
 export type SectionDrawing = { id: string; name: string; horizontalScale: number; verticalScale: number; top: number; bottom: number; left: number; right: number; planHeight: number; paper: 'A4' | 'A3'; landscape: boolean; margin: number; layers: string[]; description: string; overlap?: number; center?: boolean; pageOrder?: 'rows' | 'columns' }
 export type GeologySection = {
+  demoPreset?: 'video-reference-v1'
   schemaVersion: 1; id: string; revision: number; synthetic: true; scope: 'geology-section-prototype'
   title: string; depositId: string; depositName: string; stage: 'exploration' | 'operation'; kind: 'main' | 'auxiliary'
   year: number; description: string; top: number; bottom: number; status: 'draft' | 'locked'
@@ -43,7 +44,7 @@ export type GeologySection = {
   sourceOverrides?: Record<string, { revision: number; technology: SectionInterval[]; ore: SectionInterval[]; uncorrected: SectionInterval[]; offbalance: SectionInterval[] }>
 }
 export const sectionViews: Array<{ id: SectionView; label: string }> = [
-  { id: 'overview', label: 'Сведения' }, { id: 'profile', label: 'Профиль' }, { id: 'wells', label: 'Скважины' }, { id: 'map', label: 'Карта' },
+  { id: 'overview', label: 'Разрез' }, { id: 'map', label: 'Карта' },
   { id: 'technology', label: 'Технологический горизонт' }, { id: 'lithology', label: 'Литология' }, { id: 'ore', label: 'Рудное тело' },
   { id: 'offbalance', label: 'Технологический забаланс' }, { id: 'oxidation', label: 'Зона окисления' }, { id: 'drawing', label: 'Чертёж' },
 ]

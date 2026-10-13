@@ -2,8 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { initialSections } from '../../../entities/geology-section/model/fixtures'
 import { correlationIssues, layerAnchors, pinchBounds } from '../../../entities/geology-section/lib/correlation'
 import { correlationHandles, moveCorrelationHandle } from './correlationHandles'
+import { referenceSection } from '../../../entities/geology-section/model/referenceSection'
 
 describe('correlation handle constraints', () => {
+  it('exposes arc points instead of ignored pinches on connected reference sides and restores pinches after unlinking', () => {
+    const section = referenceSection(), selection = 'GTR-W2/technology/REF-T-U'
+    const connected = correlationHandles(section, 'technology', selection)
+    expect(connected.some(handle => handle.target.type === 'arc')).toBe(true)
+    expect(connected.some(handle => handle.target.type === 'pinch')).toBe(false)
+    const unlinked = { ...section, links: { ...section.links, technology: section.links.technology.filter(link => link.a !== selection && link.b !== selection) } }
+    const restored = correlationHandles(unlinked, 'technology', selection)
+    expect(restored.filter(handle => handle.target.type === 'pinch').map(handle => handle.id)).toEqual(['pinch-left', 'pinch-right'])
+    expect(restored.some(handle => handle.target.type === 'arc')).toBe(false)
+    expect(moveCorrelationHandle(section, 'technology', restored.find(handle => handle.id === 'pinch-right')!, { x: 70, z: -460 })).toBe(section)
+  })
   it('clamps a pinch to neighbours/heights and preserves measured source contacts', () => {
     const section = initialSections()[0]!, anchor = layerAnchors(section, 'technology')[0]!, handles = correlationHandles(section, 'technology', anchor.id)
     const next = moveCorrelationHandle(section, 'technology', handles[0]!, { x: -200, z: 100 })
@@ -28,6 +40,7 @@ describe('correlation handle constraints', () => {
     section.links.technology = [{ id: 'link', a: a.id, b: b.id }]
     const x = (a.top.x + b.top.x) / 2, z = (a.top.z + b.top.z) / 2
     section.arcEdits = { technology: [{ linkId: 'link', edge: 'top', smooth: false, points: [{ x, z }] }] }
+    expect(correlationHandles(section, 'technology', a.id).filter(handle => handle.target.type === 'pinch')).toHaveLength(2)
     const handle = correlationHandles(section, 'technology', a.id).find(h => h.target.type === 'arc')!
     const moved = moveCorrelationHandle(section, 'technology', handle, { x: 1000, z })
     expect(moved.arcEdits!.technology![0]!.points[0]!.x).toBeCloseTo(Math.max(a.top.x, b.top.x) - .001)

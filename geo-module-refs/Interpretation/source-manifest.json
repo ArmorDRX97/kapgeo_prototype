@@ -1,0 +1,115 @@
+{
+  "researchDate": "2026-10-13",
+  "scope": "Study and code comparison only; no implementation",
+  "source": {
+    "relativePath": "../Руководство_пользователя_программы_Альфа_2018.pdf",
+    "title": "Руководство пользователя программы комплексной интерпретации данных ГИС Альфа",
+    "editionYear": 2018,
+    "pages": 183,
+    "sha256": "82bd3bd0ec8e40591ebc3676346428c89bfe48fe30a7f3788d73fb733b6490e5",
+    "pdfCreationDate": "D:20181210112725+06'00'",
+    "printedPageEqualsPdfPageFrom": 2,
+    "coverPdfPage": 1,
+    "embeddedBookmarks": 0
+  },
+  "coverage": {
+    "textExtractedPages": 183,
+    "contentReadRanges": [
+      [
+        2,
+        4
+      ],
+      [
+        10,
+        164
+      ],
+      [
+        165,
+        182
+      ]
+    ],
+    "installationExcludedRange": [
+      5,
+      9
+    ],
+    "renderedPages": [
+      1,
+      15,
+      18,
+      25,
+      28,
+      34,
+      36,
+      38,
+      39,
+      40,
+      44,
+      47,
+      49,
+      52,
+      57,
+      64,
+      69,
+      71,
+      74,
+      76,
+      80,
+      86,
+      88,
+      91,
+      92,
+      95,
+      96,
+      99,
+      105,
+      116,
+      118,
+      122,
+      125,
+      127,
+      129,
+      130,
+      133,
+      136,
+      138,
+      143,
+      153,
+      155,
+      161,
+      163,
+      179,
+      182
+    ],
+    "contactSheets": 7,
+    "additionalFullPageInspection": [
+      39,
+      47,
+      130,
+      138
+    ]
+  },
+  "sourceLimitations": [
+    "No dedicated KND-m methodology chapter",
+    "Referenced normative documents are not supplied/verified by this research",
+    "Updated legend appendix referenced on page 182 is absent as a separate appendix in this 183-page PDF",
+    "Extracted mathematical notation is insufficient for implementation without visual and expert verification"
+  ],
+  "artifacts": [
+    "README.md",
+    "manual-map.md",
+    "methods-summary.md",
+    "code-gap-map.md",
+    "next-work.md",
+    "visual-reference-index.md"
+  ],
+  "codeReviewRoots": [
+    "src/entities/interpretation",
+    "src/features/interpretation",
+    "src/pages/geology/InterpretationPage.tsx",
+    "src/repository/demo/interpretationRepository.ts",
+    "src/shared/auth/permissions.ts",
+    "packages/geo-viz/src/wellog",
+    "packages/geo-viz/src/domain-tokens.ts"
+  ],
+  "runtimeValidation": "Not performed in this research; static source review only"
+}

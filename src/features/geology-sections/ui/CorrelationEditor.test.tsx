@@ -4,10 +4,28 @@ import { initialSections } from '../../../entities/geology-section/model/fixture
 import { layerAnchors } from '../../../entities/geology-section/lib/correlation'
 import { CorrelationEditor } from './CorrelationEditor'
 import { SectionSvg } from './SectionCanvas'
+import { referenceSection } from '../../../entities/geology-section/model/referenceSection'
 vi.mock('./SharedAuxiliaryEditor', () => ({ SharedAuxiliaryEditor: () => null }))
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); localStorage.clear() })
 describe('direct correlation handles', () => {
+  it('explains connected reference sides and enables numeric pinch editing after disconnecting', () => {
+    const section = referenceSection(), selection = 'GTR-W2/technology/REF-T-U', change = vi.fn()
+    const props = { layer: 'technology' as const, selection, disabled: false, onChange: change, onSelect: vi.fn(), onPending: vi.fn() }
+    const view = render(<CorrelationEditor section={section} {...props} />)
+    expect(screen.getByText('Граница соединена с соседним интервалом. Изменяйте вспомогательные точки дуги или разъедините связь.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Сторона')).toBeEnabled()
+    expect(screen.getByLabelText('X вдоль профиля, м')).toBeDisabled()
+    expect(screen.getByLabelText('Абсолютная высота Z, м')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Переместить точку' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Восстановить выклинивание' })).toBeDisabled()
+    const unlinked = { ...section, links: { ...section.links, technology: section.links.technology.filter(link => link.a !== selection && link.b !== selection) }, arcEdits: { ...section.arcEdits, technology: [] } }
+    view.rerender(<CorrelationEditor section={unlinked} {...props} />)
+    expect(screen.queryByText('Граница соединена с соседним интервалом. Изменяйте вспомогательные точки дуги или разъедините связь.')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('X вдоль профиля, м')).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Переместить точку' })).toBeEnabled()
+    expect(change).not.toHaveBeenCalled()
+  })
   it('captures a boundary gesture outside the plot and cancels it with Escape', () => {
     vi.stubGlobal('PointerEvent', MouseEvent)
     vi.stubGlobal('DOMPoint', class { constructor(public x: number, public y: number) {} matrixTransform() { return this } })

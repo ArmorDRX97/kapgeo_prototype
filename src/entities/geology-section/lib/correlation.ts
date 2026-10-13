@@ -1,23 +1,29 @@
 import polygonClipping from 'polygon-clipping'
 import type { GeologySection, SectionLayer, SectionAnchor, XZ, SectionWellSource } from '../model/types'
 import { sectionWellSources } from '../model/fixtures'
+import { referenceWellSources } from '../model/referenceSources'
 import { pointAtDepth, profileLength, projectToProfile } from './profile'
 import { heightOnArc, sampleArc } from './curves'
 import { editContourArc, ringKey, polygonIssues, ringsIntersect, insideRing, openRing } from './contourArc'
 
-export const sourceFor = (section: GeologySection, well: SectionWellSource): SectionWellSource => ({ ...well, ...section.sourceOverrides?.[well.id] })
+export const sourceFor = (section: GeologySection, well: SectionWellSource): SectionWellSource => {
+  const source = section.demoPreset === 'video-reference-v1' ? referenceWellSources.find(w => w.id === well.id) ?? well : well
+  return { ...source, ...section.sourceOverrides?.[well.id] }
+}
+export const sectionSources = (section: GeologySection): SectionWellSource[] => sectionWellSources.map(well => sourceFor(section, well))
 export function stationAtDepth(section: GeologySection, well: SectionWellSource, md: number): XZ {
-  const p = pointAtDepth(well, md)
+  const p = pointAtDepth(sourceFor(section, well), md)
   return { x: projectToProfile(p, section.profile).station, z: p.z }
 }
 export function virtualStationAtDepth(section: GeologySection, well: SectionWellSource, md: number): XZ {
+  well = sourceFor(section, well)
   if (md <= well.depth) return stationAtDepth(section, well, md)
   const bottom = stationAtDepth(section, well, well.depth)
   return { x: bottom.x, z: bottom.z - (md - well.depth) }
 }
 export function mayExtendBottom(well: SectionWellSource, layer: SectionLayer, to: number) { const gap = well.depth - to; return gap >= 0 && gap <= (layer === 'technology' ? 3 : .5) }
 export function layerAnchors(section: GeologySection, layer: SectionLayer): SectionAnchor[] {
-  return sectionWellSources.filter(w => section.participation[layer].includes(w.id)).flatMap(w => {
+  return sectionSources(section).filter(w => section.participation[layer].includes(w.id)).flatMap(w => {
     const source = sourceFor(section, w)
     let ordinary = source[layer]
     if (layer === 'technology') ordinary = ordinary.filter(i => i.kind === 'permeable')
@@ -40,7 +46,7 @@ export function correlationIssues(section: GeologySection, layer: SectionLayer):
   for (const anchor of anchors) {
     const extension = section.bottomExtensions?.[anchor.id]
     if (extension === undefined) continue
-    const well = sectionWellSources.find(w => w.id === anchor.wellId)!, original = virtualStationAtDepth(section, well, anchor.to)
+    const well = sectionSources(section).find(w => w.id === anchor.wellId)!, original = virtualStationAtDepth(section, well, anchor.to)
     if (!mayExtendBottom(well, layer, anchor.to) || !Number.isFinite(extension) || extension > original.z || extension < section.bottom) issues.push('Продолжение низа допустимо только вниз у забоя: 3 м для технологии, 0,5 м для руды.')
   }
   for (const link of links) {
@@ -93,6 +99,10 @@ export function pinchPoint(section: GeologySection, layer: SectionLayer, anchor:
   return { x: center + ((side === 'left' ? bounds.min : bounds.max) - center) / 4, z: (anchor.top.z + anchor.bottom.z) / 2 }
 }
 export type SectionPolygon = XZ[][]
+export function linksAtAnchor(section: GeologySection, layer: SectionLayer, anchor: SectionAnchor, anchors = layerAnchors(section, layer)) {
+  const others = section.links[layer].filter(link => link.a === anchor.id || link.b === anchor.id).map(link => anchors.find(other => other.id === (link.a === anchor.id ? link.b : link.a))).filter((other): other is SectionAnchor => !!other)
+  return { left: others.some(other => other.top.x < anchor.top.x), right: others.some(other => other.top.x > anchor.top.x) }
+}
 export function boundaryInterval(section: GeologySection, layer: SectionLayer, anchor: SectionAnchor, side: 'left' | 'right') {
   const edit = section.contourEdits?.[layer]?.find(e => e.anchorId === anchor.id && e.side === side && e.boundary)
   if (!edit) return null
@@ -106,7 +116,9 @@ export function rawLayerPolygons(section: GeologySection, layer: SectionLayer): 
   for (const a of anchors) {
     const left = pinchPoint(section, layer, a, 'left'), right = pinchPoint(section, layer, a, 'right')
     const leftInterval = boundaryInterval(section, layer, a, 'left'), rightInterval = boundaryInterval(section, layer, a, 'right')
-    patches.push([[a.top, ...(rightInterval ? [rightInterval.top, rightInterval.bottom] : [right]), a.bottom, ...(leftInterval ? [leftInterval.bottom, leftInterval.top] : [left]), a.top].map(p => [p.x, p.z] as polygonClipping.Pair)])
+    const linked = section.demoPreset ? linksAtAnchor(section, layer, a, anchors) : { left: false, right: false }
+    const ring = [a.top, ...(rightInterval ? [rightInterval.top, rightInterval.bottom] : linked.right ? [] : [right]), a.bottom, ...(leftInterval ? [leftInterval.bottom, leftInterval.top] : linked.left ? [] : [left]), a.top]
+    if (ring.length > 3) patches.push([ring.map(p => [p.x, p.z] as polygonClipping.Pair)])
   }
   for (const link of section.links[layer]) {
     const top = linkArc(section, layer, link.id, 'top'), bottom = linkArc(section, layer, link.id, 'bottom')

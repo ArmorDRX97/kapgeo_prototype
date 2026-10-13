@@ -1,13 +1,14 @@
 import { z } from 'zod'
-import { initialSections, sectionWellSources } from '../../entities/geology-section/model/fixtures'
+import { initialSections } from '../../entities/geology-section/model/fixtures'
+import { referenceSection } from '../../entities/geology-section/model/referenceSection'
 import type { GeologySection } from '../../entities/geology-section/model/types'
 import { profileIssues, profileLength } from '../../entities/geology-section/lib/profile'
-import { correlationIssues, contourArcIssues, layerAnchors, virtualStationAtDepth } from '../../entities/geology-section/lib/correlation'
+import { correlationIssues, contourArcIssues, layerAnchors, virtualStationAtDepth, sectionSources } from '../../entities/geology-section/lib/correlation'
 import { graphicIssues } from '../../entities/geology-section/lib/geometry'
 import { resolveGraphicPoints } from '../../entities/geology-section/lib/boundaries'
 import type { UserPersona } from '../../entities/session/model/types'
 import { hasPermission } from '../../shared/auth/permissions'
-import { SECTION_STORAGE_KEY } from './sectionStorageKeys'
+import { SECTION_STORAGE_KEY, SECTION_DEMO_BACKUP_KEY } from './sectionStorageKeys'
 import { trackIssues } from '../../entities/geology-section/lib/columnTracks'
 import { retireRhythms } from '../../entities/geology-section/lib/retireRhythms'
 import { validateSharedSnapshots } from './sharedAuxiliaryRepository'
@@ -20,6 +21,7 @@ const layerIds = z.object({ technology: ids, ore: ids, uncorrected: ids, offbala
 const links = z.array(z.object({ id: z.string(), a: z.string(), b: z.string() }))
 const sourceIntervals = z.array(z.object({ id: z.string(), from: num.nonnegative(), to: positive, kind: z.enum(['permeable', 'impermeable']), grade: num.optional() }))
 const schema = z.object({
+  demoPreset: z.literal('video-reference-v1').optional(),
   schemaVersion: z.literal(1), id: z.string().min(1), revision: num.int().nonnegative(), synthetic: z.literal(true), scope: z.literal('geology-section-prototype'),
   title: z.string().trim().min(1).max(120), depositId: z.literal('GTR-LOCAL-NORTH'), depositName: z.literal('Полигон Северный'),
   stage: z.enum(['exploration', 'operation']), kind: z.enum(['main', 'auxiliary']), year: num.int().min(1900).max(2100), description: z.string().max(5000),
@@ -48,7 +50,7 @@ export function validateSection(value: unknown): GeologySection {
   const issues = profileIssues(section.profile)
   if (issues.length) throw new Error(issues.join(' '))
   if (section.top <= section.bottom) throw new Error('Верхняя отметка должна быть выше нижней.')
-  if (new Set(section.wellIds).size !== section.wellIds.length || section.wellIds.some(id => !sectionWellSources.some(w => w.id === id))) throw new Error('Состав скважин содержит неизвестные или повторяющиеся объекты.')
+  if (new Set(section.wellIds).size !== section.wellIds.length || section.wellIds.some(id => !sectionSources(section).some(w => w.id === id))) throw new Error('Состав скважин содержит неизвестные или повторяющиеся объекты.')
   for (const [layer, wellIds] of Object.entries(section.participation)) {
     if (new Set(wellIds).size !== wellIds.length || wellIds.some(id => !section.wellIds.includes(id))) throw new Error('Участвующие скважины должны входить в разрез.')
     const layerLinks = section.links[layer as keyof typeof section.links]
@@ -62,17 +64,17 @@ export function validateSection(value: unknown): GeologySection {
   }
   for (const graphic of section.graphics) { const errors = graphicIssues(graphic, section); if (errors.length) throw new Error(errors.join(' ')) }
   for (const [id, column] of Object.entries(section.columnSettings ?? {})) {
-    const well = sectionWellSources.find(w => w.id === id) ?? (id === 'all' ? sectionWellSources[0] : undefined)
+    const well = sectionSources(section).find(w => w.id === id) ?? (id === 'all' ? sectionSources(section)[0] : undefined)
     if (!well) throw new Error('Настройки колонок ссылаются на неизвестную скважину.')
     const errors = trackIssues(column, well); if (errors.length) throw new Error(errors.join(' '))
     if (column.curveMin >= column.curveMax) throw new Error('Минимум шкалы должен быть меньше максимума.')
     for (const curve of Object.values(column.curveSettings ?? {})) if (curve.min >= curve.max || curve.from >= curve.to) throw new Error('Проверьте шкалу и глубинный диапазон каротажа.')
   }
-  for (const aux of section.auxiliary ?? []) { const well = sectionWellSources.find(w => w.id === aux.wellId); if (!well || !section.wellIds.includes(aux.wellId) || aux.to <= aux.from || virtualStationAtDepth(section, well, aux.to).z < section.bottom) throw new Error('Вспомогательный интервал выходит за рабочие высоты разреза.') }
+  for (const aux of section.auxiliary ?? []) { const well = sectionSources(section).find(w => w.id === aux.wellId); if (!well || !section.wellIds.includes(aux.wellId) || aux.to <= aux.from || virtualStationAtDepth(section, well, aux.to).z < section.bottom) throw new Error('Вспомогательный интервал выходит за рабочие высоты разреза.') }
   const allAnchors = (['technology', 'ore', 'uncorrected', 'offbalance'] as const).flatMap(layer => layerAnchors(section, layer))
   if (Object.keys(section.bottomExtensions ?? {}).some(id => !allAnchors.some(a => a.id === id))) throw new Error('Продолжение ссылается на удалённый интервал.')
   for (const [id, source] of Object.entries(section.sourceOverrides ?? {})) {
-    const well = sectionWellSources.find(w => w.id === id)
+    const well = sectionSources(section).find(w => w.id === id)
     if (!well || !section.wellIds.includes(id)) throw new Error('Источник не входит в разрез.')
     for (const layer of ['technology', 'ore', 'uncorrected', 'offbalance'] as const) {
       const intervals = source[layer]
@@ -96,6 +98,17 @@ function read(): GeologySection[] {
 function write(docs: GeologySection[]) { localStorage.setItem(SECTION_STORAGE_KEY, JSON.stringify(docs)) }
 export const sectionRepository = {
   async list() { return read() },
+  /** Refresh only the shared presentation fixture; independent documents stay intact. */
+  async demoList() {
+    const docs = read(), previous = docs.find(doc => doc.id === 'GTR-01')
+    if (!previous || previous.demoPreset === 'video-reference-v1') return docs
+    const hadSavedDocument = localStorage.getItem(SECTION_STORAGE_KEY) !== null
+    const next = validateSection({ ...referenceSection(), title: previous.title, status: previous.status, revision: hadSavedDocument ? previous.revision + 1 : 0 })
+    if (hadSavedDocument && !localStorage.getItem(SECTION_DEMO_BACKUP_KEY)) localStorage.setItem(SECTION_DEMO_BACKUP_KEY, JSON.stringify(previous))
+    const updated = docs.map(doc => doc.id === previous.id ? next : doc)
+    write(updated)
+    return updated
+  },
   create(input: GeologySection, persona: UserPersona | null) {
     if (!canEditSection(persona, input)) throw new Error('Недостаточно прав для создания разреза.')
     const docs = read(), next = validateSection(input)

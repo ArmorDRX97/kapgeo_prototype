@@ -8,7 +8,7 @@ import { profileLength } from '../../../entities/geology-section/lib/profile'
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); localStorage.clear() })
 describe('external plot headers', () => {
-  it('places well and track names in a separate header above the geology frame', () => {
+  it('places only well names in a compact separate header above the geology frame', () => {
     const { container } = render(<SectionSvg section={initialSections()[0]!} />)
     const section = initialSections()[0]!, header = container.querySelector('.section-canvas__headers')!, frame = plotFrame(1000, 500, false, plotHeaders(section, 1000, 0, profileLength(section.profile)).top)
     expect(header).toBeTruthy()
@@ -16,7 +16,9 @@ describe('external plot headers', () => {
     for (const label of header.querySelectorAll('text')) expect(Number(label.getAttribute('y'))).toBeLessThan(frame.top)
     const verticalGrid = container.querySelector('.section-canvas__grid path')!
     expect(verticalGrid.getAttribute('d')).toContain(` ${frame.top}V${frame.bottom}`)
-    expect(header.querySelectorAll('[data-header-track]')).toHaveLength(20)
+    expect(header.querySelectorAll('text')).toHaveLength(5)
+    expect(header.textContent).toBe('ГС-101ГС-102ГС-103ГС-104ГС-105')
+    expect(header.querySelectorAll('[data-header-track], .section-canvas__header-divider')).toHaveLength(0)
     expect(header.querySelectorAll('text[transform]')).toHaveLength(0)
     expect(header.querySelectorAll('.section-canvas__header-card')).toHaveLength(5)
   })

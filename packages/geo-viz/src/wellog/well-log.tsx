@@ -17,7 +17,7 @@ type Gesture = { trackId: string; startDepth: number; startY: number; range: Dep
 /** Main frontend Canvas tablet, adapted for standalone styling and interval editing. */
 export function WellLog({ tracks, depthRange, height = 620, className, onDepthRangeChange,
   bounds, interactionMode = 'select', onTrackSelect, onRangeSelect, onBoundaryChange,
-  onTrackHeaderClick, labels = { axis: 'MD, m', depthAxis: 'Depth axis', unit: 'm', track: 'Track' } }: WellLogProps) {
+  onTrackHeaderClick, onContextSelect, labels = { axis: 'MD, m', depthAxis: 'Depth axis', unit: 'm', track: 'Track' } }: WellLogProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const axisRef = useRef<HTMLCanvasElement>(null);
@@ -132,6 +132,7 @@ export function WellLog({ tracks, depthRange, height = 620, className, onDepthRa
         <canvas ref={axisRef} role="img" aria-label={labels.depthAxis} className="wellog__axis" style={{ width: AXIS_WIDTH, height: plotHeight }} />
         {tracks.map(track => <canvas key={track.id} ref={node => { if (node) canvases.current.set(track.id, node); else canvases.current.delete(track.id); }}
           role="img" aria-label={`${labels.track} ${track.title}`} className="wellog__track" style={{ width: trackWidth(track), height: plotHeight }}
+          onContextMenu={event => { if (onContextSelect) { event.preventDefault(); onContextSelect({ trackId: track.id, depth: depthAt(event as unknown as ReactPointerEvent) }); } }}
           onPointerDown={event => down(event, track)} onPointerMove={move} onPointerUp={up} onPointerCancel={() => { gesture.current = null; setPreview(null); }} />)}
       </div>
     </div>

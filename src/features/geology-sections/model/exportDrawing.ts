@@ -2,7 +2,7 @@ export function drawingSvgSource(original: SVGSVGElement) {
   const copy = original.cloneNode(true) as SVGSVGElement, originals = [original, ...original.querySelectorAll('*')], copies = [copy, ...copy.querySelectorAll('*')]
   originals.forEach((node, i) => {
     const style = getComputedStyle(node)
-    copies[i]?.setAttribute('style', ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'opacity', 'font-family', 'font-size', 'font-weight', 'paint-order'].map(k => `${k}:${style.getPropertyValue(k).replace(/url\(["']?[^#)]*#([^"')]+)["']?\)/g, 'url(#$1)')}`).join(';'))
+    copies[i]?.setAttribute('style', ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-dasharray', 'opacity', 'font-family', 'font-size', 'font-weight', 'paint-order'].map(k => `${k}:${style.getPropertyValue(k).replace(/url\(["']?[^#)]*#([^"')]+)["']?\)/g, 'url(#$1)')}`).join(';'))
   })
   return new XMLSerializer().serializeToString(copy)
 }

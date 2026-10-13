@@ -13,9 +13,7 @@ import { WorkspaceTabs } from '../../shared/ui/WorkspaceTabs'
 import { validateSectionSearch, type SectionSearch } from './model/search'
 import { useSharedAuxiliary } from './model/useSharedAuxiliary'
 import { staleAuxiliary } from '../../entities/geology-section/lib/sharedAuxiliary'
-import { SectionOverview } from './ui/SectionOverview'
-import { ProfileEditor } from './ui/ProfileEditor'
-import { SectionWells } from './ui/SectionWells'
+import { SectionSetup } from './ui/SectionSetup'
 import { ProfileMap } from './ui/ProfileMap'
 import { CorrelationEditor } from './ui/CorrelationEditor'
 import { GraphicEditor } from './ui/GraphicEditor'
@@ -31,9 +29,9 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
   const [pendingGeometry, setPendingGeometry] = useState(false)
   const shared = useSharedAuxiliary(), stale = staleAuxiliary(section, shared.data ?? [])
   const editable = canEditSection(persona, saved), dirty = JSON.stringify(section) !== JSON.stringify(saved), view = search.view ?? 'overview'
-  const routeBlocker = useBlocker({ withResolver: true, disabled: !dirty && !pendingGeometry, enableBeforeUnload: dirty || pendingGeometry, shouldBlockFn: ({ next }) => {
+  const routeBlocker = useBlocker({ withResolver: true, disabled: !dirty && !pendingGeometry, enableBeforeUnload: dirty || pendingGeometry, shouldBlockFn: ({ current, next }) => {
     const destination = validateSectionSearch(next.search as Record<string, unknown>)
-    return next.pathname !== `/geology/sections/${section.id}` || pendingGeometry && (destination.view !== search.view || destination.mode !== search.mode)
+    return next.pathname !== current.pathname || pendingGeometry && (destination.view !== search.view || destination.mode !== search.mode)
   } })
   const commit = (next: GeologySection) => {
     if (!editable) return
@@ -54,7 +52,7 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
     const url = URL.createObjectURL(new Blob([JSON.stringify(section, null, 2)], { type: 'application/json;charset=utf-8' })), a = document.createElement('a')
     a.href = url; a.download = `${section.id}-разрез.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
-  const graphView = !['overview', 'profile', 'wells'].includes(view)
+  const graphView = view !== 'overview'
   const documentActions = <div className="section-actions"><Button variant="quiet" size="sm" disabled={pendingGeometry} aria-label="Скачать копию разреза JSON" title="Скачать копию разреза JSON" onClick={backup}><Download size={17} /></Button><Button variant="quiet" size="sm" aria-label="Отменить действие разреза" disabled={!editable || pendingGeometry || !past.length} onClick={undo}><Undo2 size={18} /></Button><Button variant="quiet" size="sm" aria-label="Повторить действие разреза" disabled={!editable || pendingGeometry || !future.length} onClick={redo}><Redo2 size={18} /></Button><Button size="sm" disabled={!editable || !dirty} onClick={() => save()}><Save size={17} />Сохранить разрез</Button></div>
   const messages = <>{error && routeBlocker?.status !== 'blocked' && <p role="alert" className="section-error">{error}</p>}
     {stale.length > 0 && <p role="status" className="section-preview">Изменились общие вспомогательные опоры: {stale.length}. Сохранена прежняя геометрия. Откройте опоры соответствующего слоя и примените коррекцию.</p>}</>
@@ -62,7 +60,7 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
       if (!window.confirm(`Удалить разрез «${saved.title}»?`)) return
       try { sectionRepository.remove(saved.id, saved.revision, persona); onDeleted?.() } catch (problem) { setError(problem instanceof Error ? problem.message : 'Не удалось удалить разрез.') }
     }}><Trash2 size={15} />Удалить разрез</Button>
-  const editor = view === 'overview' ? <SectionOverview {...props} /> : view === 'profile' ? <ProfileEditor {...props} /> : view === 'wells' ? <SectionWells {...props} /> : view === 'map' ? <ProfileMap {...props} onPending={setPendingGeometry} /> : !graphicReady ? <PlotSurface><p role="alert" className="section-error">Для графической области исправьте профиль и диапазон высот в разделах «Сведения» и «Профиль». Черновик сохранён в текущей рабочей области.</p></PlotSurface> : view === 'drawing' ? <DrawingEditor {...props} selection={search.selection} onSelect={select} /> : <>
+  const editor = view === 'overview' ? <SectionSetup {...props} /> : view === 'map' ? <ProfileMap {...props} onPending={setPendingGeometry} /> : !graphicReady ? <PlotSurface><p role="alert" className="section-error">Для графической области исправьте профиль и диапазон высот во вкладке «Разрез». Черновик сохранён в текущей рабочей области.</p></PlotSurface> : view === 'drawing' ? <DrawingEditor {...props} selection={search.selection} onSelect={select} /> : <>
         {view === 'technology' && <div className="section-actions" role="group" aria-label="Режим технологии">{(['layers', 'foundation'] as const).map((mode, i) => <Button key={mode} variant={(search.mode ?? 'layers') === mode ? 'primary' : 'secondary'} onClick={() => onSearch({ view, mode })}>{['Пропластки', 'Фундамент и разломы'][i]}</Button>)}</div>}
         {view === 'ore' && <div className="section-actions" role="group" aria-label="Источник руды">{(['corrected', 'uncorrected'] as const).map((mode, i) => <Button key={mode} variant={(search.mode ?? 'corrected') === mode ? 'primary' : 'secondary'} onClick={() => onSearch({ view, mode })}>{['В технологической толще', 'Без поправок'][i]}</Button>)}</div>}
         {view === 'lithology' || view === 'oxidation' || view === 'technology' && search.mode === 'foundation' ? <GraphicEditor key={`${view}-${search.mode}`} {...props} onPending={setPendingGeometry} mode={view === 'technology' ? search.mode as 'foundation' : view} selection={search.selection} onSelect={select} /> : <CorrelationEditor onPending={setPendingGeometry} key={`${view}-${search.mode}`} {...props} layer={view === 'ore' ? search.mode === 'uncorrected' ? 'uncorrected' : 'ore' : view === 'offbalance' ? 'offbalance' : 'technology'} selection={search.selection} onSelect={select} />}

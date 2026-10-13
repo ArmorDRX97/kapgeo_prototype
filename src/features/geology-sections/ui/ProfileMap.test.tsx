@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initialSections } from '../../../entities/geology-section/model/fixtures'
+import { referenceWellSources } from '../../../entities/geology-section/model/referenceSources'
+import { pointAtDepth } from '../../../entities/geology-section/lib/profile'
 import { ProfileMap } from './ProfileMap'
 
 const originalMatrix = Object.getOwnPropertyDescriptor(SVGSVGElement.prototype, 'getScreenCTM')
@@ -20,6 +22,41 @@ const point = (x: number, y: number) => {
   fireEvent.pointerUp(map, { button: 0 })
 }
 describe('profile map gestures', () => {
+  it('centers the reference extent and keeps coordinate labels within the camera while panning and zooming', () => {
+    const section = { ...initialSections()[0]!, demoPreset: 'video-reference-v1' as const, profile: [{ x: 0, y: 0 }, { x: 350, y: 0 }] }, change = vi.fn()
+    const { container } = render(<ProfileMap section={section} disabled onChange={change} onPending={vi.fn()} />)
+    const map = screen.getByRole('group', { name: 'Карта скважин и направленного профиля' })
+    const box = () => map.getAttribute('viewBox')!.split(' ').map(Number) as [number, number, number, number]
+    const extent = [...section.profile, ...referenceWellSources.flatMap(w => [w.collar, pointAtDepth(w, w.depth)])], before = box()
+    expect(before[0] + before[2] / 2).toBeCloseTo((Math.min(...extent.map(p => p.x)) + Math.max(...extent.map(p => p.x))) / 2)
+    expect(before[1] + before[3] / 2).toBeCloseTo(-(Math.min(...extent.map(p => p.y)) + Math.max(...extent.map(p => p.y))) / 2)
+    const labels = () => [...container.querySelectorAll<SVGTextElement>('[data-map-axes] text')]
+    const checkLabels = () => {
+      const [x, y, width, height] = box()
+      expect(labels().length).toBeGreaterThan(5)
+      for (const label of labels()) {
+        expect(Number(label.getAttribute('x'))).toBeGreaterThan(x)
+        expect(Number(label.getAttribute('x'))).toBeLessThan(x + width)
+        expect(Number(label.getAttribute('y'))).toBeGreaterThan(y)
+        expect(Number(label.getAttribute('y'))).toBeLessThan(y + height)
+      }
+      const fontSize = Number(container.querySelector('[data-map-axes]')!.getAttribute('font-size'))
+      expect(fontSize * Math.min(1000 / width, 500 / height)).toBeCloseTo(11)
+    }
+    checkLabels()
+    fireEvent.keyDown(map, { key: 'ArrowRight' }); checkLabels()
+    expect(box()[0]).toBeCloseTo(before[0] + 20)
+    fireEvent.wheel(map, { deltaY: -100, clientX: 100, clientY: 100 }); checkLabels()
+    expect(box()[2]).toBeLessThan(before[2])
+    fireEvent.click(screen.getByRole('button', { name: 'Весь профиль' }))
+    expect(box()).toEqual(before); expect(change).not.toHaveBeenCalled()
+  })
+
+  it('retains the original map frame and omits coordinate labels for existing non-reference documents', () => {
+    const { container } = render(<ProfileMap section={initialSections()[0]!} disabled onChange={vi.fn()} onPending={vi.fn()} />)
+    expect(container.querySelector('[data-map-axes]')).not.toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Карта скважин и направленного профиля' }).getAttribute('viewBox')).toBe('-30 -230 550 250')
+  })
   it('pans in viewing mode without modifying the profile or adding wells', () => {
     const change = vi.fn()
     render(<ProfileMap section={initialSections()[0]!} disabled={true} onChange={change} onPending={vi.fn()} />)

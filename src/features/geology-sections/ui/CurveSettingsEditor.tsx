@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ColumnSettings, GeologySection } from '../../../entities/geology-section/model/types'
-import { sectionWellSources } from '../../../entities/geology-section/model/fixtures'
+import { sectionSources } from '../../../entities/geology-section/lib/correlation'
 import { defaultColumns } from '../model/presentation'
 import { TrackSettingsEditor } from './TrackSettingsEditor'
 import { Button } from '../../../shared/ui/Button'
@@ -9,7 +9,7 @@ type CurveSettings = NonNullable<ColumnSettings['curveSettings']>[string]
 export function CurveSettingsEditor({ section, columnId, disabled, onChange }: { section: GeologySection; columnId: string; disabled: boolean; onChange: (section: GeologySection) => void }) {
   const [error, setError] = useState('')
   const column = section.columnSettings?.[columnId] ?? section.columnSettings?.all ?? defaultColumns
-  const source = sectionWellSources.find(w => w.id === columnId) ?? sectionWellSources[0]!
+  const source = sectionSources(section).find(w => w.id === columnId) ?? sectionSources(section)[0]!
   const change = (id: string, settings: CurveSettings) => {
     if (![settings.min, settings.max, settings.from, settings.to].every(Number.isFinite) || settings.min >= settings.max || settings.from < 0 || settings.from >= settings.to || settings.to > source.depth) { setError('Минимум шкалы должен быть меньше максимума; диапазон MD — внутри ствола.'); return }
     setError(''); onChange({ ...section, columnSettings: { ...section.columnSettings, [columnId]: { ...column, curveSettings: { ...column.curveSettings, [id]: settings } } } })

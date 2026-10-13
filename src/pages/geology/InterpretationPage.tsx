@@ -27,7 +27,7 @@ function InterpretationContent() {
   if (query.error) return <Panel title="Не удалось открыть интерпретацию"><p role="alert">{query.error.message}</p><Button onClick={() => void query.refetch()}>Повторить</Button><Button variant="secondary" onClick={() => { if (window.confirm('Удалить только сохранённый результат интерпретации этой скважины?')) { interpretationRepository.reset(well); void query.refetch() } }}>Сбросить интерпретацию</Button></Panel>
   if (!query.data) return <div className="page-loading"><span /><p>Подготавливаем планшет…</p></div>
   // Selection and depth-window updates are workbench interactions, not page changes.
-  return <InterpretationWorkbench key={well.id} well={well} initial={query.data} persona={persona} search={search}
+  return <><div className="alpha-legacy-return"><Button size="sm" variant="quiet" onClick={() => void navigate({ to: '/geology/interpretation/$method', params: { method: 'electro' }, search: { well: well.id } })}>← Методы интерпретации ГИС</Button></div><InterpretationWorkbench key={well.id} well={well} initial={query.data} persona={persona} search={search}
     onSaved={document => queryClient.setQueryData(['interpretation-demo', well.id], document)}
-    onLocationChange={next => void navigate({ to: '/geology/interpretation', search: next, replace: next.well === search.well, resetScroll: false })} />
+    onLocationChange={next => void navigate({ to: '/geology/interpretation', search: next, replace: next.well === search.well, resetScroll: false })} /></>
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
-import { sectionWellSources } from '../../../entities/geology-section/model/fixtures'
+import { sectionSources } from '../../../entities/geology-section/lib/correlation'
 import { pointAtDepth, profileIssues } from '../../../entities/geology-section/lib/profile'
 import type { GeologySection, XY } from '../../../entities/geology-section/model/types'
 import { Button } from '../../../shared/ui/Button'
@@ -12,9 +12,18 @@ import { GraphicInspection } from './GraphicInspection'
 import { inspectAttributes } from '../model/graphicInfo'
 import { useDragPan } from '../model/useDragPan'
 import { GraphHelp, PlotSurface, ToolCategory } from './SectionGraphicWorkspace'
+import { usePlotSize } from '../model/usePlotSize'
+
+function mapTicks(min: number, max: number, unitsPerLabel: number) {
+  const magnitude = 10 ** Math.floor(Math.log10(unitsPerLabel))
+  const step = ([1, 2, 5, 10].find(value => value * magnitude >= unitsPerLabel) ?? 10) * magnitude
+  const precision = Math.max(0, -Math.floor(Math.log10(step)))
+  return Array.from({ length: Math.max(0, Math.floor(max / step) - Math.ceil(min / step) + 1) }, (_, index) => Number(((Math.ceil(min / step) + index) * step).toFixed(precision)))
+}
 
 export function ProfileMap({ section, disabled, onChange, onPending }: { section: GeologySection; disabled: boolean; onChange: (next: GeologySection) => void; onPending: (pending: boolean) => void }) {
   const svg = useRef<SVGSVGElement>(null)
+  const viewport = useRef<HTMLDivElement>(null), viewportSize = usePlotSize(viewport)
   const [tool, setTool] = useState<'select' | 'new' | 'segment' | 'append' | 'move' | 'wells'>('select')
   const [selected, setSelected] = useState<number | null>(null), [snap, setSnap] = useState(true), [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 }), [message, setMessage] = useState('')
@@ -28,14 +37,18 @@ export function ProfileMap({ section, disabled, onChange, onPending }: { section
   const newIssues = tool === 'new' && draft?.length === 2 ? profileChangeIssues(section, draft) : []
   const includeWell = (id: string) => {
     if (disabled || tool !== 'wells') return
-    const well = sectionWellSources.find(w => w.id === id)!
+    const well = sectionSources(section).find(w => w.id === id)!
     if (section.wellIds.includes(id)) { setMessage(`${well.name} уже в составе разреза`); return }
     onChange(changeSectionWells(section, [...section.wellIds, id])); setMessage(`${well.name} добавлена. Участие в слоях выбирается отдельно.`)
   }
-  const extent = [...section.profile, ...(draft ?? []), ...sectionWellSources.flatMap(w => [w.collar, pointAtDepth(w, w.depth)])].filter(p => Number.isFinite(p.x) && Number.isFinite(p.y))
-  const base = { x: Math.min(...extent.map(p => p.x)) - 30, y: Math.min(...extent.map(p => p.y)) - 50 }
-  const baseWidth = Math.max(550, Math.max(...extent.map(p => p.x)) - base.x + 30), baseHeight = Math.max(250, Math.max(...extent.map(p => p.y)) - base.y + 50)
+  const extent = [...section.profile, ...(draft ?? []), ...sectionSources(section).flatMap(w => [w.collar, pointAtDepth(w, w.depth)])].filter(p => Number.isFinite(p.x) && Number.isFinite(p.y))
+  const minX = Math.min(...extent.map(p => p.x)), maxX = Math.max(...extent.map(p => p.x)), minY = Math.min(...extent.map(p => p.y)), maxY = Math.max(...extent.map(p => p.y))
+  const baseWidth = Math.max(550, maxX - minX + 60), baseHeight = Math.max(250, maxY - minY + 100), reference = section.demoPreset === 'video-reference-v1'
+  const base = reference ? { x: (minX + maxX - baseWidth) / 2, y: (minY + maxY - baseHeight) / 2 } : { x: minX - 30, y: minY - 50 }
   const origin = { x: base.x + pan.x, y: base.y + pan.y }, width = baseWidth / zoom, height = baseHeight / zoom
+  const unitsPerPixel = Math.max(width / viewportSize.width, height / viewportSize.height)
+  const xTicks = reference ? mapTicks(origin.x + 40 * unitsPerPixel, origin.x + width - 60 * unitsPerPixel, 80 * unitsPerPixel) : []
+  const yTicks = reference ? mapTicks(origin.y + 28 * unitsPerPixel, origin.y + height - 28 * unitsPerPixel, 60 * unitsPerPixel) : []
   const dragPan = useDragPan(tool === 'select', () => {
     const start = pan, inverse = svg.current?.getScreenCTM()?.inverse()
     return { move: (dx, dy) => { if (inverse) setPan({ x: start.x - dx * inverse.a - dy * inverse.c, y: start.y + dx * inverse.b + dy * inverse.d }) }, cancel: () => setPan(start) }
@@ -52,7 +65,7 @@ export function ProfileMap({ section, disabled, onChange, onPending }: { section
     const matrix = svg.current?.getScreenCTM()
     if (!matrix) return origin
     const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse()), coordinate = { x: p.x, y: -p.y }
-    const near = snap ? sectionWellSources.flatMap(w => [w.collar, pointAtDepth(w, w.depth)]).find(p => Math.hypot(p.x - coordinate.x, p.y - coordinate.y) < 8 / zoom) : undefined
+    const near = snap ? sectionSources(section).flatMap(w => [w.collar, pointAtDepth(w, w.depth)]).find(p => Math.hypot(p.x - coordinate.x, p.y - coordinate.y) < 8 / zoom) : undefined
     setMessage(near ? 'Привязка к скважине' : `X ${coordinate.x.toFixed(1)} · Y ${coordinate.y.toFixed(1)} м`)
     return near ? { x: near.x, y: near.y } : coordinate
   }
@@ -60,9 +73,9 @@ export function ProfileMap({ section, disabled, onChange, onPending }: { section
   return <section onKeyDown={e => { if (e.key === 'Escape') cancel() }}><h2>Карта профиля</h2><div className="section-actions"><Button variant={tool === 'select' ? 'primary' : 'secondary'} onClick={() => chooseTool('select')}>Выбор</Button><Button disabled={disabled} variant={tool === 'new' ? 'primary' : 'secondary'} onClick={() => chooseTool('new')}>Новый профиль</Button><Button disabled={disabled} variant={tool === 'segment' ? 'primary' : 'secondary'} onClick={() => { chooseTool('segment'); setReverseSegment(false) }}>Независимый сегмент</Button><Button disabled={disabled} variant={tool === 'append' ? 'primary' : 'secondary'} onClick={() => chooseTool('append')}>Продолжить профиль</Button><Button disabled={disabled} variant={tool === 'move' ? 'primary' : 'secondary'} onClick={() => chooseTool('move')}>Переместить вершину</Button><Button disabled={disabled} variant={tool === 'wells' ? 'primary' : 'secondary'} onClick={() => chooseTool('wells')}>Добавить скважины</Button><label><input type="checkbox" checked={snap} onChange={e => setSnap(e.target.checked)} />Привязка</label><ToolCategory category="display"><div className="section-actions"><Button variant="quiet" onClick={() => setZoom(Math.min(5, zoom * 1.25))}>Приблизить</Button><Button variant="quiet" onClick={() => setZoom(Math.max(0.5, zoom / 1.25))}>Отдалить</Button><Button variant="quiet" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }) }}>Весь профиль</Button></div></ToolCategory></div>
     <GraphHelp><p className="section-muted">{tool === 'segment' ? 'Задайте отдельный сегмент двумя кликами или точными координатами. Соединение с началом/концом профиля применяется после проверки. Escape отменяет.' : tool === 'new' ? draft ? 'Укажите конец нового профиля. Escape отменяет построение.' : 'Укажите начало и конец двумя кликами. Текущий профиль заменится только после проверки и применения; состав скважин сохраняется.' : tool === 'append' ? 'Щёлкните для добавления сопряжённого сегмента.' : tool === 'move' ? 'Перетащите вершину. Escape отменяет текущий жест.' : tool === 'wells' ? 'Нажмите на скважину или выберите её клавишами Tab и Enter. Уже включённые скважины остаются в составе.' : 'ЛКМ + перетаскивание — перемещение карты. Устья — кружки, забои — кресты; стрелка задаёт направление.'}</p></GraphHelp>
     {tool !== 'select' && <p role="status">{tool === 'new' || tool === 'segment' ? 'Укажите две точки на карте.' : tool === 'move' ? 'Выберите и перетащите вершину.' : tool === 'append' ? 'Укажите конец нового сегмента.' : 'Выберите скважину на карте.'}</p>}
-    <ToolCategory category="coordinates"><p>Точные координаты вершин профиля доступны в разделе «Профиль».</p></ToolCategory>
-    <div className="section-actions"><label>Скважина на карте<select value={wellSearch} onChange={e => { setWellSearch(e.target.value); const well = sectionWellSources.find(w => w.id === e.target.value); if (well) { const p = pointAtDepth(well, well.depth); setZoom(2); setPan({ x: p.x - base.x - baseWidth / 4, y: p.y - base.y - baseHeight / 4 }); setMessage(`${well.name}: X ${p.x.toFixed(2)}, Y ${p.y.toFixed(2)} м`) } }}><option value="">Найти скважину</option>{sectionWellSources.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select></label></div>
-    <PlotSurface><GraphicInspection><div {...dragPan.events} className={`section-map-wrap${tool === 'select' ? ' is-pannable' : ''}${dragPan.panning ? ' is-panning' : ''}`}><svg ref={svg} className="section-map" viewBox={`${origin.x} ${-origin.y - height} ${width} ${height}`} role="group" aria-label="Карта скважин и направленного профиля" tabIndex={0} onKeyDown={e => {
+    <ToolCategory category="coordinates"><p>Точные координаты вершин профиля доступны во вкладке «Разрез», блок «Направленный профиль».</p></ToolCategory>
+    <div className="section-actions"><label>Скважина на карте<select value={wellSearch} onChange={e => { setWellSearch(e.target.value); const well = sectionSources(section).find(w => w.id === e.target.value); if (well) { const p = pointAtDepth(well, well.depth); setZoom(2); setPan({ x: p.x - base.x - baseWidth / 4, y: p.y - base.y - baseHeight / 4 }); setMessage(`${well.name}: X ${p.x.toFixed(2)}, Y ${p.y.toFixed(2)} м`) } }}><option value="">Найти скважину</option>{sectionSources(section).map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select></label></div>
+    <PlotSurface><GraphicInspection><div ref={viewport} {...dragPan.events} className={`section-map-wrap${tool === 'select' ? ' is-pannable' : ''}${dragPan.panning ? ' is-panning' : ''}`}><svg ref={svg} className="section-map" viewBox={`${origin.x} ${-origin.y - height} ${width} ${height}`} role="group" aria-label="Карта скважин и направленного профиля" tabIndex={0} onKeyDown={e => {
       const move = { ArrowLeft: [-20, 0], ArrowRight: [20, 0], ArrowUp: [0, 20], ArrowDown: [0, -20] }[e.key]
       if (move) { e.preventDefault(); setPan({ x: pan.x + move[0]! / zoom, y: pan.y + move[1]! / zoom }) }
     }} onPointerDown={e => {
@@ -78,7 +91,13 @@ export function ProfileMap({ section, disabled, onChange, onPending }: { section
     }} onPointerCancel={() => { drag.current = null; setDraft(null) }}>
       <defs><pattern id="section-map-grid" width={50} height={50} patternUnits="userSpaceOnUse"><path d="M 50 0 L 0 0 0 50" className="section-map__grid" fill="none" /></pattern><marker id="section-map-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" className="section-map__arrow" /></marker></defs>
       <rect x={origin.x} y={-origin.y - height} width={width} height={height} fill="url(#section-map-grid)" />
-      {sectionWellSources.map(w => { const b = pointAtDepth(w, w.depth); return <g key={w.id} {...inspectAttributes({ title: w.name, kind: 'Скважина на карте', rows: [['Устье X/Y', `${w.collar.x.toFixed(2)} / ${w.collar.y.toFixed(2)} м`], ['Забой X/Y', `${b.x.toFixed(2)} / ${b.y.toFixed(2)} м`], ['Глубина', `${w.depth} м`], ['В составе', section.wellIds.includes(w.id) ? 'Да' : 'Нет']] })} className={section.wellIds.includes(w.id) ? 'section-map__well is-included' : 'section-map__well'} role="button" tabIndex={tool === 'wells' && disabled ? undefined : 0} aria-label={tool === 'wells' ? `Добавить ${w.name} в разрез` : `${w.name}: сведения`} aria-pressed={tool === 'wells' ? section.wellIds.includes(w.id) : undefined} aria-disabled={tool === 'wells' ? disabled : undefined} onPointerDown={e => { if (tool === 'wells') { e.stopPropagation(); if (e.button === 0) includeWell(w.id) } }} onKeyDown={e => { if (tool === 'wells' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); includeWell(w.id) } }}>{<rect className="section-map__well-hit" x={Math.min(w.collar.x, b.x) - 8 / zoom} y={Math.min(-w.collar.y, -b.y) - 18 / zoom} width={Math.abs(b.x - w.collar.x) + 55 / zoom} height={Math.abs(b.y - w.collar.y) + 30 / zoom} />}<line x1={w.collar.x} y1={-w.collar.y} x2={b.x} y2={-b.y} /><circle cx={w.collar.x} cy={-w.collar.y} r={3 / zoom} /><path d={`M${b.x - 3 / zoom},${-b.y}h${6 / zoom}M${b.x},${-b.y - 3 / zoom}v${6 / zoom}`} /><text x={b.x + 6 / zoom} y={-b.y - 7 / zoom} fontSize={9 / zoom}>{w.name}</text></g> })}
+      {reference && <g data-map-axes="true" aria-hidden="true" pointerEvents="none" fill="var(--text-tertiary)" fontSize={11 * unitsPerPixel}>
+        <text x={origin.x + width - 8 * unitsPerPixel} y={-origin.y - 8 * unitsPerPixel} textAnchor="end">X, м</text>
+        <text x={origin.x + 8 * unitsPerPixel} y={-origin.y - height + 16 * unitsPerPixel}>Y, м</text>
+        {xTicks.map(value => <text data-map-axis="x" key={value} x={value} y={-origin.y - 8 * unitsPerPixel} textAnchor="middle">{value}</text>)}
+        {yTicks.map(value => <text data-map-axis="y" key={value} x={origin.x + 8 * unitsPerPixel} y={-value} dominantBaseline="middle">{value}</text>)}
+      </g>}
+      {sectionSources(section).map(w => { const b = pointAtDepth(w, w.depth); return <g key={w.id} {...inspectAttributes({ title: w.name, kind: 'Скважина на карте', rows: [['Устье X/Y', `${w.collar.x.toFixed(2)} / ${w.collar.y.toFixed(2)} м`], ['Забой X/Y', `${b.x.toFixed(2)} / ${b.y.toFixed(2)} м`], ['Глубина', `${w.depth} м`], ['В составе', section.wellIds.includes(w.id) ? 'Да' : 'Нет']] })} className={section.wellIds.includes(w.id) ? 'section-map__well is-included' : 'section-map__well'} role="button" tabIndex={tool === 'wells' && disabled ? undefined : 0} aria-label={tool === 'wells' ? `Добавить ${w.name} в разрез` : `${w.name}: сведения`} aria-pressed={tool === 'wells' ? section.wellIds.includes(w.id) : undefined} aria-disabled={tool === 'wells' ? disabled : undefined} onPointerDown={e => { if (tool === 'wells') { e.stopPropagation(); if (e.button === 0) includeWell(w.id) } }} onKeyDown={e => { if (tool === 'wells' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); includeWell(w.id) } }}>{<rect className="section-map__well-hit" x={Math.min(w.collar.x, b.x) - 8 / zoom} y={Math.min(-w.collar.y, -b.y) - 18 / zoom} width={Math.abs(b.x - w.collar.x) + 55 / zoom} height={Math.abs(b.y - w.collar.y) + 30 / zoom} />}<line x1={w.collar.x} y1={-w.collar.y} x2={b.x} y2={-b.y} /><circle cx={w.collar.x} cy={-w.collar.y} r={3 / zoom} /><path d={`M${b.x - 3 / zoom},${-b.y}h${6 / zoom}M${b.x},${-b.y - 3 / zoom}v${6 / zoom}`} /><text x={b.x + 6 / zoom} y={-b.y - 7 / zoom} fontSize={9 / zoom}>{w.name}</text></g> })}
       {(tool === 'new' || tool === 'segment') && !profileIssues(section.profile).length && <polyline points={section.profile.map(p => `${p.x},${-p.y}`).join(' ')} className="section-map__profile section-map__profile--previous" fill="none" />}
       {!profileIssues(path).length && <polyline {...inspectAttributes({ title: 'Направленный профиль', kind: 'Трасса разреза', rows: [['Вершин', String(path.length)], ['Направление', 'От первой вершины к последней'], ['Координаты', 'Локальные X/Y, м']] })} tabIndex={0} role="button" aria-label="Линия профиля: сведения" points={path.map(p => `${p.x},${-p.y}`).join(' ')} className="section-map__profile" fill="none" markerMid="url(#section-map-arrow)" markerEnd="url(#section-map-arrow)" />}
       {tool === 'segment' && draft && <polyline points={draft.filter(p => Number.isFinite(p.x) && Number.isFinite(p.y)).map(p => `${p.x},${-p.y}`).join(' ')} className="section-map__profile section-map__segment" fill="none" />}

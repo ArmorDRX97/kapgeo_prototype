@@ -2,7 +2,8 @@ import { sectionViews, type SectionView } from '../../../entities/geology-sectio
 
 export type SectionSearch = { view?: SectionView; mode?: 'layers' | 'foundation' | 'corrected' | 'uncorrected'; selection?: string; q?: string; kind?: 'main' | 'auxiliary'; year?: number; body?: string; groupBy?: 'year' | 'body' | 'kind' }
 export function validateSectionSearch(input: Record<string, unknown>): SectionSearch {
-  const view = sectionViews.some(v => v.id === input.view) ? input.view as SectionView : undefined
+  const requestedView = input.view === 'profile' || input.view === 'wells' ? 'overview' : input.view
+  const view = sectionViews.some(v => v.id === requestedView) ? requestedView as SectionView : undefined
   const allowedModes = view === 'technology' ? ['layers', 'foundation'] : view === 'ore' ? ['corrected', 'uncorrected'] : []
   const year = Number(input.year)
   return { view, mode: allowedModes.includes(String(input.mode)) ? input.mode as SectionSearch['mode'] : undefined,

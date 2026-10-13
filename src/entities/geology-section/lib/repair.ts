@@ -1,6 +1,5 @@
 import type { GeologySection } from '../model/types'
-import { adjacentAnchors, layerAnchors, pinchBounds, mayExtendBottom, virtualStationAtDepth } from './correlation'
-import { sectionWellSources } from '../model/fixtures'
+import { adjacentAnchors, layerAnchors, pinchBounds, mayExtendBottom, virtualStationAtDepth, sectionSources } from './correlation'
 import { correlationIssues, rawLayerPolygons } from './correlation'
 import { ringKey } from './contourArc'
 export function repairSection(section: GeologySection) {
@@ -25,7 +24,7 @@ export function repairSection(section: GeologySection) {
   }
   const anchors = (['technology', 'ore', 'uncorrected', 'offbalance'] as const).flatMap(layer => layerAnchors(next, layer))
   next.bottomExtensions = Object.fromEntries(Object.entries(next.bottomExtensions ?? {}).filter(([id, z]) => {
-    const a = anchors.find(p => p.id === id), well = a && sectionWellSources.find(w => w.id === a.wellId)
+    const a = anchors.find(p => p.id === id), well = a && sectionSources(next).find(w => w.id === a.wellId)
     return !!a && !!well && mayExtendBottom(well, a.layer, a.to) && z <= virtualStationAtDepth(next, well, a.to).z && z >= next.bottom
   }))
   for (const [id, source] of Object.entries(next.sourceOverrides ?? {})) next.sourceRevisions[id] = source.revision

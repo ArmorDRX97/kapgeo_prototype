@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import type { SectionLayer } from '../../../entities/geology-section/model/types'
 
 type ViewPreferences = { zoom: number; ratio: number; grid: boolean; graphics: boolean; layers: SectionLayer[] }
-export function useSectionView(sectionId: string, available: SectionLayer[]) {
-  const key = `kapgeo.sections.view.v1:${sectionId}:${available.join(',')}`
+export function useSectionView(sectionId: string, available: SectionLayer[], preset?: string) {
+  const key = `kapgeo.sections.view.v1:${sectionId}:${available.join(',')}${preset ? `:${preset}` : ''}`
   const [view, setView] = useState<ViewPreferences>(() => {
     const fallback: ViewPreferences = { zoom: 1, ratio: 1, grid: true, graphics: true, layers: available }
     try {

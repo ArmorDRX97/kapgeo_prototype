@@ -36,6 +36,8 @@ const curves = {
   CAL: '#5d4037',
   /** Расходометрия — flow meter. */
   FLOW: '#ad1457',
+  /** ТМ — temperature. */
+  TM: '#985c32',
 } as const;
 
 /** Lithology fills for well columns, sections and legends. PLACEHOLDER. */

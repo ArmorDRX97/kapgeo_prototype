@@ -8,6 +8,8 @@ import { ProfilePage } from '../pages/profile/ProfilePage'
 import { NotFoundPage } from '../pages/system/NotFoundPage'
 import { AccessDeniedPage, AnalyticsModulePage, ModelingModulePage, TechnologyModulePage } from '../pages/system/ModulePlaceholderPage'
 import { InterpretationPage } from '../pages/geology/InterpretationPage'
+import { AlphaInterpretationPage } from '../pages/geology/AlphaInterpretationPage'
+import { validateAlphaSearch } from '../features/interpretation/alpha/search'
 import { SectionsPage } from '../pages/geology/SectionsPage'
 import { validateSectionSearch } from '../features/geology-sections/model/search'
 import { validateInterpretationSearch } from '../features/interpretation/model/search'
@@ -43,7 +45,10 @@ const geologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geol
   if (Object.values(search).some(value => value !== undefined)) throw redirect({ to: '/geology/interpretation', search, replace: true })
   throw redirect({ to: '/geology/sections', replace: true })
 } })
-const interpretationRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/interpretation', validateSearch: validateInterpretationSearch, component: InterpretationPage })
+const interpretationRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/interpretation', validateSearch: validateInterpretationSearch, beforeLoad: ({ search }) => {
+  if (!search.mode) throw redirect({ to: '/geology/interpretation/$method', params: { method: 'gamma' }, search: { well: search.well, from: search.from, to: search.to }, replace: true })
+}, component: InterpretationPage })
+const alphaInterpretationRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/interpretation/$method', validateSearch: validateAlphaSearch, component: AlphaInterpretationPage })
 const sectionsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/sections', component: SectionsPage })
 const sectionRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/sections/$sectionId', validateSearch: validateSectionSearch, component: SectionsPage })
 const geoBaseRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd', component: GeoBasePage })
@@ -63,6 +68,7 @@ const routeTree = rootRoute.addChildren([
   signInRoute,
   geologyRoute,
   interpretationRoute,
+  alphaInterpretationRoute,
   sectionsRoute,
   sectionRoute,
   geoBaseRoute,

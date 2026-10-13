@@ -114,6 +114,28 @@
 .section-graphic-tools .section-table input[type="number"] { min-width: 72px; }
 .section-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 .section-form > h2, .section-form__wide { grid-column: 1 / -1; }
+.section-setup { container: section-setup / inline-size; max-width: 1440px; }
+.section-setup__grid { display: grid; gap: var(--space-4); align-items: start; }
+.section-setup__block { min-width: 0; padding: var(--space-4); border: 1px solid var(--border-default); border-radius: var(--radius-md); }
+.section-setup__block h2 { margin: 0 0 var(--space-3); }
+.section-setup__block .section-muted { margin: 0 0 var(--space-3); font-size: var(--font-size-sm); line-height: 1.5; }
+.section-setup__parameters > .section-form { max-width: 640px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2) var(--space-3); }
+.section-setup__parameters > .section-form > h2 { margin-bottom: var(--space-1); }
+.section-setup__details { border-top: 1px solid var(--border-default); padding-top: var(--space-3); }
+.section-setup__details > summary { width: fit-content; cursor: pointer; color: var(--text-secondary); font-size: var(--font-size-sm); }
+.section-setup__details[open] > summary { margin-bottom: var(--space-3); }
+.section-setup__details > div > .section-form { max-width: 460px; }
+.section-setup__details .section-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.section-setup__details .section-checks { margin-block: var(--space-3); }
+.section-setup__profile .section-table { max-width: 760px; }
+.section-setup__profile .section-table input[type="number"] { max-width: 180px; }
+.section-setup__wells { grid-column: 1 / -1; }
+.section-setup__wells .section-search { max-width: 300px; }
+.section-setup__wells .section-table { max-width: 1100px; }
+.section-setup__wells .section-actions > label { width: 180px; }
+@container section-setup (min-width: 900px) {
+  .section-setup__grid { grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); }
+}
 .section-form label, .section-search, .section-filter, .section-actions > label { display: grid; gap: var(--space-1); font-size: var(--font-size-sm); }
 .section-form input, .section-form select, .section-form textarea, .section-search input, .section-filter select, .section-table input, .section-actions input[type="number"] { width: 100%; min-width: 0; min-height: 34px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); background: var(--surface-panel); color: var(--text-primary); font-size: var(--font-size-base); }
 .section-form input[type="checkbox"], .section-table input[type="checkbox"] { width: var(--space-4); height: var(--space-4); min-height: 0; padding: 0; flex: none; }
@@ -163,6 +185,7 @@
 .section-canvas { display: block; width: 100%; background: var(--surface-panel); }
 .section-canvas__paper { fill: var(--surface-panel); }
 .section-canvas__grid path { stroke: var(--border-default); stroke-width: .5; fill: none; }
+.section-canvas__grid .section-canvas__axis-tick { stroke: var(--text-tertiary); stroke-width: 1; }
 .section-canvas__grid text, .section-canvas__label { font: 12px sans-serif; fill: var(--text-secondary); }
 .section-canvas__body { stroke-width: 1; opacity: .45; }
 .section-canvas__body--technology { fill: var(--color-blue-200); stroke: var(--color-blue-600); }
@@ -189,9 +212,39 @@
 .section-canvas__interval--offbalance { stroke: var(--color-amber-700); fill: var(--color-amber-200); stroke-dasharray: 1 1; }
 .section-canvas .is-selected, .section-canvas g:focus-visible .section-canvas__interval { stroke: var(--color-brand-600); stroke-width: 6; }
 .section-canvas__well-label { font: bold 12px sans-serif; fill: var(--text-primary); paint-order: stroke; stroke: var(--surface-panel); stroke-width: 3; }
+.section-canvas__bottom-label { font: 12px sans-serif; fill: var(--text-primary); paint-order: stroke; stroke: var(--surface-panel); stroke-width: 3; }
+.section-canvas__bottom-leader { fill: none; stroke: var(--text-tertiary); stroke-width: .7; }
 .section-canvas__handle { fill: var(--color-brand-600); stroke: var(--surface-panel); }
 .section-canvas__draft { fill: none; stroke: var(--color-brand-600); stroke-width: 2; stroke-dasharray: 4 2; }
 .section-canvas__hatch { fill: none; stroke: var(--text-secondary); stroke-width: .5; }
+.section-canvas--reference { --geo-rock-sand: var(--geo-reference-sand); --geo-rock-clay: var(--geo-reference-clay); --geo-rock-silt: var(--geo-reference-silt); }
+.section-canvas--reference .section-canvas__body { opacity: .92; stroke-width: 1.2; }
+.section-canvas--reference .section-canvas__body--technology, .section-canvas--reference .section-canvas__interval--technology { fill: var(--geo-reference-technology); stroke: var(--geo-reference-boundary); }
+.section-canvas--reference .section-canvas__body--ore, .section-canvas--reference .section-canvas__interval--ore { fill: var(--geo-reference-ore); stroke: var(--geo-reference-ore-boundary); }
+.section-canvas--reference .section-canvas__body--uncorrected, .section-canvas--reference .section-canvas__interval--uncorrected { fill: var(--geo-reference-uncorrected); fill-opacity: .45; stroke: var(--geo-reference-uncorrected-boundary); stroke-dasharray: 5 3; }
+.section-canvas--reference .section-canvas__body--offbalance, .section-canvas--reference .section-canvas__interval--offbalance { fill: var(--geo-reference-offbalance); stroke: var(--geo-reference-offbalance-boundary); stroke-dasharray: none; }
+.section-canvas--reference .section-canvas__graphic--lithology { opacity: 1; stroke: var(--geo-reference-boundary); stroke-width: 1; }
+.section-canvas--reference .section-canvas__graphic--oxidation, .section-canvas--reference .section-canvas__oxidation-tick { stroke: var(--geo-reference-oxidation); stroke-width: 1.5; }
+.section-canvas--reference .section-canvas__trajectory { stroke: var(--geo-reference-well); stroke-width: 1.5; }
+.section-canvas--reference .section-canvas__curve { stroke: var(--geo-reference-curve-rs); }
+.section-canvas--reference .section-canvas__curve--gr { stroke: var(--geo-reference-curve-gr); }
+.section-canvas--reference .section-canvas__column { stroke: var(--geo-reference-boundary); stroke-width: .7; }
+.section-canvas--reference .section-canvas__source-contact { stroke: var(--geo-reference-contact); }
+.section-canvas--reference .section-canvas__hatch { stroke: var(--geo-reference-boundary); stroke-width: .5; }
+.section-canvas-legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
+.section-canvas-legend__swatch { display: inline-block; width: 16px; height: 10px; border: 1px solid var(--text-tertiary); }
+.section-canvas-legend__swatch--sand { background: var(--geo-rock-sand); }
+.section-canvas-legend__swatch--clay { background: var(--geo-rock-clay); }
+.section-canvas-legend__swatch--silt { background: var(--geo-rock-silt); }
+.section-canvas-legend__swatch--technology { background: var(--color-blue-200); border-color: var(--color-blue-600); }
+.section-canvas-legend__swatch--ore { background: var(--color-red-200); border-color: var(--color-red-700); }
+.section-canvas-legend__swatch--uncorrected { background: var(--color-brand-200); border-color: var(--color-brand-700); border-style: dashed; }
+.section-canvas-legend__swatch--offbalance { background: var(--color-amber-200); border-color: var(--color-amber-700); }
+.section-canvas-legend--reference { --geo-rock-sand: var(--geo-reference-sand); --geo-rock-clay: var(--geo-reference-clay); --geo-rock-silt: var(--geo-reference-silt); }
+.section-canvas-legend--reference .section-canvas-legend__swatch--technology { background: var(--geo-reference-technology); border-color: var(--geo-reference-boundary); }
+.section-canvas-legend--reference .section-canvas-legend__swatch--ore { background: var(--geo-reference-ore); border-color: var(--geo-reference-ore-boundary); }
+.section-canvas-legend--reference .section-canvas-legend__swatch--uncorrected { background: var(--geo-reference-uncorrected); border-color: var(--geo-reference-uncorrected-boundary); }
+.section-canvas-legend--reference .section-canvas-legend__swatch--offbalance { background: var(--geo-reference-offbalance); border-color: var(--geo-reference-offbalance-boundary); }
 .section-legend { display: flex; flex-wrap: wrap; gap: var(--space-3); font-size: var(--font-size-sm); color: var(--text-secondary); }
 .section-editor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .section-link-list { padding: 0; list-style: none; }
@@ -221,10 +274,8 @@
 .section-track-list label { display: flex; align-items: center; gap: var(--space-1); }
 .section-track-list input { max-width: 7ch; }
 .section-canvas__track-label { font-size: 8px; fill: var(--text-secondary); }
-.section-canvas__header-track { font: 12px sans-serif; fill: var(--text-secondary); }
 .section-canvas__header-card { fill: var(--surface-subtle); stroke: var(--border-default); stroke-width: 1; }
 .section-canvas__header-leaders { fill: none; stroke: var(--text-tertiary); stroke-width: 1; }
-.section-canvas__header-divider { fill: none; stroke: var(--border-default); stroke-width: 1; }
 .section-map__segment { stroke-dasharray: 5 3; }
 .section-map--preview { max-height: 220px; }
 
