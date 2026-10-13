@@ -6,6 +6,8 @@ import { userPersonas } from '../../entities/session/model/personas'
 import { interpretationStorageKey, interpretationRepository } from '../../repository/demo/interpretationRepository'
 import type { InterpretationSearch } from './model/search'
 import { InterpretationWorkbench } from './InterpretationWorkbench'
+import { useBlocker } from '@tanstack/react-router'
+import { interpretationViewKey } from './model/viewPreferences'
 
 vi.mock('@tanstack/react-router', () => ({ useBlocker: vi.fn() }))
 const well = interpretationWells[0]!
@@ -16,14 +18,53 @@ function Harness({ mode = 'lithology', reader = false, locked = false, stale = f
 }
 describe('interpretation prototype workbench', () => {
   beforeEach(() => {
-    for (const w of interpretationWells) localStorage.removeItem(interpretationStorageKey(w.id))
+    for (const w of interpretationWells) { localStorage.removeItem(interpretationStorageKey(w.id)); localStorage.removeItem(interpretationViewKey(w.id)) }
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     const ctx = new Proxy({ measureText: (text: string) => ({ width: text.length * 6 }) }, { get(target, key) { return key in target ? target[key as keyof typeof target] : () => undefined }, set() { return true } })
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx as unknown as CanvasRenderingContext2D)
     vi.stubGlobal('requestAnimationFrame', (fn: FrameRequestCallback) => { fn(0); return 1 })
     vi.stubGlobal('cancelAnimationFrame', vi.fn())
   })
-  afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); for (const w of interpretationWells) localStorage.removeItem(interpretationStorageKey(w.id)) })
+  afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); for (const w of interpretationWells) { localStorage.removeItem(interpretationStorageKey(w.id)); localStorage.removeItem(interpretationViewKey(w.id)) } })
+  it('restores tablet settings on remount without making the geological result dirty', () => {
+    const first = render(<Harness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Колонки' }))
+    fireEvent.change(screen.getByLabelText('Ширина колонки По каротажу'), { target: { value: '208' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'ГК' }))
+    fireEvent.click(screen.getByRole('button', { name: /Колонка По каротажу левее/ }))
+    fireEvent.click(screen.getByRole('button', { name: /^КС · основной/ }))
+    fireEvent.change(screen.getByLabelText('Максимум шкалы'), { target: { value: '150' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Применить шкалу' }))
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled()
+    first.unmount(); render(<Harness />)
+    expect(screen.queryByRole('img', { name: 'Колонка ГК' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^КС · основной/ })).toHaveTextContent('150')
+    fireEvent.click(screen.getByRole('button', { name: 'Колонки' }))
+    expect(screen.getByLabelText('Ширина колонки По каротажу')).toHaveValue(208)
+    expect(screen.getByRole('checkbox', { name: 'ГК' })).not.toBeChecked()
+    expect(localStorage.getItem(interpretationStorageKey(well.id))).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Настройки по умолчанию' }))
+    expect(screen.getByRole('checkbox', { name: 'ГК' })).toBeChecked()
+    expect(screen.getByLabelText('Ширина колонки По каротажу')).toHaveValue(144)
+  })
+  it('saves before leaving the module and keeps an unfinished preview on save failure', async () => {
+    const proceed = vi.fn(), reset = vi.fn()
+    vi.mocked(useBlocker).mockReturnValue({ status: 'blocked', proceed, reset } as unknown as ReturnType<typeof useBlocker>)
+    render(<Harness mode="technology" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Рассчитать по КС' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Рассчитать' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить и перейти' }))
+    expect(proceed).not.toHaveBeenCalled()
+    expect(within(screen.getByRole('dialog')).getByRole('alert')).toHaveTextContent('Сначала примените или отмените')
+    fireEvent.click(screen.getByRole('button', { name: 'Остаться' }))
+    expect(reset).toHaveBeenCalledOnce()
+    expect(screen.getByRole('img', { name: 'Колонка Предпросмотр' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить расчёт' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить и перейти' }))
+    expect(proceed).toHaveBeenCalledOnce()
+    expect((await interpretationRepository.load(well)).revision).toBe(1)
+    vi.mocked(useBlocker).mockReset()
+  })
   it('renders the actual Canvas package, edits neighbours, undoes and saves a result', async () => {
     render(<Harness />)
     expect(screen.getByRole('img', { name: 'Колонка КС · основной' }).tagName).toBe('CANVAS')

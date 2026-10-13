@@ -15,7 +15,12 @@ archive/
 .gh-auth-*.tmp
 # Local QA and source-material artifacts are not part of the published prototype.
 .tmp/
+# Playwright CLI session artifacts (preferred QA output is under .tmp/).
+.playwright-cli/
 screenshots/
 temp-check.txt
 ~$*
 /РП по геологическому модулю.pdf
+
+# Separate local educational application; excluded by user request.
+/kapgeo-knowledge-map/

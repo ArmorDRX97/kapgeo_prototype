@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useState } from 'react'
+import { useEffect, useMemo, useReducer, useState, type SetStateAction } from 'react'
 import { useBlocker } from '@tanstack/react-router'
 import { ArrowDownUp, Check, ChevronLeft, ChevronRight, Columns3, Crosshair, Hand, Layers3, LockKeyhole, Maximize2, PanelLeftClose, PanelLeftOpen, Plus, Redo2, RotateCcw, Save, Search, SlidersHorizontal, Undo2, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { WellLog, clampRange, visibleWindow, type CurveScale, type DepthRange } from '@kapgeo/geo-viz/wellog'
@@ -13,6 +13,7 @@ import { interpretationRepository, validateInterpretation } from '../../reposito
 import { hasPermission } from '../../shared/auth/permissions'
 import { Badge } from '../../shared/ui/Badge'
 import { Button } from '../../shared/ui/Button'
+import { DiscardChangesDialog } from '../../shared/ui/DiscardChangesDialog'
 import { interpretationCopy as copy } from './model/copy'
 import { historyReducer, sameDocument } from './model/history'
 import type { InterpretationSearch } from './model/search'
@@ -20,6 +21,7 @@ import { buildTracks, initialView, lithologySpecs, technologySpecs, type Selecti
 import { CalculationEditor, CurveEditor, IntervalEditor } from './ui/Editors'
 import { CoreOperationsEditor, RangeDeleteEditor, SampleEditor, type SampleDraft } from './ui/NextEditors'
 import { ResultsTable } from './ui/ResultsTable'
+import { useInterpretationView } from './model/viewPreferences'
 import './interpretation.css'
 
 type Row = LithologyInterval | TechnologyInterval
@@ -38,8 +40,12 @@ export function InterpretationWorkbench({ well, initial, persona, search, onLoca
   const [saved, setSaved] = useState(initial)
   const [kind, setKind] = useState<LithologyKind>('log')
   const [tool, setTool] = useState<Tool>('select')
-  const [view, setView] = useState<ViewSettings>(initialView)
-  const [scales, setScales] = useState<Record<string, CurveScale>>({})
+  const { preferences, update: updateView, reset: resetView, storageError: viewStorageError } = useInterpretationView(well.id)
+  const { view, scales, trackWidths, trackOrder } = preferences
+  const setView = (value: SetStateAction<ViewSettings>) => updateView(p => ({ ...p, view: typeof value === 'function' ? value(p.view) : value }))
+  const setScales = (value: SetStateAction<Record<string, CurveScale>>) => updateView(p => ({ ...p, scales: typeof value === 'function' ? value(p.scales) : value }))
+  const setTrackWidths = (value: SetStateAction<Record<string, number>>) => updateView(p => ({ ...p, trackWidths: typeof value === 'function' ? value(p.trackWidths) : value }))
+  const setTrackOrder = (value: string[]) => updateView(p => ({ ...p, trackOrder: value }))
   const [curveId, setCurveId] = useState<string | null>(null)
   const [calculationOpen, setCalculationOpen] = useState(false)
   const [parameters, setParameters] = useState<CalculationParameters>(initial.calculation ?? { curveId: 'rs-main', from: 112, to: 136, threshold: 25, minThickness: 0.3, method: 'potential', direction: 'down', rounding: 0.1, minImpermeable: 0.3, continuePermeable: false })
@@ -47,8 +53,6 @@ export function InterpretationWorkbench({ well, initial, persona, search, onLoca
   const [sampleDraft, setSampleDraft] = useState<SampleDraft | null>(null)
   const [rangeDelete, setRangeDelete] = useState(false)
   const [validationOpen, setValidationOpen] = useState(false)
-  const [trackWidths, setTrackWidths] = useState<Record<string, number>>({})
-  const [trackOrder, setTrackOrder] = useState<string[]>([])
   const [preview, setPreview] = useState<Preview | null>(null)
   const [editPreview, setEditPreview] = useState<Row | null>(null)
   const [newRow, setNewRow] = useState<Row | null>(null)
@@ -96,9 +100,9 @@ export function InterpretationWorkbench({ well, initial, persona, search, onLoca
     })
   }, [well, doc, mode, kind, search.selection, view, scales, canEdit, preview, editPreview, editTrack, selected?.trackId, sampleKind, trackWidths, trackOrder, coreEditable])
 
-  useBlocker({ disabled: !pending, enableBeforeUnload: pending, shouldBlockFn: ({ next }) => {
-    if (next.pathname === '/geology' && 'well' in next.search && next.search.well === well.id) return false
-    return !window.confirm('Есть несохранённые изменения или предпросмотр. Покинуть интерпретацию и отбросить их?')
+  const routeBlocker = useBlocker({ withResolver: true, disabled: !pending, enableBeforeUnload: pending, shouldBlockFn: ({ next }) => {
+    if (next.pathname === '/geology/interpretation' && 'well' in next.search && next.search.well === well.id) return false
+    return true
   } })
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -153,6 +157,14 @@ export function InterpretationWorkbench({ well, initial, persona, search, onLoca
     if (!canEdit || formDirty || newRow || preview || sampleDraft || rangeDelete) throw new Error('Сначала примените или отмените ввод и предпросмотр.')
     const result = interpretationRepository.save(well, doc, saved.revision); setSaved(result); onSaved?.(result); setNotice('Результат сохранён в этом браузере.')
   })
+  const saveAndContinue = () => {
+    setError('')
+    try {
+      if (!canEdit || formDirty || newRow || preview || sampleDraft || rangeDelete) throw new Error('Сначала примените или отмените ввод и предпросмотр. Нажмите «Остаться», чтобы вернуться к редактору.')
+      const result = interpretationRepository.save(well, doc, saved.revision)
+      setSaved(result); onSaved?.(result); routeBlocker?.proceed?.()
+    } catch (problem) { setError(problem instanceof Error ? problem.message : copy.storageError) }
+  }
   const undo = (type: 'undo' | 'redo') => { if (!leaveForm()) return; closeDraft(); dispatch({ type }); setNotice(type === 'undo' ? 'Действие отменено.' : 'Действие повторено.'); setError('') }
   const reset = () => run(() => {
     if (!canEdit || !window.confirm('Сбросить только интерпретацию этой скважины? БГД и остальные скважины останутся без изменений.')) return
@@ -214,6 +226,7 @@ export function InterpretationWorkbench({ well, initial, persona, search, onLoca
   }
 
   return <div className="interpretation-page">
+    {viewStorageError && <p role="status" className="interpretation-note">{viewStorageError}</p>}
     <header className="interpretation-page__header"><div><p className="eyebrow">ГЕОЛОГИЯ / РАБОЧЕЕ МЕСТО</p><h1>Интерпретация</h1><p>Сопоставляйте каротаж, литологию и керн на одном планшете.</p></div></header>
     <div className={`interpretation-workspace${sidebarOpen ? '' : ' interpretation-workspace--collapsed'}`}>
       {sidebarOpen && <aside className="interpretation-directory" aria-label="Список скважин">
@@ -230,7 +243,7 @@ export function InterpretationWorkbench({ well, initial, persona, search, onLoca
         {mode === 'core' && coreStale && <div className="interpretation-preview-banner" role="alert"><div><strong>Исходные данные изменились</strong><small>Соответствие устарело. Восстановите буровую колонку перед редактированием керна.</small></div><Button size="sm" disabled={!canEdit} onClick={rebuildCore}>Восстановить соответствие</Button></div>}
         {mode === 'core' && validationOpen && <div className="interpretation-validation" role="status"><strong>Проверка исходных данных</strong>{inputIssues.length ? <ul>{inputIssues.map(issue => <li key={issue}>{issue}</li>)}</ul> : <p>Выход керна, мощности и цвета литологии, промер и исходные пробы согласованы. Проверено {well.runs.length} рейса.</p>}</div>}
         {!canEdit && <div className="interpretation-banner"><LockKeyhole size={16} />{well.status === 'locked' ? 'Зафиксированный пример: доступен просмотр и настройка планшета.' : 'Ваш профиль может просматривать интерпретацию. Изменения доступны геологу и интерпретатору.'}</div>}
-        <div className="interpretation-toolbar"><div className="interpretation-toolbar__tools">{(Object.keys(tools) as Tool[]).map(t => { const Icon = tools[t]; return <Button key={t} variant={tool === t ? 'secondary' : 'quiet'} size="sm" aria-label={copy.tools[t]} title={copy.tools[t]} aria-pressed={tool === t} disabled={t === 'range' ? !(editableIntervals || (mode === 'core' && coreEditable)) : t === 'boundary' && !editableIntervals} onClick={() => setTool(t)}><Icon size={17} />{t === 'select' && <span>Выбрать</span>}</Button> })}<span className="interpretation-toolbar__divider" /><Button variant="quiet" size="sm" aria-label="Отменить действие" title="Отменить · Ctrl+Z" disabled={!canEdit || !history.past.length} onClick={() => undo('undo')}><Undo2 size={17} /></Button><Button variant="quiet" size="sm" aria-label="Повторить действие" title="Повторить · Ctrl+Shift+Z" disabled={!canEdit || !history.future.length} onClick={() => undo('redo')}><Redo2 size={17} /></Button></div><div className="interpretation-toolbar__right"><div className="interpretation-columns-wrap"><Button variant="quiet" size="sm" aria-expanded={columnsOpen} onClick={() => setColumnsOpen(v => !v)}><Columns3 size={16} />Колонки</Button>{columnsOpen && <div className="interpretation-columns-popover"><strong>Видимые данные</strong>{(Object.keys(initialView) as (keyof ViewSettings)[]).map(key => <label key={key}><input type="checkbox" checked={view[key]} onChange={e => setView(v => ({ ...v, [key]: e.target.checked }))} />{{ source: 'Исходная колонка', rs: 'КС · основной', gr: 'ГК', control: 'КС · контрольный', measurements: 'Промер керна' }[key]}</label>)}<details><summary>Размер и порядок колонок</summary>{tracks.map(t => <div key={t.id} className="interpretation-track-setting"><label>{t.title}<input aria-label={'Ширина колонки ' + t.title} type="number" min={72} max={360} step={8} value={t.width ?? 140} onChange={e => setTrackWidths(values => ({ ...values, [t.id]: Math.max(72, Math.min(360, Number(e.target.value))) }))} /></label><Button variant="quiet" size="sm" aria-label={'Колонка ' + t.title + ' левее'} onClick={() => reorderTrack(t.id, -1)}><ChevronLeft size={14} /></Button><Button variant="quiet" size="sm" aria-label={'Колонка ' + t.title + ' правее'} onClick={() => reorderTrack(t.id, 1)}><ChevronRight size={14} /></Button></div>)}</details><Button variant="secondary" size="sm" onClick={() => { setView(initialView); setTrackWidths({}); setTrackOrder([]); setScales({}); setNotice('Настройки планшета восстановлены.') }}>Настройки по умолчанию</Button><Button size="sm" variant="quiet" onClick={() => setColumnsOpen(false)}>Готово</Button></div>}</div><Button variant="quiet" size="sm" aria-label="Увеличить масштаб" onClick={() => setRange(visibleWindow(range, 1.4, (range[0] + range[1]) / 2))}><ZoomIn size={17} /></Button><Button variant="quiet" size="sm" aria-label="Уменьшить масштаб" onClick={() => setRange(visibleWindow(range, 1 / 1.4, (range[0] + range[1]) / 2))}><ZoomOut size={17} /></Button><Button variant="quiet" size="sm" aria-label="Показать всю скважину" title="Вся скважина" onClick={() => setRange([0, well.depth])}><Maximize2 size={17} /></Button></div></div>
+        <div className="interpretation-toolbar"><div className="interpretation-toolbar__tools">{(Object.keys(tools) as Tool[]).map(t => { const Icon = tools[t]; return <Button key={t} variant={tool === t ? 'secondary' : 'quiet'} size="sm" aria-label={copy.tools[t]} title={copy.tools[t]} aria-pressed={tool === t} disabled={t === 'range' ? !(editableIntervals || (mode === 'core' && coreEditable)) : t === 'boundary' && !editableIntervals} onClick={() => setTool(t)}><Icon size={17} />{t === 'select' && <span>Выбрать</span>}</Button> })}<span className="interpretation-toolbar__divider" /><Button variant="quiet" size="sm" aria-label="Отменить действие" title="Отменить · Ctrl+Z" disabled={!canEdit || !history.past.length} onClick={() => undo('undo')}><Undo2 size={17} /></Button><Button variant="quiet" size="sm" aria-label="Повторить действие" title="Повторить · Ctrl+Shift+Z" disabled={!canEdit || !history.future.length} onClick={() => undo('redo')}><Redo2 size={17} /></Button></div><div className="interpretation-toolbar__right"><div className="interpretation-columns-wrap"><Button variant="quiet" size="sm" aria-expanded={columnsOpen} onClick={() => setColumnsOpen(v => !v)}><Columns3 size={16} />Колонки</Button>{columnsOpen && <div className="interpretation-columns-popover"><strong>Видимые данные</strong>{(Object.keys(initialView) as (keyof ViewSettings)[]).map(key => <label key={key}><input type="checkbox" checked={view[key]} onChange={e => setView(v => ({ ...v, [key]: e.target.checked }))} />{{ source: 'Исходная колонка', rs: 'КС · основной', gr: 'ГК', control: 'КС · контрольный', measurements: 'Промер керна' }[key]}</label>)}<details><summary>Размер и порядок колонок</summary>{tracks.map(t => <div key={t.id} className="interpretation-track-setting"><label>{t.title}<input aria-label={'Ширина колонки ' + t.title} type="number" min={72} max={360} step={8} value={t.width ?? 140} onChange={e => setTrackWidths(values => ({ ...values, [t.id]: Math.max(72, Math.min(360, Number(e.target.value))) }))} /></label><Button variant="quiet" size="sm" aria-label={'Колонка ' + t.title + ' левее'} onClick={() => reorderTrack(t.id, -1)}><ChevronLeft size={14} /></Button><Button variant="quiet" size="sm" aria-label={'Колонка ' + t.title + ' правее'} onClick={() => reorderTrack(t.id, 1)}><ChevronRight size={14} /></Button></div>)}</details><Button variant="secondary" size="sm" onClick={() => { resetView(); setNotice('Настройки планшета восстановлены.') }}>Настройки по умолчанию</Button><Button size="sm" variant="quiet" onClick={() => setColumnsOpen(false)}>Готово</Button></div>}</div><Button variant="quiet" size="sm" aria-label="Увеличить масштаб" onClick={() => setRange(visibleWindow(range, 1.4, (range[0] + range[1]) / 2))}><ZoomIn size={17} /></Button><Button variant="quiet" size="sm" aria-label="Уменьшить масштаб" onClick={() => setRange(visibleWindow(range, 1 / 1.4, (range[0] + range[1]) / 2))}><ZoomOut size={17} /></Button><Button variant="quiet" size="sm" aria-label="Показать всю скважину" title="Вся скважина" onClick={() => setRange([0, well.depth])}><Maximize2 size={17} /></Button></div></div>
         <div className="interpretation-context-row">{mode === 'lithology' ? <label>Редактируемые данные<select aria-label="Вид литологии" value={kind} onChange={e => { if (leaveForm()) { closeDraft(); setKind(e.target.value as LithologyKind); setTool('select'); location({ selection: undefined }) } }}>{Object.entries(copy.kinds).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label> : mode === 'technology' ? <Button variant="secondary" size="sm" disabled={!canEdit || !well.curves.some(c => c.type === 'RS')} onClick={() => { if (leaveForm()) { closeDraft(); setCurveId(null); setCalculationOpen(true) } }}><SlidersHorizontal size={15} />Рассчитать по КС</Button> : <div className="interpretation-core-actions"><label>Вид проб<select aria-label="Показать вид проб" value={sampleKind} onChange={e => { if (leaveForm()) { closeDraft(); setSampleKind(e.target.value as SampleKind); location({ selection: undefined }) } }}>{Object.entries(copy.sampleKinds).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><Button size="sm" variant="secondary" disabled={!coreEditable || !well.core.length} onClick={() => addSample()}>Новая сводная проба</Button><Button size="sm" variant="quiet" disabled={!canEdit || !well.core.length} onClick={rebuildCore}>К буровой колонке</Button><Button size="sm" variant="quiet" aria-expanded={validationOpen} onClick={() => setValidationOpen(v => !v)}>Проверить исходные данные</Button></div>}<Button variant="quiet" size="sm" disabled={!editableIntervals} onClick={() => addInterval()}><Plus size={15} />Ввести интервал</Button><Button size="sm" variant="quiet" disabled={!editableIntervals || !!preview} onClick={() => { if (leaveForm()) { closeDraft(); setCurveId(null); setCalculationOpen(false); setRangeDelete(true) } }}>Удалить группу</Button></div>
         <div className="interpretation-range"><span>Окно глубины</span><input aria-label="Окно от, м" type="number" step="0.1" min={0} max={160} value={activeFrom} onChange={e => setRangeInput([Number(e.target.value), activeTo])} /><span>—</span><input aria-label="Окно до, м" type="number" step="0.1" min={0} max={160} value={activeTo} onChange={e => setRangeInput([activeFrom, Number(e.target.value)])} /><span>м</span><Button size="sm" variant="quiet" aria-label="Применить окно глубины" onClick={() => run(() => { if (!Number.isFinite(activeFrom) || !Number.isFinite(activeTo) || activeTo <= activeFrom) throw new Error('Конец окна должен быть глубже начала.'); setRange([activeFrom, activeTo]) })}><Check size={15} /></Button><Button variant="quiet" size="sm" onClick={() => setRange(well.initialRange)}>Рабочий диапазон</Button><span className="interpretation-range__navigation"><Button variant="quiet" size="sm" aria-label="На предыдущий диапазон" onClick={() => setRange([range[0] - (range[1] - range[0]) / 2, range[1] - (range[1] - range[0]) / 2])}><ChevronLeft size={15} /></Button><Button variant="quiet" size="sm" aria-label="На следующий диапазон" onClick={() => setRange([range[0] + (range[1] - range[0]) / 2, range[1] + (range[1] - range[0]) / 2])}><ChevronRight size={15} /></Button></span></div>
         {preview && mode === 'technology' && <div className="interpretation-preview-banner"><div><strong>Предпросмотр · {preview.rows.length} интервалов</strong><small>Текущий результат не изменён. Применение заменит все его интервалы.</small></div><Button size="sm" disabled={!canEdit || stale || formDirty} onClick={applyCalculation}>Применить результат</Button><Button size="sm" variant="quiet" aria-label="Отменить расчёт" onClick={() => { closeDraft(); setPreview(null); setCalculationOpen(false); location({ selection: undefined }); setNotice('Предпросмотр отменён. Текущие интервалы сохранены.') }}><X size={17} /></Button></div>}
@@ -260,5 +273,6 @@ export function InterpretationWorkbench({ well, initial, persona, search, onLoca
         <footer><span>Данные сохраняются в этом браузере</span></footer>
       </aside>
     </div>
+    {routeBlocker?.status === 'blocked' && <DiscardChangesDialog error={error} onStay={() => { routeBlocker.reset(); setError('') }} onDiscard={() => routeBlocker.proceed()} onSave={canEdit ? saveAndContinue : undefined} />}
   </div>
 }

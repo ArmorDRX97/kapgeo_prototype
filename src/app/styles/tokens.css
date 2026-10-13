@@ -1,4 +1,9 @@
 :root {
+  --geo-rock-sand: #f2dc9b;
+  --geo-rock-clay: #8d9db6;
+  --geo-rock-silt: #cec39c;
+  --geo-curve-rs: #c62828;
+  --geo-curve-gr: #2e7d32;
   color-scheme: light;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-synthesis: none;
@@ -56,6 +61,7 @@
   --sidebar-width: 252px;
   --sidebar-collapsed: 76px;
   --topbar-height: 68px;
+  --geology-subnav-height: 44px;
   --content-max: 1720px;
   --space-1: 4px;
   --space-2: 8px;

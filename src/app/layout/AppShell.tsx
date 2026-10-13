@@ -22,6 +22,7 @@ import { fetchPlatformPreferences, fetchWells } from '../../repository/api'
 import { hasPermission, type Permission } from '../../shared/auth/permissions'
 import { GeologyNavigator } from './GeologyNavigator'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import { GeologyModuleNavigation } from '../../pages/geology/GeologyModuleLayout'
 
 type ModuleRoute = '/geology/bgd' | '/geology' | '/technology' | '/modeling' | '/analytics' | '/admin'
 
@@ -53,6 +54,7 @@ export function AppShell({ children }: PropsWithChildren) {
   const profileRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const isBgd = pathname.startsWith('/geology/bgd')
+  const isGeology = pathname.startsWith('/geology') && !isBgd
   const closeGeologyNavigation = useCallback(() => setGeologyNavOpen(false), [])
 
   useEffect(() => {
@@ -98,7 +100,7 @@ export function AppShell({ children }: PropsWithChildren) {
     void navigate({ to: '/auth/sign-in' })
   }
 
-  return <div className={`app-frame app-frame--top-navigation${isBgd ? ' app-frame--bgd' : ''}`}>
+  return <div className={`app-frame app-frame--top-navigation${isBgd ? ' app-frame--bgd' : ''}${isGeology ? ' app-frame--geology' : ''}`}>
     <a className="skip-link" href="#main-content">Перейти к содержимому</a>
     <header className="topbar topbar--modules">
       <Link className="topbar-brand" to={persona?.homeRoute ?? '/geology/bgd'} aria-label="AI KAPGEO — рабочая область">
@@ -110,7 +112,7 @@ export function AppShell({ children }: PropsWithChildren) {
         {moduleNavigation.filter((item) => hasPermission(persona, item.permission)).map((item) => {
           const Icon = item.icon
           const active = item.to === '/geology'
-            ? pathname === '/geology'
+            ? pathname.startsWith('/geology') && !isBgd
             : pathname.startsWith(item.to)
           return <Link key={item.to} to={item.to} title={item.label} aria-label={item.label} className={active ? 'is-active' : ''}><Icon size={17} /><span>{item.label}</span></Link>
         })}
@@ -140,6 +142,7 @@ export function AppShell({ children }: PropsWithChildren) {
         </div>}
       </div>
     </header>
+    {isGeology && hasPermission(persona, 'geology.view') && <GeologyModuleNavigation />}
 
     <div className={`app-workspace${isBgd ? ' app-workspace--bgd' : ''}`}>
       {isBgd && <GeologyNavigator mobileOpen={geologyNavOpen} collapsed={geologyNavCollapsed} onToggle={() => setGeologyNavCollapsed((value) => !value)} onClose={closeGeologyNavigation} />}

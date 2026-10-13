@@ -1,5 +1,5 @@
 import './workspace.css'
-import { useId, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 
 type WorkspaceTab = { id: string; label: ReactNode }
 
@@ -13,6 +13,21 @@ export function WorkspaceTabs({ tabs, value, onChange, label, children }: {
 }) {
   const id = useId()
   const list = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const strip = list.current
+    if (!strip) return
+    const reveal = () => {
+      const button = strip.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]')
+      if (!button) return
+      const offset = button.offsetLeft - strip.offsetLeft
+      if (offset < strip.scrollLeft) strip.scrollLeft = offset
+      else if (offset + button.offsetWidth > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = offset + button.offsetWidth - strip.clientWidth
+    }
+    reveal()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(reveal); observer.observe(strip)
+    return () => observer.disconnect()
+  }, [id, value])
   const select = (index: number) => {
     const tab = tabs[index]
     if (!tab) return

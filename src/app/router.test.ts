@@ -1,9 +1,20 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { router } from './router'
 
 describe('BGD route smoke', () => {
+  afterEach(() => { sessionStorage.removeItem('kapgeo.persona') })
+  it('redirects legacy interpretation links without losing selection and keeps the plain geology entry on sections', async () => {
+    sessionStorage.setItem('kapgeo.persona', 'geo.ivanova')
+    await router.navigate({ to: '/geology', search: { well: 'int-demo-01', mode: 'core', from: 112, to: 136, selection: 'core:seg-1' } })
+    expect(router.state.location.pathname).toBe('/geology/interpretation')
+    expect(router.state.location.search).toMatchObject({ well: 'int-demo-01', mode: 'core', from: 112, to: 136, selection: 'core:seg-1' })
+    await router.navigate({ to: '/geology', search: {} })
+    expect(router.state.location.pathname).toBe('/geology/sections')
+  })
   it('builds typed deep-links for the complete BGD flow', () => {
     expect(router.buildLocation({ to: '/geology' }).href).toBe('/geology')
+    expect(router.buildLocation({ to: '/geology/sections' }).href).toBe('/geology/sections')
+    expect(router.buildLocation({ to: '/geology/interpretation', search: { well: 'int-demo-01', mode: 'core' } }).href).toBe('/geology/interpretation?well=int-demo-01&mode=core')
     expect(router.buildLocation({ to: '/geology', search: { well: 'int-demo-01', mode: 'core', from: 112, to: 136, selection: 'core:seg-1' } }).href).toBe('/geology?well=int-demo-01&mode=core&from=112&to=136&selection=core%3Aseg-1')
     expect(router.buildLocation({ to: '/geology/bgd' }).href).toBe('/geology/bgd')
     expect(router.buildLocation({ to: '/geology/bgd/$depositId', params: { depositId: 'DEP-SARYTAU' } }).href).toBe('/geology/bgd/DEP-SARYTAU')

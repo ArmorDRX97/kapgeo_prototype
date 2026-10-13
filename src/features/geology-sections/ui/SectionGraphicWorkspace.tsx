@@ -1,0 +1,58 @@
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { ChevronDown, Info, PanelRightClose, PanelRightOpen } from 'lucide-react'
+import { Button } from '../../../shared/ui/Button'
+import { WorkspaceDialog } from '../../../shared/ui/WorkspaceDialog'
+import { ToolContext, type ToolId, type ToolSlot } from '../model/toolContext'
+
+const PlotSurfaceContext = createContext<HTMLElement | null | undefined>(undefined)
+export function ToolCategory({ category, state, children }: { category: ToolSlot; state?: 'inactive' | 'preview'; children: ReactNode }) {
+  const context = useContext(ToolContext)
+  if (!context) return <>{children}</>
+  const target = context.targets[category]
+  return target ? createPortal(<div className="section-tool-part" inert={state === 'inactive' || undefined} data-tool-state={state}>{children}</div>, target) : null
+}
+export function GraphHelp({ children }: { children: ReactNode }) {
+  const context = useContext(ToolContext)
+  if (!context) return <>{children}</>
+  return context.help ? createPortal(<div className="section-graph-help__context" onKeyDown={event => { if (event.key === 'Escape') event.stopPropagation() }}>{children}</div>, context.help) : null
+}
+
+/** Editors retain state and event ancestry; only their plot is placed in the center. */
+export function PlotSurface({ children, state }: { children: ReactNode; state?: 'inactive' | 'preview' }) {
+  const target = useContext(PlotSurfaceContext)
+  if (target === undefined) return <>{children}</>
+  return target ? createPortal(<div className="section-plot-surface" inert={state === 'inactive' || undefined} data-plot-preview={state === 'preview' || undefined}>{children}</div>, target) : null
+}
+
+export function SectionGraphicWorkspace({ title, children }: { title: string; children: ReactNode }) {
+  const [surface, setSurface] = useState<HTMLDivElement | null>(null), [open, setOpen] = useState(true)
+  const [active, setActive] = useState<ToolId | null>('objects'), [helpOpen, setHelpOpen] = useState(false)
+  const [display, setDisplay] = useState<HTMLDivElement | null>(null), [coordinates, setCoordinates] = useState<HTMLDivElement | null>(null), [footer, setFooter] = useState<HTMLDivElement | null>(null), [help, setHelp] = useState<HTMLDivElement | null>(null)
+  const content = useRef<HTMLDivElement>(null)
+  useEffect(() => { content.current?.querySelectorAll('[data-tool-body]').forEach(node => { node.scrollTop = 0 }) }, [title])
+  const groups: Array<{ id: ToolId; label: string }> = [{ id: 'display', label: 'Отображение' }, { id: 'objects', label: 'Работа с объектами' }, { id: 'coordinates', label: 'Координаты точек' }]
+  return <PlotSurfaceContext.Provider value={surface}><ToolContext.Provider value={{ targets: { display, coordinates, footer }, help, reveal: setActive }}>
+    <div className={`section-graphic-workspace${open ? '' : ' is-tools-collapsed'}`}>
+      <div className="section-graph-center">
+        <header className="section-graph-center__header"><h2>{title}</h2><div className="section-graph-center__actions"><Button variant="quiet" size="sm" onClick={() => setHelpOpen(true)} aria-haspopup="dialog"><Info size={17} />Как работать</Button><Button variant="quiet" size="sm" aria-expanded={open} aria-controls="section-graphic-tools" onClick={() => setOpen(!open)}>{open ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}{open ? 'Скрыть инструменты' : 'Показать инструменты'}</Button></div></header>
+        <div className="section-graph-stage" ref={setSurface}><p className="section-graph-empty">Выберите или создайте объект в панели инструментов.</p></div>
+      </div>
+      <aside id="section-graphic-tools" className="section-graphic-tools" aria-label="Инструменты разреза" hidden={!open}>
+        <header><strong>Инструменты</strong><span>{title}</span></header>
+        <div className="section-graphic-tools__content section-tools-groups" ref={content}>{groups.map(group => <section key={group.id} className={`section-tools-group${active === group.id ? ' is-open' : ''}`}>
+          <h3><button id={`section-tool-${group.id}`} type="button" aria-expanded={active === group.id} aria-controls={`section-tool-body-${group.id}`} onClick={() => setActive(active === group.id ? null : group.id)}>{group.label}<ChevronDown size={16} aria-hidden="true" /></button></h3>
+          <div id={`section-tool-body-${group.id}`} role="region" aria-labelledby={`section-tool-${group.id}`} hidden={active !== group.id} data-tool-body className="section-tools-group__body" ref={group.id === 'display' ? setDisplay : group.id === 'coordinates' ? setCoordinates : undefined}>
+            {group.id === 'objects' && surface && display && coordinates && footer && children}
+          </div>
+        </section>)}</div>
+        <div ref={setFooter} className="section-tool-footer" />
+      </aside>
+    </div>
+    {helpOpen && <WorkspaceDialog title="Управление графикой" size="compact" onClose={() => setHelpOpen(false)}><div className="section-graph-help">
+      <p>Выберите нужный инструмент справа. Заголовки блоков всегда доступны; открытый блок можно свернуть повторным нажатием.</p>
+      <p>Сведения об объектах на разрезе и карте: наведение — подсказка, ПКМ или Shift+F10 — меню, Enter на выбранном объекте — карточка сведений.</p>
+      <div ref={setHelp} />
+    </div></WorkspaceDialog>}
+  </ToolContext.Provider></PlotSurfaceContext.Provider>
+}

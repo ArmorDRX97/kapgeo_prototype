@@ -1,0 +1,4 @@
+# Local source material, meeting identities, extracted images and isolated analysis runtimes.
+*.mp4
+*.pdf
+audit/

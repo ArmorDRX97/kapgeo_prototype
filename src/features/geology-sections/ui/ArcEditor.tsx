@@ -1,0 +1,18 @@
+import { useState } from 'react'
+import type { GeologySection, SectionLayer, ArcEdit } from '../../../entities/geology-section/model/types'
+import { correlationIssues, layerAnchors } from '../../../entities/geology-section/lib/correlation'
+import { Button } from '../../../shared/ui/Button'
+export function ArcEditor({ section, layer, disabled, onChange }: { section: GeologySection; layer: SectionLayer; disabled: boolean; onChange: (s: GeologySection) => void }) {
+  const [linkId, setLinkId] = useState(''), [edge, setEdge] = useState<'top' | 'bottom'>('top'), [error, setError] = useState('')
+  const link = section.links[layer].find(l => l.id === linkId) ?? section.links[layer][0], anchors = layerAnchors(section, layer), edit = section.arcEdits?.[layer]?.find(e => e.linkId === link?.id && e.edge === edge)
+  const change = (next: ArcEdit) => {
+    const candidate = { ...section, arcEdits: { ...section.arcEdits, [layer]: [...(section.arcEdits?.[layer] ?? []).filter(e => !(e.linkId === next.linkId && e.edge === next.edge)), next] } }, issues = correlationIssues(candidate, layer)
+    if (issues.length) { setError(issues.join(' ')); return } onChange(candidate); setError('')
+  }
+  if (!link) return null
+  const a = anchors.find(p => p.id === link.a), b = anchors.find(p => p.id === link.b)
+  if (!a || !b) return null
+  const ends = [a[edge], b[edge]].sort((p, q) => p.x - q.x)
+  return <details><summary>Дуги и вспомогательные точки</summary><div className="section-form"><label>Связь<select value={link.id} onChange={e => setLinkId(e.target.value)}>{section.links[layer].map(l => <option key={l.id} value={l.id}>{l.a.split('/')[0]} ↔ {l.b.split('/')[0]} · {anchors.find(p => p.id === l.a)?.from} / {anchors.find(p => p.id === l.b)?.from} м</option>)}</select></label><label>Дуга<select value={edge} onChange={e => setEdge(e.target.value as typeof edge)}><option value="top">Верхняя</option><option value="bottom">Нижняя</option></select></label></div><p className="section-muted">Опоры закреплены. Вспомогательные точки перемещаются между ними. Сглаживание проходит через опоры и не выходит за высоты соседних узлов.</p>{error && <p role="alert" className="section-error">{error}</p>}
+    <div className="section-table-scroll"><table className="section-table"><thead><tr><th>Узел</th><th>X, м</th><th>Z, м</th><th>Действие</th></tr></thead><tbody>{edit?.points.map((p, i) => <tr key={i}><th scope="row">Вспомогательный {i + 1}</th>{(['x', 'z'] as const).map(key => <td key={key}><input type="number" value={p[key]} disabled={disabled} aria-label={`Дуга, точка ${i + 1}, ${key.toUpperCase()}`} onChange={e => change({ ...edit, points: edit.points.map((q, j) => j === i ? { ...q, [key]: Number(e.target.value) } : q) })} /></td>)}<td><Button variant="quiet" disabled={disabled} onClick={() => change({ ...edit, points: edit.points.filter((_, j) => j !== i) })}>Удалить узел</Button></td></tr>)}</tbody></table></div><div className="section-actions"><Button variant="secondary" disabled={disabled} onClick={() => { const previous = edit?.points.at(-1) ?? ends[0]!, end = ends[1]!; change({ linkId: link.id, edge, smooth: edit?.smooth ?? false, points: [...(edit?.points ?? []), { x: (previous.x + end.x) / 2, z: (previous.z + end.z) / 2 }] }) }}>Добавить узел дуги</Button><Button variant="secondary" disabled={disabled || !edit?.points.length} onClick={() => change({ ...edit!, smooth: !edit?.smooth })}>{edit?.smooth ? 'Спрямить дугу' : 'Сгладить дугу'}</Button><Button variant="quiet" disabled={disabled || !edit} onClick={() => onChange({ ...section, arcEdits: { ...section.arcEdits, [layer]: section.arcEdits?.[layer]?.filter(e => !(e.linkId === link.id && e.edge === edge)) ?? [] } })}>Исходная прямая</Button></div></details>
+}

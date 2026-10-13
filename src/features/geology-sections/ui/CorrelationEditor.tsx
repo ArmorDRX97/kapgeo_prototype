@@ -1,0 +1,89 @@
+import { useEffect, useRef, useState } from 'react'
+import type { GeologySection, SectionLayer, ContourEdit } from '../../../entities/geology-section/model/types'
+import { sectionWellSources } from '../../../entities/geology-section/model/fixtures'
+import { mayExtendBottom, adjacentAnchors, correlationIssues, layerAnchors, pinchBounds, pinchPoint } from '../../../entities/geology-section/lib/correlation'
+import { profileLength } from '../../../entities/geology-section/lib/profile'
+import { Button } from '../../../shared/ui/Button'
+import { WorkspaceDialog } from '../../../shared/ui/WorkspaceDialog'
+import { SectionCanvas, type HandlePhase } from './SectionCanvas'
+import type { XZ } from '../../../entities/geology-section/model/types'
+import { correlationHandles, moveCorrelationHandle } from '../model/correlationHandles'
+import { defaultColumns, layerNames } from '../model/presentation'
+import { SourceEditor } from './SourceEditor'
+import { ClosedContourArcEditor } from './ClosedContourArcEditor'
+import { ArcEditor } from './ArcEditor'
+import { CurveSettingsEditor } from './CurveSettingsEditor'
+import { repairSection } from '../../../entities/geology-section/lib/repair'
+import { SharedAuxiliaryEditor } from './SharedAuxiliaryEditor'
+import { GraphHelp, ToolCategory } from './SectionGraphicWorkspace'
+import { useRevealTool } from '../model/toolContext'
+
+export function CorrelationEditor({ section, layer, disabled, onChange, selection, onSelect, onPending }: { section: GeologySection; layer: SectionLayer; disabled: boolean; onChange: (s: GeologySection) => void; selection?: string; onSelect: (id: string) => void; onPending: (pending: boolean) => void }) {
+  const revealTool = useRevealTool()
+  const anchors = layerAnchors(section, layer), anchor = anchors.find(a => a.id === selection)
+  const [target, setTarget] = useState(''), [error, setError] = useState(''), [reset, setReset] = useState(false), [columns, setColumns] = useState(false), [columnId, setColumnId] = useState('all')
+  const [pendingArc, setPendingArc] = useState(false)
+  const [pendingSource, setPendingSource] = useState(false), [pendingAuxiliary, setPendingAuxiliary] = useState(false)
+  const [dragPreview, setDragPreview] = useState<GeologySection | null>(null), dragSource = useRef<GeologySection | null>(null)
+  useEffect(() => { onPending(pendingSource || pendingAuxiliary || pendingArc || !!dragPreview); return () => onPending(false) }, [pendingSource, pendingAuxiliary, pendingArc, dragPreview, onPending])
+  const [side, setSide] = useState<'left' | 'right'>('left'), [moveX, setMoveX] = useState(''), [moveZ, setMoveZ] = useState('')
+  const [boundaryTop, setBoundaryTop] = useState(''), [boundaryBottom, setBoundaryBottom] = useState(''), [extensionZ, setExtensionZ] = useState('')
+  const [notice, setNotice] = useState('')
+  const boundaryEdit = section.contourEdits?.[layer]?.find(e => e.anchorId === anchor?.id && e.side === side && e.boundary)
+  const commit = (next: GeologySection) => { const repaired = repairSection(next); setNotice(repaired.changes.join(' ')); onChange(repaired.section) }
+  const issues = correlationIssues(section, layer)
+  const change = (next: GeologySection) => { const errors = correlationIssues(next, layer); if (errors.length) { setError(errors.join(' ')); return } setError(''); commit(next) }
+  const dragHandle = (id: string, point: XZ, phase: HandlePhase) => {
+    if (disabled) return
+    if (phase === 'start') {
+      revealTool('coordinates')
+      const handle = correlationHandles(section, layer, selection).find(h => h.id === id)
+      if (handle && handle.target.type !== 'arc') { setSide(handle.target.side); setMoveX(''); setMoveZ(''); setBoundaryTop(''); setBoundaryBottom('') }
+      dragSource.current = section; setDragPreview(section); setError(''); return
+    }
+    const before = dragSource.current
+    if (phase === 'cancel') { dragSource.current = null; setDragPreview(null); setError(''); return }
+    if (!before) return
+    const handle = correlationHandles(before, layer, selection).find(h => h.id === id)
+    if (!handle) { dragSource.current = null; setDragPreview(null); return }
+    const candidate = moveCorrelationHandle(before, layer, handle, point), errors = correlationIssues(candidate, layer)
+    if (phase === 'move') { if (!errors.length) setDragPreview(candidate); else setError(errors.join(' ')); return }
+    dragSource.current = null; setDragPreview(null); change(candidate)
+  }
+  const select = (id: string) => { onSelect(id); setTarget(''); setMoveX(''); setMoveZ(''); setBoundaryTop(''); setBoundaryBottom(''); setExtensionZ('') }
+  const c = section.columnSettings?.[columnId] ?? section.columnSettings?.all ?? defaultColumns
+  const updateColumn = (key: keyof typeof c, value: number | boolean) => { const next = { ...c, [key]: value }; if (!Number.isFinite(next.width) || next.width < 2 || next.width > 40 || !Number.isFinite(next.offset) || next.curveMin >= next.curveMax) { setError('Ширина колонки 2–40; минимум шкалы должен быть меньше максимума.'); return } onChange({ ...section, columnSettings: { ...section.columnSettings, [columnId]: next } }); setError('') }
+  return <section className="section-correlation-editor"><div inert={pendingArc || undefined}><h2>{layerNames[layer]}</h2>
+    <fieldset className="section-checks"><legend>Участвующие скважины этого слоя</legend>{sectionWellSources.filter(w => section.wellIds.includes(w.id)).map(w => <label key={w.id}><input type="checkbox" disabled={disabled} checked={section.participation[layer].includes(w.id)} onChange={e => {
+      const participation = e.target.checked ? [...section.participation[layer], w.id] : section.participation[layer].filter(id => id !== w.id)
+      const base = { ...section, participation: { ...section.participation, [layer]: participation } }, remaining = layerAnchors(base, layer)
+      const links = section.links[layer].filter(l => { const a = remaining.find(p => p.id === l.a), b = remaining.find(p => p.id === l.b); return a && b && adjacentAnchors(base, layer, a, b) })
+      commit({ ...base, arcEdits: { ...section.arcEdits, [layer]: section.arcEdits?.[layer]?.filter(e => links.some(l => l.id === e.linkId)) ?? [] }, links: { ...section.links, [layer]: links }, contourEdits: { ...section.contourEdits, [layer]: section.contourEdits?.[layer]?.filter(edit => remaining.some(a => a.id === edit.anchorId)) ?? [] } })
+    }} />{w.name}</label>)}</fieldset>
+    {!section.participation[layer].length && <p role="status">Нет участвующих скважин. Включите нужные скважины для построения слоя.</p>}
+    <div className="section-actions"><Button variant="quiet" disabled={disabled} onClick={() => setReset(true)}>Сбросить связи слоя…</Button></div>
+
+    <ToolCategory category="footer">{notice && <p role="status">{notice}</p>}{error && <p role="alert" className="section-error">{error}</p>}{issues.length > 0 && <p role="alert" className="section-error">{issues.join(' ')}</p>}</ToolCategory>
+    <GraphHelp><details className="section-help" open><summary>Работа с точками и связями</summary><p className="section-muted">Выберите опору на разрезе или в списке. У выбранного интервала перетаскивайте круглые точки. Граничные точки движутся только по высоте; исходные контакты закреплены. Tab и стрелки перемещают выбранную точку на 0,1 м, Shift — на 1 м. Escape отменяет жест.</p></details></GraphHelp>
+    <SectionCanvas surfaceState={pendingArc ? 'inactive' : undefined} section={dragPreview ?? section} layers={[layer]} selection={selection} onAnchor={select} handles={disabled || pendingSource || pendingAuxiliary || pendingArc ? [] : correlationHandles(dragPreview ?? section, layer, selection)} onHandleDrag={disabled ? undefined : dragHandle} />
+    <ToolCategory category="display" state={pendingArc ? 'inactive' : undefined}><Button variant="secondary" onClick={() => setColumns(!columns)} aria-expanded={columns}>Колонки и каротажи</Button>{columns && <fieldset className="section-form"><legend>Настройки колонок</legend><label>Применить к<select value={columnId} onChange={e => setColumnId(e.target.value)}><option value="all">Общие настройки</option>{sectionWellSources.filter(w => section.wellIds.includes(w.id)).map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select></label>{(['width', 'offset'] as const).map((key, i) => <label key={key}>{['Ширина, экранные единицы', 'Смещение'][i]}<input type="number" value={c[key]} disabled={disabled} onChange={e => updateColumn(key, Number(e.target.value))} /></label>)}<div className="section-actions">{(['lithology', 'intervals', 'curves'] as const).map((key, i) => <label key={key}><input type="checkbox" checked={c[key]} disabled={disabled} onChange={e => updateColumn(key, e.target.checked)} />{['Литология', 'Интервалы', 'Каротаж'][i]}</label>)}{columnId !== 'all' && <Button variant="quiet" disabled={disabled || !section.columnSettings?.[columnId]} onClick={() => { const next = { ...section.columnSettings }; delete next[columnId]; onChange({ ...section, columnSettings: next }) }}>Использовать общие</Button>}</div><CurveSettingsEditor section={section} columnId={columnId} disabled={disabled} onChange={onChange} /></fieldset>}</ToolCategory>
+    <div className="section-editor-grid"><div><h3>Корреляция интервалов</h3><div className="section-form"><label>Исходный интервал<select value={anchor?.id ?? ''} onChange={e => select(e.target.value)}><option value="">Выберите интервал</option>{anchors.map(a => <option key={a.id} value={a.id}>{sectionWellSources.find(w => w.id === a.wellId)?.name}: MD {a.from}–{a.to} м</option>)}</select></label><label>Соседний интервал<select value={target} disabled={disabled || !anchor} onChange={e => setTarget(e.target.value)}><option value="">Выберите соседа</option>{anchor && anchors.filter(a => adjacentAnchors(section, layer, anchor, a)).map(a => <option key={a.id} value={a.id}>{sectionWellSources.find(w => w.id === a.wellId)?.name}: MD {a.from}–{a.to} м</option>)}</select></label></div><Button disabled={disabled || !anchor || !target} onClick={() => {
+      const a = anchor!.id, b = target
+      if (section.links[layer].some(l => l.a === a && l.b === b || l.b === a && l.a === b)) { setError('Эта связь уже существует.'); return }
+      change({ ...section, links: { ...section.links, [layer]: [...section.links[layer], { id: `${a}|${b}`, a, b }] } }); setTarget('')
+    }}>Соединить интервалы</Button><ul className="section-link-list">{section.links[layer].map(l => <li key={l.id}><span>{anchors.find(a => a.id === l.a)?.from} ↔ {anchors.find(a => a.id === l.b)?.from} м · {l.a.split('/')[0]} / {l.b.split('/')[0]}</span><Button variant="quiet" disabled={disabled} onClick={() => change({ ...section, links: { ...section.links, [layer]: section.links[layer].filter(x => x.id !== l.id) }, arcEdits: { ...section.arcEdits, [layer]: section.arcEdits?.[layer]?.filter(e => e.linkId !== l.id) ?? [] } })}>Разъединить</Button></li>)}</ul></div>
+    <ToolCategory category="coordinates" state={pendingArc ? 'inactive' : undefined}><div><h3>Выклинивание и граница</h3>{anchor ? <><p>Фиксированные опоры: Z {anchor.top.z.toFixed(2)} / {anchor.bottom.z.toFixed(2)} м.</p><div className="section-form"><label>Сторона<select value={side} onChange={e => { setSide(e.target.value as typeof side); setMoveX(''); setMoveZ(''); setBoundaryTop(''); setBoundaryBottom(''); setExtensionZ('') }}><option value="left">Слева</option><option value="right">Справа</option></select></label><span>Допустимо X {pinchBounds(section, layer, anchor, side).min.toFixed(2)}…{pinchBounds(section, layer, anchor, side).max.toFixed(2)}</span><label>X вдоль профиля, м<input type="number" disabled={disabled || !!boundaryEdit} value={moveX || pinchPoint(section, layer, anchor, side).x.toFixed(2)} onChange={e => setMoveX(e.target.value)} /></label>{boundaryEdit ? <><label>Верх граничного интервала Z, м<input type="number" disabled={disabled} value={boundaryTop || (boundaryEdit.boundaryTop ?? boundaryEdit.z + (anchor.top.z - anchor.bottom.z) / 2).toFixed(2)} onChange={e => setBoundaryTop(e.target.value)} /></label><label>Низ граничного интервала Z, м<input type="number" disabled={disabled} value={boundaryBottom || (boundaryEdit.boundaryBottom ?? boundaryEdit.z - (anchor.top.z - anchor.bottom.z) / 2).toFixed(2)} onChange={e => setBoundaryBottom(e.target.value)} /></label></> : <label>Абсолютная высота Z, м<input type="number" disabled={disabled} value={moveZ || pinchPoint(section, layer, anchor, side).z.toFixed(2)} onChange={e => setMoveZ(e.target.value)} /></label>}</div><div className="section-actions"><Button disabled={disabled} onClick={() => {
+      const point = pinchPoint(section, layer, anchor, side), edit: ContourEdit = { anchorId: anchor.id, side, x: moveX ? Number(moveX) : point.x, z: moveZ ? Number(moveZ) : point.z, boundary: !!boundaryEdit, ...(boundaryEdit ? { boundaryTop: boundaryTop !== '' ? Number(boundaryTop) : boundaryEdit.boundaryTop ?? boundaryEdit.z + (anchor.top.z - anchor.bottom.z) / 2, boundaryBottom: boundaryBottom !== '' ? Number(boundaryBottom) : boundaryEdit.boundaryBottom ?? boundaryEdit.z - (anchor.top.z - anchor.bottom.z) / 2 } : {}) }
+      change({ ...section, contourEdits: { ...section.contourEdits, [layer]: [...(section.contourEdits?.[layer] ?? []).filter(e => !(e.anchorId === anchor.id && e.side === side)), edit] } })
+    }}>Переместить точку</Button><Button variant="secondary" disabled={disabled || (side === 'left' ? pinchBounds(section, layer, anchor, side).min !== 0 : pinchBounds(section, layer, anchor, side).max !== profileLength(section.profile))} onClick={() => {
+      const edit: ContourEdit = { anchorId: anchor.id, side, x: side === 'left' ? 0 : profileLength(section.profile), z: (anchor.top.z + anchor.bottom.z) / 2, boundary: true, boundaryTop: anchor.top.z, boundaryBottom: anchor.bottom.z }
+      change({ ...section, contourEdits: { ...section.contourEdits, [layer]: [...(section.contourEdits?.[layer] ?? []).filter(e => !(e.anchorId === anchor.id && e.side === side)), edit] } })
+    }}>Продолжить до границы</Button><Button variant="quiet" disabled={disabled} onClick={() => change({ ...section, contourEdits: { ...section.contourEdits, [layer]: (section.contourEdits?.[layer] ?? []).filter(e => !(e.anchorId === anchor.id && e.side === side)) } })}>Восстановить выклинивание</Button></div></> : <p>Выберите исходный интервал.</p>}</div></ToolCategory></div>
+    <ToolCategory category="coordinates" state={pendingArc ? 'inactive' : undefined}>{anchor && <div className="section-actions"><label>Предполагаемый низ Z, м<input type="number" value={extensionZ || anchor.bottom.z.toFixed(2)} disabled={disabled || !mayExtendBottom(sectionWellSources.find(w => w.id === anchor.wellId)!, layer, anchor.to)} onChange={e => setExtensionZ(e.target.value)} /></label><Button variant="secondary" disabled={disabled || !mayExtendBottom(sectionWellSources.find(w => w.id === anchor.wellId)!, layer, anchor.to)} onClick={() => change({ ...section, bottomExtensions: { ...section.bottomExtensions, [anchor.id]: Number(extensionZ || anchor.bottom.z) } })}>Продолжить низ у забоя</Button><Button variant="quiet" disabled={disabled || section.bottomExtensions?.[anchor.id] === undefined} onClick={() => { const next = { ...section.bottomExtensions }; delete next[anchor.id]; change({ ...section, bottomExtensions: next }) }}>Восстановить исходный низ</Button><span className="section-muted">Только контур; исходная глубина и мощность сохраняются.</span></div>}</ToolCategory>
+    <SharedAuxiliaryEditor section={section} layer={layer} disabled={disabled} onChange={onChange} onPending={setPendingAuxiliary} />
+    {reset && <WorkspaceDialog title="Сбросить корреляцию слоя?" onClose={() => setReset(false)} footer={<><Button variant="secondary" onClick={() => setReset(false)}>Оставить</Button><Button onClick={() => { commit({ ...section, arcEdits: { ...section.arcEdits, [layer]: [] }, links: { ...section.links, [layer]: [] }, contourEdits: { ...section.contourEdits, [layer]: [] } }); setReset(false) }}>Восстановить исходные выклинивания</Button></>}><p>Связи и ручные точки только этого слоя будут удалены. Скважинные интервалы сохранятся. Действие можно отменить.</p></WorkspaceDialog>}
+    <SourceEditor section={section} layer={layer} disabled={disabled} onChange={onChange} onPending={setPendingSource} />
+    </div><ToolCategory category="coordinates" state={pendingArc ? 'preview' : undefined}><ClosedContourArcEditor section={section} layer={layer} disabled={disabled || pendingSource || pendingAuxiliary || !!dragPreview} onChange={onChange} onPending={setPendingArc} /></ToolCategory>
+    <ToolCategory category="coordinates" state={pendingArc ? 'inactive' : undefined}><div inert={pendingArc || undefined}><ArcEditor section={section} layer={layer} disabled={disabled || pendingArc} onChange={onChange} /></div></ToolCategory>
+  </section>
+}

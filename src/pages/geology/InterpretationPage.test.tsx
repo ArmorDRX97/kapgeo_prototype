@@ -3,6 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { interpretationWells } from '../../entities/interpretation/model/fixtures'
 import { userPersonas } from '../../entities/session/model/personas'
 import { InterpretationPage } from './InterpretationPage'
+import type { PropsWithChildren } from 'react'
+
+vi.mock('./GeologyModuleLayout', () => ({ GeologyModuleLayout: ({ children }: PropsWithChildren) => <>{children}</> }))
 
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
 vi.mock('@tanstack/react-router', () => ({
@@ -38,7 +41,7 @@ describe('interpretation in-place navigation', () => {
     fireEvent.pointerDown(canvas, { button: 0, clientY: 160 })
     fireEvent.pointerUp(canvas, { button: 0, clientY: 160 })
     expect(navigate).toHaveBeenCalledWith(expect.objectContaining({
-      to: '/geology', replace: true, resetScroll: false,
+      to: '/geology/interpretation', replace: true, resetScroll: false,
       search: expect.objectContaining({ well: 'int-demo-01', selection: 'lithology:lit-3' }),
     }))
   })
@@ -48,7 +51,7 @@ describe('interpretation in-place navigation', () => {
     const canvas = screen.getByRole('img', { name: 'Колонка КС · основной' })
     fireEvent.wheel(canvas, { deltaY: 100, clientY: 200 })
     expect(navigate).toHaveBeenCalledWith(expect.objectContaining({
-      to: '/geology', replace: true, resetScroll: false,
+      to: '/geology/interpretation', replace: true, resetScroll: false,
       search: expect.objectContaining({ from: expect.any(Number), to: expect.any(Number) }),
     }))
     expect(navigate.mock.calls[0]![0].search.to).toBeGreaterThan(136)

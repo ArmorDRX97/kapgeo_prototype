@@ -9,6 +9,8 @@ export type Permission =
   | 'bgd.view'
   | 'geology.view'
   | 'geology.interpretation.edit'
+  | 'geology.sections.edit'
+  | 'geology.sections.delete'
   | 'geology.bgd.create'
   | 'geology.bgd.update'
   | 'geology.bgd.delete'
@@ -48,6 +50,8 @@ const rolePermissions: Record<RoleId, Permission[]> = {
 
 // Explicit prototype permission; object scope/status are checked by the editor.
 for (const role of ['R1', 'R2', 'R13'] as const) rolePermissions[role].push('geology.interpretation.edit')
+// Autonomous section prototype: explicitly approved by the user, 12.10.2026.
+for (const role of ['R1', 'R13'] as const) rolePermissions[role].push('geology.sections.edit', 'geology.sections.delete')
 
 export function hasPermission(persona: UserPersona | null, permission: Permission) {
   return persona?.roles.some((role) => rolePermissions[role].includes(permission)) ?? false

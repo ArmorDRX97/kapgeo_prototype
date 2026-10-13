@@ -1,0 +1,7 @@
+{
+  "browser": {
+    "isolated": true
+  },
+  "outputDir": ".tmp/design-qa",
+  "outputMode": "file"
+}

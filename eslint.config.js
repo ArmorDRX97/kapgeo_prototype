@@ -6,7 +6,7 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage', 'archive', 'node_modules']),
+  globalIgnores(['dist', 'coverage', 'archive', 'node_modules', 'kapgeo-knowledge-map']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
