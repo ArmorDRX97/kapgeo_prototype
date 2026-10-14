@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
-import { Mountain, PanelLeftClose, PanelLeftOpen, Plus, RadioTower, Search, SlidersHorizontal, Star, X } from 'lucide-react'
+import { Mountain, PanelLeftClose, PanelLeftOpen, Plus, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { getDepositName } from '../../entities/geology-master/model/types'
 import { useSession } from '../../entities/session/model/sessionContext'
@@ -8,26 +8,15 @@ import { fetchGeologicalMasterData, fetchPlatformPreferences, fetchWells } from 
 import { hasPermission } from '../../shared/auth/permissions'
 import { validateBgdWellSectionSearch } from '../../features/geobase/model/bgdWellSection'
 
-type WellFilter = 'all' | 'favorites' | 'attention'
-
-const FAVORITE_WELLS_KEY = 'kapgeo.favorite-wells'
-
-function readFavoriteWells() {
-  try {
-    const value = JSON.parse(window.localStorage.getItem(FAVORITE_WELLS_KEY) ?? '[]')
-    return new Set<string>(Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [])
-  } catch {
-    return new Set<string>()
-  }
-}
+type WellStatusFilter = 'all' | 'Работает' | 'Требует внимания' | 'Отключена' | 'На проверке'
 
 export function GeologyNavigator({ mobileOpen, onClose, collapsed = false, onToggle }: { mobileOpen: boolean; onClose: () => void; collapsed?: boolean; onToggle?: () => void }) {
   const { persona } = useSession()
   const navigate = useNavigate()
   const location = useRouterState({ select: (state) => state.location })
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<WellFilter>('all')
-  const [favoriteWells, setFavoriteWells] = useState(readFavoriteWells)
+  const [statusFilter, setStatusFilter] = useState<WellStatusFilter>('all')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const panelRef = useRef<HTMLElement>(null)
   const focusReturn = useRef<HTMLElement | null>(null)
   const masterQuery = useQuery({ queryKey: ['geology-master'], queryFn: fetchGeologicalMasterData })
@@ -41,10 +30,6 @@ export function GeologyNavigator({ mobileOpen, onClose, collapsed = false, onTog
   const currentDeposit = deposits.find((item) => item.id === routeDepositId)
     ?? deposits.find((item) => item.id === preferencesQuery.data?.currentDepositId)
     ?? deposits[0]
-
-  useEffect(() => {
-    window.localStorage.setItem(FAVORITE_WELLS_KEY, JSON.stringify([...favoriteWells]))
-  }, [favoriteWells])
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -70,8 +55,7 @@ export function GeologyNavigator({ mobileOpen, onClose, collapsed = false, onTog
   const depositWells = (wellsQuery.data ?? []).filter((well) => (well.bgd?.depositId ?? 'DEP-SARYTAU') === currentDeposit?.id)
   const normalizedQuery = query.trim().toLocaleLowerCase('ru')
   const visibleWells = depositWells.filter((well) => {
-    if (filter === 'favorites' && !favoriteWells.has(well.id)) return false
-    if (filter === 'attention' && well.status === 'Работает') return false
+    if (statusFilter !== 'all' && well.status !== statusFilter) return false
     return !normalizedQuery || `${well.code} ${well.type} ${well.profile} ${well.status}`.toLocaleLowerCase('ru').includes(normalizedQuery)
   })
 
@@ -87,13 +71,6 @@ export function GeologyNavigator({ mobileOpen, onClose, collapsed = false, onTog
     const search = selectedWellId ? validateBgdWellSectionSearch(location.search) : {}
     void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId: currentDeposit.id, wellId }, search, resetScroll: false })
   }
-
-  const toggleFavorite = (wellId: string) => setFavoriteWells((current) => {
-    const next = new Set(current)
-    if (next.has(wellId)) next.delete(wellId)
-    else next.add(wellId)
-    return next
-  })
 
   return <>
     <aside ref={panelRef} className={`geology-navigator${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`} aria-label="Навигация модуля БГД">
@@ -113,18 +90,13 @@ export function GeologyNavigator({ mobileOpen, onClose, collapsed = false, onTog
         <header><div><strong>Скважины</strong><span>{depositWells.length}</span></div>{currentDeposit && hasPermission(persona, 'geology.bgd.well.create') && <button type="button" aria-label="Добавить скважину" onClick={() => void navigate({ to: '/geology/bgd/$depositId/wells/new', params: { depositId: currentDeposit.id } })}><Plus size={18} aria-hidden="true" />Добавить</button>}</header>
         <div className="well-navigator__search-row">
           <label className="well-navigator__search"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по скважинам" aria-label="Поиск по скважинам" /></label>
-          <button type="button" className="well-navigator__filter-button"><SlidersHorizontal size={17} aria-hidden="true" />Фильтр</button>
+          <button type="button" className="well-navigator__filter-button" aria-expanded={filtersOpen} aria-controls="well-navigator-filters" onClick={() => setFiltersOpen((open) => !open)}><SlidersHorizontal size={17} aria-hidden="true" />Фильтр</button>
         </div>
-        <div className="well-navigator__filters" aria-label="Фильтр скважин">
-          <button type="button" className={filter === 'all' ? 'is-active' : ''} onClick={() => setFilter('all')}>Все</button>
-          <button type="button" className={filter === 'favorites' ? 'is-active' : ''} onClick={() => setFilter('favorites')}>Избранные</button>
-          <button type="button" className={filter === 'attention' ? 'is-active' : ''} onClick={() => setFilter('attention')}>Требуют внимания</button>
-        </div>
+        {filtersOpen && <div id="well-navigator-filters" className="well-navigator__filter-popover"><label htmlFor="well-status-filter">Статус скважины</label><select id="well-status-filter" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as WellStatusFilter)}><option value="all">Все статусы</option><option value="Работает">Работает</option><option value="Требует внимания">Требует внимания</option><option value="Отключена">Отключена</option><option value="На проверке">На проверке</option></select></div>}
         <div className="well-navigator__list">
           {wellsQuery.isLoading && <span className="well-navigator__empty">Загружаем скважины…</span>}
           {!wellsQuery.isLoading && visibleWells.map((well) => <div key={well.id} className={`well-navigator__item${selectedWellId === well.id ? ' is-active' : ''}`}>
-            <button type="button" className="well-navigator__open" aria-current={selectedWellId === well.id ? 'page' : undefined} onClick={() => openWell(well.id)}><RadioTower size={17} /><span><strong>WELL-{well.code.replace(/^WELL-/, '')}</strong></span><i className={`well-status well-status--${well.status === 'Работает' ? 'ok' : well.status === 'Отключена' ? 'neutral' : 'attention'}`} role="img" aria-label={well.status} title={well.status} /></button>
-            <button type="button" className={`well-navigator__favorite${favoriteWells.has(well.id) ? ' is-active' : ''}`} onClick={() => toggleFavorite(well.id)} aria-label={favoriteWells.has(well.id) ? `Убрать ${well.code} из избранного` : `Добавить ${well.code} в избранное`}><Star size={15} fill={favoriteWells.has(well.id) ? 'currentColor' : 'none'} /></button>
+            <button type="button" className="well-navigator__open" aria-current={selectedWellId === well.id ? 'page' : undefined} onClick={() => openWell(well.id)}><span><strong>WELL-{well.code.replace(/^WELL-/, '')}</strong></span></button>
           </div>)}
           {!wellsQuery.isLoading && !visibleWells.length && <span className="well-navigator__empty">Скважины по выбранным условиям не найдены.</span>}
         </div>

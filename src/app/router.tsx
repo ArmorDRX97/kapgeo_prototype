@@ -3,6 +3,7 @@ import { RootLayout } from './layout/RootLayout'
 import { SignInPage } from '../pages/auth/SignInPage'
 import { BgdNewWellPage, BgdWellPage } from '../pages/geology/BgdWellPage'
 import { GeoBaseDepositPage } from '../pages/geology/GeoBaseDepositPage'
+import { GeoBaseDepositConditionsPage } from '../pages/geology/GeoBaseDepositConditionsPage'
 import { GeoBasePage } from '../pages/geology/GeoBasePage'
 import { ProfilePage } from '../pages/profile/ProfilePage'
 import { NotFoundPage } from '../pages/system/NotFoundPage'
@@ -56,7 +57,10 @@ const sectionRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geol
 const plansRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/plans', component: PlansPage })
 const planRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/plans/$projectId', validateSearch: validatePlanSearch, component: PlansPage })
 const geoBaseRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd', component: GeoBasePage })
-const geoBaseDepositRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId', validateSearch: validateDepositSectionSearch, component: GeoBaseDepositPage })
+const geoBaseDepositRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId', validateSearch: validateDepositSectionSearch, beforeLoad: ({ params, search }) => {
+  if (search.section === 'conditions') throw redirect({ to: '/geology/bgd/$depositId/conditions', params, replace: true })
+}, component: GeoBaseDepositPage })
+const geoBaseDepositConditionsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId/conditions', component: GeoBaseDepositConditionsPage })
 const bgdNewWellRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId/wells/new', validateSearch: validateBgdWellSectionSearch, component: BgdNewWellPage })
 const bgdWellRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId/wells/$wellId', validateSearch: validateBgdWellSectionSearch, component: BgdWellPage })
 const profileRoute = createRoute({ getParentRoute: () => rootRoute, path: '/profile', component: ProfilePage })
@@ -79,6 +83,7 @@ const routeTree = rootRoute.addChildren([
   planRoute,
   geoBaseRoute,
   geoBaseDepositRoute,
+  geoBaseDepositConditionsRoute,
   bgdNewWellRoute,
   bgdWellRoute,
   profileRoute,

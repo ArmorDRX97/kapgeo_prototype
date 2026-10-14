@@ -10,6 +10,8 @@ describe('BGD route smoke', () => {
     expect(router.state.location.search).toMatchObject({ well: 'int-demo-01', mode: 'core', from: 112, to: 136, selection: 'core:seg-1' })
     await router.navigate({ to: '/geology', search: {} })
     expect(router.state.location.pathname).toBe('/geology/sections')
+    await router.navigate({ to: '/geology/bgd/$depositId', params: { depositId: 'DEP-SARYTAU' }, search: { section: 'conditions' } })
+    expect(router.state.location.pathname).toBe('/geology/bgd/DEP-SARYTAU/conditions')
   })
   it('builds typed deep-links for the complete BGD flow', () => {
     expect(router.buildLocation({ to: '/geology' }).href).toBe('/geology')
@@ -19,6 +21,7 @@ describe('BGD route smoke', () => {
     expect(router.buildLocation({ to: '/geology', search: { well: 'int-demo-01', mode: 'core', from: 112, to: 136, selection: 'core:seg-1' } }).href).toBe('/geology?well=int-demo-01&mode=core&from=112&to=136&selection=core%3Aseg-1')
     expect(router.buildLocation({ to: '/geology/bgd' }).href).toBe('/geology/bgd')
     expect(router.buildLocation({ to: '/geology/bgd/$depositId', params: { depositId: 'DEP-SARYTAU' } }).href).toBe('/geology/bgd/DEP-SARYTAU')
+    expect(router.buildLocation({ to: '/geology/bgd/$depositId/conditions', params: { depositId: 'DEP-SARYTAU' } }).href).toBe('/geology/bgd/DEP-SARYTAU/conditions')
     expect(router.buildLocation({ to: '/geology/bgd/$depositId', params: { depositId: 'DEP-SARYTAU' }, search: { section: 'conditions' } }).href).toBe('/geology/bgd/DEP-SARYTAU?section=conditions')
     expect(router.buildLocation({ to: '/geology/bgd/$depositId/wells/new', params: { depositId: 'DEP-SARYTAU' } }).href).toBe('/geology/bgd/DEP-SARYTAU/wells/new')
     expect(router.buildLocation({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId: 'DEP-SARYTAU', wellId: 'WELL-1042' } }).href).toBe('/geology/bgd/DEP-SARYTAU/wells/WELL-1042')

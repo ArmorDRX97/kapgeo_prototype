@@ -403,24 +403,15 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 .well-navigator > header > button { display: grid; width: 29px; height: 29px; cursor: pointer; place-items: center; color: white; border: 0; border-radius: 8px; background: var(--color-brand-700); }
 .well-navigator__search { display: flex; min-height: 35px; margin: 9px 9px 6px; align-items: center; gap: 7px; padding: 0 9px; color: var(--text-tertiary); border: 1px solid var(--border-default); border-radius: 8px; background: var(--surface-subtle); }
 .well-navigator__search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 13px; }
-.well-navigator__filters { display: flex; padding: 0 9px 8px; gap: 3px; overflow-x: auto; }
-.well-navigator__filters button { min-width: max-content; min-height: 30px; cursor: pointer; padding: 0 8px; color: var(--text-tertiary); border: 1px solid transparent; border-radius: 7px; background: transparent; font-size: 12px; font-weight: 650; }
-.well-navigator__filters button:hover, .well-navigator__filters button.is-active { color: var(--color-brand-800); border-color: var(--color-brand-200); background: var(--color-brand-50); }
 .well-navigator__list { min-height: 0; flex: 1; overflow-y: auto; padding: 0 6px 7px; scrollbar-width: thin; }
 .well-navigator__item { position: relative; display: flex; align-items: center; border-radius: 8px; }
 .well-navigator__item:hover, .well-navigator__item.is-active { background: var(--color-brand-50); }
 .well-navigator__item.is-active { box-shadow: inset 3px 0 var(--color-brand-600); }
 .well-navigator__open { display: grid; width: 100%; min-width: 0; min-height: 54px; grid-template-columns: 19px minmax(0, 1fr) 8px; cursor: pointer; align-items: center; gap: 8px; padding: 6px 34px 6px 10px; border: 0; border-radius: inherit; background: transparent; text-align: left; }
-.well-navigator__open > svg { color: var(--color-brand-700); }
 .well-navigator__open > span { display: grid; min-width: 0; }
 .well-navigator__open strong, .well-navigator__open small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .well-navigator__open strong { font-size: 13px; }
 .well-navigator__open small { color: var(--text-tertiary); font-size: 12px; line-height: 1.4; }
-.well-navigator__favorite { position: absolute; right: 5px; display: grid; width: 28px; height: 28px; cursor: pointer; place-items: center; color: #9aa8ad; border: 0; border-radius: 6px; background: transparent; }
-.well-navigator__favorite:hover, .well-navigator__favorite.is-active { color: #bb7d10; background: #fff7df; }
-.well-status { width: 7px; height: 7px; border-radius: 50%; background: #a5b0b4; }
-.well-status--ok { background: #21a66a; }
-.well-status--attention { background: #d98b19; }
 .well-navigator__empty { display: block; padding: 23px 12px; color: var(--text-tertiary); font-size: 12px; line-height: 1.45; text-align: center; }
 
 

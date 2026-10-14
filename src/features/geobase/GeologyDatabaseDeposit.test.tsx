@@ -8,22 +8,23 @@ import { demoDatabase } from '../../repository/demo/demoDatabase'
 import { GeologyDatabaseDeposit } from './GeologyDatabaseDeposit'
 
 const onOpenDeposit = vi.fn()
+const onOpenConditions = vi.fn()
 
-function mount(depositId = 'DEP-SARYTAU', readOnly = false, admin = false) {
+function mount(depositId = 'DEP-SARYTAU', readOnly = false, admin = false, view: 'overview' | 'conditions' = 'overview') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const persona = admin ? { ...defaultPersona, roles: ['R13' as const] } : readOnly ? { ...defaultPersona, roles: ['R3' as const] } : defaultPersona
   return render(<QueryClientProvider client={client}><SessionContext.Provider value={{ status: 'authenticated', persona, signIn: () => persona, signOut: vi.fn(), switchPersona: vi.fn() }}>
-    <GeologyDatabaseDeposit depositId={depositId} onOpenDeposit={onOpenDeposit} onDeleted={vi.fn()} />
+    <GeologyDatabaseDeposit depositId={depositId} view={view} onOpenDeposit={onOpenDeposit} onOpenConditions={onOpenConditions} onDeleted={vi.fn()} />
   </SessionContext.Provider></QueryClientProvider>)
 }
 
 describe('Deposit condition limits', () => {
-  beforeEach(async () => { onOpenDeposit.mockReset(); await demoDatabase.reset() })
+  beforeEach(async () => { onOpenDeposit.mockReset(); onOpenConditions.mockReset(); await demoDatabase.reset() })
   afterEach(async () => { cleanup(); vi.restoreAllMocks(); await demoDatabase.reset() })
 
   it('opens one editable deposit set, saves and closes, then reloads without approval or versions', async () => {
     const confirm = vi.spyOn(window, 'confirm')
-    const view = mount()
+    const view = mount('DEP-SARYTAU', false, false, 'conditions')
     const open = await screen.findByRole('button', { name: 'Изменить' })
     expect(screen.getAllByRole('button', { name: 'Изменить' })).toHaveLength(1)
     open.focus()
@@ -41,7 +42,7 @@ describe('Deposit condition limits', () => {
     expect(open).toHaveFocus()
     expect(confirm).not.toHaveBeenCalled()
     view.unmount()
-    mount()
+    mount('DEP-SARYTAU', false, false, 'conditions')
     fireEvent.click(await screen.findByRole('button', { name: 'Изменить' }))
     expect(screen.getByLabelText('Бортовое содержание урана')).toHaveValue('0.025')
     expect(screen.getByLabelText('Бортовое содержание урана')).toBeEnabled()
@@ -49,7 +50,7 @@ describe('Deposit condition limits', () => {
   })
 
   it('cancels edits without a confirmation and restores stored values on reopening', async () => {
-    mount()
+    mount('DEP-SARYTAU', false, false, 'conditions')
     fireEvent.click(await screen.findByRole('button', { name: 'Изменить' }))
     fireEvent.change(screen.getByLabelText('Бортовое содержание урана'), { target: { value: 'discard me' } })
     fireEvent.click(screen.getByRole('button', { name: 'Отменить' }))
@@ -60,7 +61,7 @@ describe('Deposit condition limits', () => {
   })
 
   it('allows a deposit without sites to save its first and only set', async () => {
-    mount('DEP-SEVERNOE', false, true)
+    mount('DEP-SEVERNOE', false, true, 'conditions')
     fireEvent.click(await screen.findByRole('button', { name: 'Изменить' }))
     expect(screen.getByRole('dialog', { name: 'Кондиционные лимиты Северное' })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Бортовое содержание урана'), { target: { value: '0.02' } })
@@ -73,7 +74,7 @@ describe('Deposit condition limits', () => {
 
   it('preserves edits and shows the save error inside the open form', async () => {
     vi.spyOn(api, 'saveConditionSet').mockRejectedValueOnce(new Error('Не удалось сохранить лимиты.'))
-    mount()
+    mount('DEP-SARYTAU', false, false, 'conditions')
     fireEvent.click(await screen.findByRole('button', { name: 'Изменить' }))
     fireEvent.change(screen.getByLabelText('Бортовое содержание урана'), { target: { value: '0.03' } })
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
@@ -84,7 +85,7 @@ describe('Deposit condition limits', () => {
   })
 
   it('keeps the form read-only without an edit permission', async () => {
-    mount('DEP-SARYTAU', true)
+    mount('DEP-SARYTAU', true, false, 'conditions')
     fireEvent.click(await screen.findByRole('button', { name: 'Изменить' }))
     expect(screen.getByLabelText('Бортовое содержание урана')).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled()
@@ -99,8 +100,12 @@ describe('Deposit condition limits', () => {
     expect(screen.getByText('Sarytau uranium deposit.')).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Участки' })).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Список залежей' })).toBeVisible()
-    expect(screen.getByRole('heading', { name: 'Кондиционные лимиты Сарытау' })).toBeVisible()
-    expect(screen.getByText('Бортовое содержание урана')).toBeVisible()
+    expect(screen.queryByRole('heading', { name: 'Кондиционные лимиты Сарытау' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Бортовое содержание урана')).not.toBeInTheDocument()
+    const actions = screen.getByRole('heading', { name: 'Сарытау' }).closest('header')!.querySelectorAll('button')
+    expect([...actions].map((button) => button.textContent)).toEqual(['Редактировать', 'Кондиционные лимиты', 'Сменить месторождение'])
+    fireEvent.click(screen.getByRole('button', { name: 'Кондиционные лимиты' }))
+    expect(onOpenConditions).toHaveBeenCalledWith('DEP-SARYTAU')
     expect(screen.queryByRole('heading', { name: 'Скважины' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
     const facts = screen.getByRole('heading', { name: 'Сведения об объекте' }).closest('section')!

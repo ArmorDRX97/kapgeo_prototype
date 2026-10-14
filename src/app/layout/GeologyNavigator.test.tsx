@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defaultPersona } from '../../entities/session/model/personas'
 import type { UserPersona } from '../../entities/session/model/types'
@@ -21,15 +21,30 @@ describe('BGD deposit navigation', () => {
   beforeEach(async () => { route.navigate.mockReset(); await demoDatabase.reset() })
   afterEach(async () => { cleanup(); await demoDatabase.reset() })
 
-  it('shows compact well titles with accessible statuses and opens well creation', async () => {
+  it('shows plain well titles without status icons, dots or favorites, and opens creation', async () => {
     mount()
     const well = await screen.findByRole('button', { name: /^WELL-1010/ })
     expect(well).toHaveTextContent(/^WELL-1010$/)
-    expect(within(well).getByRole('img', { name: primaryWell.status })).toBeInTheDocument()
+    expect(well.querySelector('svg, i')).toBeNull()
+    expect(screen.queryByRole('button', { name: /избранн/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Все' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Требуют внимания' })).not.toBeInTheDocument()
     const add = screen.getByRole('button', { name: 'Добавить скважину' })
     expect(add).toHaveTextContent('Добавить')
     fireEvent.click(add)
     expect(route.navigate).toHaveBeenCalledWith({ to: '/geology/bgd/$depositId/wells/new', params: { depositId: 'DEP-SARYTAU' } })
+  })
+
+  it('opens the filter control as a status selector', async () => {
+    mount()
+    const button = screen.getByRole('button', { name: 'Фильтр' })
+    expect(button).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(button)
+    expect(button).toHaveAttribute('aria-expanded', 'true')
+    const select = screen.getByRole('combobox', { name: 'Статус скважины' })
+    fireEvent.change(select, { target: { value: 'Требует внимания' } })
+    expect(await screen.findByRole('button', { name: /^WELL-1042$/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^WELL-1010$/ })).not.toBeInTheDocument()
   })
 
   it('opens the unified deposit overview directly from the collapse-button row', async () => {

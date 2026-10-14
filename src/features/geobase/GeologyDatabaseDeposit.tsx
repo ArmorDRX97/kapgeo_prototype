@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRightLeft, Check, CircleAlert, Database, History, Languages, Mountain, PencilLine, ShieldCheck, SlidersHorizontal } from 'lucide-react'
+import { ArrowLeft, ArrowRightLeft, Check, CircleAlert, Database, History, Languages, Mountain, PencilLine, ShieldCheck, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { buildConditionLimits, getDepositName, type ConditionSet, type Deposit, type UpdateDepositPatch } from '../../entities/geology-master/model/types'
 import { useSession } from '../../entities/session/model/sessionContext'
@@ -23,15 +23,17 @@ import { WorkspaceDialog } from '../../shared/ui/WorkspaceDialog'
 import { DepositCollections } from './DepositCollections'
 import './geobase.css'
 
-export function GeologyDatabaseDeposit({ depositId, onDeleted, onOpenDeposit }: {
+export function GeologyDatabaseDeposit({ depositId, onDeleted, onOpenDeposit, onOpenConditions, view = 'overview' }: {
   depositId: string
   onDeleted: () => void
   onOpenDeposit: (depositId: string) => void
+  onOpenConditions?: (depositId: string) => void
+  view?: 'overview' | 'conditions'
 }) {
   const { persona } = useSession()
   const queryClient = useQueryClient()
   const masterQuery = useQuery({ queryKey: ['geology-master'], queryFn: fetchGeologicalMasterData })
-  const auditQuery = useQuery({ queryKey: ['demo-audit-events'], queryFn: fetchDemoAuditEvents, enabled: hasPermission(persona, 'geology.bgd.audit') })
+  const auditQuery = useQuery({ queryKey: ['demo-audit-events'], queryFn: fetchDemoAuditEvents, enabled: view === 'overview' && hasPermission(persona, 'geology.bgd.audit') })
   const [editOpen, setEditOpen] = useState(false)
   const [switchOpen, setSwitchOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -121,6 +123,27 @@ export function GeologyDatabaseDeposit({ depositId, onDeleted, onOpenDeposit }: 
   const auditEvents = (auditQuery.data ?? []).filter((event) => event.entityId === deposit.id)
   const canViewAudit = hasPermission(persona, 'geology.bgd.audit')
 
+  const conditionCard = <Panel title={`Кондиционные лимиты ${deposit.nameRu}`} action={<Button size="sm" variant="secondary" onClick={() => { saveLimitsMutation.reset(); setLimitsCondition(depositCondition ?? getEmptyConditionSet(deposit.id)) }}><PencilLine size={16} />Изменить</Button>}>
+    <dl className="geobase-condition-values">{(depositCondition ?? getEmptyConditionSet(deposit.id)).limits.map((limit) => <div key={limit.id}>
+      <dt>{limit.parameter}</dt><dd>{limit.value || 'Не задано'}{limit.value && limit.unit && <small>{limit.unit}</small>}</dd>
+    </div>)}</dl>
+  </Panel>
+
+  if (view === 'conditions') return <div className="page-stack geobase-page geobase-overview">
+    <PageHeader
+      eyebrow="База геологических данных · месторождение"
+      title="Кондиционные лимиты"
+      description={`${deposit.nameRu} · № ${deposit.code}`}
+      actions={<Button variant="secondary" onClick={() => onOpenDeposit(deposit.id)}><ArrowLeft size={17} />К месторождению</Button>}
+    />
+    {!canEdit && <div className="form-alert"><ShieldCheck size={17} /><span>Лимиты доступны только для просмотра. Изменять их может геолог с назначенным доступом или администратор.</span></div>}
+    {currentError && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span>{currentError.message}</span></div>}
+    {notice && <div className="success-message" role="status"><ShieldCheck size={17} /><span><strong>БГД обновлена</strong>{notice}</span></div>}
+    {conditionCard}
+    {limitsCondition?.depositId === deposit.id && <ConditionLimitsDialog key={limitsCondition.id} canEdit={canEdit} input={limitsCondition} depositName={deposit.nameRu}
+      onClose={() => setLimitsCondition(null)} onSave={(next) => saveLimitsMutation.mutate(next)} pending={saveLimitsMutation.isPending} error={saveLimitsMutation.error?.message} />}
+  </div>
+
   return <div className="page-stack geobase-page geobase-overview">
     <PageHeader
       eyebrow="База геологических данных"
@@ -129,6 +152,7 @@ export function GeologyDatabaseDeposit({ depositId, onDeleted, onOpenDeposit }: 
       meta={<Badge tone={deposit.status === 'archived' || deposit.isHidden ? 'neutral' : 'success'} dot>{deposit.status === 'archived' ? 'Архив' : deposit.isHidden ? 'Скрыто' : 'Используется'}</Badge>}
       actions={<>
         {canEdit && <Button variant="secondary" disabled={deposit.status === 'archived'} onClick={() => { updateMutation.reset(); setEditOpen(true) }}><PencilLine size={17} />Редактировать</Button>}
+        <Button variant="secondary" onClick={() => onOpenConditions?.(deposit.id)}><SlidersHorizontal size={17} />Кондиционные лимиты</Button>
         <Button variant="secondary" onClick={() => { switchDepositMutation.reset(); setSwitchOpen(true) }}><ArrowRightLeft size={17} />Сменить месторождение</Button>
       </>}
     />
@@ -158,12 +182,6 @@ export function GeologyDatabaseDeposit({ depositId, onDeleted, onOpenDeposit }: 
 
       <DepositCollections deposit={deposit} sites={sites} canEdit={canEdit} canDelete={canDelete} />
 
-      <Panel title={`Кондиционные лимиты ${deposit.nameRu}`} action={<Button size="sm" variant="secondary" onClick={() => { saveLimitsMutation.reset(); setLimitsCondition(depositCondition ?? getEmptyConditionSet(deposit.id)) }}><PencilLine size={16} />Изменить</Button>}>
-        <dl className="geobase-condition-values">{(depositCondition ?? getEmptyConditionSet(deposit.id)).limits.map((limit) => <div key={limit.id}>
-          <dt>{limit.parameter}</dt><dd>{limit.value || 'Не задано'}{limit.value && limit.unit && <small>{limit.unit}</small>}</dd>
-        </div>)}</dl>
-      </Panel>
-
       {canViewAudit && <Panel title="Аудит месторождения" action={<History size={18} />}>
         {auditQuery.isLoading ? <p className="geobase-muted">Загружаем события…</p> : auditQuery.isError ? <div className="form-alert form-alert--error" role="alert">{auditQuery.error.message}<Button size="sm" variant="secondary" onClick={() => void auditQuery.refetch()}>Повторить</Button></div> : auditEvents.length ? <div className="geobase-audit">{auditEvents.map((event) => <article key={event.id}><span><strong>{event.eventType}</strong><small>{event.actor.name}</small></span><time dateTime={event.occurredAt}>{new Date(event.occurredAt).toLocaleString('ru-RU')}</time></article>)}</div> : <p className="geobase-muted">Событий по этому месторождению пока нет.</p>}
       </Panel>}
@@ -191,16 +209,6 @@ export function GeologyDatabaseDeposit({ depositId, onDeleted, onOpenDeposit }: 
       error={deleteMutation.error?.message}
       onClose={() => setDeleteOpen(false)}
       onConfirm={() => deleteMutation.mutate(deposit)}
-    />}
-    {limitsCondition?.depositId === deposit.id && <ConditionLimitsDialog
-      key={limitsCondition.id}
-      canEdit={canEdit}
-      input={limitsCondition}
-      depositName={deposit.nameRu}
-      onClose={() => setLimitsCondition(null)}
-      onSave={(next) => saveLimitsMutation.mutate(next)}
-      pending={saveLimitsMutation.isPending}
-      error={saveLimitsMutation.error?.message}
     />}
   </div>
 }
