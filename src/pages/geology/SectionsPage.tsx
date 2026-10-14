@@ -20,7 +20,7 @@ export function SectionsPage() {
   const { sectionId } = useParams({ strict: false }), search = validateSectionSearch(useSearch({ strict: false }))
   const query = useQuery({ queryKey: ['geology-sections-prototype'], queryFn: () => sectionRepository.demoList(), retry: false })
   const [collapsed, setCollapsed] = useState(false)
-  const registryContext = { q: search.q, kind: search.kind, year: search.year, body: search.body, groupBy: search.groupBy }
+  const registryContext = { q: search.q, kind: search.kind, stage: search.stage, year: search.year, body: search.body, groupBy: search.groupBy }
   const updateRegistry = (patch: Partial<SectionSearch>, replace = false) => { const next = { ...search, ...patch }; if (sectionId) void navigate({ to: '/geology/sections/$sectionId', params: { sectionId }, search: next, replace, resetScroll: false }); else void navigate({ to: '/geology/sections', search: next, replace, resetScroll: false }) }
   const [creating, setCreating] = useState(false), [name, setName] = useState(''), [error, setError] = useState('')
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['geology-sections-prototype'] })

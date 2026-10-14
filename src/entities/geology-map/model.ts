@@ -1,8 +1,14 @@
 import { z } from 'zod'
 
-export const pointSchema = z.object({ id: z.string().min(1), x: z.number().finite().min(-1e8).max(1e8), y: z.number().finite().min(-1e8).max(1e8) })
+export const anchorSchema = z.object({ wellId: z.string().min(1), target: z.enum(['collar', 'bottom']) })
+export type MapAnchor = z.infer<typeof anchorSchema>
+export const pointSchema = z.object({ id: z.string().min(1), x: z.number().finite().min(-1e8).max(1e8), y: z.number().finite().min(-1e8).max(1e8), anchor: anchorSchema.optional() })
 export type MapPoint = z.infer<typeof pointSchema>
 export type XY = Pick<MapPoint, 'x' | 'y'>
+export type SnapPoint = XY & { anchor?: MapAnchor }
+export const gridSchema = z.object({ step: z.number().min(0).max(10000), color: z.string().regex(/^#[\da-f]{6}$/i), width: z.number().min(.2).max(3), dx: z.number().finite().min(-10000).max(10000), dy: z.number().finite().min(-10000).max(10000) })
+export type MapGrid = z.infer<typeof gridSchema>
+export const defaultMapGrid: MapGrid = { step: 0, color: '#dbe3e8', width: .6, dx: 0, dy: 0 }
 export const objectSchema = z.object({
   id: z.string().min(1), layerId: z.string(), name: z.string().trim().min(1).max(120),
   kind: z.enum(['well', 'profile', 'block', 'contour']), shape: z.enum(['straight', 'cardinal', 'bezier']), closed: z.boolean(),
@@ -10,11 +16,13 @@ export const objectSchema = z.object({
   style: z.object({ stroke: z.string().regex(/^#[\da-f]{6}$/i), fill: z.string().regex(/^(none|#[\da-f]{6})$/i), width: z.number().min(.1).max(8), paperWidth: z.number().min(.05).max(2).default(.2), dash: z.enum(['solid', 'dash', 'dot']), opacity: z.number().min(0).max(1) }),
   label: z.object({ visible: z.boolean(), dx: z.number().finite().min(-500).max(500), dy: z.number().finite().min(-500).max(500) }),
   attributes: z.object({ type: z.string().max(120), depth: z.number().min(0).max(3000), value: z.number().finite(), note: z.string().max(2000) }),
+  segmentWells: z.record(z.string(), z.array(z.string()).max(5000)).optional(),
 })
 export type MapObject = z.infer<typeof objectSchema>
 export const projectSchema = z.object({
   schemaVersion: z.literal(1), id: z.string().min(1), title: z.string().trim().min(1).max(120), deposit: z.literal('Полигон Северный'), lens: z.string().max(60), date: z.string(), author: z.string().max(120), description: z.string().max(2000),
   scope: z.literal('north'), locked: z.boolean(), revision: z.number().int().min(0),
+  sceneVersion: z.literal(2).optional(), migrationNote: z.string().max(500).optional(), grid: gridSchema.optional(),
   layers: z.array(z.object({ id: z.string().min(1), parentId: z.string().nullable(), name: z.string().trim().min(1).max(120), visible: z.boolean(), locked: z.boolean() })).max(100),
   objects: z.array(objectSchema).max(5000),
   underlay: z.object({ key: z.string(), name: z.string(), x: z.number().finite(), y: z.number().finite(), width: z.number().positive().max(1e6), height: z.number().positive().max(1e6), angle: z.number().finite(), opacity: z.number().min(0).max(1), visible: z.boolean() }).nullable(),
@@ -32,11 +40,20 @@ export const projectSchema = z.object({
     const problem = objectIssues(o)
     for (const message of problem) ctx.addIssue({ code: 'custom', message: `${o.name}: ${message}` })
     if (o.kind === 'well') { const name = o.name.toLocaleLowerCase(); if (names.has(name)) ctx.addIssue({ code: 'custom', message: 'Номер скважины уже существует.' }); names.add(name) }
+    for (const node of o.parts.flatMap(part => part.nodes)) if (node.anchor) {
+      const well = p.objects.find(w => w.id === node.anchor!.wellId && w.kind === 'well')
+      const target = well?.parts[0]?.nodes[node.anchor.target === 'collar' ? 0 : 1]
+      if (!target || o.kind === 'well' || Math.hypot(node.x - target.x, node.y - target.y) > .001) ctx.addIssue({ code: 'custom', message: 'Привязка точки не соответствует скважине.' })
+    }
+    if (o.segmentWells) {
+      const keys = new Set(o.parts.flatMap(part => part.nodes.slice(1).map((node, i) => `${part.nodes[i]!.id}:${node.id}`)))
+      for (const [key, ids] of Object.entries(o.segmentWells)) if (!keys.has(key) || new Set(ids).size !== ids.length || ids.some(id => !p.objects.some(w => w.id === id && w.kind === 'well'))) ctx.addIssue({ code: 'custom', message: 'Проверьте состав скважин сегмента.' })
+    }
   }
 })
 export type MapProject = z.infer<typeof projectSchema>
 export type MapLayer = MapProject['layers'][number]
-export const kindNames = { well: 'Скважина', profile: 'Профиль', block: 'Блок', contour: 'Контур' }
+export const kindNames = { well: 'Скважина', profile: 'Профиль разреза', block: 'Геоблок', contour: 'Построение' }
 export const shapeNames = { straight: 'Прямые', cardinal: 'Кардинальный сплайн', bezier: 'Кубическая Безье' }
 export const newId = () => crypto.randomUUID()
 export const point = (x: number, y: number): MapPoint => ({ id: newId(), x, y })

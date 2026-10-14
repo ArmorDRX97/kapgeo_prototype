@@ -13,6 +13,18 @@ function Harness() {
   return <SectionRegistry sections={sectionRegistryEntries(initialSections())} sectionId="GTR-01" search={search} onSearch={patch => setSearch({ ...search, ...patch })} collapsed={false} onToggle={vi.fn()} />
 }
 describe('compact section registry', () => {
+  it('filters and groups by six study stages independently of section type',()=>{
+    render(<Harness />)
+    fireEvent.click(screen.getByRole('button',{name:'Фильтры разрезов'}))
+    const stage=screen.getByRole('combobox',{name:'Этап изучения'})
+    expect(stage.querySelectorAll('option')).toHaveLength(7)
+    fireEvent.change(stage,{target:{value:'detailed'}})
+    expect(screen.getByText('Разрезы не найдены')).toBeTruthy()
+    fireEvent.change(stage,{target:{value:'exploration'}})
+    fireEvent.change(screen.getByRole('combobox',{name:'Группировать'}),{target:{value:'stage'}})
+    expect(screen.getByText('Разведочные работы · 200')).toBeTruthy()
+    expect(screen.getAllByRole('link')).toHaveLength(200)
+  })
   it('opens filters on demand and combines them with quick search, then resets an empty result', () => {
     render(<Harness />)
     expect(screen.queryByRole('combobox', { name: 'Тип' })).toBeNull()

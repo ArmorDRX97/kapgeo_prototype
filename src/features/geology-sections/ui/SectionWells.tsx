@@ -4,6 +4,7 @@ import { sectionSources } from '../../../entities/geology-section/lib/correlatio
 import type { GeologySection } from '../../../entities/geology-section/model/types'
 import { Button } from '../../../shared/ui/Button'
 import { changeSectionWells } from '../model/wells'
+import { projectSectionPoint } from '../../../entities/geology-section/lib/segments'
 
 export function SectionWells({ section, disabled, onChange }: { section: GeologySection; disabled: boolean; onChange: (next: GeologySection) => void }) {
   const [filter, setFilter] = useState(''), [corridor, setCorridor] = useState(30), [preview, setPreview] = useState<{ ids: string[]; profile: string } | null>(null)
@@ -11,7 +12,7 @@ export function SectionWells({ section, disabled, onChange }: { section: Geology
   const validProfile = !profileIssues(section.profile).length
   return <section><h2>Состав скважин</h2><p className="section-muted">Выбор скважин не перестраивает трассу. Добавленные скважины включаются в нужные слои отдельно.</p><label className="section-search">Поиск скважины<input value={filter} onChange={e => setFilter(e.target.value)} placeholder="Название скважины" /></label>
     <div className="section-table-scroll"><table className="section-table" aria-label="Скважины разреза"><thead><tr><th>В разрезе</th><th>Скважина</th><th>Глубина MD, м</th><th>Высота забоя Z, м</th><th>Вдоль профиля, м</th><th>До трассы, м</th></tr></thead><tbody>{sectionSources(section).filter(w => w.name.toLocaleLowerCase().includes(filter.toLocaleLowerCase())).map(w => {
-      const bottom = pointAtDepth(w, w.depth), projected = validProfile ? projectToProfile(bottom, section.profile) : null
+      const bottom = pointAtDepth(w, w.depth), projected = validProfile ? projectSectionPoint(section,w.id,bottom) : null
       return <tr key={w.id}><td><input type="checkbox" aria-label={`Включить ${w.name} в разрез`} checked={section.wellIds.includes(w.id)} disabled={disabled} onChange={e => onChange(changeSectionWells(section, e.target.checked ? [...section.wellIds, w.id] : section.wellIds.filter(id => id !== w.id)))} /></td><th scope="row">{w.name}</th><td>{w.depth.toFixed(1)}</td><td>{bottom.z.toFixed(2)}</td><td>{projected?.station.toFixed(2) ?? '—'}</td><td>{projected?.distance.toFixed(2) ?? '—'}</td></tr>
     })}</tbody></table></div>
     {!sectionSources(section).some(w => w.name.toLocaleLowerCase().includes(filter.toLocaleLowerCase())) && <p>Скважины по запросу не найдены.</p>}

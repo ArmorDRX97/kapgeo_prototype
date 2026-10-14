@@ -4,6 +4,7 @@ import { sectionSources } from '../../../entities/geology-section/lib/correlatio
 
 export function changeSectionWells(section: GeologySection, wellIds: string[]): GeologySection {
   return repairSection({ ...section, wellIds, sourceRevisions: Object.fromEntries(wellIds.map(id => [id, section.sourceRevisions[id] ?? sectionSources(section).find(w => w.id === id)!.revision])),
+    segmentWells: section.segmentWells ? Object.fromEntries(Object.entries(section.segmentWells).map(([id,wells])=>[id,wells.filter(w=>wellIds.includes(w))])) : undefined,
     auxiliary: section.auxiliary?.filter(a => wellIds.includes(a.wellId)),
     contourEdits: Object.fromEntries(Object.entries(section.contourEdits ?? {}).map(([layer, edits]) => [layer, edits.filter(e => wellIds.includes(e.anchorId.split('/')[0]!))])),
     sourceOverrides: Object.fromEntries(Object.entries(section.sourceOverrides ?? {}).filter(([id]) => wellIds.includes(id))),

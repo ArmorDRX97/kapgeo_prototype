@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { PlanWorkbench } from './PlanWorkbench'
-import { emptyMap } from '../../entities/geology-map/fixtures'
+import { emptyMap, initialMaps } from '../../entities/geology-map/fixtures'
 import { userPersonas } from '../../entities/session/model/personas'
 import { MAP_STORAGE_KEY } from '../../repository/demo/mapRepository'
 const route = vi.hoisted(() => ({ shouldBlockFn: null as null | ((args: { current: { pathname: string; search: Record<string, unknown> }; next: { pathname: string; search: Record<string, unknown> } }) => boolean) }))
@@ -9,6 +9,16 @@ vi.mock('@tanstack/react-router', () => ({ useBlocker: (options: { shouldBlockFn
 describe('map workbench operation boundaries', () => {
   beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} }); vi.stubGlobal('requestAnimationFrame', (f: FrameRequestCallback) => { f(0); return 0 }) })
   afterEach(() => { cleanup(); vi.unstubAllGlobals() })
+  it('protects source geometry while allowing inspection and explicit well type edits',()=>{
+    const p=initialMaps()[0]!,well=p.objects.find(o=>o.kind==='well')!
+    render(<PlanWorkbench initial={p} persona={userPersonas[0]!} search={{selection:well.id}} onSearch={vi.fn()} onSaved={vi.fn()} onDeleted={vi.fn()} registry={null} registryOpen onRegistryToggle={vi.fn()} />)
+    for(const name of ['Переместить объект','Добавить точку','Удалить точку','Переместить подпись','Удалить объект']) expect(screen.getByRole('button',{name})).toBeDisabled()
+    expect(screen.getByRole('combobox',{name:'Тип скважины'})).toBeEnabled()
+    fireEvent.click(screen.getByText(/Координаты точек/))
+    expect(screen.getByRole('spinbutton',{name:'X части 1 точки 1'})).toBeDisabled()
+    expect(screen.getByRole('spinbutton',{name:'Y части 1 точки 2'})).toBeDisabled()
+    expect(document.querySelector('[data-node]')).toBeNull()
+  })
   it('creates a line by exact coordinate input and does not guard its internal Apply selection', () => {
     const p = emptyMap('test', 'Plan'), onSearch = vi.fn((next: { selection?: string }) => {
       expect(route.shouldBlockFn!({ current: { pathname: '/geology/plans/test', search: {} }, next: { pathname: '/geology/plans/test', search: next } })).toBe(false)

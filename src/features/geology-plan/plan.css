@@ -42,7 +42,7 @@
 .map-canvas-status { display:flex; justify-content:space-between; gap:var(--space-2); padding:var(--space-1) var(--space-3); background:var(--surface-panel); border-top:1px solid var(--border-default); font-size:var(--font-size-sm); color:var(--text-secondary); }
 .map-canvas-status span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .map-notice { min-height:28px; padding:var(--space-1) var(--space-3); color:var(--text-secondary); font-size:var(--font-size-sm); }
-.map-draft-bar { display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-2); padding:var(--space-2); background:var(--color-brand-50); border-top:1px solid var(--color-brand-200); }
+.map-draft-bar { position:absolute; left:var(--space-2); right:var(--space-2); bottom:54px; z-index:3; display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-2); padding:var(--space-2); background:var(--color-brand-50); border:1px solid var(--color-brand-200); border-radius:var(--radius-sm); }
 .map-draft-bar span { flex:1; font-size:var(--font-size-sm); }
 .map-alert,.map-load-error { padding:var(--space-3); background:var(--color-red-50); color:var(--color-red-700); }
 .map-error { color:var(--color-red-700); font-size:var(--font-size-sm); }
@@ -125,3 +125,20 @@
 .map-tool-content { max-height: min(52vh, 480px); overflow:auto; overscroll-behavior:contain; }
 .map-new-object { padding:0 0 var(--space-3); }
 .map-edit-tools { padding:0; }
+.map-find { display:flex; gap:var(--space-2); }
+.map-find>select { max-width:160px; border:1px solid var(--border-default); border-radius:var(--radius-sm); background:var(--surface-panel); color:var(--text-secondary); font:inherit; font-size:var(--font-size-sm); }
+.map-find>label { flex:1; min-width:0; }
+.map-well-legend { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-2); font-size:var(--font-size-sm); }
+.map-well-legend>span { display:flex; align-items:center; gap:var(--space-1); }
+.map-related { padding:var(--space-3); border:1px solid var(--border-default); border-radius:var(--radius-sm); background:var(--surface-subtle); font-size:var(--font-size-sm); }
+.map-related p { overflow-wrap:anywhere; }
+.map-members { display:grid; grid-template-columns:1fr 1fr; max-height:180px; overflow:auto; gap:var(--space-1); padding:var(--space-2); border:1px solid var(--border-default); border-radius:var(--radius-sm); }
+.map-members label { display:flex; align-items:center; gap:var(--space-1); font-size:var(--font-size-sm); }
+.map-members input { width:auto; }
+.map-coordinates th small { display:block; color:var(--text-tertiary); font-size:10px; font-weight:normal; }
+.map-coordinates th button { overflow-wrap:anywhere; }
+.map-node-dot.is-bound { fill:var(--color-brand-600); stroke:var(--surface-panel); }
+.map-snap-hint circle { fill:none; stroke:var(--color-brand-600); stroke-width:2; }
+.map-snap-hint text { font-size:11px; fill:var(--color-brand-700); paint-order:stroke; stroke:var(--surface-panel); stroke-width:3; stroke-linejoin:round; }
+.map-migration { padding:var(--space-2) var(--space-3); color:var(--text-secondary); font-size:var(--font-size-sm); background:var(--surface-subtle); border-bottom:1px solid var(--border-default); }
+@media(max-width:850px) { .map-find>select { max-width:115px; }.map-members{max-height:160px} }

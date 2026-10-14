@@ -12,6 +12,8 @@ import { SECTION_STORAGE_KEY, SECTION_DEMO_BACKUP_KEY } from './sectionStorageKe
 import { trackIssues } from '../../entities/geology-section/lib/columnTracks'
 import { retireRhythms } from '../../entities/geology-section/lib/retireRhythms'
 import { validateSharedSnapshots } from './sharedAuxiliaryRepository'
+import { sectionStageValues } from '../../entities/geology-section/model/stages'
+import { segmentMembershipIssues } from '../../entities/geology-section/lib/segments'
 export { SECTION_STORAGE_KEY } from './sectionStorageKeys'
 
 const num = z.number().finite(), positive = num.positive()
@@ -24,8 +26,9 @@ const schema = z.object({
   demoPreset: z.literal('video-reference-v1').optional(),
   schemaVersion: z.literal(1), id: z.string().min(1), revision: num.int().nonnegative(), synthetic: z.literal(true), scope: z.literal('geology-section-prototype'),
   title: z.string().trim().min(1).max(120), depositId: z.literal('GTR-LOCAL-NORTH'), depositName: z.literal('Полигон Северный'),
-  stage: z.enum(['exploration', 'operation']), kind: z.enum(['main', 'auxiliary']), year: num.int().min(1900).max(2100), description: z.string().max(5000),
+  stage: z.enum(sectionStageValues), kind: z.enum(['main', 'auxiliary']), year: num.int().min(1900).max(2100), description: z.string().max(5000),
   top: num, bottom: num, status: z.enum(['draft', 'locked']), profile: z.array(xy), wellIds: ids, sourceRevisions: z.record(z.string(), num.int().positive()),
+  profileVertexIds: ids.optional(), segmentWells: z.record(z.string(),ids).optional(),
   participation: layerIds, links: z.object({ technology: links, ore: links, uncorrected: links, offbalance: links }),
   graphics: z.array(z.object({ id: z.string(), type: z.enum(['lithology', 'oxidation', 'roof', 'base', 'foundation', 'fault']), name: z.string().trim().min(1), points: z.array(xz), closed: z.boolean(), reversed: z.boolean(), smooth: z.boolean(), rock: z.enum(['sand', 'clay', 'silt']).optional(), unitId: z.string().optional(), parentId: z.string().optional(), references: ids.optional(), contourLinks: ids.optional(), contourSnapshot: z.array(xz).optional(), detachedFromContour: z.boolean().optional() })),
   drawings: z.array(z.object({ id: z.string(), name: z.string().min(1), horizontalScale: positive, verticalScale: positive, top: num, bottom: num, left: num, right: num, planHeight: num.nonnegative(), paper: z.enum(['A4', 'A3']), landscape: z.boolean(), margin: num.nonnegative(), layers: ids, description: z.string(), overlap: num.min(0).max(20).optional(), center: z.boolean().optional(), pageOrder: z.enum(['rows', 'columns']).optional() })),
@@ -48,6 +51,7 @@ export function validateSection(value: unknown): GeologySection {
   if (!result.success) throw new Error('Разрез содержит некорректные или несовместимые данные. Проверьте обязательные поля.')
   const section = retireRhythms(result.data)
   const issues = profileIssues(section.profile)
+  issues.push(...segmentMembershipIssues(section))
   if (issues.length) throw new Error(issues.join(' '))
   if (section.top <= section.bottom) throw new Error('Верхняя отметка должна быть выше нижней.')
   if (new Set(section.wellIds).size !== section.wellIds.length || section.wellIds.some(id => !sectionSources(section).some(w => w.id === id))) throw new Error('Состав скважин содержит неизвестные или повторяющиеся объекты.')

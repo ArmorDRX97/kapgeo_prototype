@@ -1,4 +1,5 @@
 import { type MapObject, type MapPoint, type MapProject } from './model'
+import { cleanMapScene } from './cleanScene'
 
 export function emptyMap(id: string, title: string): MapProject {
   return { schemaVersion: 1, id, title, deposit: 'Полигон Северный', lens: '2.1', date: '2026-10-14', author: 'Ирина Иванова', description: '', scope: 'north', locked: false, revision: 0, layers: [{ id: `${id}-base`, parentId: null, name: 'Построения', visible: true, locked: false }], objects: [], underlay: null, print: { paper: 'A3', landscape: true, scale: 2000 } }
@@ -8,7 +9,7 @@ function sceneObject(id: string, layerId: string, name: string, kind: MapObject[
   // Every source ID and value is deterministic across resets.
   return { id, layerId, kind, shape, name, closed, attributes: { type: '', depth: 0, value: 0, note: '' }, label: { visible: true, dx: 8, dy: -8 }, parts: [{ id: `${id}-part`, nodes }], style: { stroke, fill, width: 1.1, paperWidth: .15, dash: 'solid', opacity: .62 } }
 }
-export function initialMaps(): MapProject[] {
+export function legacyInitialMaps(): MapProject[] {
   const p = emptyMap('MAP-01', 'Северный · геологическое картирование')
   p.description = 'Обзор скважин, профилей и ручных картографических построений.'
   p.layers = [
@@ -43,5 +44,6 @@ export function initialMaps(): MapProject[] {
   }
   return [p, { ...p, id: 'MAP-02', title: 'Северный · утверждённая схема', locked: true }, emptyMap('MAP-03', 'Восточный фланг · новый план')]
 }
-export function translated(o: MapObject, dx: number, dy: number): MapObject { return { ...o, parts: o.parts.map(p => ({ ...p, nodes: p.nodes.map(n => ({ ...n, x: n.x + dx, y: n.y + dy })) })) } }
-export function changedNode(o: MapObject, nodeId: string, patch: Partial<Pick<MapPoint, 'x' | 'y'>>): MapObject { return { ...o, parts: o.parts.map(p => ({ ...p, nodes: p.nodes.map(n => n.id === nodeId ? { ...n, ...patch } : n) })) } }
+export function initialMaps(): MapProject[] { return legacyInitialMaps().map(p => p.objects.length ? cleanMapScene(p) : { ...p, sceneVersion: 2 }) }
+export function translated(o: MapObject, dx: number, dy: number): MapObject { return { ...o, parts: o.parts.map(p => ({ ...p, nodes: p.nodes.map(n => n.anchor ? n : { ...n, x: n.x + dx, y: n.y + dy }) })) } }
+export function changedNode(o: MapObject, nodeId: string, patch: Partial<Pick<MapPoint, 'x' | 'y' | 'anchor'>>): MapObject { return { ...o, parts: o.parts.map(p => ({ ...p, nodes: p.nodes.map(n => n.id !== nodeId || n.anchor && !patch.anchor ? n : { ...n, ...patch, anchor: patch.anchor }) })) } }

@@ -1,0 +1,15 @@
+{
+  "audit_date": "2026-10-14",
+  "source": "../bandicam 2026-10-14 15-28-17-053.mp4",
+  "sha256": "21c00174872d8713c9f1081ab8b3219cc0ef3a1ec65636f0b7f196f23ebfd0ab",
+  "bytes": 498313864,
+  "duration_seconds": 1363.533,
+  "video": { "codec": "h264", "width": 1920, "height": 1080, "frames": 53848, "variable_frame_rate": true },
+  "audio": { "codec": "aac", "sample_rate": 48000, "channels": 2, "duration_seconds": 1363.498646 },
+  "baseline_commit": "5f45bf782e3f92b796b88b844a71863d3d21b0e4",
+  "transcription": { "engine": "faster-whisper", "model": "medium", "device": "cuda", "compute_type": "float16", "language": "ru", "vad": true, "beam_size": 5, "segments": 444, "speaker_diarization": false, "external_upload": false },
+  "recheck": { "beam_size": 8, "condition_on_previous_text": false, "clips": [{ "start": 480, "duration": 152 }, { "start": 920, "duration": 190 }, { "start": 1218, "duration": 82 }], "segments": 57 },
+  "visual": { "overview_frames": 137, "minimum_sample_step_seconds": 10, "actual_pts_index": "audit/frame-index.json", "contact_sheets": 12, "exact_time_frames": 35, "detail_crops": 6 },
+  "manual": { "source": "../РП по геологическому модулю.pdf", "pdf_pages_extracted": [110,111,112,113,114,115,116,136,137,138,139,140,141,142,143,144,145,154,155,156,157,158], "rendered_pages": [111,112,114,115,140,142,154,155,156], "visually_reviewed_pages": [111,112,154,155] },
+  "scope": "Research, source comparison and implementation backlog only; no runtime change."
+}

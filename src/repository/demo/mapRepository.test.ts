@@ -38,4 +38,10 @@ describe('independent map repository', () => {
     const created = mapRepository.save(emptyMap('new', 'New plan'), geo); mapRepository.remove(created, geo)
     expect((await mapRepository.list()).map(p => p.id)).toEqual(['MAP-01', 'MAP-02', 'MAP-03'])
   })
+  it('rejects source well movement/deletion while allowing an explicit type change',async()=>{
+    const p=(await mapRepository.list())[0]!,well=p.objects.find(o=>o.kind==='well')!
+    expect(()=>mapRepository.save({...p,objects:p.objects.filter(o=>o.id!==well.id)},geo)).toThrow('Исходные скважины')
+    expect(()=>mapRepository.save({...p,objects:p.objects.map(o=>o.id===well.id?{...o,parts:[{...o.parts[0]!,nodes:o.parts[0]!.nodes.map(n=>({...n,x:n.x+10}))}]}:o)},geo)).toThrow('Исходные скважины')
+    expect(mapRepository.save({...p,objects:p.objects.map(o=>o.id===well.id?{...o,attributes:{...o.attributes,type:'Наблюдательная'}}:o)},geo).revision).toBe(1)
+  })
 })

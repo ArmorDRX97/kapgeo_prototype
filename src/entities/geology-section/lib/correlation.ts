@@ -2,9 +2,10 @@ import polygonClipping from 'polygon-clipping'
 import type { GeologySection, SectionLayer, SectionAnchor, XZ, SectionWellSource } from '../model/types'
 import { sectionWellSources } from '../model/fixtures'
 import { referenceWellSources } from '../model/referenceSources'
-import { pointAtDepth, profileLength, projectToProfile } from './profile'
+import { pointAtDepth, profileLength } from './profile'
 import { heightOnArc, sampleArc } from './curves'
 import { editContourArc, ringKey, polygonIssues, ringsIntersect, insideRing, openRing } from './contourArc'
+import { projectSectionPoint } from './segments'
 
 export const sourceFor = (section: GeologySection, well: SectionWellSource): SectionWellSource => {
   const source = section.demoPreset === 'video-reference-v1' ? referenceWellSources.find(w => w.id === well.id) ?? well : well
@@ -13,13 +14,18 @@ export const sourceFor = (section: GeologySection, well: SectionWellSource): Sec
 export const sectionSources = (section: GeologySection): SectionWellSource[] => sectionWellSources.map(well => sourceFor(section, well))
 export function stationAtDepth(section: GeologySection, well: SectionWellSource, md: number): XZ {
   const p = pointAtDepth(sourceFor(section, well), md)
-  return { x: projectToProfile(p, section.profile).station, z: p.z }
+  return { x: projectSectionPoint(section, well.id, p).station, z: p.z }
 }
 export function virtualStationAtDepth(section: GeologySection, well: SectionWellSource, md: number): XZ {
   well = sourceFor(section, well)
   if (md <= well.depth) return stationAtDepth(section, well, md)
   const bottom = stationAtDepth(section, well, well.depth)
   return { x: bottom.x, z: bottom.z - (md - well.depth) }
+}
+/** Source interval contact, independent of display offsets and any manual bottom extension. */
+export function sourceAnchorPoint(section: GeologySection, anchor: SectionAnchor, edge: 'top'|'bottom'): XZ {
+  const well=sectionSources(section).find(w=>w.id===anchor.wellId)!
+  return virtualStationAtDepth(section,well,edge==='top'?anchor.from:anchor.to)
 }
 export function mayExtendBottom(well: SectionWellSource, layer: SectionLayer, to: number) { const gap = well.depth - to; return gap >= 0 && gap <= (layer === 'technology' ? 3 : .5) }
 export function layerAnchors(section: GeologySection, layer: SectionLayer): SectionAnchor[] {

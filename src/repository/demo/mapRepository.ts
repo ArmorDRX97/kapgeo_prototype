@@ -3,6 +3,7 @@ import { initialMaps } from '../../entities/geology-map/fixtures'
 import { projectSchema, type MapProject } from '../../entities/geology-map/model'
 import type { UserPersona } from '../../entities/session/model/types'
 import { hasPermission } from '../../shared/auth/permissions'
+import { upgradeMap } from '../../entities/geology-map/migrate'
 
 export const MAP_STORAGE_KEY = 'kapgeo.geology.maps.v1'
 const envelope = z.object({ version: z.literal(1), projects: z.array(projectSchema).max(100) }).superRefine((v, c) => { if (new Set(v.projects.map(p => p.id)).size !== v.projects.length) c.addIssue({ code: 'custom', message: 'Повторяются проекты.' }) })
@@ -10,7 +11,7 @@ export function canEditMap(persona: UserPersona | null, project: MapProject) { r
 function read(): MapProject[] {
   const raw = localStorage.getItem(MAP_STORAGE_KEY)
   if (!raw) return initialMaps()
-  try { return envelope.parse(JSON.parse(raw)).projects } catch { throw new Error('Локальное хранилище планов повреждено или имеет другую версию. Можно повторить чтение, скачать исходную копию или восстановить примеры.') }
+  try { return envelope.parse(JSON.parse(raw)).projects.map(p => projectSchema.parse(upgradeMap(p))) } catch { throw new Error('Локальное хранилище планов повреждено или имеет другую версию. Можно повторить чтение, скачать исходную копию или восстановить примеры.') }
 }
 function write(projects: MapProject[]) { const checked = envelope.parse({ version: 1, projects }); try { localStorage.setItem(MAP_STORAGE_KEY, JSON.stringify(checked)) } catch { throw new Error('Не удалось сохранить план: браузер запретил запись или закончилась квота. Правки остались в рабочем окне.') } }
 export const mapRepository = {
@@ -19,6 +20,7 @@ export const mapRepository = {
     const projects = read(), stored = projects.find(p => p.id === project.id)
     if (!canEditMap(persona, stored ?? project)) throw new Error('Нет разрешения на изменение этого плана.')
     if (stored && stored.revision !== project.revision) throw new Error('План изменён в другом окне. Скачайте свои правки и повторно откройте сохранённую версию.')
+    if (stored?.objects.some(w => w.kind === 'well' && JSON.stringify(w.parts) !== JSON.stringify(project.objects.find(o => o.id === w.id)?.parts))) throw new Error('Исходные скважины нельзя перемещать или удалять в редакторе плана. Изменяйте точки контура блока.')
     const checked = projectSchema.safeParse({ ...project, revision: project.revision + 1 })
     if (!checked.success) throw new Error(checked.error.issues[0]?.message ?? 'Проверьте геометрию и поля проекта.')
     const next = checked.data; write(stored ? projects.map(p => p.id === next.id ? next : p) : [...projects, next]); return next

@@ -20,6 +20,7 @@ import { GraphicEditor } from './ui/GraphicEditor'
 import { DrawingEditor } from './ui/DrawingEditor'
 import { SectionGraphicWorkspace, PlotSurface } from './ui/SectionGraphicWorkspace'
 import { SectionDocumentHeader } from './ui/SectionDocumentHeader'
+import { reconcileProfile } from '../../entities/geology-section/lib/segments'
 import './sections.css'
 
 export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, onDeleted }: { initial: GeologySection; persona: UserPersona | null; search: SectionSearch; onSearch: (next: SectionSearch) => void; onSaved: (section: GeologySection) => void; onDeleted?: () => void }) {
@@ -35,7 +36,9 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
   } })
   const commit = (next: GeologySection) => {
     if (!editable) return
-    const repaired = repairSection(next)
+    const reconciled = reconcileProfile(section,next)
+    if (reconciled.lost && !window.confirm(`Изменение профиля снимет ${reconciled.lost} назначений скважин сегментам. Состав разреза сохранится. Продолжить?`)) return
+    const repaired = repairSection(reconciled.section)
     setPast([...past.slice(-39), section]); setFuture([]); setSection(repaired.section); setError(''); setNotice(repaired.changes.join('. '))
   }
   const undo = () => { const previous = past.at(-1); if (previous) { setFuture([section, ...future]); setSection(previous); setPast(past.slice(0, -1)); setError(''); setNotice('Действие отменено') } }

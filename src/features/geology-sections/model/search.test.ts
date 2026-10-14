@@ -1,6 +1,11 @@
 import { expect, it } from 'vitest'
 import { validateSectionSearch } from './search'
 import { sectionViews } from '../../../entities/geology-section/model/types'
+import { sectionStageValues } from '../../../entities/geology-section/model/stages'
+it('accepts all six stages independently of main/auxiliary and retains grouping context',()=>{
+  for(const stage of sectionStageValues) expect(validateSectionSearch({stage,kind:'auxiliary',groupBy:'stage'})).toMatchObject({stage,kind:'auxiliary',groupBy:'stage'})
+  expect(validateSectionSearch({stage:'technology'}).stage).toBeUndefined()
+})
 it('retains shareable registry context and rejects incompatible section modes', () => {
   expect(validateSectionSearch({ view: 'ore', mode: 'foundation', year: '2026', kind: 'auxiliary', q: 'профиль', groupBy: 'body', body: 'Залежь 1' })).toMatchObject({ view: 'ore', mode: undefined, year: 2026, kind: 'auxiliary', q: 'профиль', groupBy: 'body', body: 'Залежь 1' })
   expect(validateSectionSearch({ view: 'absent', mode: 'layers', year: 9999, kind: 'absent', selection: 'x'.repeat(501) })).toMatchObject({ view: undefined, mode: undefined, year: undefined, kind: undefined, selection: undefined })

@@ -1,11 +1,35 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { initialSections } from '../../../entities/geology-section/model/fixtures'
-import { layerAnchors } from '../../../entities/geology-section/lib/correlation'
+import { layerAnchors, sourceAnchorPoint } from '../../../entities/geology-section/lib/correlation'
+import { profileLength } from '../../../entities/geology-section/lib/profile'
+import { defaultColumns } from '../model/presentation'
+import { visibleTracks } from '../../../entities/geology-section/lib/columnTracks'
+import { sectionWellSources } from '../../../entities/geology-section/model/fixtures'
 import { SectionCanvas, SectionSvg } from './SectionCanvas'
 
 afterEach(() => { cleanup(); localStorage.clear(); vi.unstubAllGlobals() })
 describe('section exploration', () => {
+  it('keeps original contacts and offset tracks aligned for inclined wells in all four modes', () => {
+    const base=initialSections()[0]!,wellIds=['GTR-W2','GTR-W4'],section={...base,wellIds,columnSettings:{all:{...defaultColumns,offset:21}},participation:{technology:wellIds,ore:wellIds,uncorrected:wellIds,offbalance:wellIds}}
+    for(const layer of ['technology','ore','uncorrected','offbalance'] as const) {
+      const anchor=layerAnchors(section,layer)[0]!,extended={...section,bottomExtensions:{[anchor.id]:anchor.bottom.z-2}}
+      for(const [left,right,top,bottom] of [[0,profileLength(base.profile),10,-45],[20,300,5,-30]]) {
+        const {container,unmount}=render(<SectionSvg section={extended} layers={[layer]} width={1000} height={500} left={left!} right={right!} top={top!} bottom={bottom!} headerLayout={{top:60,cards:[]}} />)
+        for(const a of layerAnchors(extended,layer)) for(const edge of ['top','bottom'] as const) {
+          const source=sourceAnchorPoint(extended,a,edge),point=container.querySelector(`[data-source-contact="${a.id}"][data-edge="${edge}"]`)!
+          expect(Number(point.getAttribute('cx'))).toBeCloseTo(42+(source.x-left!)/(right!-left!)*916)
+          expect(Number(point.getAttribute('cy'))).toBeCloseTo(60+(top!-source.z)/(top!-bottom!)*398)
+          const well=sectionWellSources.find(w=>w.id===a.wellId)!,tracks=visibleTracks(section.columnSettings.all,well),index=tracks.findIndex(t=>t.type==='intervals'),offset=21+tracks.slice(0,index).reduce((sum,t)=>sum+t.width+5,0)
+          const path=container.querySelector(`[data-source-interval="${a.id}"]`)!.getAttribute('d')!
+          const originalTop=sourceAnchorPoint(extended,a,'top')
+          expect(path).toContain(`M${42+(originalTop.x-left!)/(right!-left!)*916+offset} ${60+(top!-originalTop.z)/(top!-bottom!)*398}`)
+          expect(container.querySelector(`[data-contact-bridge="${a.id}"]`)).toBeTruthy()
+        }
+        unmount()
+      }
+    }
+  })
   it('pans by left drag, suppresses selection after a drag and restores the camera on Escape', () => {
     vi.stubGlobal('PointerEvent', MouseEvent)
     const section = initialSections()[0]!, original = JSON.stringify(section), select = vi.fn()

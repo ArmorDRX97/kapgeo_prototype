@@ -1,3 +1,4 @@
+import type { SectionStage } from './stages'
 export type XY = { x: number; y: number }
 export type XZ = { x: number; z: number }
 export type SectionLayer = 'technology' | 'ore' | 'uncorrected' | 'offbalance'
@@ -29,9 +30,10 @@ export type SectionDrawing = { id: string; name: string; horizontalScale: number
 export type GeologySection = {
   demoPreset?: 'video-reference-v1'
   schemaVersion: 1; id: string; revision: number; synthetic: true; scope: 'geology-section-prototype'
-  title: string; depositId: string; depositName: string; stage: 'exploration' | 'operation'; kind: 'main' | 'auxiliary'
+  title: string; depositId: string; depositName: string; stage: SectionStage; kind: 'main' | 'auxiliary'
   year: number; description: string; top: number; bottom: number; status: 'draft' | 'locked'
   profile: XY[]; wellIds: string[]; sourceRevisions: Record<string, number>
+  profileVertexIds?: string[]; segmentWells?: Record<string, string[]>
   participation: Record<SectionLayer, string[]>; links: Record<SectionLayer, CorrelationLink[]>
   graphics: SectionGraphic[]; drawings: SectionDrawing[]
   contourEdits?: Record<string, ContourEdit[]>; smoothLayers?: SectionLayer[]

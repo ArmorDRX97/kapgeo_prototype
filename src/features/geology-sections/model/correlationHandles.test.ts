@@ -1,10 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { initialSections } from '../../../entities/geology-section/model/fixtures'
-import { correlationIssues, layerAnchors, pinchBounds } from '../../../entities/geology-section/lib/correlation'
+import { initialSections, sectionWellSources } from '../../../entities/geology-section/model/fixtures'
+import { correlationIssues, layerAnchors, pinchBounds, sourceAnchorPoint } from '../../../entities/geology-section/lib/correlation'
 import { correlationHandles, moveCorrelationHandle } from './correlationHandles'
 import { referenceSection } from '../../../entities/geology-section/model/referenceSection'
 
 describe('correlation handle constraints', () => {
+  it('moves bottom extensions only vertically while preserving original interval coordinates',()=>{
+    const section=initialSections()[0]!,well=sectionWellSources[0]!
+    section.sourceOverrides={[well.id]:{revision:1,technology:[{id:'near-bottom',from:140,to:143,kind:'permeable'}],ore:well.ore,uncorrected:well.uncorrected,offbalance:well.offbalance}}
+    section.participation.technology=[well.id]
+    const anchor=layerAnchors(section,'technology')[0]!,source=sourceAnchorPoint(section,anchor,'bottom')
+    section.bottomExtensions={[anchor.id]:source.z-1}
+    const handle=correlationHandles(section,'technology',anchor.id).find(h=>h.kind==='extension')!
+    const next=moveCorrelationHandle(section,'technology',handle,{x:999,z:source.z-2})
+    expect(correlationIssues(next,'technology')).toEqual([])
+    expect(layerAnchors(next,'technology')[0]!.bottom).toEqual({x:source.x,z:source.z-2})
+    expect(sourceAnchorPoint(next,layerAnchors(next,'technology')[0]!,'bottom')).toEqual(source)
+    const invalid=moveCorrelationHandle(section,'technology',handle,{x:999,z:source.z+1})
+    expect(correlationIssues(invalid,'technology').length).toBeGreaterThan(0)
+  })
   it('exposes arc points instead of ignored pinches on connected reference sides and restores pinches after unlinking', () => {
     const section = referenceSection(), selection = 'GTR-W2/technology/REF-T-U'
     const connected = correlationHandles(section, 'technology', selection)

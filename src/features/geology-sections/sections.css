@@ -303,3 +303,13 @@
 .section-canvas .section-canvas__drag-handle { cursor: default; }
 .section-correlation-editor > div:first-child > .section-checks { display: inline-flex; vertical-align: middle; max-width: 100%; margin-block: var(--space-2); margin-right: var(--space-3); }
 .section-correlation-editor > div:first-child > .section-actions:first-of-type { display: inline-flex; vertical-align: middle; margin-bottom: 0; }
+.section-segment-composition { margin-top:var(--space-3); border-top:1px solid var(--border-default); padding-top:var(--space-2); }
+.section-segment-composition h3 { font-size:var(--font-size-sm); margin:var(--space-2) 0; }
+.section-canvas__contact-bridge { fill:none; stroke:var(--text-tertiary); stroke-width:.8; stroke-dasharray:2 2; }
+.section-canvas__extension-contact { fill:var(--surface-panel); stroke:var(--color-brand-600); stroke-width:1.5; }
+.section-canvas__source-contact.is-auxiliary { stroke-dasharray:2 1; }
+.section-canvas__drag-handle--pinch,.section-canvas__drag-handle--auxiliary,.section-canvas__drag-handle--boundary,.section-canvas__drag-handle--extension { fill:transparent;stroke:transparent; }
+.section-canvas__handle-shape { fill:var(--surface-panel);stroke:var(--color-brand-600);stroke-width:1.5; }
+.section-map__segment-hit { stroke:transparent;stroke-width:12;vector-effect:non-scaling-stroke;cursor:pointer; }
+.section-map__segment-hit.is-selected { stroke:var(--color-brand-600);stroke-opacity:.18; }
+.section-map__segment-hit:focus-visible { stroke:var(--color-brand-600);stroke-opacity:.6;outline:none; }

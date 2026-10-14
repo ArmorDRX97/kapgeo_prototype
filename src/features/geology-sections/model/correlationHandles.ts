@@ -1,7 +1,8 @@
 import type { GeologySection, SectionLayer, XZ } from '../../../entities/geology-section/model/types'
-import { boundaryInterval, layerAnchors, linksAtAnchor, pinchBounds, pinchPoint } from '../../../entities/geology-section/lib/correlation'
+import { boundaryInterval, layerAnchors, linksAtAnchor, mayExtendBottom, pinchBounds, pinchPoint, sectionSources } from '../../../entities/geology-section/lib/correlation'
 
-export type CorrelationHandle = { id: string; label: string; point: XZ; target:
+export type CorrelationHandle = { id: string; label: string; point: XZ; kind?: 'pinch'|'boundary'|'auxiliary'|'extension'; target:
+  { type: 'extension'; anchorId: string } |
   { type: 'pinch'; anchorId: string; side: 'left' | 'right' } |
   { type: 'boundary'; anchorId: string; side: 'left' | 'right'; edge: 'top' | 'bottom' } |
   { type: 'arc'; linkId: string; edge: 'top' | 'bottom'; index: number } }
@@ -13,14 +14,15 @@ export function correlationHandles(section: GeologySection, layer: SectionLayer,
   const linked = linksAtAnchor(section, layer, anchor, anchors)
   for (const side of ['left', 'right'] as const) {
     const boundary = boundaryInterval(section, layer, anchor, side), label = side === 'left' ? 'Слева' : 'Справа'
-    if (boundary) for (const edge of ['top', 'bottom'] as const) handles.push({ id: `boundary-${side}-${edge}`, label: `${label}: ${edge === 'top' ? 'верх' : 'низ'} граничного интервала`, point: boundary[edge], target: { type: 'boundary', anchorId: anchor.id, side, edge } })
-    else if (!section.demoPreset || !linked[side]) handles.push({ id: `pinch-${side}`, label: `${label}: точка выклинивания`, point: pinchPoint(section, layer, anchor, side), target: { type: 'pinch', anchorId: anchor.id, side } })
+    if (boundary) for (const edge of ['top', 'bottom'] as const) handles.push({ id: `boundary-${side}-${edge}`, kind:'boundary', label: `${label}: ${edge === 'top' ? 'верх' : 'низ'} граничного интервала`, point: boundary[edge], target: { type: 'boundary', anchorId: anchor.id, side, edge } })
+    else if (!section.demoPreset || !linked[side]) handles.push({ id: `pinch-${side}`, kind:'pinch', label: `${label}: точка выклинивания`, point: pinchPoint(section, layer, anchor, side), target: { type: 'pinch', anchorId: anchor.id, side } })
   }
   for (const edit of section.arcEdits?.[layer] ?? []) {
     const link = section.links[layer].find(l => l.id === edit.linkId)
     if (!link || link.a !== anchor.id && link.b !== anchor.id) continue
-    edit.points.forEach((point, index) => handles.push({ id: `arc-${edit.linkId}-${edit.edge}-${index}`, label: `${edit.edge === 'top' ? 'Верхняя' : 'Нижняя'} дуга: вспомогательная точка ${index + 1}`, point, target: { type: 'arc', linkId: edit.linkId, edge: edit.edge, index } }))
+    edit.points.forEach((point, index) => handles.push({ id: `arc-${edit.linkId}-${edit.edge}-${index}`, kind:'auxiliary', label: `${edit.edge === 'top' ? 'Верхняя' : 'Нижняя'} дуга: вспомогательная точка ${index + 1}`, point, target: { type: 'arc', linkId: edit.linkId, edge: edit.edge, index } }))
   }
+  if(section.bottomExtensions?.[anchor.id]!==undefined) handles.push({id:`extension-${anchor.id}`,kind:'extension',label:'Продолжение нижней границы: только высота Z',point:anchor.bottom,target:{type:'extension',anchorId:anchor.id}})
   return handles
 }
 
@@ -39,6 +41,7 @@ export function moveCorrelationHandle(section: GeologySection, layer: SectionLay
   }
   const anchor = anchors.find(a => a.id === target.anchorId)
   if (!anchor) return section
+  if(target.type==='extension') {const well=sectionSources(section).find(w=>w.id===anchor.wellId)!;return mayExtendBottom(well,layer,anchor.to)?{...section,bottomExtensions:{...section.bottomExtensions,[anchor.id]:z}}:section}
   const bounds = pinchBounds(section, layer, anchor, target.side), edits = section.contourEdits?.[layer] ?? [], existing = edits.find(e => e.anchorId === anchor.id && e.side === target.side)
   const boundary = boundaryInterval(section, layer, anchor, target.side)
   if (target.type === 'pinch' && section.demoPreset && !boundary && linksAtAnchor(section, layer, anchor, anchors)[target.side]) return section
