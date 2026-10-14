@@ -60,9 +60,28 @@ function drawCurve(
 
   const points = decimate(samples, Math.max(1, Math.round(height)), start, end);
   const depthScale = createDepthScale(range, height);
-
+  ctx.save();
+  if (curve.fill) {
+    const fill = curve.fill, baseline = valueToX(fill.baseline, curve.scale, width);
+    if (baseline !== undefined) {
+      ctx.fillStyle = fill.color; ctx.globalAlpha = 0.18;
+      for (let i = start; i < end - 1; i++) {
+        const da = samples.depths[i]!, db = samples.depths[i + 1]!, va = samples.values[i]!, vb = samples.values[i + 1]!;
+        if (![va, vb].every(Number.isFinite) || db <= da) continue;
+        let from = Math.max(da, fill.from, range[0]), to = Math.min(db, fill.to, range[1]);
+        if (to <= from || (fill.below ? Math.min(va, vb) >= fill.baseline : Math.max(va, vb) <= fill.baseline)) continue;
+        if ((va < fill.baseline) !== (vb < fill.baseline)) { const contact = da + (fill.baseline - va) / (vb - va) * (db - da); if (fill.below ? va > vb : va < vb) from = Math.max(from, contact); else to = Math.min(to, contact); }
+        if (to <= from) continue;
+        const a = valueToX(va + (vb - va) * (from - da) / (db - da), curve.scale, width), b = valueToX(va + (vb - va) * (to - da) / (db - da), curve.scale, width);
+        if (a === undefined || b === undefined) continue;
+        ctx.beginPath(); ctx.moveTo(baseline, depthScale(from)); ctx.lineTo(a, depthScale(from)); ctx.lineTo(b, depthScale(to)); ctx.lineTo(baseline, depthScale(to)); ctx.closePath(); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
   ctx.strokeStyle = curve.color ?? curveColor(curve.type);
-  ctx.lineWidth = 1;
+  ctx.lineWidth = curve.lineWidth ?? 1;
+  if (curve.dashed) ctx.setLineDash([5, 3]);
   ctx.lineJoin = 'round';
   ctx.beginPath();
 
@@ -82,6 +101,16 @@ function drawCurve(
     open = true;
   }
   ctx.stroke();
+  if (curve.markers) {
+    ctx.fillStyle = curve.color ?? curveColor(curve.type);
+    const stride = Math.max(1, Math.ceil((end - start) / 300));
+    for (let i = start; i < end; i += stride) {
+      const depth = samples.depths[i]!, x = valueToX(samples.values[i]!, curve.scale, width);
+      if (depth < range[0] || depth > range[1] || x === undefined) continue;
+      ctx.beginPath(); ctx.arc(x, depthScale(depth), 2.5, 0, 2 * Math.PI); ctx.fill();
+    }
+  }
+  ctx.restore();
 }
 
 /**
@@ -132,6 +161,13 @@ export function drawTrack(ctx: CanvasRenderingContext2D, options: TrackDrawOptio
     if (guide.depth !== undefined) { const y = depthScale(guide.depth); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.fillText(guide.label, 4, Math.min(height - 3, Math.max(12, y - 4))); }
     else if (guide.value !== undefined && guide.scale) { const x = valueToX(guide.value, guide.scale, width); if (x !== undefined) { ctx.moveTo(x, 0); ctx.lineTo(x, height); } }
     ctx.stroke(); ctx.restore();
+  }
+  for (const note of track.annotations ?? []) {
+    if (note.depth < range[0] || note.depth > range[1]) continue;
+    ctx.save(); ctx.font = '11px Segoe UI, sans-serif';
+    const y = Math.min(height - 19, Math.max(1, depthScale(note.depth) - 9)), w = Math.min(width - 8, ctx.measureText(note.text).width + 8);
+    ctx.fillStyle = note.background; ctx.fillRect(4, y, w, 18); ctx.strokeStyle = note.color; ctx.lineWidth = 0.7; ctx.strokeRect(4, y, w, 18);
+    ctx.beginPath(); ctx.rect(4, y, w, 18); ctx.clip(); ctx.fillStyle = note.color; ctx.fillText(note.text, 8, y + 13); ctx.restore();
   }
   ctx.lineWidth = 1;
   ctx.strokeRect(0.5, 0.5, width - 1, height - 1);

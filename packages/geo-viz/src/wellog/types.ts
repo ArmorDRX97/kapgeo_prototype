@@ -41,6 +41,10 @@ export type CurveSpec = {
   unit: string;
   /** Overrides the default colour for `type`. */
   color?: string;
+  lineWidth?: number;
+  dashed?: boolean;
+  markers?: boolean;
+  fill?: { from: number; to: number; baseline: number; color: string; below?: boolean };
   data: CurveSamples;
   scale: CurveScale;
 };
@@ -57,9 +61,10 @@ export type TrackSpec = {
   subtitle?: string;
   editable?: boolean;
   /** Non-destructive annotations on a common depth/value grid. */
-  guides?: { depth?: number; value?: number; label: string; color: string; dashed?: boolean; scale?: CurveScale }[];
+  guides?: { id?: string; depth?: number; value?: number; label: string; color: string; dashed?: boolean; scale?: CurveScale }[];
   bars?: { id: string; from: number; to: number; value: number; label: string; fill: string }[];
   barMax?: number;
+  annotations?: { id: string; depth: number; text: string; color: string; background: string }[];
 };
 
 /** Display geometry only; geological operations belong to the host application. */
@@ -101,5 +106,6 @@ export type WellLogProps = {
   onBoundaryChange?: (trackId: string, intervalId: string, edge: 'from' | 'to', depth: number) => void;
   onTrackHeaderClick?: (trackId: string) => void;
   onContextSelect?: (event: TrackInteraction) => void;
-  labels?: { axis: string; depthAxis: string; unit: string; track: string };
+  onGuideChange?: (trackId: string, guideId: string, axis: 'depth' | 'value', value: number) => void;
+  labels?: { axis: string; depthAxis: string; unit: string; track: string; keyboard?: string };
 };

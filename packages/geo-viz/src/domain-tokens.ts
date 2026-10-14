@@ -48,6 +48,7 @@ const lithology = {
   gravel: '#d9b07c',
   sandstone: '#e5c274',
   limestone: '#bcd6e8',
+  paleozoic: '#ada2b6',
   marl: '#bed3b6',
   ore: '#8e24aa',
   unknown: '#d4d4d4',
@@ -93,7 +94,16 @@ const plan = {
   blockContour: '#37474f',
 } as const;
 
-export const domainTokens = { curves, lithology, wellKind, wellStatus, plan } as const;
+/** Alpha prototype palette from the supplied manual; not a certified legend. */
+const interpretation = {
+  ore: '#ed9fc6', offbalance: '#f9dce9', technological: '#d8d8d8', filter: '#6acaca',
+  sump: '#f5d3a1', cement: '#b8bdc0', oxidation: '#f3e468', project: '#b9b5e9',
+  flow: '#d793c0', background: '#547cb7', lowKf: '#d3d8da', middleKf: '#acd7eb', highKf: '#6496dc',
+  levelLow: '#c75050', levelPermeable: '#d89836', levelMedium: '#56906b', levelHigh: '#577fc0',
+  neutral: '#f0f4f6', projectLight: '#dfdcf2', metal: '#ad5ba0',
+  editorOre: '#f1924a', editorOffbalance: '#ffd4a1', zadr: '#e3f0ec',
+} as const;
+export const domainTokens = { curves, lithology, wellKind, wellStatus, plan, interpretation } as const;
 
 export type DomainTokens = typeof domainTokens;
 
@@ -117,6 +127,7 @@ const groupPrefix = {
   wellKind: 'well-kind',
   wellStatus: 'well-status',
   plan: 'plan',
+  interpretation: 'interpretation',
 } as const satisfies Record<keyof DomainTokens, string>;
 
 function kebabCase(value: string): string {

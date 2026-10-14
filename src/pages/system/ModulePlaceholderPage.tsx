@@ -23,7 +23,7 @@ function ModulePlaceholder({ eyebrow, title, description, icon: Icon, accent }: 
 }
 
 export function TechnologyModulePage() {
-  return <ModulePlaceholder eyebrow="Производственный контур" title="Технология" description="Технологические процессы, режимы эксплуатации и оперативная работа с производственными объектами." icon={Network} accent="#0f766e" />
+  return <ModulePlaceholder eyebrow="Производственный контур" title="Геотехнология" description="Технологические процессы, режимы эксплуатации и оперативная работа с производственными объектами." icon={Network} accent="#0f766e" />
 }
 
 export function GeologyModulePage() {

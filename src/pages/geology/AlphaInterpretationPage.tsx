@@ -14,7 +14,7 @@ import { AlphaWorkbench } from '../../features/interpretation/alpha/AlphaWorkben
 export function AlphaInterpretationPage() {
   const { persona } = useSession(), { method } = useParams({ from: '/geology/interpretation/$method' }), search = useSearch({ from: '/geology/interpretation/$method' })
   const navigate = useNavigate(), cache = useQueryClient(), well = interpretationWells.find(w => w.id === (search.well ?? 'int-demo-01'))
-  const allowed = hasPermission(persona, 'geology.view'), valid = method in alphaNames
+  const allowed = hasPermission(persona, 'geology.view'), valid = Object.hasOwn(alphaNames, method)
   const query = useQuery({ queryKey: ['alpha-interpretation', well?.id], queryFn: () => alphaRepository.load(well!), enabled: allowed && !!well && valid, retry: false })
   if (!allowed) return <AccessDeniedPage moduleName="Интерпретация" />
   const fallback = () => void navigate({ to: '/geology/interpretation/$method', params: { method: 'gamma' }, search: {} })

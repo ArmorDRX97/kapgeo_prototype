@@ -1,6 +1,2 @@
 .geology-module { min-width: 0; min-height: 0; height: 100%; }
-.geology-module__navigation { position: sticky; top: var(--topbar-height); z-index: 50; display: flex; align-items: stretch; height: var(--geology-subnav-height); min-width: 0; gap: var(--space-1); padding-inline: var(--space-4); overflow-x: auto; border-bottom: 1px solid var(--border-default); background: var(--surface-panel); }
-.geology-module__navigation a { display: flex; align-items: center; flex: none; gap: var(--space-2); padding-inline: var(--space-4); color: var(--text-secondary); text-decoration: none; border-bottom: 3px solid transparent; font-size: var(--font-size-sm); }
-.geology-module__navigation a:hover { background: var(--surface-subtle); }
-.geology-module__navigation a[aria-current="page"] { color: var(--color-brand-800); border-bottom-color: var(--color-brand-600); font-weight: 700; }
 .app-frame--geology .geology-module:has(.interpretation-page) { overflow: auto; padding: var(--space-4); }

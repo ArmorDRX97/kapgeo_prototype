@@ -16,7 +16,7 @@ export function RootLayout() {
     { prefix: '/admin/references', permission: 'administration.references.view', name: 'Справочники' },
     { prefix: '/geology/bgd', permission: 'bgd.view', name: 'БГД' },
     { prefix: '/geology', permission: 'geology.view', name: 'Геология' },
-    { prefix: '/technology', permission: 'technology.view', name: 'Технология' },
+    { prefix: '/technology', permission: 'technology.view', name: 'Геотехнология' },
     { prefix: '/modeling', permission: 'modeling.view', name: 'Моделирование' },
     { prefix: '/analytics', permission: 'analytics.view', name: 'Аналитика' },
     { prefix: '/admin', permission: 'administration.view', name: 'Администрирование' },

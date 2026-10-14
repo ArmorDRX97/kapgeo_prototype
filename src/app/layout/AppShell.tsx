@@ -2,43 +2,21 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import {
   Bell,
-  Boxes,
   BriefcaseBusiness,
-  ChartNoAxesCombined,
   ChevronDown,
   CircleUserRound,
-  Database,
   LogOut,
   Menu,
   Mountain,
-  Network,
   Search,
-  Settings2,
   X,
 } from 'lucide-react'
 import { type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { fetchPlatformPreferences, fetchWells } from '../../repository/api'
-import { hasPermission, type Permission } from '../../shared/auth/permissions'
 import { GeologyNavigator } from './GeologyNavigator'
 import { LanguageSwitcher } from './LanguageSwitcher'
-import { GeologyModuleNavigation } from '../../pages/geology/GeologyModuleLayout'
-
-type ModuleRoute = '/geology/bgd' | '/geology' | '/technology' | '/modeling' | '/analytics' | '/admin'
-
-const moduleNavigation: Array<{
-  label: string
-  to: ModuleRoute
-  permission: Permission
-  icon: typeof Mountain
-}> = [
-  { label: 'БГД', to: '/geology/bgd', permission: 'bgd.view', icon: Database },
-  { label: 'Геология', to: '/geology', permission: 'geology.view', icon: Mountain },
-  { label: 'Технология', to: '/technology', permission: 'technology.view', icon: Network },
-  { label: 'Моделирование', to: '/modeling', permission: 'modeling.view', icon: Boxes },
-  { label: 'Аналитика', to: '/analytics', permission: 'analytics.view', icon: ChartNoAxesCombined },
-  { label: 'Администрирование', to: '/admin', permission: 'administration.view', icon: Settings2 },
-]
+import { ModuleNavigation } from './ModuleNavigation'
 
 export function AppShell({ children }: PropsWithChildren) {
   const { persona, signOut } = useSession()
@@ -108,15 +86,7 @@ export function AppShell({ children }: PropsWithChildren) {
         <span className="brand__text"><strong>AI KAPGEO</strong><small>Industrial intelligence</small></span>
       </Link>
       <span className="topbar__divider" aria-hidden="true" />
-      <nav className="topbar__module-nav" aria-label="Модули системы">
-        {moduleNavigation.filter((item) => hasPermission(persona, item.permission)).map((item) => {
-          const Icon = item.icon
-          const active = item.to === '/geology'
-            ? pathname.startsWith('/geology') && !isBgd
-            : pathname.startsWith(item.to)
-          return <Link key={item.to} to={item.to} title={item.label} aria-label={item.label} className={active ? 'is-active' : ''}><Icon size={17} /><span>{item.label}</span></Link>
-        })}
-      </nav>
+      <ModuleNavigation persona={persona} />
       {isBgd && <button className="topbar__geology-toggle" type="button" onClick={() => setGeologyNavOpen((value) => !value)} aria-expanded={geologyNavOpen} aria-label={geologyNavOpen ? 'Закрыть скважины' : 'Открыть скважины'}><Menu size={20} /><span>Скважины</span></button>}
       <div className="global-search-wrap" ref={searchRef}>
         <label className="global-search global-search--input"><Search size={17} /><input value={searchQuery} onFocus={() => setSearchOpen(true)} onChange={(event) => { setSearchQuery(event.target.value); setSearchOpen(true) }} placeholder="Поиск скважины" aria-label="Глобальный поиск скважины" />{searchQuery && <button type="button" onClick={() => setSearchQuery('')} aria-label="Очистить поиск"><X size={15} /></button>}</label>
@@ -142,7 +112,6 @@ export function AppShell({ children }: PropsWithChildren) {
         </div>}
       </div>
     </header>
-    {isGeology && hasPermission(persona, 'geology.view') && <GeologyModuleNavigation />}
 
     <div className={`app-workspace${isBgd ? ' app-workspace--bgd' : ''}`}>
       {isBgd && <GeologyNavigator mobileOpen={geologyNavOpen} collapsed={geologyNavCollapsed} onToggle={() => setGeologyNavCollapsed((value) => !value)} onClose={closeGeologyNavigation} />}

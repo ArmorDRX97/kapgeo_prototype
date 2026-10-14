@@ -1,4 +1,9 @@
 export type AlphaSearch = { well?: string; from?: number; to?: number; selection?: string; sub?: string }
+export function alphaSubview(page: string, sub: string | undefined, recordIds: string[]) {
+  if (page === 'curves') return sub && recordIds.includes(sub) ? sub : recordIds[0] ?? 'alpha-gr'
+  const allowed = page === 'gamma' ? ['result', 'oxidation'] : page === 'thermal' ? ['result', 'induction', 'projects'] : ['result']
+  return sub && allowed.includes(sub) ? sub : 'result'
+}
 export function validateAlphaSearch(input: Record<string, unknown>): AlphaSearch {
   const from = Number(input.from), to = Number(input.to)
   return { well: typeof input.well === 'string' ? input.well : undefined,

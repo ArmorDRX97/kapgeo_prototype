@@ -15,6 +15,7 @@ export function alphaRecords(well: InterpretationWell): MeasurementRecord[] {
   const gr = (d: number) => 22 + 4 * Math.sin(d * 4) + 510 * gaussian(d, 119.8 + phase, 0.9) + 320 * gaussian(d, 123.1, 0.55) + 740 * gaussian(d, 132, 1.2)
   const rs = (d: number) => 8 + 31 * gaussian(d, 120, 3.4) + 16 * gaussian(d, 126, 1.2) + 52 * gaussian(d, 132.5, 2.2) + 1.8 * Math.sin(d * 3)
   const tk = (d: number) => 12 + 135 / (1 + Math.exp(-(d - 117.5) * 5)) - 133 / (1 + Math.exp(-(d - 135) * 5))
+  const flow = (d: number) => 300 + 25 * (Math.max(0, 135 - d) + 12 * Math.max(0, Math.min(1, (132 - d) / 2)) + 9 * Math.max(0, Math.min(1, (121 - d) / 2)))
   const records = [
     make('alpha-gr', 'GR', 'ГК · основной', 'мкР/ч', gr), make('alpha-gr-control', 'GR', 'ГК · контрольный', 'мкР/ч', d => gr(d + 0.1) * 1.035, 'repeat', 'control'),
     make('alpha-rs', 'RS', 'КС · основной', 'Ом·м', rs), make('alpha-rs-control', 'RS', 'КС · контрольный', 'Ом·м', d => rs(d + 0.08) * 1.04, 'repeat', 'control'),
@@ -25,7 +26,8 @@ export function alphaRecords(well: InterpretationWell): MeasurementRecord[] {
     make('alpha-tm-repeat', 'TM', 'ТМ · повторная', '°C', d => 18 + d * 0.029 + 2.6 * gaussian(d, 109.4, 5.1), 'repeat'),
     make('alpha-km', 'CAL', 'КМ · до расширения', 'мм', d => 161 + 6 * Math.sin(d * 0.7) + 12 * gaussian(d, 122, 2)),
     make('alpha-kmr', 'CAL', 'КМр · после расширения', 'мм', d => 165 + 205 / (1 + Math.exp(-(d - 115.2) * 4)) - 202 / (1 + Math.exp(-(d - 139.2) * 4)) - 63 * gaussian(d, 128, 0.65), 'expanded'),
-    make('alpha-flow', 'FLOW', 'РМ · налив', 'имп/мин', d => 300 + 25 * (Math.max(0, 135 - d) + 12 * Math.max(0, Math.min(1, (132 - d) / 2)) + 9 * Math.max(0, Math.min(1, (121 - d) / 2))), 'development', 'main', 0.5),
+    make('alpha-flow', 'FLOW', 'РМ · налив', 'имп/мин', flow, 'development', 'main', 0.5),
+    make('alpha-flow-repeat', 'FLOW', 'РМ · повторная', 'имп/мин', d => flow(d + 0.2) * 1.025, 'repeat', 'control', 0.5),
   ]
   const curve = records.find(r => r.id === 'alpha-rs')!
   curve.values = curve.values.map((v, i) => curve.depths[i]! >= 128.4 && curve.depths[i]! <= 129.1 ? null : v)

@@ -1,5 +1,5 @@
 .app-frame--geology > .topbar { height: var(--topbar-height); min-height: var(--topbar-height); }
-.app-frame--geology > .app-workspace { height: calc(100dvh - var(--topbar-height) - var(--geology-subnav-height)); min-height: 0; }
+.app-frame--geology > .app-workspace { height: calc(100dvh - var(--topbar-height)); min-height: 0; }
 .app-frame--geology .app-workspace__content.content { padding: 0; min-height: 0; overflow: hidden; }
 .section-layout { --section-registry-width: 260px; --section-tools-width: 340px; display: grid; grid-template-columns: var(--section-registry-width) minmax(0, 1fr); gap: 0; height: 100%; min-height: 0; min-width: 0; }
 .section-layout.is-registry-collapsed { grid-template-columns: var(--bgd-navigation-rail) minmax(0, 1fr); }
