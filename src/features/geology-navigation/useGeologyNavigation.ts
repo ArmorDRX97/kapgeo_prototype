@@ -4,10 +4,13 @@ import { validateInterpretationSearch, type InterpretationSearch } from '../inte
 import { validateSectionSearch, type SectionSearch } from '../geology-sections/model/search'
 import { validateAlphaSearch, type AlphaSearch } from '../interpretation/alpha/search'
 import { alphaNames } from '../../entities/interpretation/model/alphaTypes'
+import { validatePlanSearch, type PlanSearch } from '../geology-plan/search'
 
 const KEY = 'kapgeo.geology.navigation.v1'
 const SECTION_KEY = 'kapgeo.geology.section-navigation.v1'
 const ALPHA_KEY = 'kapgeo.geology.alpha-navigation.v1'
+const PLAN_KEY = 'kapgeo.geology.plan-navigation.v1'
+function rememberedPlan(): { id: string; search: PlanSearch } | null { try { const p = JSON.parse(sessionStorage.getItem(PLAN_KEY) ?? 'null'); return p && typeof p.id === 'string' ? { id: p.id, search: validatePlanSearch(p.search ?? {}) } : null } catch { return null } }
 function rememberedAlpha(): { method: string; search: AlphaSearch } | null {
   try { const value = JSON.parse(sessionStorage.getItem(ALPHA_KEY) ?? 'null'); return value && typeof value.method === 'string' && Object.hasOwn(alphaNames, value.method) ? { method: value.method, search: validateAlphaSearch(value.search ?? {}) } : null } catch { return null }
 }
@@ -31,10 +34,15 @@ export function useGeologyNavigation() {
       try { sessionStorage.setItem(ALPHA_KEY, JSON.stringify({ method: location.pathname.split('/').at(-1), search: validateAlphaSearch(location.search) })) } catch { /* Optional return context. */ }
     } else if (interpretation && location.pathname === '/geology/interpretation') {
       try { sessionStorage.setItem(KEY, JSON.stringify(validateInterpretationSearch(location.search))); sessionStorage.removeItem(ALPHA_KEY) } catch { /* Navigation works without storage. */ }
+    } else if (location.pathname === '/geology/plans') {
+      try { sessionStorage.removeItem(PLAN_KEY) } catch { /* Optional return context. */ }
+    } else if (location.pathname.startsWith('/geology/plans/')) {
+      try { sessionStorage.setItem(PLAN_KEY, JSON.stringify({ id: location.pathname.split('/').at(-1), search: validatePlanSearch(location.search) })) } catch { /* Optional return context. */ }
     } else if (location.pathname.startsWith('/geology/sections/')) {
       try { sessionStorage.setItem(SECTION_KEY, JSON.stringify({ id: location.pathname.split('/').at(-1), search: validateSectionSearch(location.search) })) } catch { /* Optional return context. */ }
     }
   }, [interpretation, alpha, location.search, location.pathname])
   return { section: location.pathname.startsWith('/geology/sections/') ? { id: location.pathname.split('/').at(-1)!, search: validateSectionSearch(location.search) } : remembered,
+    plan: location.pathname.startsWith('/geology/plans/') ? { id: location.pathname.split('/').at(-1)!, search: validatePlanSearch(location.search) } : rememberedPlan(),
     alpha: alphaContext, legacy: interpretation ? validateInterpretationSearch(location.search) : rememberedInterpretation() }
 }

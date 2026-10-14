@@ -11,6 +11,8 @@ import { InterpretationPage } from '../pages/geology/InterpretationPage'
 import { AlphaInterpretationPage } from '../pages/geology/AlphaInterpretationPage'
 import { validateAlphaSearch } from '../features/interpretation/alpha/search'
 import { SectionsPage } from '../pages/geology/SectionsPage'
+import { PlansPage } from '../pages/geology/PlansPage'
+import { validatePlanSearch } from '../features/geology-plan/search'
 import { validateSectionSearch } from '../features/geology-sections/model/search'
 import { validateInterpretationSearch } from '../features/interpretation/model/search'
 import { AdminPage } from '../pages/admin/AdminPage'
@@ -51,6 +53,8 @@ const interpretationRoute = createRoute({ getParentRoute: () => rootRoute, path:
 const alphaInterpretationRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/interpretation/$method', validateSearch: validateAlphaSearch, component: AlphaInterpretationPage })
 const sectionsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/sections', component: SectionsPage })
 const sectionRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/sections/$sectionId', validateSearch: validateSectionSearch, component: SectionsPage })
+const plansRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/plans', component: PlansPage })
+const planRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/plans/$projectId', validateSearch: validatePlanSearch, component: PlansPage })
 const geoBaseRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd', component: GeoBasePage })
 const geoBaseDepositRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId', validateSearch: validateDepositSectionSearch, component: GeoBaseDepositPage })
 const bgdNewWellRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId/wells/new', validateSearch: validateBgdWellSectionSearch, component: BgdNewWellPage })
@@ -71,6 +75,8 @@ const routeTree = rootRoute.addChildren([
   alphaInterpretationRoute,
   sectionsRoute,
   sectionRoute,
+  plansRoute,
+  planRoute,
   geoBaseRoute,
   geoBaseDepositRoute,
   bgdNewWellRoute,

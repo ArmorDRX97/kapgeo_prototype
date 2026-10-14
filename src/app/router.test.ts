@@ -14,6 +14,7 @@ describe('BGD route smoke', () => {
   it('builds typed deep-links for the complete BGD flow', () => {
     expect(router.buildLocation({ to: '/geology' }).href).toBe('/geology')
     expect(router.buildLocation({ to: '/geology/sections' }).href).toBe('/geology/sections')
+    expect(router.buildLocation({ to: '/geology/plans/$projectId', params: { projectId: 'MAP-01' }, search: { selection: 'well-49' } }).href).toBe('/geology/plans/MAP-01?selection=well-49')
     expect(router.buildLocation({ to: '/geology/interpretation', search: { well: 'int-demo-01', mode: 'core' } }).href).toBe('/geology/interpretation?well=int-demo-01&mode=core')
     expect(router.buildLocation({ to: '/geology', search: { well: 'int-demo-01', mode: 'core', from: 112, to: 136, selection: 'core:seg-1' } }).href).toBe('/geology?well=int-demo-01&mode=core&from=112&to=136&selection=core%3Aseg-1')
     expect(router.buildLocation({ to: '/geology/bgd' }).href).toBe('/geology/bgd')

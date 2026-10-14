@@ -11,6 +11,8 @@ export type Permission =
   | 'geology.interpretation.edit'
   | 'geology.sections.edit'
   | 'geology.sections.delete'
+  | 'geology.maps.edit'
+  | 'geology.maps.delete'
   | 'geology.bgd.create'
   | 'geology.bgd.update'
   | 'geology.bgd.delete'
@@ -52,6 +54,8 @@ const rolePermissions: Record<RoleId, Permission[]> = {
 for (const role of ['R1', 'R2', 'R13'] as const) rolePermissions[role].push('geology.interpretation.edit')
 // Autonomous section prototype: explicitly approved by the user, 12.10.2026.
 for (const role of ['R1', 'R13'] as const) rolePermissions[role].push('geology.sections.edit', 'geology.sections.delete')
+// Independent cartographic prototype; scope and locked state are checked separately.
+for (const role of ['R1', 'R13'] as const) rolePermissions[role].push('geology.maps.edit', 'geology.maps.delete')
 
 export function hasPermission(persona: UserPersona | null, permission: Permission) {
   return persona?.roles.some((role) => rolePermissions[role].includes(permission)) ?? false

@@ -12,6 +12,8 @@
 
 | Задача | Документ |
 |---|---|
+| интерактивный план месторождения: рабочий автономный редактор, источники, ограничения и QA | [итог реализации](../geo-module-refs/InteractivePlan/implementation-report.md), [матрица приёмки](../geo-module-refs/InteractivePlan/implementation-acceptance.md) |
+| интерактивный план месторождения: исследование GeoMap 2025, старых карт, ТЗ и предложенная реализация | [выжимка и подход](../geo-module-refs/InteractivePlan/README.md), [источники](../geo-module-refs/InteractivePlan/sources.md), [матрица возможностей](../geo-module-refs/InteractivePlan/requirements.md) |
 | новая структура меню Геологии/Геотехнологии, эффекты и пустые пункты | [решение и проверка 14.10](./task/module-menu-refresh.md) |
 | интерпретация по «Альфа 2018» | [итог реализации](../geo-module-refs/Interpretation/implementation-report.md), [матрица приёмки](../geo-module-refs/Interpretation/implementation-acceptance.md), [исследование/история](../geo-module-refs/Interpretation/README.md) |
 | реалистичный общий пример разреза по кадрам видео | [визуальная сверка, данные, техническое устройство и проверка](../geo-module-refs/reference-reconstruction.md) |
