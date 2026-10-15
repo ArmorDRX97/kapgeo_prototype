@@ -1,11 +1,15 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ command, isPreview }) => ({
   // GitHub Pages needs the repository prefix in the built artifact, while the
   // local Vite server should keep browser-history routes at the domain root.
   base: command === 'build' || isPreview ? '/kapgeo_prototype/' : '/',
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
+  build: {
+    rolldownOptions: { input: ['index.html', 'internal/knowledge-map.html'] },
+  },
   server: {
     port: 4173,
     host: '127.0.0.1',

@@ -1,5 +1,9 @@
 # Архитектура прототипа
 
+## Изолированный внутренний атлас — 14.10.2026
+
+`src/internal/knowledge-map/` — автономное дерево кода/JSON/CSS/документации со вторым entry `internal/knowledge-map.html` в общей Vite-сборке. Route `/team/knowledge-map` размещает его в iframe; единственный контракт — валидируемая синхронизация режима/ID понятия и безопасный возврат. Это исключение с намеренно самостоятельной внутренней структурой, без импортов продуктовых repository/entities/UI и без общего бизнес-состояния. Тесты включены в корневой test; build проверяет модель и изоляцию CSS/entry. [Устройство и границы](../../src/internal/knowledge-map/README.md).
+
 ## Стек
 
 React 19, strict TypeScript, Vite, TanStack Router/Query, Vitest, IndexedDB и автономное localStorage интерпретации. Локальный npm-пакет `@kapgeo/geo-viz` содержит Canvas wellog и зависит от `d3-scale`.

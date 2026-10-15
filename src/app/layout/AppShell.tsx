@@ -5,6 +5,7 @@ import {
   BriefcaseBusiness,
   ChevronDown,
   CircleUserRound,
+  CodeXml,
   LogOut,
   Menu,
   Mountain,
@@ -22,6 +23,7 @@ export function AppShell({ children }: PropsWithChildren) {
   const { persona, signOut } = useSession()
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const currentHref = useRouterState({ select: (state) => state.location.href })
   const preferencesQuery = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences })
   const wellsQuery = useQuery({ queryKey: ['wells'], queryFn: fetchWells })
   const [profileOpen, setProfileOpen] = useState(false)
@@ -100,13 +102,15 @@ export function AppShell({ children }: PropsWithChildren) {
         <button type="button" aria-label="Уведомления" aria-disabled="true"><Bell size={19} /></button>
       </div>
       <LanguageSwitcher />
-      <div className="topbar-profile" ref={profileRef}>
+      <div className="topbar-profile" ref={profileRef} onKeyDown={event => { if (event.key === 'Escape') { setProfileOpen(false); profileRef.current?.querySelector<HTMLButtonElement>('.topbar-profile__trigger')?.focus() } }}>
         <button className="topbar-profile__trigger" type="button" onClick={() => setProfileOpen((value) => !value)} aria-haspopup="menu" aria-expanded={profileOpen}>
           <span className="avatar avatar--sm">{persona?.initials}</span><span className="topbar-profile__copy"><strong>{persona?.name}</strong><small>{persona?.position}</small></span><ChevronDown size={15} />
         </button>
         {profileOpen && <div className="topbar-profile__menu" role="menu">
           <div className="topbar-profile__summary"><span className="avatar">{persona?.initials}</span><span><strong>{persona?.name}</strong><small>{persona?.scope}</small></span></div>
           <Link to="/profile" role="menuitem" onClick={() => setProfileOpen(false)}><CircleUserRound size={17} />Профиль и роли</Link>
+          <div className="topbar-profile__separator" />
+          <Link to="/team/knowledge-map" search={{ from: currentHref }} role="menuitem" className="topbar-profile__team-tool" onClick={() => setProfileOpen(false)}><CodeXml size={19} aria-hidden="true" /><span><strong>Карта взаимосвязей</strong><small>Для команды · разработка</small></span></Link>
           <div className="topbar-profile__separator" />
           <button type="button" role="menuitem" onClick={logOut}><LogOut size={17} />Выйти</button>
         </div>}

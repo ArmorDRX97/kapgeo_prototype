@@ -1,0 +1,13 @@
+[
+  {"id":"g19","title":"РП геологического модуля, 2019","kind":"manual","reference":"geo-module-refs/manual-review.md · руководство, 339 страниц","asOf":"2026-10-14"},
+  {"id":"alpha18","title":"Альфа 2018: руководство интерпретации ГИС","kind":"manual","reference":"geo-module-refs/Interpretation/manual-map.md · руководство, 183 страницы","asOf":"2026-10-14"},
+  {"id":"gm25","title":"GeoMap 2025: геологическое картирование","kind":"manual","reference":"geo-module-refs/InteractivePlan/sources.md · руководство, 16 страниц","asOf":"2026-10-14"},
+  {"id":"video-oct14","title":"Встреча 14.10: карта, блоки и разрезы","kind":"video-audit","reference":"geo-module-refs/VideoAudit-2026-10-14/implementation-report.md · VA-01…18","asOf":"2026-10-14"},
+  {"id":"design-review","title":"Дизайн.pdf: аудит 14 замечаний","kind":"review","reference":"geo-module-refs/DesignAudit-2026-10-14/README.md и tasks.md · D-00…13 / DR-01…13","asOf":"2026-10-14"},
+  {"id":"alpha-current","title":"Интерпретация: фактическая реализация и ограничения","kind":"implementation","reference":"geo-module-refs/Interpretation/implementation-report.md · профиль alpha-prototype-2","asOf":"2026-10-14"},
+  {"id":"section-current","title":"Разрезы: реализация, решения и визуальный пример","kind":"implementation","reference":"geo-module-refs/geology-implementation-report.md; reference-reconstruction.md; docs/implementation-status.md","asOf":"2026-10-14"},
+  {"id":"map-current","title":"План месторождения: автономный редактор","kind":"implementation","reference":"geo-module-refs/InteractivePlan/implementation-report.md; VideoAudit-2026-10-14/implementation-report.md","asOf":"2026-10-14"},
+  {"id":"bgd-current","title":"БГД: действующие данные, доступ и кондиции","kind":"implementation","reference":"docs/implementation-status.md; docs/task/bgd-workbench-refresh.md; docs/ui-ux/modules/02-geology.md","asOf":"2026-10-14"},
+  {"id":"menu-current","title":"Состав меню и границы пустых пунктов","kind":"decision","reference":"src/app/layout/ModuleNavigation.tsx; docs/task/module-menu-refresh.md; docs/implementation-status.md","asOf":"2026-10-14"},
+  {"id":"team-current","title":"Внутренняя карта команды: изоляция","kind":"implementation","reference":"src/internal/knowledge-map/README.md и integration/protocol.ts","asOf":"2026-10-14"}
+]

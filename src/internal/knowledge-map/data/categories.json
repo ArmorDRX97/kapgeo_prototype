@@ -1,0 +1,92 @@
+[
+  {
+    "id": "territory",
+    "domainId": "territory",
+    "title": "Предприятие и объекты",
+    "shortTitle": "Объекты предприятия",
+    "description": "Где работаем и как различаем производственные объекты.",
+    "tone": "earth",
+    "order": 0
+  },
+  {
+    "id": "exploration",
+    "domainId": "exploration",
+    "title": "Разведка и бурение",
+    "shortTitle": "Разведка и бурение",
+    "description": "Как находят и вскрывают интересующие породы.",
+    "tone": "blue",
+    "order": 1
+  },
+  {
+    "id": "research",
+    "domainId": "research",
+    "title": "Исследования скважины",
+    "shortTitle": "Исследования",
+    "description": "Что узнают по приборам, керну, пробам и воде.",
+    "tone": "violet",
+    "order": 2
+  },
+  {
+    "id": "interpretation",
+    "domainId": "interpretation",
+    "title": "От измерений к геологии",
+    "shortTitle": "Интерпретация",
+    "description": "Как разнородные наблюдения превращаются в согласованное описание.",
+    "tone": "teal",
+    "order": 3
+  },
+  {
+    "id": "planning",
+    "domainId": "planning",
+    "title": "Запасы и проектирование",
+    "shortTitle": "Планирование",
+    "description": "Как оценивают ресурс и выбирают способ разработки.",
+    "tone": "amber",
+    "order": 4
+  },
+  {
+    "id": "production",
+    "domainId": "production",
+    "title": "Добыча методом ПСВ",
+    "shortTitle": "Добыча ПСВ",
+    "description": "Как уран переходит из породы в раствор и извлекается на поверхности.",
+    "tone": "cyan",
+    "order": 5
+  },
+  {
+    "id": "monitoring",
+    "domainId": "monitoring",
+    "title": "Контроль и безопасность",
+    "shortTitle": "Контроль",
+    "description": "Как наблюдения помогают управлять процессом и его воздействием.",
+    "tone": "rose",
+    "order": 6
+  },
+  {
+    "id": "maintenance",
+    "domainId": "maintenance",
+    "title": "Оборудование и ремонты",
+    "shortTitle": "Оборудование",
+    "description": "Как сохраняют работоспособность и закрывают объекты.",
+    "tone": "slate",
+    "order": 7
+  },
+  {
+    "id": "accounting",
+    "domainId": "accounting",
+    "title": "Учёт и ресурсы",
+    "shortTitle": "Учёт и ресурсы",
+    "description": "Как физические потоки становятся производственными и экономическими показателями.",
+    "tone": "green",
+    "order": 8
+  },
+  {
+    "id": "management",
+    "domainId": "management",
+    "title": "Решения и развитие",
+    "shortTitle": "Управление",
+    "description": "Как люди сопоставляют факты, планы и прогнозы.",
+    "tone": "indigo",
+    "order": 9
+  }
+]

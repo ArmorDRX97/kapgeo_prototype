@@ -21,6 +21,8 @@ import { ReferenceDataPage } from '../pages/admin/ReferenceDataPage'
 import { userPersonas } from '../entities/session/model/personas'
 import { validateBgdWellSectionSearch } from '../features/geobase/model/bgdWellSection'
 import { validateDepositSectionSearch } from '../features/geobase/model/depositSection'
+import { KnowledgeMapPage } from '../pages/team/KnowledgeMapPage'
+import { validateKnowledgeSearch } from '../internal/knowledge-map/integration/protocol'
 
 const SESSION_PERSONA_KEY = 'kapgeo.persona'
 
@@ -64,6 +66,7 @@ const geoBaseDepositConditionsRoute = createRoute({ getParentRoute: () => rootRo
 const bgdNewWellRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId/wells/new', validateSearch: validateBgdWellSectionSearch, component: BgdNewWellPage })
 const bgdWellRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId/wells/$wellId', validateSearch: validateBgdWellSectionSearch, component: BgdWellPage })
 const profileRoute = createRoute({ getParentRoute: () => rootRoute, path: '/profile', component: ProfilePage })
+const knowledgeMapRoute = createRoute({ getParentRoute: () => rootRoute, path: '/team/knowledge-map', validateSearch: validateKnowledgeSearch, component: KnowledgeMapPage })
 const technologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/technology', component: TechnologyModulePage })
 const modelingRoute = createRoute({ getParentRoute: () => rootRoute, path: '/modeling', component: ModelingModulePage })
 const analyticsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/analytics', component: AnalyticsModulePage })
@@ -87,6 +90,7 @@ const routeTree = rootRoute.addChildren([
   bgdNewWellRoute,
   bgdWellRoute,
   profileRoute,
+  knowledgeMapRoute,
   technologyRoute,
   modelingRoute,
   analyticsRoute,

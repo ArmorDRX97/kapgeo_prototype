@@ -33,7 +33,7 @@
 | интерпретация по РП 1.24–1.26 | [текущее состояние, проверка и исследования](./task/README.md), [геологический модуль](./ui-ux/modules/02-geology.md) |
 | геотехнологические разрезы и второй уровень геологии | [план реализации](../geo-module-refs/geology-implementation-plan.md), [аудит видео](../geo-module-refs/video-audit.md), [руководство](../geo-module-refs/manual-review.md), [требования/приёмка](../geo-module-refs/requirements-matrix.md), [итог реализации и техническое устройство](../geo-module-refs/geology-implementation-report.md) |
 | управление справочниками | [03-reference-data.md](./ui-ux/modules/03-reference-data.md) |
-| образовательная карта предметной области | отдельное локальное приложение `kapgeo-knowledge-map/`; по запросу пользователя от 13.10.2026 исключено из Git и CI. Инструкции находятся внутри локальной папки |
+| внутренняя карта взаимосвязей команды | [изолированный модуль](../src/internal/knowledge-map/README.md), [обновление контекста по РП/видео/PDF 15.10](../src/internal/knowledge-map/docs/context-update-2026-10-15.md); вход из профиля `/team/knowledge-map`, вне продуктового UI/UX-ТЗ |
 | среда Product Design / UX / UI для Codex | [skills, источники, Windows QA и проверки](./task/product-design-environment.md) |
 
 `archive/` не используется при обычной работе и не должен попадать в широкие поиски.

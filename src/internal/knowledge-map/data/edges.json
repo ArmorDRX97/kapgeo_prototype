@@ -1,0 +1,4574 @@
+[
+  {
+    "id": "e-territory-precedes-exploration",
+    "source": "territory",
+    "type": "precedes",
+    "target": "exploration",
+    "label": "Определяем область работ",
+    "description": "Понятный контекст объектов позволяет назначить программу разведки."
+  },
+  {
+    "id": "e-exploration-produces-research",
+    "source": "exploration",
+    "type": "produces",
+    "target": "research",
+    "label": "Передаём скважину и материал",
+    "description": "Бурение создаёт доступный ствол и керн для нескольких параллельных исследований."
+  },
+  {
+    "id": "e-research-produces-interpretation",
+    "source": "research",
+    "type": "produces",
+    "target": "interpretation",
+    "label": "Передаём наблюдения",
+    "description": "Кривые, образцы и анализы требуют совместной проверки и объяснения."
+  },
+  {
+    "id": "e-interpretation-produces-planning",
+    "source": "interpretation",
+    "type": "produces",
+    "target": "planning",
+    "label": "Обосновываем проект",
+    "description": "Согласованные свойства и интервалы становятся входом оценки и проектирования."
+  },
+  {
+    "id": "e-planning-precedes-production",
+    "source": "planning",
+    "type": "precedes",
+    "target": "production",
+    "label": "Готовим и назначаем работу",
+    "description": "Проект и план задают подготовку сети и ограничения эксплуатации."
+  },
+  {
+    "id": "e-production-produces-monitoring",
+    "source": "production",
+    "type": "produces",
+    "target": "monitoring",
+    "label": "Получаем наблюдения",
+    "description": "Работа скважин создаёт потоки, параметры и точки контроля."
+  },
+  {
+    "id": "e-monitoring-related-to-production",
+    "source": "monitoring",
+    "type": "related_to",
+    "target": "production",
+    "label": "Уточняем режим по наблюдениям",
+    "description": "Проверенные изменения возвращаются технологу для выбора действия."
+  },
+  {
+    "id": "e-monitoring-produces-maintenance",
+    "source": "monitoring",
+    "type": "produces",
+    "target": "maintenance",
+    "label": "Выявляем потребность в работах",
+    "description": "Техническая причина отклонения может потребовать обслуживания или ремонта."
+  },
+  {
+    "id": "e-maintenance-related-to-production",
+    "source": "maintenance",
+    "type": "related_to",
+    "target": "production",
+    "label": "Возвращаем готовность",
+    "description": "Результаты работ влияют на возможность эксплуатации и доступное время."
+  },
+  {
+    "id": "e-production-produces-accounting",
+    "source": "production",
+    "type": "produces",
+    "target": "accounting",
+    "label": "Передаём производственный факт",
+    "description": "Замеры, состав потоков и события становятся основой учёта за период."
+  },
+  {
+    "id": "e-maintenance-produces-accounting",
+    "source": "maintenance",
+    "type": "produces",
+    "target": "accounting",
+    "label": "Учитываем работы и ресурсы",
+    "description": "Ремонты дают фактические материалы, время и простои."
+  },
+  {
+    "id": "e-accounting-produces-management",
+    "source": "accounting",
+    "type": "produces",
+    "target": "management",
+    "label": "Сводим результат",
+    "description": "Согласованный отчёт объясняет работу и потребление ресурсов."
+  },
+  {
+    "id": "e-management-related-to-planning",
+    "source": "management",
+    "type": "related_to",
+    "target": "planning",
+    "label": "Пересматриваем план",
+    "description": "Решения по результатам изменяют следующий план и набор ограничений."
+  },
+  {
+    "id": "e-monitoring-related-to-planning",
+    "source": "monitoring",
+    "type": "related_to",
+    "target": "planning",
+    "label": "Уточняем знания о пласте",
+    "description": "Новые наблюдения проверяют проектные предположения и модель."
+  },
+  {
+    "id": "e-management-related-to-exploration",
+    "source": "management",
+    "type": "related_to",
+    "target": "exploration",
+    "label": "Назначаем дополнительные исследования",
+    "description": "Неопределённость результата может потребовать новой проверки недр."
+  },
+  {
+    "id": "e-enterprise-related-to-deposit",
+    "source": "enterprise",
+    "type": "related_to",
+    "target": "deposit",
+    "label": "Работает на месторождении",
+    "description": "Организационная ответственность связывает предприятие с областью недр."
+  },
+  {
+    "id": "e-deposit-related-to-site",
+    "source": "deposit",
+    "type": "related_to",
+    "target": "site",
+    "label": "Область организации работ",
+    "description": "Участок относится к месторождению и не заменяет залежь."
+  },
+  {
+    "id": "e-deposit-related-to-orebody",
+    "source": "deposit",
+    "type": "related_to",
+    "target": "orebody",
+    "label": "Природное строение",
+    "description": "Залежь описывает минерализованный объём внутри месторождения."
+  },
+  {
+    "id": "e-deposit-related-to-well",
+    "source": "deposit",
+    "type": "related_to",
+    "target": "well",
+    "label": "Привязка к месторождению",
+    "description": "Наблюдения скважины интерпретируют в общем геологическом контексте."
+  },
+  {
+    "id": "e-site-related-to-production-block",
+    "source": "site",
+    "type": "related_to",
+    "target": "production-block",
+    "label": "Организация эксплуатации",
+    "description": "Производственные контуры связывают с областью работ по проекту."
+  },
+  {
+    "id": "e-orebody-related-to-reserve-block",
+    "source": "orebody",
+    "type": "related_to",
+    "target": "reserve-block",
+    "label": "Основа выделения объёма",
+    "description": "Подсчётный блок выделяется для оценки характеристик залежи."
+  },
+  {
+    "id": "e-production-block-related-to-cell",
+    "source": "production-block",
+    "type": "related_to",
+    "target": "cell",
+    "label": "Совместная работа сети",
+    "description": "Ячейки рассматриваются в контуре эксплуатации, принятом проектом."
+  },
+  {
+    "id": "e-cell-related-to-well",
+    "source": "cell",
+    "type": "related_to",
+    "target": "well",
+    "label": "Взаимодействие через пласт",
+    "description": "Назначение и положение скважин определяют локальный поток."
+  },
+  {
+    "id": "e-exploration-plan-precedes-surveying",
+    "source": "exploration-plan",
+    "type": "precedes",
+    "target": "surveying",
+    "label": "Задаёт точки работ",
+    "description": "Программа определяет, где проверить геологический вопрос."
+  },
+  {
+    "id": "e-surveying-precedes-drilling",
+    "source": "surveying",
+    "type": "precedes",
+    "target": "drilling",
+    "label": "Передаёт положение точки",
+    "description": "Буровая бригада получает привязанные к местности координаты."
+  },
+  {
+    "id": "e-surveying-produces-trajectory",
+    "source": "surveying",
+    "type": "produces",
+    "target": "trajectory",
+    "label": "Даёт координаты устья",
+    "description": "Траектория начинается в измеренной точке, а не в условном начале координат."
+  },
+  {
+    "id": "e-drilling-produces-well",
+    "source": "drilling",
+    "type": "produces",
+    "target": "well",
+    "label": "Создаёт ствол",
+    "description": "Физический объект появляется в результате проходки."
+  },
+  {
+    "id": "e-drilling-produces-core",
+    "source": "drilling",
+    "type": "produces",
+    "target": "core",
+    "label": "Извлекает породу",
+    "description": "При керновом бурении материал поднимают для непосредственного исследования."
+  },
+  {
+    "id": "e-drilling-produces-drilling-log",
+    "source": "drilling",
+    "type": "produces",
+    "target": "drilling-log",
+    "label": "Документирует проходку",
+    "description": "Интервалы и условия работ записываются как первичный факт."
+  },
+  {
+    "id": "e-drilling-precedes-logging",
+    "source": "drilling",
+    "type": "precedes",
+    "target": "logging",
+    "label": "Открывает доступ прибору",
+    "description": "Исследование требует доступного ствола нужной глубины."
+  },
+  {
+    "id": "e-drilling-precedes-inclinometry",
+    "source": "drilling",
+    "type": "precedes",
+    "target": "inclinometry",
+    "label": "Позволяет измерить ход ствола",
+    "description": "Промер выполняется по доступной скважине."
+  },
+  {
+    "id": "e-drilling-run-produces-core",
+    "source": "drilling-run",
+    "type": "produces",
+    "target": "core",
+    "label": "Связывает материал с рейсом",
+    "description": "Глубины рейса задают первичную принадлежность извлечённой породы."
+  },
+  {
+    "id": "e-drilling-log-related-to-core-recovery",
+    "source": "drilling-log",
+    "type": "related_to",
+    "target": "core-recovery",
+    "label": "Даёт длину проходки",
+    "description": "Выход сравнивает полученный керн с длиной соответствующего рейса."
+  },
+  {
+    "id": "e-drilling-precedes-completion",
+    "source": "drilling",
+    "type": "precedes",
+    "target": "completion",
+    "label": "Передаёт ствол для подготовки",
+    "description": "Оборудование и освоение следуют за проходкой и предусмотренными исследованиями."
+  },
+  {
+    "id": "e-completion-produces-well-construction",
+    "source": "completion",
+    "type": "produces",
+    "target": "well-construction",
+    "label": "Фиксирует фактическое устройство",
+    "description": "Установленные трубы и фильтры документируют по глубине."
+  },
+  {
+    "id": "e-completion-precedes-commissioning",
+    "source": "completion",
+    "type": "precedes",
+    "target": "commissioning",
+    "label": "Готовит к проверке ввода",
+    "description": "Освоение и испытания являются частью готовности объекта."
+  },
+  {
+    "id": "e-passport-uses-drilling-log",
+    "source": "passport",
+    "type": "uses",
+    "target": "drilling-log",
+    "label": "Собирает сведения о бурении",
+    "description": "Паспорт опирается на фактически выполненную проходку."
+  },
+  {
+    "id": "e-passport-uses-well-construction",
+    "source": "passport",
+    "type": "uses",
+    "target": "well-construction",
+    "label": "Описывает устройство",
+    "description": "Конструкция нужна для эксплуатации и ремонтных решений."
+  },
+  {
+    "id": "e-passport-related-to-well",
+    "source": "passport",
+    "type": "related_to",
+    "target": "well",
+    "label": "Идентифицирует объект",
+    "description": "Документ относится к конкретной скважине и её назначению."
+  },
+  {
+    "id": "e-well-lifecycle-related-to-commissioning",
+    "source": "well-lifecycle",
+    "type": "related_to",
+    "target": "commissioning",
+    "label": "Различает состояние готовности",
+    "description": "Ввод — один из переходов физического объекта во времени."
+  },
+  {
+    "id": "e-well-lifecycle-related-to-closure",
+    "source": "well-lifecycle",
+    "type": "related_to",
+    "target": "closure",
+    "label": "Учитывает завершение",
+    "description": "История объекта продолжается до закрытия и последующего контроля."
+  },
+  {
+    "id": "e-logging-produces-log-curves",
+    "source": "logging",
+    "type": "produces",
+    "target": "log-curves",
+    "label": "Регистрирует сигнал по глубине",
+    "description": "Приборные отсчёты сохраняют с методом, единицей и глубиной."
+  },
+  {
+    "id": "e-gamma-produces-log-curves",
+    "source": "gamma",
+    "type": "produces",
+    "target": "log-curves",
+    "label": "Даёт гамма-кривую",
+    "description": "Гамма-сигнал является одним из физических наблюдений."
+  },
+  {
+    "id": "e-resistivity-produces-log-curves",
+    "source": "resistivity",
+    "type": "produces",
+    "target": "log-curves",
+    "label": "Даёт электрическую кривую",
+    "description": "Кажущееся сопротивление сохраняется как измерение, а не готовый вывод о породе."
+  },
+  {
+    "id": "e-sp-produces-log-curves",
+    "source": "sp",
+    "type": "produces",
+    "target": "log-curves",
+    "label": "Даёт кривую ПС",
+    "description": "Естественные потенциалы дополняют комплекс геофизических наблюдений."
+  },
+  {
+    "id": "e-caliper-produces-log-curves",
+    "source": "caliper",
+    "type": "produces",
+    "target": "log-curves",
+    "label": "Даёт геометрию ствола",
+    "description": "Изменение диаметра помогает учитывать условия других измерений."
+  },
+  {
+    "id": "e-inclinometry-produces-trajectory",
+    "source": "inclinometry",
+    "type": "produces",
+    "target": "trajectory",
+    "label": "Восстанавливает пространственный ход",
+    "description": "Угловые точки и координаты устья позволяют рассчитать положение ствола."
+  },
+  {
+    "id": "e-core-measurement-uses-core",
+    "source": "core-measurement",
+    "type": "uses",
+    "target": "core",
+    "label": "Измеряет материал",
+    "description": "Длину и порядок фиксируют для реального извлечённого керна."
+  },
+  {
+    "id": "e-core-measurement-produces-core-recovery",
+    "source": "core-measurement",
+    "type": "produces",
+    "target": "core-recovery",
+    "label": "Даёт длину извлечённого материала",
+    "description": "Выход керна рассчитывается по промеру и длине рейса."
+  },
+  {
+    "id": "e-core-lithology-uses-core",
+    "source": "core-lithology",
+    "type": "uses",
+    "target": "core",
+    "label": "Описывает наблюдаемую породу",
+    "description": "Состав и признаки фиксируют по физическому материалу."
+  },
+  {
+    "id": "e-sampling-uses-core",
+    "source": "sampling",
+    "type": "uses",
+    "target": "core",
+    "label": "Отбирает материал из интервала",
+    "description": "Керновая проба сохраняет принадлежность к конкретной части породы."
+  },
+  {
+    "id": "e-sampling-produces-sample",
+    "source": "sampling",
+    "type": "produces",
+    "target": "sample",
+    "label": "Регистрирует образец",
+    "description": "Отбор создаёт идентифицированную пробу с контекстом."
+  },
+  {
+    "id": "e-lab-analysis-uses-sample",
+    "source": "lab-analysis",
+    "type": "uses",
+    "target": "sample",
+    "label": "Измеряет свойства образца",
+    "description": "Анализ относится к зарегистрированной пробе."
+  },
+  {
+    "id": "e-lab-analysis-uses-solution-sample",
+    "source": "lab-analysis",
+    "type": "uses",
+    "target": "solution-sample",
+    "label": "Измеряет состав жидкости",
+    "description": "Жидкий образец сохраняет точку и время отбора."
+  },
+  {
+    "id": "e-lab-analysis-produces-lab-result",
+    "source": "lab-analysis",
+    "type": "produces",
+    "target": "lab-result",
+    "label": "Возвращает измерение",
+    "description": "Метод, единица и контроль качества сопровождают значение."
+  },
+  {
+    "id": "e-granulometry-uses-sample",
+    "source": "granulometry",
+    "type": "uses",
+    "target": "sample",
+    "label": "Исследует размеры частиц",
+    "description": "Распределение размеров относится к конкретному образцу породы."
+  },
+  {
+    "id": "e-granulometry-produces-lab-result",
+    "source": "granulometry",
+    "type": "produces",
+    "target": "lab-result",
+    "label": "Формирует распределение фракций",
+    "description": "Лабораторный результат может быть набором долей частиц."
+  },
+  {
+    "id": "e-hydro-tests-uses-well",
+    "source": "hydro-tests",
+    "type": "uses",
+    "target": "well",
+    "label": "Испытывает взаимодействие с пластом",
+    "description": "Скважина служит точкой наблюдения и воздействия по программе."
+  },
+  {
+    "id": "e-hydro-tests-produces-groundwater-level",
+    "source": "hydro-tests",
+    "type": "produces",
+    "target": "groundwater-level",
+    "label": "Наблюдает уровни во времени",
+    "description": "Изменение уровня помогает оценить отклик пласта."
+  },
+  {
+    "id": "e-quality-check-uses-log-curves",
+    "source": "quality-check",
+    "type": "uses",
+    "target": "log-curves",
+    "label": "Проверяет первичные сигналы",
+    "description": "Шаг, единицы и пропуски влияют на пригодность интерпретации."
+  },
+  {
+    "id": "e-quality-check-uses-lab-result",
+    "source": "quality-check",
+    "type": "uses",
+    "target": "lab-result",
+    "label": "Проверяет контекст анализа",
+    "description": "Номер, метод и контроль нужны до использования значения."
+  },
+  {
+    "id": "e-quality-check-uses-core-lithology",
+    "source": "quality-check",
+    "type": "uses",
+    "target": "core-lithology",
+    "label": "Проверяет интервальное описание",
+    "description": "Границы и отсутствие материала должны быть явными."
+  },
+  {
+    "id": "e-quality-check-precedes-depth-matching",
+    "source": "quality-check",
+    "type": "precedes",
+    "target": "depth-matching",
+    "label": "Даёт проверенную основу привязки",
+    "description": "Сопоставление глубин нельзя выполнять на невыясненной ошибке шкалы."
+  },
+  {
+    "id": "e-depth-matching-uses-core",
+    "source": "depth-matching",
+    "type": "uses",
+    "target": "core",
+    "label": "Сопоставляет фрагменты",
+    "description": "Привязка относится к сохранённому физическому материалу."
+  },
+  {
+    "id": "e-depth-matching-uses-core-measurement",
+    "source": "depth-matching",
+    "type": "uses",
+    "target": "core-measurement",
+    "label": "Учитывает фактические длины",
+    "description": "Промер ограничивает допустимое объяснение положения частей."
+  },
+  {
+    "id": "e-depth-matching-uses-log-curves",
+    "source": "depth-matching",
+    "type": "uses",
+    "target": "log-curves",
+    "label": "Сравнивает характерные признаки",
+    "description": "Кривые дают независимую шкалу для проверки положения материала."
+  },
+  {
+    "id": "e-depth-matching-uses-drilling-log",
+    "source": "depth-matching",
+    "type": "uses",
+    "target": "drilling-log",
+    "label": "Учитывает границы рейса",
+    "description": "Документация определяет исходный интервал получения керна."
+  },
+  {
+    "id": "e-depth-matching-produces-composite-data",
+    "source": "depth-matching",
+    "type": "produces",
+    "target": "composite-data",
+    "label": "Уточняет глубины описаний и проб",
+    "description": "Сводная модель использует обоснованное соответствие шкал."
+  },
+  {
+    "id": "e-log-lithology-uses-log-curves",
+    "source": "log-lithology",
+    "type": "uses",
+    "target": "log-curves",
+    "label": "Объясняет комплекс сигналов",
+    "description": "Интервальное описание выводится из наблюдений с учётом условий."
+  },
+  {
+    "id": "e-core-lithology-transforms-composite-data",
+    "source": "core-lithology",
+    "type": "transforms",
+    "target": "composite-data",
+    "label": "Вносит прямое наблюдение",
+    "description": "Описание реальной породы согласуют с другими данными."
+  },
+  {
+    "id": "e-log-lithology-transforms-composite-data",
+    "source": "log-lithology",
+    "type": "transforms",
+    "target": "composite-data",
+    "label": "Вносит геофизический вывод",
+    "description": "Интерпретация помогает заполнить картину между сохранёнными фрагментами."
+  },
+  {
+    "id": "e-lab-result-transforms-composite-data",
+    "source": "lab-result",
+    "type": "transforms",
+    "target": "composite-data",
+    "label": "Уточняет свойства интервала",
+    "description": "Измеренные значения дополняют согласованное геологическое описание."
+  },
+  {
+    "id": "e-quality-check-produces-composite-data",
+    "source": "quality-check",
+    "type": "produces",
+    "target": "composite-data",
+    "label": "Передаёт ограничения качества",
+    "description": "Сводные данные должны учитывать сомнительные и отсутствующие наблюдения."
+  },
+  {
+    "id": "e-lithology-related-to-core-lithology",
+    "source": "lithology",
+    "type": "related_to",
+    "target": "core-lithology",
+    "label": "Прямое описание состава",
+    "description": "Керновая литология является одним способом узнать породу."
+  },
+  {
+    "id": "e-lithology-related-to-log-lithology",
+    "source": "lithology",
+    "type": "related_to",
+    "target": "log-lithology",
+    "label": "Интерпретированное описание",
+    "description": "Каротажная литология является экспертным выводом по сигналам."
+  },
+  {
+    "id": "e-lithology-related-to-stratigraphy",
+    "source": "lithology",
+    "type": "related_to",
+    "target": "stratigraphy",
+    "label": "Разные вопросы о слое",
+    "description": "Состав породы и геологическая принадлежность взаимосвязаны, но не совпадают."
+  },
+  {
+    "id": "e-ore-interval-uses-lab-result",
+    "source": "ore-interval",
+    "type": "uses",
+    "target": "lab-result",
+    "label": "Опирается на анализ",
+    "description": "Измерения помогают обосновать минерализацию и границы."
+  },
+  {
+    "id": "e-ore-interval-uses-cutoff-limits",
+    "source": "ore-interval",
+    "type": "uses",
+    "target": "cutoff-limits",
+    "label": "Применяет критерии",
+    "description": "Выделение выполняется по принятой методике и параметрам."
+  },
+  {
+    "id": "e-composite-data-transforms-ore-interval",
+    "source": "composite-data",
+    "type": "transforms",
+    "target": "ore-interval",
+    "label": "Даёт согласованные интервальные входы",
+    "description": "Выделение рудной части опирается на согласованный контекст глубин и свойств."
+  },
+  {
+    "id": "e-ore-interval-transforms-differential-interval",
+    "source": "ore-interval",
+    "type": "transforms",
+    "target": "differential-interval",
+    "label": "Детализирует неоднородность",
+    "description": "Раздельные характеристики сохраняют различия внутри рудного описания."
+  },
+  {
+    "id": "e-tech-interval-uses-composite-data",
+    "source": "tech-interval",
+    "type": "uses",
+    "target": "composite-data",
+    "label": "Учитывает состав и границы",
+    "description": "Согласованное описание помогает объяснить технологическое поведение."
+  },
+  {
+    "id": "e-tech-interval-uses-resistivity",
+    "source": "tech-interval",
+    "type": "uses",
+    "target": "resistivity",
+    "label": "Учитывает электрические признаки",
+    "description": "КС используется как часть комплекса, а не как универсальная формула проницаемости."
+  },
+  {
+    "id": "e-tech-interval-uses-hydro-tests",
+    "source": "tech-interval",
+    "type": "uses",
+    "target": "hydro-tests",
+    "label": "Проверяет фильтрационное объяснение",
+    "description": "Реальное взаимодействие с водой дополняет приборные признаки."
+  },
+  {
+    "id": "e-geological-section-uses-composite-data",
+    "source": "geological-section",
+    "type": "uses",
+    "target": "composite-data",
+    "label": "Сопоставляет скважины",
+    "description": "Разрез связывает согласованные интервалы в пространстве."
+  },
+  {
+    "id": "e-geological-section-uses-trajectory",
+    "source": "geological-section",
+    "type": "uses",
+    "target": "trajectory",
+    "label": "Учитывает положение ствола",
+    "description": "Интервалы размещают по фактическому ходу, а не условно под устьем."
+  },
+  {
+    "id": "e-geological-section-related-to-orebody",
+    "source": "geological-section",
+    "type": "related_to",
+    "target": "orebody",
+    "label": "Объясняет форму залежи",
+    "description": "Сопоставление между скважинами даёт пространственное представление минерализации."
+  },
+  {
+    "id": "e-reserves-uses-ore-interval",
+    "source": "reserves",
+    "type": "uses",
+    "target": "ore-interval",
+    "label": "Использует выделенные интервалы",
+    "description": "Они задают рудную часть для принятого способа подсчёта."
+  },
+  {
+    "id": "e-reserves-uses-reserve-block",
+    "source": "reserves",
+    "type": "uses",
+    "target": "reserve-block",
+    "label": "Учитывает расчётный объём",
+    "description": "Оценка относится к явно определённым границам блока."
+  },
+  {
+    "id": "e-reserves-uses-cutoff-limits",
+    "source": "reserves",
+    "type": "uses",
+    "target": "cutoff-limits",
+    "label": "Учитывает критерии",
+    "description": "Метод и параметры влияют на результат оценки."
+  },
+  {
+    "id": "e-reserves-uses-composite-data",
+    "source": "reserves",
+    "type": "uses",
+    "target": "composite-data",
+    "label": "Использует согласованные свойства",
+    "description": "Исходные характеристики должны быть сопоставимы по скважинам."
+  },
+  {
+    "id": "e-production-design-uses-reserves",
+    "source": "production-design",
+    "type": "uses",
+    "target": "reserves",
+    "label": "Учитывает масштаб ресурса",
+    "description": "Оценка запасов помогает обосновать размер разработки."
+  },
+  {
+    "id": "e-production-design-uses-tech-interval",
+    "source": "production-design",
+    "type": "uses",
+    "target": "tech-interval",
+    "label": "Выбирает рабочие части пласта",
+    "description": "Технологические свойства влияют на конструкцию и сеть."
+  },
+  {
+    "id": "e-production-design-uses-geological-section",
+    "source": "production-design",
+    "type": "uses",
+    "target": "geological-section",
+    "label": "Учитывает пространственное строение",
+    "description": "Разрез помогает проверить связь пластов между объектами."
+  },
+  {
+    "id": "e-production-design-uses-hydro-tests",
+    "source": "production-design",
+    "type": "uses",
+    "target": "hydro-tests",
+    "label": "Учитывает движение воды",
+    "description": "Фильтрационный отклик важен для схемы ПСВ."
+  },
+  {
+    "id": "e-production-design-produces-well-pattern",
+    "source": "production-design",
+    "type": "produces",
+    "target": "well-pattern",
+    "label": "Определяет сеть",
+    "description": "Проект назначает расположение и назначение скважин."
+  },
+  {
+    "id": "e-well-pattern-related-to-cell",
+    "source": "well-pattern",
+    "type": "related_to",
+    "target": "cell",
+    "label": "Организует локальный поток",
+    "description": "Схема сети определяет совместную работу ячейки."
+  },
+  {
+    "id": "e-production-plan-uses-production-design",
+    "source": "production-plan",
+    "type": "uses",
+    "target": "production-design",
+    "label": "Опирается на проект",
+    "description": "Планирование учитывает подготовку и техническую схему."
+  },
+  {
+    "id": "e-production-plan-uses-forecast",
+    "source": "production-plan",
+    "type": "uses",
+    "target": "forecast",
+    "label": "Учитывает ожидания",
+    "description": "Прогноз помогает оценить достижимость целей без подмены плана."
+  },
+  {
+    "id": "e-production-plan-uses-equipment-service",
+    "source": "production-plan",
+    "type": "uses",
+    "target": "equipment-service",
+    "label": "Учитывает обслуживание",
+    "description": "Доступность объектов зависит от запланированных работ."
+  },
+  {
+    "id": "e-modeling-uses-composite-data",
+    "source": "modeling",
+    "type": "uses",
+    "target": "composite-data",
+    "label": "Задаёт геологические входы",
+    "description": "Строение и свойства породы определяют допущения расчётной системы."
+  },
+  {
+    "id": "e-modeling-uses-hydro-tests",
+    "source": "modeling",
+    "type": "uses",
+    "target": "hydro-tests",
+    "label": "Задаёт фильтрационные ограничения",
+    "description": "Испытания помогают проверять параметры движения жидкости."
+  },
+  {
+    "id": "e-modeling-uses-scenario",
+    "source": "modeling",
+    "type": "uses",
+    "target": "scenario",
+    "label": "Считает выбранный вариант",
+    "description": "Условия расчёта должны быть явно определены."
+  },
+  {
+    "id": "e-modeling-uses-actual-regime",
+    "source": "modeling",
+    "type": "uses",
+    "target": "actual-regime",
+    "label": "Сопоставляет с наблюдениями",
+    "description": "Фактическая история помогает оценить применимость модели."
+  },
+  {
+    "id": "e-modeling-produces-forecast",
+    "source": "modeling",
+    "type": "produces",
+    "target": "forecast",
+    "label": "Формирует ожидание",
+    "description": "Расчёт при заданных допущениях даёт будущие показатели."
+  },
+  {
+    "id": "e-commissioning-uses-passport",
+    "source": "commissioning",
+    "type": "uses",
+    "target": "passport",
+    "label": "Проверяет документированный объект",
+    "description": "Ввод требует понимания конструкции, назначения и ответственности."
+  },
+  {
+    "id": "e-commissioning-uses-installation",
+    "source": "commissioning",
+    "type": "uses",
+    "target": "installation",
+    "label": "Проверяет установленное оборудование",
+    "description": "Готовность техники входит в готовность объекта."
+  },
+  {
+    "id": "e-commissioning-precedes-isr",
+    "source": "commissioning",
+    "type": "precedes",
+    "target": "isr",
+    "label": "Открывает эксплуатацию",
+    "description": "Процесс начинается на подготовленных и проверенных объектах."
+  },
+  {
+    "id": "e-isr-uses-well-pattern",
+    "source": "isr",
+    "type": "uses",
+    "target": "well-pattern",
+    "label": "Работает через сеть",
+    "description": "Управляемый поток создаётся совместной работой назначенных скважин."
+  },
+  {
+    "id": "e-isr-uses-production-plan",
+    "source": "isr",
+    "type": "uses",
+    "target": "production-plan",
+    "label": "Получает производственное задание",
+    "description": "План задаёт согласованный ориентир и ограничения."
+  },
+  {
+    "id": "e-isr-related-to-injection",
+    "source": "isr",
+    "type": "related_to",
+    "target": "injection",
+    "label": "Подача в пласт",
+    "description": "Закачка обеспечивает входную часть технологического потока."
+  },
+  {
+    "id": "e-isr-related-to-recovery",
+    "source": "isr",
+    "type": "related_to",
+    "target": "recovery",
+    "label": "Возврат на поверхность",
+    "description": "Откачка выводит раствор с полезным компонентом."
+  },
+  {
+    "id": "e-injection-uses-injection-solution",
+    "source": "injection",
+    "type": "uses",
+    "target": "injection-solution",
+    "label": "Подаёт подготовленную жидкость",
+    "description": "Назначение потока связывает подготовку с рабочим пластом."
+  },
+  {
+    "id": "e-injection-precedes-recovery",
+    "source": "injection",
+    "type": "precedes",
+    "target": "recovery",
+    "label": "Связаны движением через пласт",
+    "description": "Жидкость взаимодействует с породой; операции в устойчивом процессе идут одновременно."
+  },
+  {
+    "id": "e-recovery-produces-productive-solution",
+    "source": "recovery",
+    "type": "produces",
+    "target": "productive-solution",
+    "label": "Поднимает носитель урана",
+    "description": "Поток переносит растворённый компонент к поверхностной переработке."
+  },
+  {
+    "id": "e-processing-uses-productive-solution",
+    "source": "processing",
+    "type": "uses",
+    "target": "productive-solution",
+    "label": "Принимает поток с ураном",
+    "description": "Раствор является входом операций извлечения."
+  },
+  {
+    "id": "e-processing-related-to-sorption",
+    "source": "processing",
+    "type": "related_to",
+    "target": "sorption",
+    "label": "Один из способов извлечения",
+    "description": "Сорбция объясняет удержание компонента специальным материалом."
+  },
+  {
+    "id": "e-processing-precedes-circulation",
+    "source": "processing",
+    "type": "precedes",
+    "target": "circulation",
+    "label": "Передаёт поток для подготовки",
+    "description": "Допустимую жидкость после извлечения рассматривают для оборота."
+  },
+  {
+    "id": "e-circulation-produces-injection-solution",
+    "source": "circulation",
+    "type": "produces",
+    "target": "injection-solution",
+    "label": "Готовит оборотный поток",
+    "description": "Возврат требует проверки и подготовки под требования закачки."
+  },
+  {
+    "id": "e-recovery-produces-operating-measurements",
+    "source": "recovery",
+    "type": "produces",
+    "target": "operating-measurements",
+    "label": "Даёт фактические параметры",
+    "description": "Расход, состояние и время наблюдают при эксплуатации."
+  },
+  {
+    "id": "e-injection-produces-operating-measurements",
+    "source": "injection",
+    "type": "produces",
+    "target": "operating-measurements",
+    "label": "Даёт наблюдения закачки",
+    "description": "Входящий поток контролируют отдельно от откачного."
+  },
+  {
+    "id": "e-productive-solution-related-to-solution-sample",
+    "source": "productive-solution",
+    "type": "related_to",
+    "target": "solution-sample",
+    "label": "Контекст отбора",
+    "description": "Образец относится к конкретному потоку и времени."
+  },
+  {
+    "id": "e-lab-analysis-produces-chemistry",
+    "source": "lab-analysis",
+    "type": "produces",
+    "target": "chemistry",
+    "label": "Возвращает состав жидкости",
+    "description": "Результат связан с точкой, временем, пробой и методом."
+  },
+  {
+    "id": "e-actual-regime-uses-operating-measurements",
+    "source": "actual-regime",
+    "type": "uses",
+    "target": "operating-measurements",
+    "label": "Собирает наблюдаемые параметры",
+    "description": "История работы строится из временных значений и событий."
+  },
+  {
+    "id": "e-groundwater-monitoring-uses-groundwater-level",
+    "source": "groundwater-monitoring",
+    "type": "uses",
+    "target": "groundwater-level",
+    "label": "Наблюдает положение воды",
+    "description": "Изменение уровня оценивают совместно с режимом и фоном."
+  },
+  {
+    "id": "e-groundwater-monitoring-uses-chemistry",
+    "source": "groundwater-monitoring",
+    "type": "uses",
+    "target": "chemistry",
+    "label": "Наблюдает состав воды",
+    "description": "Анализы наблюдательных точек проверяют отдельно от производственных потоков."
+  },
+  {
+    "id": "e-groundwater-monitoring-uses-solution-sample",
+    "source": "groundwater-monitoring",
+    "type": "uses",
+    "target": "solution-sample",
+    "label": "Получает образцы по программе",
+    "description": "Место и время необходимы для осмысленного сравнения."
+  },
+  {
+    "id": "e-environment-uses-groundwater-monitoring",
+    "source": "environment",
+    "type": "uses",
+    "target": "groundwater-monitoring",
+    "label": "Оценивает водную среду",
+    "description": "Гидрогеологические наблюдения являются частью экологической картины."
+  },
+  {
+    "id": "e-radiation-control-related-to-environment",
+    "source": "radiation-control",
+    "type": "related_to",
+    "target": "environment",
+    "label": "Дополняет контроль условий",
+    "description": "Радиационные факторы рассматривают с назначением конкретных наблюдений."
+  },
+  {
+    "id": "e-deviation-uses-operating-measurements",
+    "source": "deviation",
+    "type": "uses",
+    "target": "operating-measurements",
+    "label": "Сравнивает проверенные значения",
+    "description": "Расхождение сначала проверяют на качество и контекст."
+  },
+  {
+    "id": "e-deviation-uses-chemistry",
+    "source": "deviation",
+    "type": "uses",
+    "target": "chemistry",
+    "label": "Учитывает изменение состава",
+    "description": "Состав помогает отличить причины изменения результата."
+  },
+  {
+    "id": "e-deviation-related-to-repair-order",
+    "source": "deviation",
+    "type": "related_to",
+    "target": "repair-order",
+    "label": "Может привести к заданию",
+    "description": "Ремонт назначают после проверки технической причины, а не по любому отклонению."
+  },
+  {
+    "id": "e-deviation-related-to-decision",
+    "source": "deviation",
+    "type": "related_to",
+    "target": "decision",
+    "label": "Требует выбора действия",
+    "description": "Проверенная причина становится основанием решения ответственного."
+  },
+  {
+    "id": "e-equipment-passport-related-to-equipment",
+    "source": "equipment-passport",
+    "type": "related_to",
+    "target": "equipment",
+    "label": "Описывает конкретное устройство",
+    "description": "Характеристики сохраняются при смене установки."
+  },
+  {
+    "id": "e-installation-uses-equipment",
+    "source": "installation",
+    "type": "uses",
+    "target": "equipment",
+    "label": "Размещает серийный объект",
+    "description": "Монтаж связывает устройство с местом, не меняя его идентичность."
+  },
+  {
+    "id": "e-installation-uses-equipment-passport",
+    "source": "installation",
+    "type": "uses",
+    "target": "equipment-passport",
+    "label": "Проверяет совместимость",
+    "description": "Характеристики сопоставляют с требованиями объекта."
+  },
+  {
+    "id": "e-installation-related-to-well",
+    "source": "installation",
+    "type": "related_to",
+    "target": "well",
+    "label": "Связывает устройство с объектом",
+    "description": "Событие установки фиксирует текущую техническую конфигурацию."
+  },
+  {
+    "id": "e-equipment-service-uses-equipment",
+    "source": "equipment-service",
+    "type": "uses",
+    "target": "equipment",
+    "label": "Поддерживает работоспособность",
+    "description": "Работы связаны с устройством и его историей."
+  },
+  {
+    "id": "e-equipment-service-uses-equipment-passport",
+    "source": "equipment-service",
+    "type": "uses",
+    "target": "equipment-passport",
+    "label": "Учитывает требования",
+    "description": "Допустимое обслуживание определяется технической документацией."
+  },
+  {
+    "id": "e-repair-work-uses-repair-order",
+    "source": "repair-work",
+    "type": "uses",
+    "target": "repair-order",
+    "label": "Выполняет назначенный объём",
+    "description": "Задание задаёт объект, исполнителя и ограничения работ."
+  },
+  {
+    "id": "e-repair-work-uses-equipment",
+    "source": "repair-work",
+    "type": "uses",
+    "target": "equipment",
+    "label": "Восстанавливает устройство",
+    "description": "Результат работ проверяют на конкретном объекте."
+  },
+  {
+    "id": "e-repair-work-uses-inventory",
+    "source": "repair-work",
+    "type": "uses",
+    "target": "inventory",
+    "label": "Потребляет материалы",
+    "description": "Доступность деталей влияет на выполнение ремонта."
+  },
+  {
+    "id": "e-repair-work-precedes-commissioning",
+    "source": "repair-work",
+    "type": "precedes",
+    "target": "commissioning",
+    "label": "Возвращает к проверке готовности",
+    "description": "После ремонта повторно проверяют возможность работы."
+  },
+  {
+    "id": "e-decommissioning-uses-equipment",
+    "source": "decommissioning",
+    "type": "uses",
+    "target": "equipment",
+    "label": "Определяет судьбу техники",
+    "description": "Вывод сопровождается учётом состояния и дальнейшего использования."
+  },
+  {
+    "id": "e-decommissioning-precedes-closure",
+    "source": "decommissioning",
+    "type": "precedes",
+    "target": "closure",
+    "label": "Может перейти в окончательное закрытие",
+    "description": "Остановка и закрытие различаются, переход требует отдельного основания."
+  },
+  {
+    "id": "e-closure-precedes-groundwater-monitoring",
+    "source": "closure",
+    "type": "precedes",
+    "target": "groundwater-monitoring",
+    "label": "Продолжает наблюдение после работ",
+    "description": "Контроль среды не заканчивается автоматически с добычей."
+  },
+  {
+    "id": "e-closure-uses-environment",
+    "source": "closure",
+    "type": "uses",
+    "target": "environment",
+    "label": "Учитывает состояние территории",
+    "description": "План завершения опирается на наблюдения и последствия."
+  },
+  {
+    "id": "e-shift-log-uses-actual-regime",
+    "source": "shift-log",
+    "type": "uses",
+    "target": "actual-regime",
+    "label": "Сводит сменный факт",
+    "description": "Период и объект делают события сопоставимыми."
+  },
+  {
+    "id": "e-material-balance-uses-operating-measurements",
+    "source": "material-balance",
+    "type": "uses",
+    "target": "operating-measurements",
+    "label": "Использует объёмы потоков",
+    "description": "Объём и период должны соответствовать контуру расчёта."
+  },
+  {
+    "id": "e-material-balance-uses-chemistry",
+    "source": "material-balance",
+    "type": "uses",
+    "target": "chemistry",
+    "label": "Использует содержание компонента",
+    "description": "Концентрацию согласуют с тем же потоком и периодом."
+  },
+  {
+    "id": "e-material-balance-uses-processing",
+    "source": "material-balance",
+    "type": "uses",
+    "target": "processing",
+    "label": "Учитывает поверхностное извлечение",
+    "description": "Граница баланса определяет, какие операции и накопления включены."
+  },
+  {
+    "id": "e-acid-balance-uses-chemistry",
+    "source": "acid-balance",
+    "type": "uses",
+    "target": "chemistry",
+    "label": "Учитывает состав",
+    "description": "Химические показатели согласуют с объёмами и единицами."
+  },
+  {
+    "id": "e-acid-balance-uses-inventory",
+    "source": "acid-balance",
+    "type": "uses",
+    "target": "inventory",
+    "label": "Учитывает движение реагента",
+    "description": "Материальный учёт даёт поступление, выдачу и остатки."
+  },
+  {
+    "id": "e-costs-uses-inventory",
+    "source": "costs",
+    "type": "uses",
+    "target": "inventory",
+    "label": "Учитывает материалы",
+    "description": "Ресурсные события связывают с работами и периодом."
+  },
+  {
+    "id": "e-costs-uses-repair-work",
+    "source": "costs",
+    "type": "uses",
+    "target": "repair-work",
+    "label": "Учитывает выполненные работы",
+    "description": "Ремонт создаёт трудовые, материальные и временные затраты."
+  },
+  {
+    "id": "e-erp-related-to-inventory",
+    "source": "erp",
+    "type": "related_to",
+    "target": "inventory",
+    "label": "Объединяет ресурсный учёт",
+    "description": "Материалы связывают с общими ресурсами предприятия без обещания интеграции."
+  },
+  {
+    "id": "e-erp-related-to-costs",
+    "source": "erp",
+    "type": "related_to",
+    "target": "costs",
+    "label": "Связывает ресурсы с экономикой",
+    "description": "Стоимость и отнесение затрат рассматривают в принятом учётном контуре."
+  },
+  {
+    "id": "e-production-report-uses-shift-log",
+    "source": "production-report",
+    "type": "uses",
+    "target": "shift-log",
+    "label": "Агрегирует проверенный факт",
+    "description": "Несколько смен объединяют в согласованный период."
+  },
+  {
+    "id": "e-production-report-uses-material-balance",
+    "source": "production-report",
+    "type": "uses",
+    "target": "material-balance",
+    "label": "Включает показатели потоков",
+    "description": "Баланс объясняет результат с определёнными границами и единицами."
+  },
+  {
+    "id": "e-production-report-uses-acid-balance",
+    "source": "production-report",
+    "type": "uses",
+    "target": "acid-balance",
+    "label": "Показывает ресурсы процесса",
+    "description": "Использование реагента дополняет объёмный результат."
+  },
+  {
+    "id": "e-plan-fact-uses-production-plan",
+    "source": "plan-fact",
+    "type": "uses",
+    "target": "production-plan",
+    "label": "Берёт назначенную цель",
+    "description": "План сохраняет смысл согласованного ориентира."
+  },
+  {
+    "id": "e-plan-fact-uses-production-report",
+    "source": "plan-fact",
+    "type": "uses",
+    "target": "production-report",
+    "label": "Берёт наблюдаемый итог",
+    "description": "Факт сохраняет связь с периодом и проверенными событиями."
+  },
+  {
+    "id": "e-plan-fact-uses-forecast",
+    "source": "plan-fact",
+    "type": "uses",
+    "target": "forecast",
+    "label": "Сравнивает ожидание",
+    "description": "Прогноз отличается от измеренного факта."
+  },
+  {
+    "id": "e-analysis-uses-plan-fact",
+    "source": "analysis",
+    "type": "uses",
+    "target": "plan-fact",
+    "label": "Исследует расхождения",
+    "description": "Сопоставимые показатели позволяют поставить предметный вопрос."
+  },
+  {
+    "id": "e-analysis-uses-deviation",
+    "source": "analysis",
+    "type": "uses",
+    "target": "deviation",
+    "label": "Проверяет контекст изменения",
+    "description": "Отклонение рассматривают вместе с качеством и событиями."
+  },
+  {
+    "id": "e-analysis-uses-costs",
+    "source": "analysis",
+    "type": "uses",
+    "target": "costs",
+    "label": "Учитывает ресурсные причины",
+    "description": "Экономический результат зависит от принятой границы и доступности ресурсов."
+  },
+  {
+    "id": "e-analysis-produces-decision",
+    "source": "analysis",
+    "type": "produces",
+    "target": "decision",
+    "label": "Даёт основание для выбора",
+    "description": "Выводы становятся решением только после принятия ответственным человеком."
+  },
+  {
+    "id": "e-decision-transforms-production-plan",
+    "source": "decision",
+    "type": "transforms",
+    "target": "production-plan",
+    "label": "Меняет будущие задания",
+    "description": "Выбранное действие отражается в следующем плане."
+  },
+  {
+    "id": "e-decision-related-to-exploration-plan",
+    "source": "decision",
+    "type": "related_to",
+    "target": "exploration-plan",
+    "label": "Может назначить исследование",
+    "description": "Неустранённая неопределённость требует дополнительного наблюдения."
+  },
+  {
+    "id": "e-reporting-uses-production-report",
+    "source": "reporting",
+    "type": "uses",
+    "target": "production-report",
+    "label": "Передаёт итог работы",
+    "description": "Руководитель получает согласованный факт вместо набора несвязанных замеров."
+  },
+  {
+    "id": "e-reporting-uses-analysis",
+    "source": "reporting",
+    "type": "uses",
+    "target": "analysis",
+    "label": "Объясняет причины",
+    "description": "Предметные выводы делают показатель пригодным для решения."
+  },
+  {
+    "id": "e-reference-data-related-to-lithology",
+    "source": "reference-data",
+    "type": "related_to",
+    "target": "lithology",
+    "label": "Общий язык пород",
+    "description": "Единые термины позволяют сравнивать описания; интеграция текущих хранилищ не заявляется."
+  },
+  {
+    "id": "e-data-audit-related-to-quality-check",
+    "source": "data-audit",
+    "type": "related_to",
+    "target": "quality-check",
+    "label": "Помогает разбирать изменения",
+    "description": "История объясняет действия над данными, но не заменяет научную проверку."
+  },
+  {
+    "id": "e-ai-suggestion-related-to-decision",
+    "source": "ai-suggestion",
+    "type": "related_to",
+    "target": "decision",
+    "label": "Отделяет предложение от принятия",
+    "description": "Рекомендация алгоритма должна пройти предметную оценку человеком."
+  },
+  {
+    "id": "e-module-bgd-related-to-module-geology",
+    "source": "module-bgd",
+    "type": "related_to",
+    "target": "module-geology",
+    "label": "Данные и их геологическое объяснение",
+    "description": "Функциональные области дополняют друг друга по назначению. Текущая автономная интерпретация не подключена к БГД."
+  },
+  {
+    "id": "e-module-geology-related-to-module-modeling",
+    "source": "module-geology",
+    "type": "related_to",
+    "target": "module-modeling",
+    "label": "Геологическая основа расчёта",
+    "description": "Согласованные свойства пласта необходимы моделированию. Связь объясняет предметную зависимость, а не готовую программную интеграцию."
+  },
+  {
+    "id": "e-module-technology-related-to-module-modeling",
+    "source": "module-technology",
+    "type": "related_to",
+    "target": "module-modeling",
+    "label": "Факт проверяет предположения",
+    "description": "Технологические наблюдения нужны для проверки расчётного объяснения процесса; рабочие сервисы этих модулей пока не реализованы."
+  },
+  {
+    "id": "e-module-technology-related-to-module-analytics",
+    "source": "module-technology",
+    "type": "related_to",
+    "target": "module-analytics",
+    "label": "Производственный результат для анализа",
+    "description": "Задача аналитики — объяснять фактическую работу. Автоматическая передача между текущими заглушками не заявляется."
+  },
+  {
+    "id": "e-module-admin-related-to-module-bgd",
+    "source": "module-admin",
+    "type": "related_to",
+    "target": "module-bgd",
+    "label": "Организация общих объектов",
+    "description": "В текущем прототипе администратор создаёт месторождение для БГД; автономный каталог справочников с БГД не связан."
+  },
+  {
+    "id": "e-exploration-plan-performed-by-geologist",
+    "source": "exploration-plan",
+    "target": "geologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геолог участвует в работе «Программа разведки»: Объясняет строение недр и связывает наблюдения в геологическую картину."
+  },
+  {
+    "id": "e-core-lithology-performed-by-geologist",
+    "source": "core-lithology",
+    "target": "geologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геолог участвует в работе «Литология по керну»: Объясняет строение недр и связывает наблюдения в геологическую картину."
+  },
+  {
+    "id": "e-depth-matching-performed-by-geologist",
+    "source": "depth-matching",
+    "target": "geologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геолог участвует в работе «Привязка керна по глубине»: Объясняет строение недр и связывает наблюдения в геологическую картину."
+  },
+  {
+    "id": "e-composite-data-performed-by-geologist",
+    "source": "composite-data",
+    "target": "geologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геолог участвует в работе «Сводные геологические данные»: Объясняет строение недр и связывает наблюдения в геологическую картину."
+  },
+  {
+    "id": "e-ore-interval-performed-by-geologist",
+    "source": "ore-interval",
+    "target": "geologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геолог участвует в работе «Рудный интервал»: Объясняет строение недр и связывает наблюдения в геологическую картину."
+  },
+  {
+    "id": "e-quality-check-performed-by-geologist",
+    "source": "quality-check",
+    "target": "geologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геолог участвует в работе «Проверка качества данных»: Объясняет строение недр и связывает наблюдения в геологическую картину."
+  },
+  {
+    "id": "e-logging-performed-by-geophysicist",
+    "source": "logging",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геофизик-интерпретатор участвует в работе «Каротаж»: Измеряет физические сигналы скважины и объясняет их геологический смысл."
+  },
+  {
+    "id": "e-gamma-performed-by-geophysicist",
+    "source": "gamma",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геофизик-интерпретатор участвует в работе «Гамма-каротаж»: Измеряет физические сигналы скважины и объясняет их геологический смысл."
+  },
+  {
+    "id": "e-resistivity-performed-by-geophysicist",
+    "source": "resistivity",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геофизик-интерпретатор участвует в работе «Кажущееся сопротивление, КС»: Измеряет физические сигналы скважины и объясняет их геологический смысл."
+  },
+  {
+    "id": "e-sp-performed-by-geophysicist",
+    "source": "sp",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геофизик-интерпретатор участвует в работе «Потенциалы собственной поляризации»: Измеряет физические сигналы скважины и объясняет их геологический смысл."
+  },
+  {
+    "id": "e-caliper-performed-by-geophysicist",
+    "source": "caliper",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геофизик-интерпретатор участвует в работе «Кавернометрия»: Измеряет физические сигналы скважины и объясняет их геологический смысл."
+  },
+  {
+    "id": "e-inclinometry-performed-by-geophysicist",
+    "source": "inclinometry",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геофизик-интерпретатор участвует в работе «Инклинометрия»: Измеряет физические сигналы скважины и объясняет их геологический смысл."
+  },
+  {
+    "id": "e-log-lithology-performed-by-geophysicist",
+    "source": "log-lithology",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геофизик-интерпретатор участвует в работе «Литология по каротажу»: Измеряет физические сигналы скважины и объясняет их геологический смысл."
+  },
+  {
+    "id": "e-reserves-performed-by-reserves-engineer",
+    "source": "reserves",
+    "target": "reserves-engineer",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Инженер по запасам участвует в работе «Оценка и подсчёт запасов»: Оценивает количество полезного компонента по обоснованной методике."
+  },
+  {
+    "id": "e-cutoff-limits-performed-by-reserves-engineer",
+    "source": "cutoff-limits",
+    "target": "reserves-engineer",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Инженер по запасам участвует в работе «Кондиционные лимиты»: Оценивает количество полезного компонента по обоснованной методике."
+  },
+  {
+    "id": "e-reserve-block-performed-by-reserves-engineer",
+    "source": "reserve-block",
+    "target": "reserves-engineer",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Инженер по запасам участвует в работе «Подсчётный блок»: Оценивает количество полезного компонента по обоснованной методике."
+  },
+  {
+    "id": "e-modeling-performed-by-modeler",
+    "source": "modeling",
+    "target": "modeler",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геотехнолог-моделист участвует в работе «Моделирование»: Сравнивает поведение процесса при разных сценариях."
+  },
+  {
+    "id": "e-scenario-performed-by-modeler",
+    "source": "scenario",
+    "target": "modeler",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геотехнолог-моделист участвует в работе «Сценарий»: Сравнивает поведение процесса при разных сценариях."
+  },
+  {
+    "id": "e-forecast-performed-by-modeler",
+    "source": "forecast",
+    "target": "modeler",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Геотехнолог-моделист участвует в работе «Прогноз»: Сравнивает поведение процесса при разных сценариях."
+  },
+  {
+    "id": "e-groundwater-monitoring-performed-by-hydrogeochemist",
+    "source": "groundwater-monitoring",
+    "target": "hydrogeochemist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Гидрогеохимик участвует в работе «Мониторинг подземных вод»: Исследует состав подземной воды и растворов в геологическом контексте."
+  },
+  {
+    "id": "e-chemistry-performed-by-hydrogeochemist",
+    "source": "chemistry",
+    "target": "hydrogeochemist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Гидрогеохимик участвует в работе «Состав растворов и воды»: Исследует состав подземной воды и растворов в геологическом контексте."
+  },
+  {
+    "id": "e-hydro-tests-performed-by-hydrogeochemist",
+    "source": "hydro-tests",
+    "target": "hydrogeochemist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Гидрогеохимик участвует в работе «Гидрогеологические испытания»: Исследует состав подземной воды и растворов в геологическом контексте."
+  },
+  {
+    "id": "e-production-design-performed-by-technologist",
+    "source": "production-design",
+    "target": "technologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Технолог добычи участвует в работе «Проектирование разработки»: Организует работу скважин и управляет производственным процессом."
+  },
+  {
+    "id": "e-isr-performed-by-technologist",
+    "source": "isr",
+    "target": "technologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Технолог добычи участвует в работе «Подземное скважинное выщелачивание»: Организует работу скважин и управляет производственным процессом."
+  },
+  {
+    "id": "e-injection-performed-by-technologist",
+    "source": "injection",
+    "target": "technologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Технолог добычи участвует в работе «Закачка»: Организует работу скважин и управляет производственным процессом."
+  },
+  {
+    "id": "e-recovery-performed-by-technologist",
+    "source": "recovery",
+    "target": "technologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Технолог добычи участвует в работе «Откачка»: Организует работу скважин и управляет производственным процессом."
+  },
+  {
+    "id": "e-material-balance-performed-by-technologist",
+    "source": "material-balance",
+    "target": "technologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Технолог добычи участвует в работе «Материальный баланс»: Организует работу скважин и управляет производственным процессом."
+  },
+  {
+    "id": "e-acid-balance-performed-by-technologist",
+    "source": "acid-balance",
+    "target": "technologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Технолог добычи участвует в работе «Баланс реагента»: Организует работу скважин и управляет производственным процессом."
+  },
+  {
+    "id": "e-commissioning-performed-by-technologist",
+    "source": "commissioning",
+    "target": "technologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Технолог добычи участвует в работе «Ввод в эксплуатацию»: Организует работу скважин и управляет производственным процессом."
+  },
+  {
+    "id": "e-operating-measurements-performed-by-dispatcher",
+    "source": "operating-measurements",
+    "target": "dispatcher",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Диспетчер участвует в работе «Производственные замеры»: Собирает оперативный факт и передаёт контекст между сменами."
+  },
+  {
+    "id": "e-actual-regime-performed-by-dispatcher",
+    "source": "actual-regime",
+    "target": "dispatcher",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Диспетчер участвует в работе «Фактический режим»: Собирает оперативный факт и передаёт контекст между сменами."
+  },
+  {
+    "id": "e-shift-log-performed-by-dispatcher",
+    "source": "shift-log",
+    "target": "dispatcher",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Диспетчер участвует в работе «Сменный журнал»: Собирает оперативный факт и передаёт контекст между сменами."
+  },
+  {
+    "id": "e-deviation-performed-by-dispatcher",
+    "source": "deviation",
+    "target": "dispatcher",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Диспетчер участвует в работе «Отклонение»: Собирает оперативный факт и передаёт контекст между сменами."
+  },
+  {
+    "id": "e-lab-analysis-performed-by-lab-technician",
+    "source": "lab-analysis",
+    "target": "lab-technician",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Лабораторный специалист участвует в работе «Лабораторный анализ»: Измеряет свойства проб по установленной методике и контролирует качество."
+  },
+  {
+    "id": "e-lab-result-performed-by-lab-technician",
+    "source": "lab-result",
+    "target": "lab-technician",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Лабораторный специалист участвует в работе «Лабораторный результат»: Измеряет свойства проб по установленной методике и контролирует качество."
+  },
+  {
+    "id": "e-granulometry-performed-by-lab-technician",
+    "source": "granulometry",
+    "target": "lab-technician",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Лабораторный специалист участвует в работе «Гранулометрический анализ»: Измеряет свойства проб по установленной методике и контролирует качество."
+  },
+  {
+    "id": "e-equipment-performed-by-mechanic",
+    "source": "equipment",
+    "target": "mechanic",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Механик участвует в работе «Оборудование»: Отвечает за техническое состояние и историю оборудования."
+  },
+  {
+    "id": "e-installation-performed-by-mechanic",
+    "source": "installation",
+    "target": "mechanic",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Механик участвует в работе «Монтаж и перемещение»: Отвечает за техническое состояние и историю оборудования."
+  },
+  {
+    "id": "e-equipment-service-performed-by-mechanic",
+    "source": "equipment-service",
+    "target": "mechanic",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Механик участвует в работе «Техническое обслуживание»: Отвечает за техническое состояние и историю оборудования."
+  },
+  {
+    "id": "e-equipment-passport-performed-by-mechanic",
+    "source": "equipment-passport",
+    "target": "mechanic",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Механик участвует в работе «Паспорт оборудования»: Отвечает за техническое состояние и историю оборудования."
+  },
+  {
+    "id": "e-repair-order-performed-by-repair-supervisor",
+    "source": "repair-order",
+    "target": "repair-supervisor",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Мастер РВР участвует в работе «Наряд на ремонтные работы»: Организует ремонтно-восстановительные работы по заданию."
+  },
+  {
+    "id": "e-repair-work-performed-by-repair-supervisor",
+    "source": "repair-work",
+    "target": "repair-supervisor",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Мастер РВР участвует в работе «Ремонтно-восстановительные работы»: Организует ремонтно-восстановительные работы по заданию."
+  },
+  {
+    "id": "e-analysis-performed-by-analyst",
+    "source": "analysis",
+    "target": "analyst",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Аналитик участвует в работе «Анализ результатов»: Сопоставляет данные служб и объясняет изменение показателей."
+  },
+  {
+    "id": "e-plan-fact-performed-by-analyst",
+    "source": "plan-fact",
+    "target": "analyst",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Аналитик участвует в работе «План, факт и модель»: Сопоставляет данные служб и объясняет изменение показателей."
+  },
+  {
+    "id": "e-reporting-performed-by-analyst",
+    "source": "reporting",
+    "target": "analyst",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Аналитик участвует в работе «Управленческая отчётность»: Сопоставляет данные служб и объясняет изменение показателей."
+  },
+  {
+    "id": "e-production-report-performed-by-analyst",
+    "source": "production-report",
+    "target": "analyst",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Аналитик участвует в работе «Производственный отчёт»: Сопоставляет данные служб и объясняет изменение показателей."
+  },
+  {
+    "id": "e-production-plan-performed-by-chief-technologist",
+    "source": "production-plan",
+    "target": "chief-technologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Главный технолог участвует в работе «Производственный план»: Согласует технологические решения и общий производственный план."
+  },
+  {
+    "id": "e-decision-performed-by-chief-technologist",
+    "source": "decision",
+    "target": "chief-technologist",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Главный технолог участвует в работе «Производственное решение»: Согласует технологические решения и общий производственный план."
+  },
+  {
+    "id": "e-reference-data-performed-by-system-admin",
+    "source": "reference-data",
+    "target": "system-admin",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Администратор системы участвует в работе «Справочники и единые термины»: Поддерживает структуру доступа и справочные данные системы."
+  },
+  {
+    "id": "e-data-audit-performed-by-system-admin",
+    "source": "data-audit",
+    "target": "system-admin",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Администратор системы участвует в работе «История действий и ответственность»: Поддерживает структуру доступа и справочные данные системы."
+  },
+  {
+    "id": "e-ai-suggestion-performed-by-ai-admin",
+    "source": "ai-suggestion",
+    "target": "ai-admin",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Администратор AI-моделей участвует в работе «Предложение AI и экспертный вывод»: Контролирует конфигурацию и применимость моделей, если они вводятся."
+  },
+  {
+    "id": "e-drilling-performed-by-driller",
+    "source": "drilling",
+    "target": "driller",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Буровик участвует в работе «Бурение и проходка»: Создаёт ствол скважины и фиксирует фактическую проходку."
+  },
+  {
+    "id": "e-drilling-run-performed-by-driller",
+    "source": "drilling-run",
+    "target": "driller",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Буровик участвует в работе «Рейс бурения»: Создаёт ствол скважины и фиксирует фактическую проходку."
+  },
+  {
+    "id": "e-drilling-log-performed-by-driller",
+    "source": "drilling-log",
+    "target": "driller",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Буровик участвует в работе «Журнал бурения»: Создаёт ствол скважины и фиксирует фактическую проходку."
+  },
+  {
+    "id": "e-completion-performed-by-driller",
+    "source": "completion",
+    "target": "driller",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Буровик участвует в работе «Оборудование и освоение скважины»: Создаёт ствол скважины и фиксирует фактическую проходку."
+  },
+  {
+    "id": "e-surveying-performed-by-surveyor",
+    "source": "surveying",
+    "target": "surveyor",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Маркшейдер / геодезист участвует в работе «Привязка на местности»: Определяет положение объектов в общей системе координат."
+  },
+  {
+    "id": "e-trajectory-performed-by-surveyor",
+    "source": "trajectory",
+    "target": "surveyor",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Маркшейдер / геодезист участвует в работе «Траектория скважины»: Определяет положение объектов в общей системе координат."
+  },
+  {
+    "id": "e-environment-performed-by-environmental-engineer",
+    "source": "environment",
+    "target": "environmental-engineer",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Эколог участвует в работе «Экологический контроль»: Оценивает воздействие деятельности и организует наблюдения за средой."
+  },
+  {
+    "id": "e-closure-performed-by-environmental-engineer",
+    "source": "closure",
+    "target": "environmental-engineer",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Эколог участвует в работе «Закрытие и последующее наблюдение»: Оценивает воздействие деятельности и организует наблюдения за средой."
+  },
+  {
+    "id": "e-radiation-control-performed-by-environmental-engineer",
+    "source": "radiation-control",
+    "target": "environmental-engineer",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Эколог участвует в работе «Радиационный контроль»: Оценивает воздействие деятельности и организует наблюдения за средой."
+  },
+  {
+    "id": "e-decision-performed-by-manager",
+    "source": "decision",
+    "target": "manager",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Руководитель предприятия участвует в работе «Производственное решение»: Принимает решения с учётом результата, ресурсов и ответственности."
+  },
+  {
+    "id": "e-reporting-performed-by-manager",
+    "source": "reporting",
+    "target": "manager",
+    "type": "performed_by",
+    "label": "Участвует специалист",
+    "description": "Руководитель предприятия участвует в работе «Управленческая отчётность»: Принимает решения с учётом результата, ресурсов и ответственности."
+  },
+  {
+    "id": "e-driller-handoff-geologist",
+    "source": "driller",
+    "target": "geologist",
+    "type": "related_to",
+    "label": "Передаёт материал и факт",
+    "description": "Буровик передаёт керн, глубины рейсов и условия получения; геолог принимает контекст описания."
+  },
+  {
+    "id": "e-surveyor-handoff-geologist",
+    "source": "surveyor",
+    "target": "geologist",
+    "type": "related_to",
+    "label": "Передаёт координаты",
+    "description": "Геолог использует систему координат и фактическое положение при пространственном сопоставлении."
+  },
+  {
+    "id": "e-geophysicist-handoff-geologist",
+    "source": "geophysicist",
+    "target": "geologist",
+    "type": "related_to",
+    "label": "Передаёт кривые и объяснения",
+    "description": "Геолог сопоставляет проверенные сигналы и геофизическую интерпретацию с материалом керна."
+  },
+  {
+    "id": "e-lab-technician-handoff-geologist",
+    "source": "lab-technician",
+    "target": "geologist",
+    "type": "related_to",
+    "label": "Возвращает анализы проб",
+    "description": "Номер пробы, метод и единица позволяют включить измерение в геологическое описание."
+  },
+  {
+    "id": "e-geologist-handoff-reserves-engineer",
+    "source": "geologist",
+    "target": "reserves-engineer",
+    "type": "related_to",
+    "label": "Передаёт интервалы и строение",
+    "description": "Инженер использует согласованную геологию для обоснованного подсчёта."
+  },
+  {
+    "id": "e-geologist-handoff-technologist",
+    "source": "geologist",
+    "target": "technologist",
+    "type": "related_to",
+    "label": "Передаёт свойства пласта",
+    "description": "Технолог учитывает литологию, границы и ограничения проницаемости в проекте."
+  },
+  {
+    "id": "e-hydrogeochemist-handoff-technologist",
+    "source": "hydrogeochemist",
+    "target": "technologist",
+    "type": "related_to",
+    "label": "Передаёт объяснение состава",
+    "description": "Технолог рассматривает состав вместе с режимом и геологическими условиями."
+  },
+  {
+    "id": "e-modeler-handoff-chief-technologist",
+    "source": "modeler",
+    "target": "chief-technologist",
+    "type": "related_to",
+    "label": "Передаёт сценарии",
+    "description": "Главный технолог сравнивает последствия вариантов с учётом допущений."
+  },
+  {
+    "id": "e-dispatcher-handoff-technologist",
+    "source": "dispatcher",
+    "target": "technologist",
+    "type": "related_to",
+    "label": "Передаёт оперативный факт",
+    "description": "Замеры и события позволяют своевременно проверять изменение режима."
+  },
+  {
+    "id": "e-technologist-handoff-mechanic",
+    "source": "technologist",
+    "target": "mechanic",
+    "type": "related_to",
+    "label": "Передаёт технический вопрос",
+    "description": "Проверка оборудования нужна, если изменение режима может быть связано с неисправностью."
+  },
+  {
+    "id": "e-mechanic-handoff-repair-supervisor",
+    "source": "mechanic",
+    "target": "repair-supervisor",
+    "type": "related_to",
+    "label": "Передаёт задание на работы",
+    "description": "Диагностика и требуемый объём становятся основой организации ремонта."
+  },
+  {
+    "id": "e-repair-supervisor-handoff-technologist",
+    "source": "repair-supervisor",
+    "target": "technologist",
+    "type": "related_to",
+    "label": "Возвращает результат работ",
+    "description": "Технолог оценивает готовность возврата объекта и фактический эффект."
+  },
+  {
+    "id": "e-analyst-handoff-manager",
+    "source": "analyst",
+    "target": "manager",
+    "type": "related_to",
+    "label": "Передаёт выводы для решения",
+    "description": "Руководитель получает показатели, причины, ограничения и варианты действий."
+  },
+  {
+    "id": "e-environmental-engineer-handoff-manager",
+    "source": "environmental-engineer",
+    "target": "manager",
+    "type": "related_to",
+    "label": "Передаёт ограничения среды",
+    "description": "Решение учитывает состояние территории и программу последующего контроля."
+  },
+  {
+    "id": "e-territory-supports-module-bgd",
+    "source": "territory",
+    "target": "module-bgd",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«База геологических данных» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-exploration-supports-module-bgd",
+    "source": "exploration",
+    "target": "module-bgd",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«База геологических данных» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-research-supports-module-bgd",
+    "source": "research",
+    "target": "module-bgd",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«База геологических данных» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-deposit-supports-module-bgd",
+    "source": "deposit",
+    "target": "module-bgd",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«База геологических данных» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-passport-supports-module-bgd",
+    "source": "passport",
+    "target": "module-bgd",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«База геологических данных» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-drilling-log-supports-module-bgd",
+    "source": "drilling-log",
+    "target": "module-bgd",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«База геологических данных» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-log-curves-supports-module-bgd",
+    "source": "log-curves",
+    "target": "module-bgd",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«База геологических данных» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-lab-result-supports-module-bgd",
+    "source": "lab-result",
+    "target": "module-bgd",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«База геологических данных» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-trajectory-supports-module-bgd",
+    "source": "trajectory",
+    "target": "module-bgd",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«База геологических данных» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-cutoff-limits-supports-module-bgd",
+    "source": "cutoff-limits",
+    "target": "module-bgd",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«База геологических данных» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-interpretation-supports-module-geology",
+    "source": "interpretation",
+    "target": "module-geology",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "Рабочая автономная интерпретация доступна в Геологии. Поддержка относится к собственному документу Альфы и сохранённому редактору керна/проб; обмен с БГД не реализован.",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Рабочее место, прежний керн/пробы и отдельные namespace"
+      }
+    ]
+  },
+  {
+    "id": "e-depth-matching-supports-module-geology",
+    "source": "depth-matching",
+    "target": "module-geology",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "Рабочая автономная интерпретация доступна в Геологии. Поддержка относится к собственному документу Альфы и сохранённому редактору керна/проб; обмен с БГД не реализован.",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Рабочее место, прежний керн/пробы и отдельные namespace"
+      }
+    ]
+  },
+  {
+    "id": "e-core-lithology-supports-module-geology",
+    "source": "core-lithology",
+    "target": "module-geology",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "Рабочая автономная интерпретация доступна в Геологии. Поддержка относится к собственному документу Альфы и сохранённому редактору керна/проб; обмен с БГД не реализован.",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Рабочее место, прежний керн/пробы и отдельные namespace"
+      }
+    ]
+  },
+  {
+    "id": "e-log-lithology-supports-module-geology",
+    "source": "log-lithology",
+    "target": "module-geology",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "Рабочая автономная интерпретация доступна в Геологии. Поддержка относится к собственному документу Альфы и сохранённому редактору керна/проб; обмен с БГД не реализован.",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Рабочее место, прежний керн/пробы и отдельные namespace"
+      }
+    ]
+  },
+  {
+    "id": "e-tech-interval-supports-module-geology",
+    "source": "tech-interval",
+    "target": "module-geology",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "Рабочая автономная интерпретация доступна в Геологии. Поддержка относится к собственному документу Альфы и сохранённому редактору керна/проб; обмен с БГД не реализован.",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Рабочее место, прежний керн/пробы и отдельные namespace"
+      }
+    ]
+  },
+  {
+    "id": "e-composite-data-supports-module-geology",
+    "source": "composite-data",
+    "target": "module-geology",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "Рабочая автономная интерпретация доступна в Геологии. Поддержка относится к собственному документу Альфы и сохранённому редактору керна/проб; обмен с БГД не реализован.",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Рабочее место, прежний керн/пробы и отдельные namespace"
+      }
+    ]
+  },
+  {
+    "id": "e-production-supports-module-technology",
+    "source": "production",
+    "target": "module-technology",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Технология» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-monitoring-supports-module-technology",
+    "source": "monitoring",
+    "target": "module-technology",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Технология» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-maintenance-supports-module-technology",
+    "source": "maintenance",
+    "target": "module-technology",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Технология» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-accounting-supports-module-technology",
+    "source": "accounting",
+    "target": "module-technology",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Технология» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-isr-supports-module-technology",
+    "source": "isr",
+    "target": "module-technology",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Технология» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-actual-regime-supports-module-technology",
+    "source": "actual-regime",
+    "target": "module-technology",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Технология» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-material-balance-supports-module-technology",
+    "source": "material-balance",
+    "target": "module-technology",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Технология» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-repair-order-supports-module-technology",
+    "source": "repair-order",
+    "target": "module-technology",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Технология» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-planning-supports-module-modeling",
+    "source": "planning",
+    "target": "module-modeling",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Моделирование» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-modeling-supports-module-modeling",
+    "source": "modeling",
+    "target": "module-modeling",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Моделирование» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-scenario-supports-module-modeling",
+    "source": "scenario",
+    "target": "module-modeling",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Моделирование» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-forecast-supports-module-modeling",
+    "source": "forecast",
+    "target": "module-modeling",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Моделирование» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-management-supports-module-analytics",
+    "source": "management",
+    "target": "module-analytics",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Аналитика» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-analysis-supports-module-analytics",
+    "source": "analysis",
+    "target": "module-analytics",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Аналитика» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-plan-fact-supports-module-analytics",
+    "source": "plan-fact",
+    "target": "module-analytics",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Аналитика» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-reporting-supports-module-analytics",
+    "source": "reporting",
+    "target": "module-analytics",
+    "type": "supports",
+    "label": "Назначение функциональной области",
+    "description": "«Аналитика» — предполагаемая функциональная область для этой задачи. В текущем прототипе только заглушка."
+  },
+  {
+    "id": "e-reference-data-supports-module-admin",
+    "source": "reference-data",
+    "target": "module-admin",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«Администрирование» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-data-audit-supports-module-admin",
+    "source": "data-audit",
+    "target": "module-admin",
+    "type": "supports",
+    "label": "Поддержка предметной работы",
+    "description": "«Администрирование» поддерживает этот предметный контекст. Границы текущей реализации объяснены в карточке модуля."
+  },
+  {
+    "id": "e-territory-contains-enterprise",
+    "source": "territory",
+    "target": "enterprise",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Предприятие» раскрывает содержание «Предприятие и объекты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-territory-contains-deposit",
+    "source": "territory",
+    "target": "deposit",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Месторождение» раскрывает содержание «Предприятие и объекты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-territory-contains-site",
+    "source": "territory",
+    "target": "site",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Участок» раскрывает содержание «Предприятие и объекты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-territory-contains-orebody",
+    "source": "territory",
+    "target": "orebody",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Рудная залежь» раскрывает содержание «Предприятие и объекты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-territory-contains-reserve-block",
+    "source": "territory",
+    "target": "reserve-block",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Подсчётный блок» раскрывает содержание «Предприятие и объекты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-territory-contains-production-block",
+    "source": "territory",
+    "target": "production-block",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Эксплуатационный блок» раскрывает содержание «Предприятие и объекты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-territory-contains-cell",
+    "source": "territory",
+    "target": "cell",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Технологическая ячейка» раскрывает содержание «Предприятие и объекты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-territory-contains-well",
+    "source": "territory",
+    "target": "well",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Скважина» раскрывает содержание «Предприятие и объекты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-exploration-contains-exploration-plan",
+    "source": "exploration",
+    "target": "exploration-plan",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Программа разведки» раскрывает содержание «Разведка и бурение». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-exploration-contains-surveying",
+    "source": "exploration",
+    "target": "surveying",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Привязка на местности» раскрывает содержание «Разведка и бурение». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-exploration-contains-drilling",
+    "source": "exploration",
+    "target": "drilling",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Бурение и проходка» раскрывает содержание «Разведка и бурение». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-drilling-contains-drilling-run",
+    "source": "drilling",
+    "target": "drilling-run",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Рейс бурения» раскрывает содержание «Бурение и проходка». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-drilling-contains-drilling-log",
+    "source": "drilling",
+    "target": "drilling-log",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Журнал бурения» раскрывает содержание «Бурение и проходка». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-exploration-contains-completion",
+    "source": "exploration",
+    "target": "completion",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Оборудование и освоение скважины» раскрывает содержание «Разведка и бурение». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-exploration-contains-well-construction",
+    "source": "exploration",
+    "target": "well-construction",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Конструкция скважины» раскрывает содержание «Разведка и бурение». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-exploration-contains-passport",
+    "source": "exploration",
+    "target": "passport",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Паспорт скважины» раскрывает содержание «Разведка и бурение». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-exploration-contains-well-lifecycle",
+    "source": "exploration",
+    "target": "well-lifecycle",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Жизненный цикл скважины» раскрывает содержание «Разведка и бурение». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-logging",
+    "source": "research",
+    "target": "logging",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Каротаж» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-logging-contains-gamma",
+    "source": "logging",
+    "target": "gamma",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Гамма-каротаж» раскрывает содержание «Каротаж». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-logging-contains-resistivity",
+    "source": "logging",
+    "target": "resistivity",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Кажущееся сопротивление, КС» раскрывает содержание «Каротаж». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-logging-contains-sp",
+    "source": "logging",
+    "target": "sp",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Потенциалы собственной поляризации» раскрывает содержание «Каротаж». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-logging-contains-caliper",
+    "source": "logging",
+    "target": "caliper",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Кавернометрия» раскрывает содержание «Каротаж». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-logging-contains-log-curves",
+    "source": "logging",
+    "target": "log-curves",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Каротажные кривые» раскрывает содержание «Каротаж». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-inclinometry",
+    "source": "research",
+    "target": "inclinometry",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Инклинометрия» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-trajectory",
+    "source": "research",
+    "target": "trajectory",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Траектория скважины» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-core",
+    "source": "research",
+    "target": "core",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Керн» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-core-recovery",
+    "source": "research",
+    "target": "core-recovery",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Выход керна» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-core-measurement",
+    "source": "research",
+    "target": "core-measurement",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Промер керна» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-sampling",
+    "source": "research",
+    "target": "sampling",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Отбор и регистрация проб» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-sample",
+    "source": "research",
+    "target": "sample",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Проба» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-lab-analysis",
+    "source": "research",
+    "target": "lab-analysis",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Лабораторный анализ» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-lab-result",
+    "source": "research",
+    "target": "lab-result",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Лабораторный результат» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-granulometry",
+    "source": "research",
+    "target": "granulometry",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Гранулометрический анализ» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-hydro-tests",
+    "source": "research",
+    "target": "hydro-tests",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Гидрогеологические испытания» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-groundwater-level",
+    "source": "research",
+    "target": "groundwater-level",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Уровень подземной воды» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-quality-check",
+    "source": "interpretation",
+    "target": "quality-check",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Проверка качества данных» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-depth-matching",
+    "source": "interpretation",
+    "target": "depth-matching",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Привязка керна по глубине» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-core-lithology",
+    "source": "interpretation",
+    "target": "core-lithology",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Литология по керну» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-log-lithology",
+    "source": "interpretation",
+    "target": "log-lithology",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Литология по каротажу» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-lithology",
+    "source": "interpretation",
+    "target": "lithology",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Литология» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-stratigraphy",
+    "source": "interpretation",
+    "target": "stratigraphy",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Стратиграфия» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-ore-interval",
+    "source": "interpretation",
+    "target": "ore-interval",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Рудный интервал» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-differential-interval",
+    "source": "interpretation",
+    "target": "differential-interval",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Дифференциальный интервал» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-tech-interval",
+    "source": "interpretation",
+    "target": "tech-interval",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Технологический интервал» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-composite-data",
+    "source": "interpretation",
+    "target": "composite-data",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Сводные геологические данные» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-geological-section",
+    "source": "interpretation",
+    "target": "geological-section",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Геологический разрез» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-planning-contains-reserves",
+    "source": "planning",
+    "target": "reserves",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Оценка и подсчёт запасов» раскрывает содержание «Запасы и проектирование». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-planning-contains-cutoff-limits",
+    "source": "planning",
+    "target": "cutoff-limits",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Кондиционные лимиты» раскрывает содержание «Запасы и проектирование». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-planning-contains-production-design",
+    "source": "planning",
+    "target": "production-design",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Проектирование разработки» раскрывает содержание «Запасы и проектирование». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-planning-contains-well-pattern",
+    "source": "planning",
+    "target": "well-pattern",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Сеть технологических скважин» раскрывает содержание «Запасы и проектирование». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-planning-contains-production-plan",
+    "source": "planning",
+    "target": "production-plan",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Производственный план» раскрывает содержание «Запасы и проектирование». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-planning-contains-modeling",
+    "source": "planning",
+    "target": "modeling",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Моделирование» раскрывает содержание «Запасы и проектирование». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-planning-contains-scenario",
+    "source": "planning",
+    "target": "scenario",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Сценарий» раскрывает содержание «Запасы и проектирование». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-planning-contains-forecast",
+    "source": "planning",
+    "target": "forecast",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Прогноз» раскрывает содержание «Запасы и проектирование». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-isr",
+    "source": "production",
+    "target": "isr",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Подземное скважинное выщелачивание» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-commissioning",
+    "source": "production",
+    "target": "commissioning",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Ввод в эксплуатацию» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-injection",
+    "source": "production",
+    "target": "injection",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Закачка» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-recovery",
+    "source": "production",
+    "target": "recovery",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Откачка» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-injection-solution",
+    "source": "production",
+    "target": "injection-solution",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Закачной раствор» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-productive-solution",
+    "source": "production",
+    "target": "productive-solution",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Продуктивный раствор» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-processing",
+    "source": "production",
+    "target": "processing",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Поверхностная переработка» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-sorption",
+    "source": "production",
+    "target": "sorption",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Сорбция» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-circulation",
+    "source": "production",
+    "target": "circulation",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Оборот растворов» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-actual-regime",
+    "source": "production",
+    "target": "actual-regime",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Фактический режим» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-monitoring-contains-operating-measurements",
+    "source": "monitoring",
+    "target": "operating-measurements",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Производственные замеры» раскрывает содержание «Контроль и безопасность». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-monitoring-contains-solution-sample",
+    "source": "monitoring",
+    "target": "solution-sample",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Проба раствора» раскрывает содержание «Контроль и безопасность». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-monitoring-contains-chemistry",
+    "source": "monitoring",
+    "target": "chemistry",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Состав растворов и воды» раскрывает содержание «Контроль и безопасность». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-monitoring-contains-groundwater-monitoring",
+    "source": "monitoring",
+    "target": "groundwater-monitoring",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Мониторинг подземных вод» раскрывает содержание «Контроль и безопасность». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-monitoring-contains-environment",
+    "source": "monitoring",
+    "target": "environment",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Экологический контроль» раскрывает содержание «Контроль и безопасность». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-monitoring-contains-radiation-control",
+    "source": "monitoring",
+    "target": "radiation-control",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Радиационный контроль» раскрывает содержание «Контроль и безопасность». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-monitoring-contains-deviation",
+    "source": "monitoring",
+    "target": "deviation",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Отклонение» раскрывает содержание «Контроль и безопасность». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-maintenance-contains-equipment",
+    "source": "maintenance",
+    "target": "equipment",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Оборудование» раскрывает содержание «Оборудование и ремонты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-maintenance-contains-equipment-passport",
+    "source": "maintenance",
+    "target": "equipment-passport",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Паспорт оборудования» раскрывает содержание «Оборудование и ремонты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-maintenance-contains-installation",
+    "source": "maintenance",
+    "target": "installation",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Монтаж и перемещение» раскрывает содержание «Оборудование и ремонты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-maintenance-contains-equipment-service",
+    "source": "maintenance",
+    "target": "equipment-service",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Техническое обслуживание» раскрывает содержание «Оборудование и ремонты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-maintenance-contains-repair-order",
+    "source": "maintenance",
+    "target": "repair-order",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Наряд на ремонтные работы» раскрывает содержание «Оборудование и ремонты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-maintenance-contains-repair-work",
+    "source": "maintenance",
+    "target": "repair-work",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Ремонтно-восстановительные работы» раскрывает содержание «Оборудование и ремонты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-maintenance-contains-decommissioning",
+    "source": "maintenance",
+    "target": "decommissioning",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Вывод из эксплуатации» раскрывает содержание «Оборудование и ремонты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-maintenance-contains-closure",
+    "source": "maintenance",
+    "target": "closure",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Закрытие и последующее наблюдение» раскрывает содержание «Оборудование и ремонты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-accounting-contains-shift-log",
+    "source": "accounting",
+    "target": "shift-log",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Сменный журнал» раскрывает содержание «Учёт и ресурсы». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-accounting-contains-material-balance",
+    "source": "accounting",
+    "target": "material-balance",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Материальный баланс» раскрывает содержание «Учёт и ресурсы». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-accounting-contains-acid-balance",
+    "source": "accounting",
+    "target": "acid-balance",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Баланс реагента» раскрывает содержание «Учёт и ресурсы». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-accounting-contains-inventory",
+    "source": "accounting",
+    "target": "inventory",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Материалы и снабжение» раскрывает содержание «Учёт и ресурсы». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-accounting-contains-costs",
+    "source": "accounting",
+    "target": "costs",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Производственные затраты» раскрывает содержание «Учёт и ресурсы». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-accounting-contains-erp",
+    "source": "accounting",
+    "target": "erp",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«ERP-контур предприятия» раскрывает содержание «Учёт и ресурсы». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-accounting-contains-production-report",
+    "source": "accounting",
+    "target": "production-report",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Производственный отчёт» раскрывает содержание «Учёт и ресурсы». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-analysis",
+    "source": "management",
+    "target": "analysis",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Анализ результатов» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-plan-fact",
+    "source": "management",
+    "target": "plan-fact",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«План, факт и модель» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-decision",
+    "source": "management",
+    "target": "decision",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Производственное решение» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-reporting",
+    "source": "management",
+    "target": "reporting",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Управленческая отчётность» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-reference-data",
+    "source": "management",
+    "target": "reference-data",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Справочники и единые термины» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-data-audit",
+    "source": "management",
+    "target": "data-audit",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«История действий и ответственность» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-ai-suggestion",
+    "source": "management",
+    "target": "ai-suggestion",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Предложение AI и экспертный вывод» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-geologist",
+    "source": "interpretation",
+    "target": "geologist",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Геолог» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-geophysicist",
+    "source": "research",
+    "target": "geophysicist",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Геофизик-интерпретатор» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-planning-contains-reserves-engineer",
+    "source": "planning",
+    "target": "reserves-engineer",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Инженер по запасам» раскрывает содержание «Запасы и проектирование». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-planning-contains-modeler",
+    "source": "planning",
+    "target": "modeler",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Геотехнолог-моделист» раскрывает содержание «Запасы и проектирование». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-monitoring-contains-hydrogeochemist",
+    "source": "monitoring",
+    "target": "hydrogeochemist",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Гидрогеохимик» раскрывает содержание «Контроль и безопасность». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-technologist",
+    "source": "production",
+    "target": "technologist",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Технолог добычи» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-dispatcher",
+    "source": "production",
+    "target": "dispatcher",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Диспетчер» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-research-contains-lab-technician",
+    "source": "research",
+    "target": "lab-technician",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Лабораторный специалист» раскрывает содержание «Исследования скважины». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-maintenance-contains-mechanic",
+    "source": "maintenance",
+    "target": "mechanic",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Механик» раскрывает содержание «Оборудование и ремонты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-maintenance-contains-repair-supervisor",
+    "source": "maintenance",
+    "target": "repair-supervisor",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Мастер РВР» раскрывает содержание «Оборудование и ремонты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-analyst",
+    "source": "management",
+    "target": "analyst",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Аналитик» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-chief-technologist",
+    "source": "management",
+    "target": "chief-technologist",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Главный технолог» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-system-admin",
+    "source": "management",
+    "target": "system-admin",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Администратор системы» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-ai-admin",
+    "source": "management",
+    "target": "ai-admin",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Администратор AI-моделей» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-exploration-contains-driller",
+    "source": "exploration",
+    "target": "driller",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Буровик» раскрывает содержание «Разведка и бурение». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-exploration-contains-surveyor",
+    "source": "exploration",
+    "target": "surveyor",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Маркшейдер / геодезист» раскрывает содержание «Разведка и бурение». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-monitoring-contains-environmental-engineer",
+    "source": "monitoring",
+    "target": "environmental-engineer",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Эколог» раскрывает содержание «Контроль и безопасность». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-manager",
+    "source": "management",
+    "target": "manager",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Руководитель предприятия» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-territory-contains-module-bgd",
+    "source": "territory",
+    "target": "module-bgd",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«База геологических данных» раскрывает содержание «Предприятие и объекты». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-interpretation-contains-module-geology",
+    "source": "interpretation",
+    "target": "module-geology",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Геологическая интерпретация» раскрывает содержание «От измерений к геологии». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-production-contains-module-technology",
+    "source": "production",
+    "target": "module-technology",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Технология» раскрывает содержание «Добыча методом ПСВ». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-planning-contains-module-modeling",
+    "source": "planning",
+    "target": "module-modeling",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Моделирование» раскрывает содержание «Запасы и проектирование». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-module-analytics",
+    "source": "management",
+    "target": "module-analytics",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Аналитика» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "e-management-contains-module-admin",
+    "source": "management",
+    "target": "module-admin",
+    "type": "contains",
+    "label": "Раскрывает область",
+    "description": "«Администрирование» раскрывает содержание «Решения и развитие». Это учебная группировка, которая не задаёт порядок работ."
+  },
+  {
+    "id": "ctx-well-construction-supports-module-tech-db",
+    "source": "well-construction",
+    "target": "module-tech-db",
+    "type": "supports",
+    "label": "Объясняет будущую задачу раздела",
+    "description": "Это предметное назначение будущего раздела; передачи производственных данных в текущем прототипе нет.",
+    "relationScope": "proposal",
+    "evidence": [
+      {
+        "sourceId": "menu-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-chemistry-supports-module-tech-composition",
+    "source": "chemistry",
+    "target": "module-tech-composition",
+    "type": "supports",
+    "label": "Объясняет будущую задачу раздела",
+    "description": "Это предметное назначение будущего раздела; передачи производственных данных в текущем прототипе нет.",
+    "relationScope": "proposal",
+    "evidence": [
+      {
+        "sourceId": "menu-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-actual-regime-supports-module-tech-flow",
+    "source": "actual-regime",
+    "target": "module-tech-flow",
+    "type": "supports",
+    "label": "Объясняет будущую задачу раздела",
+    "description": "Это предметное назначение будущего раздела; передачи производственных данных в текущем прототипе нет.",
+    "relationScope": "proposal",
+    "evidence": [
+      {
+        "sourceId": "menu-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-acid-balance-supports-module-tech-acid",
+    "source": "acid-balance",
+    "target": "module-tech-acid",
+    "type": "supports",
+    "label": "Объясняет будущую задачу раздела",
+    "description": "Это предметное назначение будущего раздела; передачи производственных данных в текущем прототипе нет.",
+    "relationScope": "proposal",
+    "evidence": [
+      {
+        "sourceId": "menu-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-equipment-supports-module-tech-equipment",
+    "source": "equipment",
+    "target": "module-tech-equipment",
+    "type": "supports",
+    "label": "Объясняет будущую задачу раздела",
+    "description": "Это предметное назначение будущего раздела; передачи производственных данных в текущем прототипе нет.",
+    "relationScope": "proposal",
+    "evidence": [
+      {
+        "sourceId": "menu-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-repair-work-supports-module-tech-repairs",
+    "source": "repair-work",
+    "target": "module-tech-repairs",
+    "type": "supports",
+    "label": "Объясняет будущую задачу раздела",
+    "description": "Это предметное назначение будущего раздела; передачи производственных данных в текущем прототипе нет.",
+    "relationScope": "proposal",
+    "evidence": [
+      {
+        "sourceId": "menu-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-production-report-supports-module-tech-reports",
+    "source": "production-report",
+    "target": "module-tech-reports",
+    "type": "supports",
+    "label": "Объясняет будущую задачу раздела",
+    "description": "Это предметное назначение будущего раздела; передачи производственных данных в текущем прототипе нет.",
+    "relationScope": "proposal",
+    "evidence": [
+      {
+        "sourceId": "menu-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-ai-suggestion-supports-module-tech-ai",
+    "source": "ai-suggestion",
+    "target": "module-tech-ai",
+    "type": "supports",
+    "label": "Объясняет будущую задачу раздела",
+    "description": "Это предметное назначение будущего раздела; передачи производственных данных в текущем прототипе нет.",
+    "relationScope": "proposal",
+    "evidence": [
+      {
+        "sourceId": "menu-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-gamma-produces-ore-interval",
+    "source": "alpha-gamma",
+    "target": "ore-interval",
+    "type": "produces",
+    "label": "Формирует результат метода",
+    "description": "Производный результат существует внутри общего документа выбранной скважины Альфы.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-gamma-performed-by-geophysicist",
+    "source": "alpha-gamma",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Интерпретирует геофизик",
+    "description": "Специалист проверяет запись, выбирает параметры и оценивает интерпретацию.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "alpha18",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-knd-performed-by-geophysicist",
+    "source": "alpha-knd",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Интерпретирует геофизик",
+    "description": "Специалист проверяет запись, выбирает параметры и оценивает интерпретацию.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "alpha18",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-electro-produces-log-lithology",
+    "source": "alpha-electro",
+    "target": "log-lithology",
+    "type": "produces",
+    "label": "Формирует результат метода",
+    "description": "Производный результат существует внутри общего документа выбранной скважины Альфы.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-electro-performed-by-geophysicist",
+    "source": "alpha-electro",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Интерпретирует геофизик",
+    "description": "Специалист проверяет запись, выбирает параметры и оценивает интерпретацию.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "alpha18",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-current-produces-alpha-filter",
+    "source": "alpha-current",
+    "target": "alpha-filter",
+    "type": "produces",
+    "label": "Формирует результат метода",
+    "description": "Производный результат существует внутри общего документа выбранной скважины Альфы.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-current-performed-by-geophysicist",
+    "source": "alpha-current",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Интерпретирует геофизик",
+    "description": "Специалист проверяет запись, выбирает параметры и оценивает интерпретацию.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "alpha18",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-thermal-produces-alpha-cement",
+    "source": "alpha-thermal",
+    "target": "alpha-cement",
+    "type": "produces",
+    "label": "Формирует результат метода",
+    "description": "Производный результат существует внутри общего документа выбранной скважины Альфы.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-thermal-performed-by-geophysicist",
+    "source": "alpha-thermal",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Интерпретирует геофизик",
+    "description": "Специалист проверяет запись, выбирает параметры и оценивает интерпретацию.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "alpha18",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-caliper-produces-alpha-diameter",
+    "source": "alpha-caliper",
+    "target": "alpha-diameter",
+    "type": "produces",
+    "label": "Формирует результат метода",
+    "description": "Производный результат существует внутри общего документа выбранной скважины Альфы.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-caliper-performed-by-geophysicist",
+    "source": "alpha-caliper",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Интерпретирует геофизик",
+    "description": "Специалист проверяет запись, выбирает параметры и оценивает интерпретацию.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "alpha18",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-flow-produces-alpha-flow-profile",
+    "source": "alpha-flow",
+    "target": "alpha-flow-profile",
+    "type": "produces",
+    "label": "Формирует результат метода",
+    "description": "Производный результат существует внутри общего документа выбранной скважины Альфы.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-flow-performed-by-geophysicist",
+    "source": "alpha-flow",
+    "target": "geophysicist",
+    "type": "performed_by",
+    "label": "Интерпретирует геофизик",
+    "description": "Специалист проверяет запись, выбирает параметры и оценивает интерпретацию.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "alpha18",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-gamma-uses-alpha-source-record",
+    "source": "alpha-gamma",
+    "target": "alpha-source-record",
+    "type": "uses",
+    "label": "Использует выбранную запись",
+    "description": "Исходная запись выбирается явно внутри автономной Альфы; источник не переписывается.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-electro-uses-alpha-source-record",
+    "source": "alpha-electro",
+    "target": "alpha-source-record",
+    "type": "uses",
+    "label": "Использует выбранную запись",
+    "description": "Исходная запись выбирается явно внутри автономной Альфы; источник не переписывается.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-current-uses-alpha-source-record",
+    "source": "alpha-current",
+    "target": "alpha-source-record",
+    "type": "uses",
+    "label": "Использует выбранную запись",
+    "description": "Исходная запись выбирается явно внутри автономной Альфы; источник не переписывается.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-thermal-uses-alpha-source-record",
+    "source": "alpha-thermal",
+    "target": "alpha-source-record",
+    "type": "uses",
+    "label": "Использует выбранную запись",
+    "description": "Исходная запись выбирается явно внутри автономной Альфы; источник не переписывается.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-caliper-uses-alpha-source-record",
+    "source": "alpha-caliper",
+    "target": "alpha-source-record",
+    "type": "uses",
+    "label": "Использует выбранную запись",
+    "description": "Исходная запись выбирается явно внутри автономной Альфы; источник не переписывается.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-flow-uses-alpha-source-record",
+    "source": "alpha-flow",
+    "target": "alpha-source-record",
+    "type": "uses",
+    "label": "Использует выбранную запись",
+    "description": "Исходная запись выбирается явно внутри автономной Альфы; источник не переписывается.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-gamma-uses-alpha-filter",
+    "source": "alpha-gamma",
+    "target": "alpha-filter",
+    "type": "uses",
+    "label": "Зависит от фактического фильтра",
+    "description": "Изменение результата ТК делает зависимый результат stale; автоматического пересчёта нет.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-caliper-uses-alpha-filter",
+    "source": "alpha-caliper",
+    "target": "alpha-filter",
+    "type": "uses",
+    "label": "Зависит от фактического фильтра",
+    "description": "Изменение результата ТК делает зависимый результат stale; автоматического пересчёта нет.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-flow-uses-alpha-filter",
+    "source": "alpha-flow",
+    "target": "alpha-filter",
+    "type": "uses",
+    "label": "Зависит от фактического фильтра",
+    "description": "Изменение результата ТК делает зависимый результат stale; автоматического пересчёта нет.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-gamma-uses-log-lithology",
+    "source": "alpha-gamma",
+    "target": "log-lithology",
+    "type": "uses",
+    "label": "Учитывает литологию ЭК",
+    "description": "Литология ЭК участвует в выбранном расчётном профиле ГК внутри Альфы.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-flow-uses-log-lithology",
+    "source": "alpha-flow",
+    "target": "log-lithology",
+    "type": "uses",
+    "label": "Использует в режиме по литологии",
+    "description": "Зависимость относится к соответствующему режиму РМ, а не ко всем режимам расходометрии.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-source-record-transforms-alpha-derived-curve",
+    "source": "alpha-source-record",
+    "target": "alpha-derived-curve",
+    "type": "transforms",
+    "label": "Создаёт производную запись",
+    "description": "Исходная запись сохраняется; предобработка создаёт производную ревизию.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-derived-curve-produces-alpha-stale",
+    "source": "alpha-derived-curve",
+    "target": "alpha-stale",
+    "type": "produces",
+    "label": "Помечает зависимые результаты stale",
+    "description": "Новая ревизия входа требует пересмотра зависимых результатов; старый результат не удаляется.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-passport-uses-alpha-result",
+    "source": "alpha-passport",
+    "target": "alpha-result",
+    "type": "uses",
+    "label": "Показывает сохранённые результаты",
+    "description": "Паспорт использует собственные результаты документа Альфы и отображает предупреждения stale.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-alpha-controls-uses-alpha-source-record",
+    "source": "alpha-controls",
+    "target": "alpha-source-record",
+    "type": "uses",
+    "label": "Проверяет качество на сравнимых данных",
+    "description": "Контроли сопоставляют выбранные записи и диапазоны, не заменяя результаты других методов.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "alpha-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-profile-segment-uses-section-profile",
+    "source": "profile-segment",
+    "target": "section-profile",
+    "type": "uses",
+    "label": "Принадлежит направленному профилю",
+    "description": "Сегмент является ребром ломаной с устойчивыми ID начала и конца; направление задаёт порядок проекции.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "section-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-section-projection-uses-profile-segment",
+    "source": "section-projection",
+    "target": "profile-segment",
+    "type": "uses",
+    "label": "Учитывает назначенный сегмент",
+    "description": "График использует явное назначение скважины; таблица чертежа пока выбирает ближайший сегмент. Единый расчёт остаётся задачей DR-09.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "section-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-section-correlations-uses-source-contacts",
+    "source": "section-correlations",
+    "target": "source-contacts",
+    "type": "uses",
+    "label": "Опирается на from/to своих интервалов",
+    "description": "Руда, технология и забаланс используют собственные исходные интервалы. Продление контура не переносит исходный контакт.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "section-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-lithology-related-to-source-contacts",
+    "source": "section-lithology",
+    "target": "source-contacts",
+    "type": "related_to",
+    "label": "Контакты принадлежат своим источникам",
+    "description": "Литология имеет собственные контакты; точки руды и технологии не переносятся на ближайшую литограницу автоматически.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "section-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-section-oxidation-uses-section-lithology",
+    "source": "section-oxidation",
+    "target": "section-lithology",
+    "type": "uses",
+    "label": "Задаёт локальный контекст",
+    "description": "Привязка линии окисления к литоконтактам включается отдельно. Ручная линия и литологическая область остаются разными объектами.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "section-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-section-correlations-uses-section-shared-support",
+    "source": "section-correlations",
+    "target": "section-shared-support",
+    "type": "uses",
+    "label": "Использует общую вспомогательную опору",
+    "description": "Изменение общей опоры затрагивает только связанные разрезы этого подмодуля и требует применения коррекции.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "section-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-section-print-uses-section-projection",
+    "source": "section-print",
+    "target": "section-projection",
+    "type": "uses",
+    "label": "Требует согласованного пикетажа",
+    "description": "Таблица чертежа и график пока используют разные способы выбора сегмента. Согласование проекции остаётся DR-09.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "section-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-geoblock-contour-uses-map-anchor",
+    "source": "geoblock-contour",
+    "target": "map-anchor",
+    "type": "uses",
+    "label": "Хранит скважинные опоры контура",
+    "description": "Узел сохраняет wellId и устье/забой. Явное изменение связи не перемещает исходную скважину.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "video-oct14",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-map-layers-supports-module-plan",
+    "source": "map-layers",
+    "target": "module-plan",
+    "type": "supports",
+    "label": "Управляет порядком и видимостью сцены",
+    "description": "Предметные группы, подслои и пользовательские построения управляются внутри картографического проекта.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "video-oct14",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-map-coordinates-supports-module-plan",
+    "source": "map-coordinates",
+    "target": "module-plan",
+    "type": "supports",
+    "label": "Согласует координатные действия",
+    "description": "Поиск, drag узлов, snap, линейка и печать используют локальные XY-метры с X к северу и Y к востоку; реальная CRS не назначена.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "video-oct14",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-autonomous-documents-supports-module-bgd",
+    "source": "autonomous-documents",
+    "target": "module-bgd",
+    "type": "supports",
+    "label": "Ограничивает обмен документами",
+    "description": "Это архитектурная граница: рабочие области самостоятельны и не выполняют скрытых межмодульных записей.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "team-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-autonomous-documents-supports-module-alpha",
+    "source": "autonomous-documents",
+    "target": "module-alpha",
+    "type": "supports",
+    "label": "Ограничивает обмен документами",
+    "description": "Это архитектурная граница: рабочие области самостоятельны и не выполняют скрытых межмодульных записей.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "team-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-autonomous-documents-supports-module-sections",
+    "source": "autonomous-documents",
+    "target": "module-sections",
+    "type": "supports",
+    "label": "Ограничивает обмен документами",
+    "description": "Это архитектурная граница: рабочие области самостоятельны и не выполняют скрытых межмодульных записей.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "team-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-autonomous-documents-supports-module-plan",
+    "source": "autonomous-documents",
+    "target": "module-plan",
+    "type": "supports",
+    "label": "Ограничивает обмен документами",
+    "description": "Это архитектурная граница: рабочие области самостоятельны и не выполняют скрытых межмодульных записей.",
+    "relationScope": "prototype",
+    "evidence": [
+      {
+        "sourceId": "team-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-module-plan-related-to-module-sections",
+    "source": "module-plan",
+    "target": "module-sections",
+    "type": "related_to",
+    "label": "Профиль плана и документ разреза различны",
+    "description": "Предметное сходство профилей не создаёт переход или синхронизацию по имени.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "video-oct14",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-section-correlations-supports-module-reserves",
+    "source": "section-correlations",
+    "target": "module-reserves",
+    "type": "supports",
+    "label": "Предполагаемый источник будущего подсчёта",
+    "description": "Расчёт запасов по построениям требует отдельной постановки и проверки методики; текущий пункт меню пустой.",
+    "relationScope": "proposal",
+    "evidence": [
+      {
+        "sourceId": "g19",
+        "locator": "РП 2019, с. 188–263; текущий пункт Подсчёт запасов"
+      }
+    ]
+  },
+  {
+    "id": "ctx-design-backlog-supports-module-sections",
+    "source": "design-backlog",
+    "target": "module-sections",
+    "type": "supports",
+    "label": "Описывает оставшийся объём",
+    "description": "DR-01…13 — предложенные задачи. Отметка VA-01…18 выполнено не означает выполнение этого остатка.",
+    "relationScope": "proposal",
+    "evidence": [
+      {
+        "sourceId": "design-review",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-rhythm-excluded-related-to-section-faults",
+    "source": "rhythm-excluded",
+    "target": "section-faults",
+    "type": "related_to",
+    "label": "Не заменяет фундамент или разломы",
+    "description": "Ритмопачки исключены; самостоятельные ручные фундамент и разломы сохранены.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "section-current",
+        "locator": "Предметные зависимости и ограничения"
+      }
+    ]
+  },
+  {
+    "id": "ctx-module-geology-contains-module-alpha",
+    "source": "module-geology",
+    "target": "module-alpha",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-geology-contains-module-sections",
+    "source": "module-geology",
+    "target": "module-sections",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-geology-contains-module-plan",
+    "source": "module-geology",
+    "target": "module-plan",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-geology-contains-module-core-menu",
+    "source": "module-geology",
+    "target": "module-core-menu",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-geology-contains-module-gis-tablet",
+    "source": "module-geology",
+    "target": "module-gis-tablet",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-geology-contains-module-well-passport",
+    "source": "module-geology",
+    "target": "module-well-passport",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-geology-contains-module-reserves",
+    "source": "module-geology",
+    "target": "module-reserves",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-technology-contains-module-tech-db",
+    "source": "module-technology",
+    "target": "module-tech-db",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-technology-contains-module-tech-composition",
+    "source": "module-technology",
+    "target": "module-tech-composition",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-technology-contains-module-tech-flow",
+    "source": "module-technology",
+    "target": "module-tech-flow",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-technology-contains-module-tech-acid",
+    "source": "module-technology",
+    "target": "module-tech-acid",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-technology-contains-module-tech-equipment",
+    "source": "module-technology",
+    "target": "module-tech-equipment",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-technology-contains-module-tech-repairs",
+    "source": "module-technology",
+    "target": "module-tech-repairs",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-technology-contains-module-tech-reports",
+    "source": "module-technology",
+    "target": "module-tech-reports",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-technology-contains-module-tech-ai",
+    "source": "module-technology",
+    "target": "module-tech-ai",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-gamma",
+    "source": "module-alpha",
+    "target": "alpha-gamma",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-knd",
+    "source": "module-alpha",
+    "target": "alpha-knd",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-electro",
+    "source": "module-alpha",
+    "target": "alpha-electro",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-current",
+    "source": "module-alpha",
+    "target": "alpha-current",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-thermal",
+    "source": "module-alpha",
+    "target": "alpha-thermal",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-caliper",
+    "source": "module-alpha",
+    "target": "alpha-caliper",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-flow",
+    "source": "module-alpha",
+    "target": "alpha-flow",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-section-profile",
+    "source": "module-sections",
+    "target": "section-profile",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-profile-segment",
+    "source": "module-sections",
+    "target": "profile-segment",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-section-projection",
+    "source": "module-sections",
+    "target": "section-projection",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-source-contacts",
+    "source": "module-sections",
+    "target": "source-contacts",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-section-correlations",
+    "source": "module-sections",
+    "target": "section-correlations",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-section-lithology",
+    "source": "module-sections",
+    "target": "section-lithology",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-section-oxidation",
+    "source": "module-sections",
+    "target": "section-oxidation",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-section-shared-support",
+    "source": "module-sections",
+    "target": "section-shared-support",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-section-faults",
+    "source": "module-sections",
+    "target": "section-faults",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-section-print",
+    "source": "module-sections",
+    "target": "section-print",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-plan-contains-geoblock-contour",
+    "source": "module-plan",
+    "target": "geoblock-contour",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-plan-contains-map-anchor",
+    "source": "module-plan",
+    "target": "map-anchor",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-plan-contains-map-layers",
+    "source": "module-plan",
+    "target": "map-layers",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-plan-contains-map-coordinates",
+    "source": "module-plan",
+    "target": "map-coordinates",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-source-record",
+    "source": "module-alpha",
+    "target": "alpha-source-record",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-derived-curve",
+    "source": "module-alpha",
+    "target": "alpha-derived-curve",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-result",
+    "source": "module-alpha",
+    "target": "alpha-result",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-stale",
+    "source": "module-alpha",
+    "target": "alpha-stale",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-filter",
+    "source": "module-alpha",
+    "target": "alpha-filter",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-cement",
+    "source": "module-alpha",
+    "target": "alpha-cement",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-diameter",
+    "source": "module-alpha",
+    "target": "alpha-diameter",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-flow-profile",
+    "source": "module-alpha",
+    "target": "alpha-flow-profile",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-controls",
+    "source": "module-alpha",
+    "target": "alpha-controls",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-alpha-contains-alpha-passport",
+    "source": "module-alpha",
+    "target": "alpha-passport",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-interpretation-contains-autonomous-documents",
+    "source": "interpretation",
+    "target": "autonomous-documents",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-design-backlog",
+    "source": "module-sections",
+    "target": "design-backlog",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-sections-contains-rhythm-excluded",
+    "source": "module-sections",
+    "target": "rhythm-excluded",
+    "type": "contains",
+    "label": "Включает учебный контекст",
+    "description": "Учебная вложенность для навигации; она не означает передачу данных или физическое подчинение объектов.",
+    "relationScope": "domain"
+  },
+  {
+    "id": "ctx-module-core-menu-related-to-depth-matching",
+    "source": "module-core-menu",
+    "target": "depth-matching",
+    "type": "related_to",
+    "label": "Отдельный пункт и сохранённый редактор различны",
+    "description": "Новый пункт второго уровня остаётся заглушкой. Сохранённый редактор керна/проб доступен через дополнительное меню интерпретации.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "menu-current",
+        "locator": "Различие пунктов второго уровня и функций рабочих областей"
+      }
+    ]
+  },
+  {
+    "id": "ctx-module-gis-tablet-related-to-module-alpha",
+    "source": "module-gis-tablet",
+    "target": "module-alpha",
+    "type": "related_to",
+    "label": "Планшет Альфы не реализует весь пункт ГИС",
+    "description": "В Альфе работает свой Canvas-планшет; самостоятельный пункт «Планшет ГИС» пока является кнопкой-пустышкой.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "menu-current",
+        "locator": "Различие пунктов второго уровня и функций рабочих областей"
+      }
+    ]
+  },
+  {
+    "id": "ctx-module-well-passport-related-to-alpha-passport",
+    "source": "module-well-passport",
+    "target": "alpha-passport",
+    "type": "related_to",
+    "label": "Паспорт Альфы не равен пустому пункту меню",
+    "description": "Три листа Альфы и паспорт БГД имеют собственные сценарии; отдельный пункт «Паспорт скважины» в Геологии ещё не реализован.",
+    "relationScope": "domain",
+    "evidence": [
+      {
+        "sourceId": "menu-current",
+        "locator": "Различие пунктов второго уровня и функций рабочих областей"
+      }
+    ]
+  }
+]
