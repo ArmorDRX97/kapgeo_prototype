@@ -2,11 +2,11 @@ import type { GeologySection, SectionDrawing } from '../model/types'
 import { profileLength } from './profile'
 import { layerAnchors } from './correlation'
 export function drawingTable(section: GeologySection, drawing: SectionDrawing) {
-  const layer = (['ore', 'uncorrected', 'offbalance'] as const).find(layer => drawing.layers.includes(layer))
-  const anchors = layer ? layerAnchors(section, layer).filter(a => !section.auxiliary?.some(aux => a.id.endsWith(`/${aux.id}`))) : []
+  const layers = (['ore', 'uncorrected', 'offbalance'] as const).filter(layer => drawing.layers.includes(layer)), layer=layers[0]
+  const anchors = drawing.oreParameters===false ? [] : layers.flatMap(layer=>layerAnchors(section,layer).filter(a=>!section.auxiliary?.some(aux=>a.id.endsWith(`/${aux.id}`))).map(a=>({...a,source:layer})))
   let line = 1
-  const rows = section.wellIds.map(wellId => {
-    const intervals = anchors.filter(a => a.wellId === wellId).map(a => `${a.from.toFixed(1)}–${a.to.toFixed(1)}`)
+  const rows = section.wellIds.filter(id=>!drawing.wellIds||drawing.wellIds.includes(id)).map(wellId => {
+    const intervals = anchors.filter(a => a.wellId === wellId).map(a => `${layers.length>1?({ore:'ОРИ',uncorrected:'БП',offbalance:'ЗБ'}[a.source]+': '):''}${a.from.toFixed(1)}–${a.to.toFixed(1)}`)
     const labels = Array.from({ length: Math.max(1, Math.ceil(intervals.length / 2)) }, (_, i) => intervals.slice(i * 2, i * 2 + 2).join('; ') || '—')
     const row = { wellId, labels, line }; line += labels.length; return row
   })
@@ -21,7 +21,7 @@ export function drawingLayout(d: SectionDrawing, wellCount = 0) {
   const graphWidth = (d.right - d.left) * 1000 / d.horizontalScale + 8.4
   const graphHeight = (d.top - d.bottom) * 1000 / d.verticalScale + 8.4
   const contentWidth = Math.max(140, graphWidth)
-  const contentHeight = graphHeight + d.planHeight + 32 + wellCount * 4
+  const contentHeight = graphHeight + d.planHeight + (d.separator??0) + 6 + (d.bottomField??26) + (d.legend?((d.legendSize??3)+5):0) + wellCount * 4
   const availableWidth = width - 2 * d.margin, availableHeight = height - 2 * d.margin - 12
   const overlap = d.overlap ?? 0, strideX = availableWidth - overlap, strideY = availableHeight - overlap
   if (![width, height, graphWidth, graphHeight, contentWidth, contentHeight, availableWidth, availableHeight].every(Number.isFinite) || graphWidth <= 8.4 || graphHeight <= 8.4 || contentHeight <= 24 || availableWidth <= 0 || availableHeight <= 0) throw new Error('Некорректные размеры чертежа.')

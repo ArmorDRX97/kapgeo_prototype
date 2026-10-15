@@ -15,7 +15,18 @@
 .section-registry__filter-button:hover, .section-registry__filter-button[aria-expanded="true"] { color: var(--color-brand-800); background: var(--color-brand-50); }
 .section-registry__summary { display: flex; flex: none; align-items: center; justify-content: space-between; color: var(--text-secondary); font-size: var(--font-size-sm); }
 .section-registry nav { min-height: 0; flex: 1; overflow-y: auto; }
-.section-registry-group > strong { display: block; padding: var(--space-2); color: var(--text-secondary); font-size: var(--font-size-sm); }
+.section-registry-group + .section-registry-group { margin-top: var(--space-2); }
+.section-registry-group > summary { cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding: var(--space-2); border-radius: var(--radius-sm); background: var(--surface-subtle); color: var(--text-primary); font-size: var(--font-size-sm); }
+.section-registry-group > summary > svg { flex: none; color: var(--text-secondary); }
+.section-registry-group > summary > span { flex: 1; min-width: 0; }
+.section-registry-group > summary > small { flex: none; padding: 0 var(--space-1); border-radius: var(--radius-sm); color: var(--text-secondary); background: var(--surface-panel); font-variant-numeric: tabular-nums; font-weight: 500; }
+.section-registry-group > summary:hover, .section-registry-group.has-selection > summary { background: var(--color-brand-50); color: var(--color-brand-800); }
+.section-registry-group > summary::-webkit-details-marker { display: none; }
+.section-registry-group[open] > summary > svg { transform: rotate(90deg); }
+.section-registry-group > summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.section-registry-group__items { margin: var(--space-1) 0 var(--space-2) var(--space-3); padding-left: var(--space-2); border-left: 1px solid var(--border-strong); }
+.section-registry-group__items > a { position: relative; }
+.section-registry-group__items > a::before { content: ''; position: absolute; left: calc(-1 * var(--space-2)); width: var(--space-2); border-top: 1px solid var(--border-strong); }
 .section-registry nav a { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-8); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); color: var(--text-primary); font-size: var(--font-size-sm); text-decoration: none; }
 .section-registry nav a > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .section-registry nav a small { flex: none; color: var(--text-secondary); }
@@ -264,7 +275,7 @@
 @media print { html, body { margin: 0; padding: 0; min-height: 0; height: auto; } body > :not(.section-print-pages) { display: none !important; } body * { visibility: hidden; } .section-print-pages { display: block; position: static; } .section-print-pages, .section-print-pages * { visibility: visible; } .section-print-pages > svg { display: block; break-after: page; overflow: hidden; } .section-print-pages > svg:last-child { break-after: auto; } }
 @media (max-width: 1200px) { .section-layout { --section-registry-width: 220px; --section-tools-width: 320px; } }
 @media (max-width: 900px) { .section-graphic-workspace { display: flex; flex-direction: column; overflow: auto; } .section-graph-center { flex: none; min-height: 620px; } .section-graph-stage { flex: none; overflow: visible; } .section-plot-surface .section-canvas-viewport { flex: none; height: min(56dvh, 560px); } .section-plot-surface .section-map-wrap { height: 420px; } .section-plot-surface .section-drawing-preview { height: 520px; flex: none; } .section-graphic-tools { flex: none; border-left: 0; border-top: 1px solid var(--border-default); } .section-graphic-tools__content { flex: none; height: min(42dvh, 360px); overflow: hidden; } .section-graph-center__header { flex-wrap: wrap; } }
-@media (max-width: 760px) { .section-layout, .section-layout.is-registry-collapsed { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); } .section-registry { max-height: 200px; border-right: 0; border-bottom: 1px solid var(--border-default); } .section-registry nav { min-height: 56px; } .section-registry > header { min-height: var(--space-8); } .section-form { grid-template-columns: minmax(0, 1fr); } .section-workbench__main { padding: var(--space-3); } .section-workbench--graph .section-workbench__main { padding: 0; } }
+@media (max-width: 760px) { .section-layout, .section-layout.is-registry-collapsed { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); } .section-registry { max-height: min(40dvh, calc(var(--space-10) * 7)); border-right: 0; border-bottom: 1px solid var(--border-default); } .section-registry nav { min-height: 56px; } .section-registry > header { min-height: var(--space-8); } .section-form { grid-template-columns: minmax(0, 1fr); } .section-workbench__main { padding: var(--space-3); } .section-workbench--graph .section-workbench__main { padding: 0; } }
 .section-curve-settings { grid-column: 1 / -1; min-width: 0; }
 .section-curve-settings fieldset { margin-block: var(--space-3); padding: var(--space-3); border: 1px solid var(--border-default); border-radius: var(--radius-sm); }
 
@@ -313,3 +324,13 @@
 .section-map__segment-hit { stroke:transparent;stroke-width:12;vector-effect:non-scaling-stroke;cursor:pointer; }
 .section-map__segment-hit.is-selected { stroke:var(--color-brand-600);stroke-opacity:.18; }
 .section-map__segment-hit:focus-visible { stroke:var(--color-brand-600);stroke-opacity:.6;outline:none; }
+
+.section-map__well circle { fill: var(--surface-panel); }
+.section-map__well path { fill:none; stroke:var(--text-primary); }
+.section-dual-list { display:grid; grid-template-columns:minmax(0,1fr) 130px minmax(0,1fr); gap:var(--space-3); }
+.section-dual-list label { display:grid; gap:var(--space-2); }
+.section-dual-list select { width:100%; }
+@media(max-width:700px){.section-dual-list{grid-template-columns:1fr}}
+
+.section-drawing-plan circle { fill:var(--surface-panel); stroke:var(--text-primary); stroke-width:1; }
+.section-drawing-plan path { fill:none; stroke:var(--text-primary); stroke-width:1; }

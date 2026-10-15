@@ -1,3 +1,4 @@
+import { profileWithBoundaries } from '../../entities/geology-section/lib/profileChange'
 import { useState } from 'react'
 import { useBlocker } from '@tanstack/react-router'
 import { Save, Undo2, Redo2, Trash2, Download } from 'lucide-react'
@@ -23,7 +24,7 @@ import { SectionDocumentHeader } from './ui/SectionDocumentHeader'
 import { reconcileProfile } from '../../entities/geology-section/lib/segments'
 import './sections.css'
 
-export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, onDeleted }: { initial: GeologySection; persona: UserPersona | null; search: SectionSearch; onSearch: (next: SectionSearch) => void; onSaved: (section: GeologySection) => void; onDeleted?: () => void }) {
+export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, onDeleted, documents=[] }: { documents?:GeologySection[]; initial: GeologySection; persona: UserPersona | null; search: SectionSearch; onSearch: (next: SectionSearch) => void; onSaved: (section: GeologySection) => void; onDeleted?: () => void }) {
   const [section, setSection] = useState(initial), [saved, setSaved] = useState(initial)
   const [past, setPast] = useState<GeologySection[]>([]), [future, setFuture] = useState<GeologySection[]>([])
   const [error, setError] = useState(''), [notice, setNotice] = useState('')
@@ -36,7 +37,7 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
   } })
   const commit = (next: GeologySection) => {
     if (!editable) return
-    const reconciled = reconcileProfile(section,next)
+    const reconciled = reconcileProfile(section,JSON.stringify(section.profile)===JSON.stringify(next.profile)?next:profileWithBoundaries(next,next.profile))
     if (reconciled.lost && !window.confirm(`Изменение профиля снимет ${reconciled.lost} назначений скважин сегментам. Состав разреза сохранится. Продолжить?`)) return
     const repaired = repairSection(reconciled.section)
     setPast([...past.slice(-39), section]); setFuture([]); setSection(repaired.section); setError(''); setNotice(repaired.changes.join('. '))
@@ -63,7 +64,7 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
       if (!window.confirm(`Удалить разрез «${saved.title}»?`)) return
       try { sectionRepository.remove(saved.id, saved.revision, persona); onDeleted?.() } catch (problem) { setError(problem instanceof Error ? problem.message : 'Не удалось удалить разрез.') }
     }}><Trash2 size={15} />Удалить разрез</Button>
-  const editor = view === 'overview' ? <SectionSetup {...props} /> : view === 'map' ? <ProfileMap {...props} onPending={setPendingGeometry} /> : !graphicReady ? <PlotSurface><p role="alert" className="section-error">Для графической области исправьте профиль и диапазон высот во вкладке «Разрез». Черновик сохранён в текущей рабочей области.</p></PlotSurface> : view === 'drawing' ? <DrawingEditor {...props} selection={search.selection} onSelect={select} /> : <>
+  const editor = view === 'overview' ? <SectionSetup {...props} onPending={setPendingGeometry} onMap={()=>onSearch({...search,view:'map'})} /> : view === 'map' ? <ProfileMap documents={documents} {...props} onPending={setPendingGeometry} /> : !graphicReady ? <PlotSurface><p role="alert" className="section-error">Для графической области исправьте профиль и диапазон высот во вкладке «Разрез». Черновик сохранён в текущей рабочей области.</p></PlotSurface> : view === 'drawing' ? <DrawingEditor {...props} selection={search.selection} onSelect={select} /> : <>
         {view === 'technology' && <div className="section-actions" role="group" aria-label="Режим технологии">{(['layers', 'foundation'] as const).map((mode, i) => <Button key={mode} variant={(search.mode ?? 'layers') === mode ? 'primary' : 'secondary'} onClick={() => onSearch({ view, mode })}>{['Пропластки', 'Фундамент и разломы'][i]}</Button>)}</div>}
         {view === 'ore' && <div className="section-actions" role="group" aria-label="Источник руды">{(['corrected', 'uncorrected'] as const).map((mode, i) => <Button key={mode} variant={(search.mode ?? 'corrected') === mode ? 'primary' : 'secondary'} onClick={() => onSearch({ view, mode })}>{['В технологической толще', 'Без поправок'][i]}</Button>)}</div>}
         {view === 'lithology' || view === 'oxidation' || view === 'technology' && search.mode === 'foundation' ? <GraphicEditor key={`${view}-${search.mode}`} {...props} onPending={setPendingGeometry} mode={view === 'technology' ? search.mode as 'foundation' : view} selection={search.selection} onSelect={select} /> : <CorrelationEditor onPending={setPendingGeometry} key={`${view}-${search.mode}`} {...props} layer={view === 'ore' ? search.mode === 'uncorrected' ? 'uncorrected' : 'ore' : view === 'offbalance' ? 'offbalance' : 'technology'} selection={search.selection} onSelect={select} />}

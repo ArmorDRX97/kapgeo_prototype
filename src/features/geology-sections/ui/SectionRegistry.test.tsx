@@ -1,5 +1,5 @@
 import { useState, type AnchorHTMLAttributes } from 'react'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { initialSections } from '../../../entities/geology-section/model/fixtures'
 import type { SectionSearch } from '../model/search'
@@ -13,17 +13,34 @@ function Harness() {
   return <SectionRegistry sections={sectionRegistryEntries(initialSections())} sectionId="GTR-01" search={search} onSearch={patch => setSearch({ ...search, ...patch })} collapsed={false} onToggle={vi.fn()} />
 }
 describe('compact section registry', () => {
-  it('filters and groups by six study stages independently of section type',()=>{
+  it('filters the two demo branches by study stage independently of section type',()=>{
     render(<Harness />)
     fireEvent.click(screen.getByRole('button',{name:'Фильтры разрезов'}))
     const stage=screen.getByRole('combobox',{name:'Этап изучения'})
+    const registry=within(screen.getByRole('navigation',{name:'Список разрезов'}))
     expect(stage.querySelectorAll('option')).toHaveLength(7)
     fireEvent.change(stage,{target:{value:'detailed'}})
-    expect(screen.getByText('Разрезы не найдены')).toBeTruthy()
-    fireEvent.change(stage,{target:{value:'exploration'}})
-    fireEvent.change(screen.getByRole('combobox',{name:'Группировать'}),{target:{value:'stage'}})
-    expect(screen.getByText('Разведочные работы · 200')).toBeTruthy()
-    expect(screen.getAllByRole('link')).toHaveLength(200)
+    expect(screen.queryByText('Разрезы не найдены')).toBeNull()
+    expect(registry.getByText('Детальная разведка')).toBeTruthy()
+    expect(registry.queryByText('Эксплуатационная разведка')).toBeNull()
+    expect(screen.getAllByRole('link', { hidden: true })).toHaveLength(100)
+    fireEvent.change(stage,{target:{value:'operationalExploration'}})
+    expect(registry.getByText('Эксплуатационная разведка')).toBeTruthy()
+    expect(registry.queryByText('Детальная разведка')).toBeNull()
+    expect(screen.getAllByRole('link', { hidden: true })).toHaveLength(100)
+  })
+  it('collapses a registry group while preserving its count and chosen grouping',()=>{
+    render(<Harness />)
+    const summary=screen.getByText('Детальная разведка'),group=summary.closest('details')!
+    expect(group.open).toBe(false)
+    expect(within(group).getByText('100')).toBeTruthy()
+    expect(screen.queryAllByRole('link')).toHaveLength(0)
+    fireEvent.click(summary)
+    expect(group.open).toBe(true)
+    expect(screen.getAllByRole('link')).toHaveLength(100)
+    expect(group.querySelector('.section-registry-group__items a[aria-current="page"]')).toBeTruthy()
+    fireEvent.click(summary)
+    expect(group.open).toBe(false)
   })
   it('opens filters on demand and combines them with quick search, then resets an empty result', () => {
     render(<Harness />)
@@ -38,6 +55,31 @@ describe('compact section registry', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Поиск разреза' }), { target: { value: 'missing' } })
     expect(screen.getByText('Разрезы не найдены')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить поиск и фильтры' }))
-    expect(screen.getAllByRole('link')).toHaveLength(200)
+    expect(screen.getAllByRole('link', { hidden: true })).toHaveLength(200)
+  })
+  it('filters by block and sorts by title in ascending order', () => {
+    render(<Harness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Фильтры разрезов' }))
+    fireEvent.change(screen.getByRole('combobox', { name: 'Сортировать по' }), { target: { value: 'title' } })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Направление сортировки' }), { target: { value: 'asc' } })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Геологический блок' }), { target: { value: 'Без геологического блока' } })
+    const links = screen.getAllByRole('link', { hidden: true })
+    expect(links.length).toBe(200)
+    expect(links[0]?.textContent).toContain('Северный · профиль')
+  })
+  it('resets block filters from an empty result', () => {
+    const [first, second] = initialSections()
+    const metadata = { depositBody: '', createdOn: '2026-01-01', compiledBy: '', checkedBy: '' }
+    first!.metadata = { ...metadata, ...first!.metadata, geoBlock: 'ГБ-01' }
+    second!.metadata = { ...metadata, ...second!.metadata, techBlock: 'ТБ-02' }
+    function EmptyBlockHarness() {
+      const [search, setSearch] = useState<SectionSearch>({ geoBlock: 'ГБ-01', techBlock: 'ТБ-02' })
+      return <SectionRegistry sections={sectionRegistryEntries([first!, second!])} search={search} onSearch={patch => setSearch({ ...search, ...patch })} collapsed={false} onToggle={vi.fn()} />
+    }
+    render(<EmptyBlockHarness />)
+    expect(screen.getByText('Разрезы не найдены')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Сбросить поиск и фильтры' }))
+    expect(screen.queryByText('Разрезы не найдены')).toBeNull()
+    expect(screen.getAllByRole('link', { hidden: true })).toHaveLength(200)
   })
 })

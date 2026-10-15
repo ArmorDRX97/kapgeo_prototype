@@ -1,3 +1,4 @@
+import { mapRepository } from '../repository/demo/mapRepository'
 import { createBrowserHistory, createHashHistory, createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
 import { RootLayout } from './layout/RootLayout'
 import { SignInPage } from '../pages/auth/SignInPage'
@@ -46,9 +47,12 @@ const indexRoute = createRoute({
   },
 })
 const signInRoute = createRoute({ getParentRoute: () => rootRoute, path: '/auth/sign-in', component: SignInPage })
-const geologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology', validateSearch: validateInterpretationSearch, beforeLoad: ({ search }) => {
+const geologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology', validateSearch: validateInterpretationSearch, beforeLoad: async ({ search }) => {
   if (Object.values(search).some(value => value !== undefined)) throw redirect({ to: '/geology/interpretation', search, replace: true })
-  throw redirect({ to: '/geology/sections', replace: true })
+  let first: string|undefined
+  try { first=(await mapRepository.list())[0]?.id } catch { /* The registry owns corrupt-storage recovery. */ }
+  if(first)throw redirect({ to: '/geology/plans/$projectId', params: {projectId:first}, replace: true })
+  throw redirect({to:'/geology/plans',replace:true})
 } })
 const interpretationRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/interpretation', validateSearch: validateInterpretationSearch, beforeLoad: ({ search }) => {
   if (!search.mode) throw redirect({ to: '/geology/interpretation/$method', params: { method: 'gamma' }, search: { well: search.well, from: search.from, to: search.to }, replace: true })

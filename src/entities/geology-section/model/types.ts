@@ -26,7 +26,7 @@ export type SectionGraphic = {
   rock?: 'sand' | 'clay' | 'silt'; parentId?: string; contourLinks?: string[]
   contourSnapshot?: XZ[]; detachedFromContour?: boolean
 }
-export type SectionDrawing = { id: string; name: string; horizontalScale: number; verticalScale: number; top: number; bottom: number; left: number; right: number; planHeight: number; paper: 'A4' | 'A3'; landscape: boolean; margin: number; layers: string[]; description: string; overlap?: number; center?: boolean; pageOrder?: 'rows' | 'columns' }
+export type SectionDrawing = { id: string; name: string; horizontalScale: number; verticalScale: number; top: number; bottom: number; left: number; right: number; planHeight: number; paper: 'A4' | 'A3'; landscape: boolean; margin: number; layers: string[]; description: string; overlap?: number; center?: boolean; pageOrder?: 'rows' | 'columns'; profileOffset?: number; separator?: number; bottomField?: number; appendix?: string; firstSheet?: number; legendSize?: number; wellIds?: string[]; lithologyColumns?: boolean; stems?: boolean; logColumns?: boolean; intervalColumns?: boolean; oreParameters?: boolean; legend?: boolean; staticLevel?: number; frozenBoundary?: number; columnSettings?: Record<string,ColumnSettings>; wellDecorations?: Record<string, { coreColor?: string; filterFrom?: number; filterTo?: number }> }
 export type GeologySection = {
   demoPreset?: 'video-reference-v1'
   schemaVersion: 1; id: string; revision: number; synthetic: true; scope: 'geology-section-prototype'
@@ -40,7 +40,7 @@ export type GeologySection = {
   arcEdits?: Record<string, ArcEdit[]>
   contourArcEdits?: Record<string, ContourArcEdit[]>
   bottomExtensions?: Record<string, number>
-  metadata?: { depositBody: string; createdOn: string; compiledBy: string; checkedBy: string }
+  metadata?: { geoBlock?: string; techBlock?: string; depositBody: string; createdOn: string; compiledBy: string; checkedBy: string }
   columnSettings?: Record<string, ColumnSettings>
   auxiliary?: SectionAuxiliary[]
   sourceOverrides?: Record<string, { revision: number; technology: SectionInterval[]; ore: SectionInterval[]; uncorrected: SectionInterval[]; offbalance: SectionInterval[] }>

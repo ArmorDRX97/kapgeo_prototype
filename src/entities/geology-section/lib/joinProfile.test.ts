@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createSection } from '../model/fixtures'
 import { joinProfile } from './joinProfile'
+import { referenceSection } from '../model/referenceSection'
+import { profileLength } from './profile'
 describe('joining an independent profile segment', () => {
   const section = () => ({ ...createSection('j', 'Профиль'), profile: [{ x: 0, y: 0 }, { x: 100, y: 0 }] })
   it('orients by nearest endpoint, explicitly bridges a gap and preserves original vertices', () => {
@@ -11,6 +13,13 @@ describe('joining an independent profile segment', () => {
   })
   it('joins at the start and deduplicates a common endpoint', () => {
     expect(joinProfile(section(), [{ x: -50, y: 0 }, { x: 0, y: 0 }], 'start').profile).toEqual([{ x: -50, y: 0 }, { x: 0, y: 0 }, { x: 100, y: 0 }])
+  })
+  it('keeps boundary-attached nodes on the extended frame without moving free nodes', () => {
+    const section=referenceSection(),last=section.profile.at(-1)!,before=structuredClone(section)
+    const result=joinProfile(section,[last,{x:last.x+50,y:last.y}],'end')
+    expect(result.issues).toEqual([])
+    for(const [layer,edits] of Object.entries(section.contourEdits??{}))for(const edit of edits){const next=result.section.contourEdits![layer]!.find(e=>e.anchorId===edit.anchorId&&e.side===edit.side)!;expect(next.x).toBe(edit.boundary?(edit.side==='left'?0:profileLength(result.profile)):edit.x)}
+    expect(section).toEqual(before)
   })
   it('rejects zero length, crossing and reversal along an existing segment', () => {
     expect(joinProfile(section(), [{ x: 0, y: 0 }, { x: 0, y: 0 }], 'end').issues.join()).toContain('Нулевой')

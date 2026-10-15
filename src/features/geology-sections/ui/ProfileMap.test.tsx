@@ -17,7 +17,7 @@ afterEach(() => {
   else Reflect.deleteProperty(SVGSVGElement.prototype, 'getScreenCTM')
 })
 const point = (x: number, y: number) => {
-  const map = screen.getByRole('group', { name: 'Карта скважин и направленного профиля' })
+  const map = screen.getByRole('group', { name: 'Карта скважин и линий сегмента' })
   fireEvent.pointerDown(map, { button: 0, clientX: x, clientY: -y })
   fireEvent.pointerUp(map, { button: 0 })
 }
@@ -25,7 +25,7 @@ describe('profile map gestures', () => {
   it('centers the reference extent and keeps coordinate labels within the camera while panning and zooming', () => {
     const section = { ...initialSections()[0]!, demoPreset: 'video-reference-v1' as const, profile: [{ x: 0, y: 0 }, { x: 350, y: 0 }] }, change = vi.fn()
     const { container } = render(<ProfileMap section={section} disabled onChange={change} onPending={vi.fn()} />)
-    const map = screen.getByRole('group', { name: 'Карта скважин и направленного профиля' })
+    const map = screen.getByRole('group', { name: 'Карта скважин и линий сегмента' })
     const box = () => map.getAttribute('viewBox')!.split(' ').map(Number) as [number, number, number, number]
     const extent = [...section.profile, ...referenceWellSources.flatMap(w => [w.collar, pointAtDepth(w, w.depth)])], before = box()
     expect(before[0] + before[2] / 2).toBeCloseTo((Math.min(...extent.map(p => p.x)) + Math.max(...extent.map(p => p.x))) / 2)
@@ -55,12 +55,12 @@ describe('profile map gestures', () => {
   it('retains the original map frame and omits coordinate labels for existing non-reference documents', () => {
     const { container } = render(<ProfileMap section={initialSections()[0]!} disabled onChange={vi.fn()} onPending={vi.fn()} />)
     expect(container.querySelector('[data-map-axes]')).not.toBeInTheDocument()
-    expect(screen.getByRole('group', { name: 'Карта скважин и направленного профиля' }).getAttribute('viewBox')).toBe('-30 -230 550 250')
+    expect(screen.getByRole('group', { name: 'Карта скважин и линий сегмента' }).getAttribute('viewBox')).toBe('-30 -230 550 250')
   })
   it('pans in viewing mode without modifying the profile or adding wells', () => {
     const change = vi.fn()
     render(<ProfileMap section={initialSections()[0]!} disabled={true} onChange={change} onPending={vi.fn()} />)
-    const map = screen.getByRole('group', { name: 'Карта скважин и направленного профиля' })
+    const map = screen.getByRole('group', { name: 'Карта скважин и линий сегмента' })
     const before = map.getAttribute('viewBox')!.split(' ').map(Number)
     fireEvent.pointerDown(map, { button: 0, clientX: 100, clientY: 100 })
     fireEvent.pointerMove(map, { clientX: 160, clientY: 120 }); fireEvent.pointerUp(map)
@@ -72,7 +72,7 @@ describe('profile map gestures', () => {
   it('zooms with the wheel and does not add a well on right click', () => {
     const change = vi.fn()
     render(<ProfileMap section={initialSections()[0]!} disabled={false} onChange={change} onPending={vi.fn()} />)
-    const map = screen.getByRole('group', { name: 'Карта скважин и направленного профиля' })
+    const map = screen.getByRole('group', { name: 'Карта скважин и линий сегмента' })
     const before = map.getAttribute('viewBox')!.split(' ').map(Number)
     fireEvent.wheel(map, { deltaY: -100, clientX: 100, clientY: 100 })
     const after = map.getAttribute('viewBox')!.split(' ').map(Number)
@@ -97,7 +97,7 @@ describe('profile map gestures', () => {
     expect(change.mock.calls[0]![0].wellIds).toEqual(section.wellIds)
     expect(pending).toHaveBeenLastCalledWith(false)
     fireEvent.click(screen.getByRole('button', { name: 'Независимый сегмент' })); point(490, 150)
-    fireEvent.keyDown(screen.getByRole('group', { name: 'Карта скважин и направленного профиля' }), { key: 'Escape' })
+    fireEvent.keyDown(screen.getByRole('group', { name: 'Карта скважин и линий сегмента' }), { key: 'Escape' })
     expect(change).toHaveBeenCalledTimes(1); expect(pending).toHaveBeenLastCalledWith(false)
   })
   it('previews two points before replacing the profile and preserves the well composition', () => {
@@ -118,7 +118,7 @@ describe('profile map gestures', () => {
     const section = initialSections()[0]!, change = vi.fn(), pending = vi.fn()
     render(<ProfileMap section={section} disabled={false} onChange={change} onPending={pending} />)
     fireEvent.click(screen.getByRole('button', { name: 'Новый профиль' })); point(0, 30)
-    fireEvent.keyDown(screen.getByRole('group', { name: 'Карта скважин и направленного профиля' }), { key: 'Escape' })
+    fireEvent.keyDown(screen.getByRole('group', { name: 'Карта скважин и линий сегмента' }), { key: 'Escape' })
     expect(pending).toHaveBeenLastCalledWith(false)
     fireEvent.click(screen.getByRole('button', { name: 'Новый профиль' })); point(0, 30); point(0, 30)
     expect(screen.getByRole('button', { name: 'Применить профиль' })).toBeDisabled()

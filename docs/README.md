@@ -12,6 +12,7 @@
 
 | Задача | Документ |
 |---|---|
+| исправления разрезов по повторно приложенному «Дизайн.pdf» 15.10 | [покрытие всех пунктов, решения и проверка](./task/sections-design-pdf-2026-10-15.md) |
 | замечания «Дизайн.pdf»: сверка старых требований с текущим прототипом и правками после видео | [аудит 14 пунктов](../geo-module-refs/DesignAudit-2026-10-14/README.md), [команды/печатные настройки](../geo-module-refs/DesignAudit-2026-10-14/tool-coverage.md), [предложенный остаток](../geo-module-refs/DesignAudit-2026-10-14/tasks.md), [доказательства](../geo-module-refs/DesignAudit-2026-10-14/evidence.md) |
 | новая запись встречи 14.10: очистка карты, блоки по скважинам, условные знаки и замечания к разрезам | [аудит, транскрипция и кадры](../geo-module-refs/VideoAudit-2026-10-14/README.md), [исходные 18 задач](../geo-module-refs/VideoAudit-2026-10-14/tasks.md), [реализация всех 18](../geo-module-refs/VideoAudit-2026-10-14/implementation-report.md), [приёмка](../geo-module-refs/VideoAudit-2026-10-14/implementation-acceptance.md) |
 | интерактивный план месторождения: рабочий автономный редактор, источники, ограничения и QA | [итог реализации](../geo-module-refs/InteractivePlan/implementation-report.md), [матрица приёмки](../geo-module-refs/InteractivePlan/implementation-acceptance.md) |

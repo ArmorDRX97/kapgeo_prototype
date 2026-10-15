@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initialSections } from '../../../entities/geology-section/model/fixtures'
 import type { SectionGraphic } from '../../../entities/geology-section/model/types'
+import { profileLength } from '../../../entities/geology-section/lib/profile'
 import { GraphicEditor } from './GraphicEditor'
 
 beforeEach(() => {
@@ -9,8 +10,8 @@ beforeEach(() => {
   vi.stubGlobal('DOMPoint', class { constructor(public x: number, public y: number) {} matrixTransform() { return this } })
 })
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
-function setup(type: 'oxidation' | 'lithology') {
-  const section = initialSections()[0]!, graphic: SectionGraphic = { id: 'g', type, name: 'Геометрия', closed: type === 'lithology', reversed: false, smooth: false, rock: 'sand', points: [{ x: 120, z: -8 }, { x: 300, z: -8 }, ...(type === 'lithology' ? [{ x: 210, z: -30 }] : [])] }
+function setup(type: 'oxidation' | 'lithology', fullWidth = false) {
+  const section = initialSections()[0]!, graphic: SectionGraphic = { id: 'g', type, name: 'Геометрия', closed: type === 'lithology', reversed: false, smooth: false, rock: 'sand', points: [{ x: fullWidth ? 0 : 120, z: -8 }, { x: fullWidth ? profileLength(section.profile) : 300, z: -8 }, ...(type === 'lithology' ? [{ x: 210, z: -30 }] : [])] }
   section.graphics = [graphic]
   const change = vi.fn(), pending = vi.fn()
   render(<GraphicEditor section={section} mode={type} selection="g" disabled={false} onChange={change} onSelect={vi.fn()} onPending={pending} />)
@@ -22,6 +23,24 @@ function setup(type: 'oxidation' | 'lithology') {
   return { section, change, pending, svg, handle }
 }
 describe('manual point gestures', () => {
+  it('moves a full-width oxidation line uniformly while keeping it inside the section frame', () => {
+    const { svg, change, section } = setup('oxidation', true)
+    fireEvent.click(screen.getByRole('button', { name: 'Перетащить всю линию' }))
+    const handle = screen.getByRole('button', { name: 'Переместить всю линию' })
+    const x = Number(handle.getAttribute('cx')), y = Number(handle.getAttribute('cy'))
+    fireEvent.pointerDown(handle, { button: 0, clientX: x, clientY: y })
+    fireEvent.pointerMove(svg, { clientX: x + 20, clientY: y + 10 })
+    fireEvent.pointerUp(svg, { clientX: x + 20, clientY: y + 10 })
+    expect(screen.getByLabelText('Точка 1, X')).toHaveValue(0)
+    expect(screen.getByLabelText('Точка 2, X')).toHaveValue(profileLength(section.profile))
+    const firstZ = (screen.getByLabelText('Точка 1, Z') as HTMLInputElement).valueAsNumber
+    expect(firstZ).not.toBe(-8)
+    expect(screen.getByLabelText('Точка 2, Z')).toHaveValue(firstZ)
+    expect(change).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Применить геометрию' }))
+    expect(change).toHaveBeenCalledTimes(1)
+    expect(section.graphics[0]!.points[0]!.z).toBe(-8)
+  })
   for (const type of ['oxidation', 'lithology'] as const) it(`previews ${type} drag in the table and commits only on Apply`, () => {
     const { change, pending, svg, handle, section } = setup(type)
     const x = Number(handle.getAttribute('cx')), y = Number(handle.getAttribute('cy'))

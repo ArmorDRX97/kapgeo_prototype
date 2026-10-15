@@ -3,13 +3,13 @@ import { router } from './router'
 
 describe('BGD route smoke', () => {
   afterEach(() => { sessionStorage.removeItem('kapgeo.persona') })
-  it('redirects legacy interpretation links without losing selection and keeps the plain geology entry on sections', async () => {
+  it('redirects legacy interpretation links without losing selection and opens the plain geology entry on the interactive map', async () => {
     sessionStorage.setItem('kapgeo.persona', 'geo.ivanova')
     await router.navigate({ to: '/geology', search: { well: 'int-demo-01', mode: 'core', from: 112, to: 136, selection: 'core:seg-1' } })
     expect(router.state.location.pathname).toBe('/geology/interpretation')
     expect(router.state.location.search).toMatchObject({ well: 'int-demo-01', mode: 'core', from: 112, to: 136, selection: 'core:seg-1' })
     await router.navigate({ to: '/geology', search: {} })
-    expect(router.state.location.pathname).toBe('/geology/sections')
+    expect(router.state.location.pathname).toBe('/geology/plans/MAP-01')
     await router.navigate({ to: '/geology/bgd/$depositId', params: { depositId: 'DEP-SARYTAU' }, search: { section: 'conditions' } })
     expect(router.state.location.pathname).toBe('/geology/bgd/DEP-SARYTAU/conditions')
   })

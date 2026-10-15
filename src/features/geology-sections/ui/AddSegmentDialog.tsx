@@ -1,0 +1,10 @@
+import { useState } from 'react'
+import type { GeologySection, XY } from '../../../entities/geology-section/model/types'
+import { joinProfile } from '../../../entities/geology-section/lib/joinProfile'
+import { Button } from '../../../shared/ui/Button'
+import { WorkspaceDialog } from '../../../shared/ui/WorkspaceDialog'
+export function AddSegmentDialog({section,onApply,onClose}:{section:GeologySection;onApply:(s:GeologySection)=>void;onClose:()=>void}) {
+  const last=section.profile.at(-1)!, [points,setPoints]=useState<XY[]>([{...last},{x:last.x+50,y:last.y}]),[side,setSide]=useState<'start'|'end'>('end'),[reverse,setReverse]=useState(false)
+  const result=joinProfile(section,points,side,reverse)
+  return <WorkspaceDialog title="Добавить линию сегмента" onClose={onClose} footer={<><Button variant="secondary" onClick={onClose}>Отмена</Button><Button disabled={result.issues.length>0} onClick={()=>{onApply(result.section);onClose()}}>Добавить линию</Button></>}><div className="section-form"><label>Присоединить к<select value={side} onChange={e=>setSide(e.target.value as typeof side)}><option value="end">Концу трассы</option><option value="start">Началу трассы</option></select></label><label><input type="checkbox" checked={reverse} onChange={e=>setReverse(e.target.checked)}/>Развернуть направление</label>{points.map((p,i)=><fieldset key={i}><legend>Точка {i+1}</legend>{(['x','y'] as const).map(key=><label key={key}>{key.toUpperCase()}, м<input type="number" value={Number.isFinite(p[key])?p[key]:''} onChange={e=>setPoints(points.map((p,j)=>j===i?{...p,[key]:e.target.valueAsNumber}:p))}/></label>)}</fieldset>)}</div><p>Предпросмотр трассы: {result.profile.length-1} сегментов; соединитель {result.gap.toFixed(2)} м. Граничные точки следуют краям разреза; свободные точки сохраняют координаты. До применения разрез не изменяется.</p><ol>{result.profile.map((p,i)=><li key={i}>X {p.x.toFixed(2)} · Y {p.y.toFixed(2)}</li>)}</ol>{result.issues.length>0&&<p role="alert" className="section-error">{result.issues.join(' ')}</p>}</WorkspaceDialog>
+}

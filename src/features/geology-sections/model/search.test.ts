@@ -21,3 +21,12 @@ it('opens legacy profile and wells links in the unified section tab without losi
   expect(sectionViews[0]).toEqual({ id: 'overview', label: 'Разрез' })
   expect(sectionViews.some(view => ['profile', 'wells'].includes(view.id))).toBe(false)
 })
+
+it('validates block filters, sort options, and new grouping options from the URL', () => {
+  expect(validateSectionSearch({ geoBlock: 'Geo A', techBlock: 'Tech B', sortBy: 'title', sortDirection: 'asc', groupBy: 'geoBlock' })).toMatchObject({
+    geoBlock: 'Geo A', techBlock: 'Tech B', sortBy: 'title', sortDirection: 'asc', groupBy: 'geoBlock',
+  })
+  expect(validateSectionSearch({ sortBy: 'bogus', sortDirection: 'sideways', groupBy: 'bogus' })).toMatchObject({
+    sortBy: undefined, sortDirection: undefined, groupBy: undefined,
+  })
+})

@@ -15,7 +15,7 @@ describe('combined section setup', () => {
   it('edits parameters, profile and well membership in the same shared draft', () => {
     render(<Harness />)
     expect(screen.getByRole('heading', { name: 'Параметры разреза' })).toBeTruthy()
-    expect(screen.getByRole('heading', { name: 'Направленный профиль' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Линии сегмента' })).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'Состав скважин' })).toBeTruthy()
     expect(screen.getByRole('combobox', { name: 'Месторождение' })).toHaveValue('GTR-LOCAL-NORTH')
     fireEvent.change(screen.getByRole('textbox', { name: 'Название' }), { target: { value: 'Общий черновик' } })

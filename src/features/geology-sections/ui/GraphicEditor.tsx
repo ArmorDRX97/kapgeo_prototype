@@ -1,3 +1,4 @@
+import { nearestEdge } from '../model/canvasCommands'
 import { useEffect, useRef, useState } from 'react'
 import type { GeologySection, SectionGraphic, XZ } from '../../../entities/geology-section/model/types'
 import { graphicIssues, snappedPoint } from '../../../entities/geology-section/lib/geometry'
@@ -15,7 +16,7 @@ const typeNames: Record<SectionGraphic['type'], string> = { lithology: 'Лито
 export function GraphicEditor({ section, mode, disabled, onChange, selection, onSelect, onPending }: { section: GeologySection; mode: 'lithology' | 'oxidation' | 'foundation'; disabled: boolean; onChange: (s: GeologySection) => void; selection?: string; onSelect: (id: string) => void; onPending: (pending: boolean) => void }) {
   const [draft, setDraft] = useState<SectionGraphic | null>(null), [error, setError] = useState(''), [snap, setSnap] = useState(true), [snapLabel, setSnapLabel] = useState('')
   const revealTool = useRevealTool()
-  const [tool, setTool] = useState<'move' | 'add'>('move')
+  const [tool, setTool] = useState<'move' | 'add' | 'delete' | 'shift' | 'line'>('move')
   const drag = useRef<{ graphic: SectionGraphic; previous: SectionGraphic | null; index: number } | null>(null)
   const [shiftX, setShiftX] = useState(0), [shiftZ, setShiftZ] = useState(0)
   const types: SectionGraphic['type'][] = mode === 'foundation' ? ['foundation', 'fault'] : [mode]
@@ -44,14 +45,19 @@ export function GraphicEditor({ section, mode, disabled, onChange, selection, on
     if (disabled || !current || mode === 'foundation') return
     if (phase === 'start') {
       revealTool('coordinates')
-      const index = Number(id.replace('manual-point-', ''))
-      if (!Number.isInteger(index) || !current.points[index]) return
+      const index = id==='line-origin' ? -1 : Number(id.replace('manual-point-', ''))
+      if (!Number.isInteger(index) || index!==-1&&!current.points[index]) return
       drag.current = { graphic: current, previous: draft, index }; setDraft(current); setError(''); setSnapLabel(''); return
     }
     const before = drag.current
     if (!before) return
     if (phase === 'cancel') { drag.current = null; setDraft(before.previous); setError(''); setSnapLabel(''); return }
-    const result = moveManualPoint(section, before.graphic, before.index, point, snap)
+    const origin=before.graphic.points[0]!
+    const xs=before.graphic.points.map(p=>p.x),zs=before.graphic.points.map(p=>p.z)
+    const dx=Math.max(-Math.min(...xs),Math.min(point.x-origin.x,profileLength(section.profile)-Math.max(...xs)))
+    const dz=Math.max(section.bottom-Math.min(...zs),Math.min(point.z-origin.z,section.top-Math.max(...zs)))
+    const translated={...before.graphic,points:before.graphic.points.map(p=>({x:p.x+dx,z:p.z+dz}))}
+    const result = before.index===-1 ? {graphic:translated,issues:graphicIssues(translated,section),label:'Перенос всей линии'} : moveManualPoint(section, before.graphic, before.index, point, snap)
     if (phase === 'move') { if (!result.issues.length) { setDraft(result.graphic); setSnapLabel(result.label ?? '') } setError(result.issues.join(' ')); return }
     drag.current = null
     if (result.issues.length) { setDraft(before.previous); setError(result.issues.join(' ')); setSnapLabel(''); return }
@@ -73,8 +79,11 @@ export function GraphicEditor({ section, mode, disabled, onChange, selection, on
     <div className="section-actions">{types.map(type => <Button key={type} disabled={disabled || !!draft} onClick={() => start(type)}>Добавить: {typeNames[type]}</Button>)}{mode === 'lithology' && <Button variant="secondary" disabled={disabled || !!draft || !selected?.closed || !!selected.parentId} onClick={() => start('lithology', selected!.id)}>Внутреннее исключение</Button>}<label><input type="checkbox" checked={snap} onChange={e => setSnap(e.target.checked)} />Привязка к литоконтактам</label></div>
     <GraphHelp><p className="section-muted">{mode !== 'foundation' ? current ? tool === 'add' ? 'Клик в разрезе добавляет точку. Вернитесь в «Перемещение и точки» для навигации и редактирования.' : 'Перетаскивайте точки или меняйте координаты в таблице. ЛКМ вне точек перемещает график. Примените геометрию; Escape отменяет текущий жест. Стрелки на точке — шаг 0,1 м, Shift + стрелки — 1 м.' : 'Выберите объект в списке, чтобы увидеть его точки.' : draft ? 'Клик в разрезе добавляет точку. Координаты доступны в таблице. Примените геометрию или нажмите Escape для отмены.' : 'Выберите объект в списке для просмотра и редактирования точек.'}</p></GraphHelp>{snapLabel && <ToolCategory category="coordinates"><p role="status" className="section-muted">Привязка: {snapLabel}.</p></ToolCategory>}
     {error && <ToolCategory category="footer"><p role="alert" className="section-error">{error}</p></ToolCategory>}
-    {mode !== 'foundation' && <div className="section-actions" role="group" aria-label="Инструмент ручной геометрии"><Button variant={tool === 'move' ? 'primary' : 'secondary'} aria-pressed={tool === 'move'} onClick={() => setTool('move')}>Перемещение и точки</Button><Button variant={tool === 'add' ? 'primary' : 'secondary'} aria-pressed={tool === 'add'} disabled={disabled || !current} onClick={() => setTool('add')}>Добавлять точки</Button></div>}
-    <SectionCanvas section={draft ? { ...section, graphics: [...section.graphics.filter(g => g.id !== draft.id), draft] } : section} graphicTypes={mode === 'lithology' ? ['lithology', 'foundation', 'fault'] : mode === 'oxidation' ? ['oxidation', 'foundation', 'fault'] : ['foundation', 'fault']} layers={mode === 'lithology' ? [] : ['technology', 'ore']} selection={current?.id} onGraphic={draft ? undefined : onSelect} graphicSelectionIds={visible.map(g => g.id)} draft={draft?.points} handles={!disabled && mode !== 'foundation' && tool === 'move' && current ? current.points.map((point, index) => ({ id: `manual-point-${index}`, label: `${current.name}: переместить точку ${index + 1}`, point, kind: 'graphic' as const })) : []} onHandleDrag={!disabled && mode !== 'foundation' && tool === 'move' ? dragPoint : undefined} onPoint={current && !disabled && (mode === 'foundation' ? !!draft : tool === 'add') ? point => { const s = snap ? snappedPoint(point, section) : { point }; setSnapLabel(s.label ?? ''); edit({ ...current, points: [...current.points, s.point] }) } : undefined} />
+    {mode !== 'foundation' && <div className="section-actions" role="group" aria-label="Инструмент ручной геометрии"><Button variant={tool === 'move' ? 'primary' : 'secondary'} aria-pressed={tool === 'move'} onClick={() => setTool('move')}>Перемещение и точки</Button><Button variant={tool === 'add' ? 'primary' : 'secondary'} aria-pressed={tool === 'add'} disabled={disabled || !current} onClick={() => setTool('add')}>Добавлять точки</Button><Button disabled={disabled||!current} aria-pressed={tool==='delete'} onClick={()=>setTool('delete')}>Удалить ближайшую точку</Button><Button disabled={disabled||!current} aria-pressed={tool==='shift'} onClick={()=>setTool('shift')}>Сместить ближайшую точку</Button>{mode==='oxidation'&&<Button disabled={disabled||!current} aria-pressed={tool==='line'} onClick={()=>setTool('line')}>Перетащить всю линию</Button>}</div>}
+    <SectionCanvas section={draft ? { ...section, graphics: [...section.graphics.filter(g => g.id !== draft.id), draft] } : section} graphicTypes={mode === 'lithology' ? ['lithology', 'foundation', 'fault'] : mode === 'oxidation' ? ['oxidation', 'foundation', 'fault'] : ['foundation', 'fault']} layers={mode === 'lithology' ? [] : ['technology', 'ore']} selection={current?.id} onGraphic={draft ? undefined : onSelect} graphicSelectionIds={visible.map(g => g.id)} draft={draft?.points} handles={!disabled && mode !== 'foundation' && tool === 'line' && current ? [{id:'line-origin',label:'Переместить всю линию',point:current.points[0]!,kind:'graphic' as const}] : !disabled && mode !== 'foundation' && tool === 'move' && current ? current.points.map((point, index) => ({ id: `manual-point-${index}`, label: `${current.name}: переместить точку ${index + 1}`, point, kind: 'graphic' as const })) : []} onHandleDrag={!disabled && mode !== 'foundation' && (tool === 'move'||tool==='line') ? dragPoint : undefined} onPoint={current && !disabled && (mode === 'foundation' ? !!draft : ['add','delete','shift'].includes(tool)) ? point => { const s = snap ? snappedPoint(point, section) : { point }; setSnapLabel(s.label ?? ''); const nearest=current.points.map((p,i)=>({i,d:Math.hypot(p.x-point.x,p.z-point.z)})).sort((a,b)=>a.d-b.d)[0]
+      if(tool==='delete'&&nearest)edit({...current,points:current.points.filter((_,i)=>i!==nearest.i)})
+      else if(tool==='shift'&&nearest){const result=moveManualPoint(section,current,nearest.i,point,snap);if(result.issues.length)setError(result.issues.join(' '));else edit(result.graphic)}
+      else {const index=nearestEdge(current.points,s.point,current.closed)?.index??current.points.length;const points=[...current.points];points.splice(index,0,s.point);edit({...current,points})} } : undefined} />
     <label className="section-search">Графический объект<select value={selected?.id ?? ''} disabled={!!draft} onChange={e => onSelect(e.target.value)}><option value="">Выберите объект</option>{visible.map(g => <option key={g.id} value={g.id}>{g.parentId ? '↳ Исключение: ' : ''}{g.name}</option>)}</select></label>
     {current?.parentId && <p className="section-preview">Внутреннее исключение области «{section.graphics.find(g => g.id === current.parentId)?.name}». Контур должен полностью лежать внутри области и не пересекать другие исключения.</p>}
     {current?.detachedFromContour && <p className="section-preview">Граница отсоединена от изменённого контура. Проверьте геометрию и выберите новые дуги при необходимости.</p>}

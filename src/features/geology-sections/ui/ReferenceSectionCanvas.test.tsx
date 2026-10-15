@@ -66,7 +66,7 @@ describe('reference section rendering', () => {
     expect(info.rows).toContainEqual(['Z', `${first.point.z.toFixed(2)} м`])
     expect(info.rows).toContainEqual(['Скважина', first.well.name])
     rerender(<SectionSvg section={section} graphicTypes={['foundation', 'fault']} layers={['technology']} right={right} />)
-    expect(container.querySelector('.section-canvas__lithology-contact')).toBeNull()
+    expect(container.querySelectorAll('.section-canvas__lithology-contact')).toHaveLength(expected.length)
     rerender(<SectionSvg section={section} graphicTypes={['lithology']} layers={[]} right={right} clean />)
     expect(container.querySelector('.section-canvas__lithology-contact')).toBeNull()
   })
