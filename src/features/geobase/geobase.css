@@ -226,23 +226,69 @@
 .bgd-log-summary > article > div { display: grid; min-width: 0; gap: 2px; }
 .bgd-log-summary strong { display: -webkit-box; overflow: hidden; color: var(--text-primary); font-size: var(--font-size-lg); line-height: 1.25; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .bgd-log-summary small { color: var(--text-tertiary); font-size: 12px; }
-.bgd-logs-layout { display: grid; min-width: 0; grid-template-columns: minmax(320px, .82fr) minmax(0, 1.38fr); align-items: start; gap: 14px; }
-.bgd-log-registry.panel, .bgd-log-inspector.panel { min-width: 0; padding: 16px; }
-.bgd-log-list { display: grid; gap: 8px; }
-.bgd-log-list > button { display: grid; width: 100%; min-width: 0; min-height: 98px; padding: 11px; cursor: pointer; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 10px; color: var(--text-secondary); border: 1px solid var(--border-default); border-radius: 10px; background: var(--surface-subtle); text-align: left; font: inherit; transition: border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast), transform var(--duration-fast); }
-.bgd-log-list > button:hover { border-color: var(--color-brand-300); background: var(--color-brand-50); transform: translateY(-1px); }
-.bgd-log-list > button:focus-visible { outline: 3px solid color-mix(in srgb, var(--focus-ring) 24%, transparent); outline-offset: 1px; }
-.bgd-log-list > button.is-selected { border-color: var(--color-brand-500); background: var(--color-brand-50); box-shadow: inset 3px 0 var(--color-brand-600); }
-.bgd-log-list__icon { display: grid; width: 38px; height: 38px; place-items: center; color: var(--color-brand-700); border-radius: 9px; background: var(--surface-panel); }
-.bgd-log-list > button > span:nth-child(2) { display: grid; min-width: 0; gap: 3px; }
-.bgd-log-list strong { display: -webkit-box; overflow: hidden; color: var(--text-primary); font-size: var(--font-size-sm); line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.bgd-log-list small, .bgd-log-list em { overflow: hidden; color: var(--text-tertiary); font-size: 12px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
-.bgd-log-list__status { display: grid; grid-column: 2; grid-row: 2; grid-auto-flow: column; align-items: center; justify-content: start; gap: 6px; color: var(--color-warning-700); }
-.bgd-log-import { display: flex; margin-top: 12px; padding: 12px; align-items: center; justify-content: space-between; gap: 10px; border: 1px dashed var(--border-strong); border-radius: 10px; background: color-mix(in srgb, var(--surface-subtle) 74%, transparent); }
-.bgd-log-import > span { display: flex; min-width: 0; align-items: center; gap: 9px; color: var(--color-brand-700); }
-.bgd-log-import > span > span { display: grid; min-width: 0; gap: 2px; }
-.bgd-log-import strong { color: var(--text-primary); font-size: var(--font-size-sm); }
-.bgd-log-import small { color: var(--text-tertiary); font-size: 12px; }
+.bgd-log-toolbar { display: flex; min-width: 0; min-height: 46px; align-items: center; justify-content: space-between; gap: var(--space-3); border-bottom: 1px solid var(--border-default); }
+.bgd-log-tabs { display: flex; min-width: 0; align-self: stretch; align-items: stretch; gap: var(--space-2); }
+.bgd-log-tabs button { position: relative; display: inline-flex; min-height: 44px; align-items: center; gap: var(--space-2); padding: 0 var(--space-3); color: var(--text-secondary); border: 0; border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: transparent; font: inherit; font-size: var(--font-size-sm); cursor: pointer; white-space: nowrap; }
+.bgd-log-tabs button:hover { color: var(--text-primary); background: var(--surface-subtle); }
+.bgd-log-tabs button[aria-selected='true'] { color: var(--color-brand-800); background: var(--color-brand-50); font-weight: 700; }
+.bgd-log-tabs button:disabled { cursor: not-allowed; opacity: .58; }
+.bgd-log-tabs button[aria-selected='true']::after { position: absolute; right: var(--space-2); bottom: -1px; left: var(--space-2); height: 2px; background: var(--color-brand-600); content: ''; }
+.bgd-log-tabs button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.bgd-log-tabs button > span { min-width: 22px; padding: 2px 6px; color: var(--text-secondary); border-radius: 999px; background: var(--surface-panel); font-size: 11px; font-variant-numeric: tabular-nums; text-align: center; }
+.bgd-log-toolbar__actions { display: flex; flex: none; align-items: center; gap: var(--space-2); }
+.bgd-log-table-scroll, .bgd-log-measurements-scroll { max-width: 100%; overflow: auto; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-panel); scrollbar-width: thin; }
+.bgd-log-table-scroll { max-height: min(380px, 46vh); }
+.bgd-log-table, .bgd-log-measurements { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--font-size-sm); }
+.bgd-log-table { min-width: 1120px; }
+.bgd-log-table th, .bgd-log-table td, .bgd-log-measurements th, .bgd-log-measurements td { min-width: 0; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border-default); text-align: left; vertical-align: middle; }
+.bgd-log-table thead th, .bgd-log-measurements thead th { position: sticky; top: 0; z-index: 1; color: var(--text-secondary); background: var(--surface-subtle); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.bgd-log-table tbody tr:last-child > *, .bgd-log-measurements tbody tr:last-child > * { border-bottom: 0; }
+.bgd-log-table tbody tr:hover { background: var(--surface-subtle); }
+.bgd-log-table tbody tr { cursor: pointer; }
+.bgd-log-table tbody tr.is-disabled { cursor: not-allowed; }
+.bgd-log-table tbody tr.is-selected { background: var(--color-brand-50); }
+.bgd-log-table tbody tr.is-selected > *:first-child { box-shadow: inset 3px 0 var(--color-brand-600); }
+.bgd-log-table tbody th { min-width: 190px; font-weight: 600; }
+.bgd-log-table tbody td { color: var(--text-primary); white-space: nowrap; }
+.bgd-log-table tbody th > small { display: block; margin-top: 2px; color: var(--text-tertiary); font-size: 11px; font-weight: 450; }
+.bgd-log-table__select { display: inline-block; max-width: 280px; overflow: hidden; color: var(--text-primary); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; cursor: inherit; }
+.bgd-log-table .is-numeric, .bgd-log-measurements .is-numeric { text-align: right; font-variant-numeric: tabular-nums; }
+.bgd-log-main-flag { display: inline-flex; align-items: center; gap: 4px; color: var(--color-warning-700); }
+.bgd-log-table-empty { margin: var(--space-4); }
+.bgd-well-construction__toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3); color:var(--text-secondary); font-size:var(--font-size-sm); }
+.bgd-well-construction__layout { display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:var(--space-4); align-items:start; }
+.bgd-well-construction__table-wrap { overflow:auto; border:1px solid var(--border-default); border-radius:var(--radius-md); }
+.bgd-well-construction__table { width:100%; min-width:900px; border-collapse:collapse; font-size:var(--font-size-sm); }
+.bgd-well-construction__table th,.bgd-well-construction__table td { padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--border-default); text-align:left; }
+.bgd-well-construction__table th { background:var(--surface-subtle); color:var(--text-secondary); white-space:nowrap; }
+.bgd-well-construction__table tbody tr { cursor:pointer; }
+.bgd-well-construction__table tbody tr:hover,.bgd-well-construction__table tbody tr.is-selected { background:var(--color-brand-50); }
+.bgd-well-construction__editor { display:grid; gap:var(--space-3); padding:var(--space-3); border:1px solid var(--border-default); border-radius:var(--radius-md); background:var(--surface-panel); }
+.bgd-well-construction__editor h3 { margin:0; font-size:var(--font-size-md); }
+.bgd-well-construction__editor label { display:grid; gap:var(--space-1); color:var(--text-secondary); font-size:var(--font-size-xs); }
+.bgd-well-construction__editor input,.bgd-well-construction__editor select { width:100%; min-width:0; min-height:36px; padding:var(--space-2); border:1px solid var(--border-default); border-radius:var(--radius-sm); background:var(--surface-canvas); color:var(--text-primary); }
+.bgd-well-construction__pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-2); }
+.bgd-well-construction__toolbar > div { display:flex; gap:var(--space-2); }
+.bgd-well-construction__scheme svg { display:block; width:100%; max-width:900px; height:380px; }
+.bgd-well-construction__table tr:focus-visible { outline:2px solid var(--focus-ring); outline-offset:-2px; }
+@media (max-width:1000px) { .bgd-well-construction__layout { grid-template-columns:1fr; } }
+.bgd-log-selected-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); color: var(--text-secondary); font-size: var(--font-size-sm); }
+.bgd-log-measurements-toolbar { display: flex; min-height: 38px; align-items: center; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-3); color: var(--text-secondary); font-size: 12px; }
+.bgd-log-measurements-toolbar > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+.bgd-log-measurements-scroll { max-height: 360px; }
+.bgd-log-measurements { min-width: 460px; }
+.bgd-log-measurements caption { padding: var(--space-2) var(--space-3); color: var(--text-tertiary); font-size: 11px; text-align: left; }
+.bgd-log-measurements thead th:not(:first-child), .bgd-log-measurements tbody td { text-align: right; }
+.bgd-log-measurements thead th small { display: block; margin-top: 2px; color: var(--text-tertiary); font-size: 10px; font-weight: 500; }
+.bgd-log-measurements tbody th { color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
+.bgd-log-measurements input { width: 100%; min-width: 78px; height: var(--space-8); padding: 0 var(--space-2); color: var(--text-primary); border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; font: inherit; font-variant-numeric: tabular-nums; text-align: right; }
+.bgd-log-measurements input:hover { border-color: var(--border-default); background: var(--surface-panel); }
+.bgd-log-measurements input:focus { border-color: var(--color-brand-500); outline: 2px solid color-mix(in srgb, var(--focus-ring) 22%, transparent); background: var(--surface-panel); }
+.bgd-log-row-action { width: 52px; text-align: center !important; }
+.bgd-log-measurements tbody tr:hover { background: var(--surface-subtle); }
+.bgd-log-empty-cell { padding: var(--space-5) !important; color: var(--text-tertiary); text-align: center !important; }
+.bgd-log-hidden-curves-note, .bgd-log-empty-hint { margin: var(--space-2) 0 0; color: var(--text-tertiary); font-size: 12px; }
+.bgd-log-inspector.panel { min-width: 0; padding: 16px; }
 .bgd-log-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .bgd-log-facts article { display: flex; min-width: 0; min-height: 68px; padding: 10px; align-items: flex-start; gap: 8px; border: 1px solid var(--border-default); border-radius: 9px; background: var(--surface-subtle); }
 .bgd-log-facts article > svg { flex: none; margin-top: 2px; color: var(--color-brand-700); }
@@ -252,41 +298,20 @@
 .bgd-log-comment { margin-top: 10px; padding: 11px 12px; border-left: 3px solid var(--color-brand-500); border-radius: 0 8px 8px 0; background: var(--color-brand-50); }
 .bgd-log-comment strong { font-size: var(--font-size-sm); }
 .bgd-log-comment p { margin: 3px 0 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.45; }
-.bgd-log-curves { min-width: 0; margin-top: 12px; overflow-x: auto; border: 1px solid var(--border-default); border-radius: 9px; }
-.bgd-log-curves > div { display: grid; min-width: 610px; min-height: 46px; padding: 0 10px; grid-template-columns: 90px minmax(190px, 1fr) 130px 130px; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-default); color: var(--text-secondary); font-size: var(--font-size-sm); }
-.bgd-log-curves > div:last-child { border-bottom: 0; }
-.bgd-log-curves__head { min-height: 36px !important; color: var(--text-tertiary) !important; background: var(--surface-subtle); font-size: 11px !important; font-weight: 750; text-transform: uppercase; }
-.bgd-log-curves [role='cell']:first-child { display: flex; align-items: center; gap: 7px; color: var(--text-primary); }
-.bgd-log-curves [role='cell'] > i { width: 8px; height: 24px; border-radius: 999px; }
-.bgd-log-curves [role='cell'] small { display: block; color: var(--text-tertiary); font-size: 11px; }
 .bgd-log-inspector__actions { display: flex; margin-top: 12px; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
-.bgd-log-viewer { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--border-default); }
-.bgd-log-viewer > header { display: flex; margin-bottom: 9px; padding: 9px 11px; align-items: center; gap: 12px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--surface-subtle); color: var(--text-secondary); font-size: var(--font-size-sm); }
-.bgd-log-viewer > header span { display: flex; flex: none; align-items: center; gap: 5px; }
-.bgd-log-viewer > header input { min-width: 100px; flex: 1; accent-color: var(--color-brand-600); }
-.bgd-log-viewer__canvas { position: relative; display: grid; min-width: 0; height: 390px; overflow: hidden; border: 1px solid var(--color-brand-900); border-radius: 10px; background: color-mix(in srgb, var(--color-brand-900) 92%, black); }
-.bgd-log-viewer__ruler { position: relative; color: color-mix(in srgb, white 62%, var(--color-brand-400)); border-right: 1px solid color-mix(in srgb, white 13%, transparent); font-size: 11px; }
-.bgd-log-viewer__ruler span { position: absolute; right: 6px; transform: translateY(-50%); }
-.bgd-log-viewer__track { position: relative; min-width: 0; overflow: hidden; border-right: 1px solid color-mix(in srgb, white 13%, transparent); }
-.bgd-log-viewer__track > strong { position: absolute; z-index: 2; top: 7px; right: 7px; left: 7px; color: white; font-size: 12px; }
-.bgd-log-viewer__track > strong small { display: block; margin-top: 2px; overflow: hidden; color: color-mix(in srgb, white 58%, var(--color-brand-300)); font-size: 10px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
-.bgd-log-viewer__track svg { position: absolute; inset: 41px 8px 8px; width: calc(100% - 16px); height: calc(100% - 49px); }
-.bgd-log-viewer__track path { fill: none; stroke-width: 2; }
-.bgd-log-viewer__cursor { position: absolute; z-index: 3; right: 0; left: 0; border-top: 1px dashed var(--color-warning-400); }
-.bgd-log-viewer__cursor span { position: absolute; top: -10px; left: 4px; padding: 2px 5px; color: var(--text-primary); border-radius: 3px; background: var(--color-warning-300); font-size: 10px; }
 .geobase-dialog--log { width: min(850px, calc(100vw - 24px)); }
 .bgd-log-form { display: grid; gap: 13px; }
 .bgd-well-form-wide { grid-column: 1 / -1; }
-.bgd-log-channel-picker { display: grid; margin: 0; padding: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; border: 1px solid var(--border-default); border-radius: 10px; }
-.bgd-log-channel-picker legend { padding: 0 5px; color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: 700; }
-.bgd-log-channel-picker legend em { color: var(--color-danger-600); }
-.bgd-log-channel-picker > label { display: flex; min-width: 0; padding: 9px 10px; cursor: pointer; align-items: center; gap: 9px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--surface-subtle); }
-.bgd-log-channel-picker > label:has(input:checked) { border-color: var(--color-brand-400); background: var(--color-brand-50); }
-.bgd-log-channel-picker input { accent-color: var(--color-brand-600); }
-.bgd-log-channel-picker label > span { display: grid; min-width: 0; grid-template-columns: auto auto; align-items: center; column-gap: 6px; }
-.bgd-log-channel-picker label i { width: 8px; height: 19px; border-radius: 999px; }
-.bgd-log-channel-picker label strong { font-size: var(--font-size-sm); }
-.bgd-log-channel-picker label small { grid-column: 1 / -1; color: var(--text-tertiary); font-size: 11px; }
+.bgd-log-curve-picker { display: grid; margin: 0; padding: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; border: 1px solid var(--border-default); border-radius: 10px; }
+.bgd-log-curve-picker legend { padding: 0 5px; color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: 700; }
+.bgd-log-curve-picker legend em { color: var(--color-danger-600); }
+.bgd-log-curve-picker > label { display: flex; min-width: 0; padding: 9px 10px; cursor: pointer; align-items: center; gap: 9px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--surface-subtle); }
+.bgd-log-curve-picker > label:has(input:checked) { border-color: var(--color-brand-400); background: var(--color-brand-50); }
+.bgd-log-curve-picker input { accent-color: var(--color-brand-600); }
+.bgd-log-curve-picker label > span { display: grid; min-width: 0; grid-template-columns: auto auto; align-items: center; column-gap: 6px; }
+.bgd-log-curve-picker label i { width: 8px; height: 19px; border-radius: 999px; }
+.bgd-log-curve-picker label strong { font-size: var(--font-size-sm); }
+.bgd-log-curve-picker label small { grid-column: 1 / -1; color: var(--text-tertiary); font-size: 11px; }
 .bgd-log-primary-check { display: flex; padding: 11px 12px; cursor: pointer; align-items: center; gap: 8px; border: 1px solid var(--border-default); border-radius: 9px; background: var(--surface-subtle); }
 .bgd-log-primary-check input { accent-color: var(--color-brand-600); }
 .bgd-log-primary-check > svg { color: var(--color-warning-600); }
@@ -523,7 +548,6 @@
 @media (max-width: 1050px) {
   .geobase-detail-summary { grid-template-columns: 1fr; }
   .bgd-log-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .bgd-logs-layout { grid-template-columns: 1fr; }
   .bgd-deviation-layout { grid-template-columns: 1fr; }
   .bgd-core-layout { grid-template-columns: 1fr; }
   .bgd-lithology-layout { grid-template-columns: minmax(0, 1fr); }
@@ -570,8 +594,6 @@
   .bgd-well-tabs button { flex: 0 0 auto; }
   .bgd-log-summary { grid-template-columns: 1fr 1fr; }
   .bgd-log-summary > article { min-height: 68px; padding: 10px; }
-  .bgd-log-import { align-items: stretch; flex-direction: column; }
-  .bgd-log-import .button { width: 100%; }
   .bgd-deviation-import, .bgd-deviation-correction, .bgd-deviation-import-file { align-items: stretch; flex-direction: column; }
   .bgd-deviation-import .button, .bgd-deviation-correction .button, .bgd-deviation-import-file .button { width: 100%; }
   .bgd-deviation-integrals { grid-template-columns: 1fr; }
@@ -601,10 +623,7 @@
   .bgd-core-form-actions > span { display: none; }
   .bgd-log-inspector__actions { display: grid; grid-template-columns: 1fr 1fr; }
   .bgd-log-inspector__actions .button { width: 100%; }
-  .bgd-log-viewer { overflow-x: auto; }
-  .bgd-log-viewer > header { min-width: 570px; }
-  .bgd-log-viewer__canvas { min-width: 570px; }
-  .bgd-log-channel-picker { grid-template-columns: 1fr; }
+  .bgd-log-curve-picker { grid-template-columns: 1fr; }
   .bgd-well-form-grid, .bgd-well-language-grid, .bgd-well-coordinate-grid, .bgd-well-coordinate-grid section > div { grid-template-columns: 1fr; }
   .geobase-well-list > button { grid-template-columns: auto minmax(0, 1fr); }
   .geobase-well-list > button > .badge { grid-column: 2; justify-self: start; }

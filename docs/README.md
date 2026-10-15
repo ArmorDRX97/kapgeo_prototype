@@ -30,6 +30,8 @@
 | сворачиваемые группы инструментов/общая справка, центральный график, меню/реестр геологии, drag точек, заголовки колонок и pan/zoom | [обновление рабочего места геологии](./task/geology-workspace-refresh.md) |
 | навигация и рабочая область БГД | [обновление структуры](./task/bgd-workbench-refresh.md) |
 | реализация БГД | [пакет проверок](./geology-functional-expansion/README.md) |
+| каротажи БГД: таблицы, контрольная вкладка, параметры зонда и измерений | [решение и проверка](./task/bgd-well-logs-refresh.md) |
+| конструкция скважины БГД: интервалы, типы, диаметры и примечание | [источники, поведение и техническая реализация](./task/bgd-well-construction.md) |
 | интерпретация по РП 1.24–1.26 | [текущее состояние, проверка и исследования](./task/README.md), [геологический модуль](./ui-ux/modules/02-geology.md) |
 | геотехнологические разрезы и второй уровень геологии | [план реализации](../geo-module-refs/geology-implementation-plan.md), [аудит видео](../geo-module-refs/video-audit.md), [руководство](../geo-module-refs/manual-review.md), [требования/приёмка](../geo-module-refs/requirements-matrix.md), [итог реализации и техническое устройство](../geo-module-refs/geology-implementation-report.md) |
 | управление справочниками | [03-reference-data.md](./ui-ux/modules/03-reference-data.md) |

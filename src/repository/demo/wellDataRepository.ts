@@ -6,6 +6,7 @@ function completeFullWellFixture(value: Well): Well | null {
   if (value.id !== 'WELL-1010-FULL') return null
   const template = wells.find((item) => item.id === 'WELL-1010-FULL')
   if (!template?.bgd) return null
+  if (value.construction === undefined && template.construction) return { ...structuredClone(value), construction: structuredClone(template.construction) }
   if (!value.bgd) return { ...structuredClone(value), bgd: structuredClone(template.bgd) }
   const passport: Partial<WellBgdData['passport']> = value.bgd.passport
   if ('documentStartDate' in passport && 'documentEndDate' in passport) return null

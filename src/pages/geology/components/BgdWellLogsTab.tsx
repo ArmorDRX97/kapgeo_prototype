@@ -1,8 +1,8 @@
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CalendarDays, CheckCircle2, FileUp, Gauge, Pencil, Plus, RadioTower, Save, ScanLine, Star, Trash2, UserRound, Wrench, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import type { LogCurve, LogCurveCode, LogRunV2, WellLogWorkspace } from '../../../entities/well-log/model/types'
+import { AlertTriangle, CheckCircle2, FileUp, Pencil, Plus, RadioTower, Save, Star, Trash2, X } from 'lucide-react'
+import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import type { LogCurve, LogCurveCode, LogMeasurementPoint, LogRunV2, WellLogWorkspace } from '../../../entities/well-log/model/types'
 import type { Well } from '../../../entities/well/model/types'
 import { getLogSurveyMetadata, validateBgdWellLogDraft, type BgdWellLogDraft } from '../../../features/geobase/model/bgdWellLog'
 import { applyWellLogImport, beginWellLogImport, fetchWellLogWorkspace, saveWellLogWorkspace } from '../../../repository/api'
@@ -31,14 +31,19 @@ function formatDate(value: string) {
 }
 
 function logDraft(run: LogRunV2): BgdWellLogDraft {
+  const survey = getLogSurveyMetadata(run)
   return {
-    ...getLogSurveyMetadata(run),
+    ...survey,
     name: run.name,
     source: run.source,
     from: run.from,
     to: run.to,
     step: run.step,
     curveCodes: run.curves.map((curve) => curve.code).filter((code): code is keyof typeof curveCatalog => code in curveCatalog),
+    isControl: survey.isControl ?? false,
+    probe: survey.probe ?? '',
+    instrumentDiameterCm: survey.instrumentDiameterCm ?? null,
+    boreholeDiameterCm: survey.boreholeDiameterCm ?? null,
   }
 }
 
@@ -50,13 +55,35 @@ function emptyLogDraft(well: Well): BgdWellLogDraft {
     instrument: '',
     zone: 'Ствол скважины',
     isPrimary: false,
+    isControl: false,
     comment: '',
     source: 'station',
     from: 0,
     to: well.depth,
     step: 0.2,
+    probe: '',
+    instrumentDiameterCm: null,
+    boreholeDiameterCm: null,
     curveCodes: ['GR'],
   }
+}
+
+function demoMeasurements(runId: string, from: number, to: number, step: number, curves: LogCurve[]): LogMeasurementPoint[] {
+  const count = Math.min(8, Math.max(1, Math.floor((to - from) / step) + 1))
+  return Array.from({ length: count }, (_, index) => {
+    const values = Object.fromEntries(curves.map((curve) => {
+      const value = curve.code === 'SP' ? -24 + index * 2.3
+        : curve.code === 'RES' ? 8.4 + index * 1.75
+          : curve.code === 'CALI' ? 142 + ((index * 7) % 23)
+            : 34 + ((index * 13) % 47)
+      return [curve.id, Number(value.toFixed(2))]
+    }))
+    return { id: `${runId}-POINT-${index + 1}`, depth: Number((from + index * step).toFixed(2)), values }
+  })
+}
+
+function formatNumber(value: number | null | undefined, digits = 2) {
+  return value === null || value === undefined || !Number.isFinite(value) ? '—' : value.toLocaleString('ru-RU', { maximumFractionDigits: digits })
 }
 
 function buildCurves(codes: LogCurveCode[], runId: string, existing: LogCurve[] = []): LogCurve[] {
@@ -75,7 +102,9 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
   const [selectedId, setSelectedId] = useState('')
   const [editorRun, setEditorRun] = useState<LogRunV2 | 'new' | null>(null)
   useReportUnsavedChanges(Boolean(editorRun), onDirtyChange)
-  const [viewerOpen, setViewerOpen] = useState(false)
+  const [activeList, setActiveList] = useState<'control' | 'all'>('all')
+  const controlTabRef = useRef<HTMLButtonElement>(null)
+  const allTabRef = useRef<HTMLButtonElement>(null)
   const [notice, setNotice] = useState('')
 
   const save = useMutation({
@@ -96,10 +125,32 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
   })
 
   const workspace = query.data
-  const selected = workspace?.runs.find((run) => run.id === selectedId) ?? workspace?.runs[0]
-  const primary = workspace?.runs.find((run) => getLogSurveyMetadata(run).isPrimary)
-  const curveCount = useMemo(() => new Set(workspace?.runs.flatMap((run) => run.curves.map((curve) => curve.code)) ?? []).size, [workspace?.runs])
+  const controlRuns = useMemo(() => workspace?.runs.filter((run) => getLogSurveyMetadata(run).isControl) ?? [], [workspace?.runs])
+  const visibleRuns = activeList === 'control' ? controlRuns : workspace?.runs ?? []
+  const selected = visibleRuns.find((run) => run.id === selectedId) ?? visibleRuns[0]
   const error = query.error ?? save.error ?? importDemo.error
+  const measurementSource = useMemo(() => selected ? (selected.measurements ?? demoMeasurements(selected.id, selected.from, selected.to, selected.step, selected.curves)) : [], [selected])
+  const [measurementDraftState, setMeasurementDraftState] = useState<{ runId: string; points: LogMeasurementPoint[] } | null>(null)
+  const measurementDraft = measurementDraftState && measurementDraftState.runId === selected?.id ? measurementDraftState.points : measurementSource
+  const measurementDirty = Boolean(selected) && JSON.stringify(measurementDraft) !== JSON.stringify(measurementSource)
+  const moveTabFocus = (event: KeyboardEvent<HTMLButtonElement>, current: 'control' | 'all') => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+    event.preventDefault()
+    const next = event.key === 'Home' ? 'control' : event.key === 'End' ? 'all' : current === 'control' ? 'all' : 'control'
+    if (measurementDirty && next !== activeList) return
+    setActiveList(next)
+    ;(next === 'control' ? controlTabRef : allTabRef).current?.focus()
+  }
+  const saveMeasurementDraft = async () => {
+    if (!workspace || !selected) return false
+    const runs = workspace.runs.map((run) => run.id === selected.id ? { ...run, measurements: measurementDraft } : run)
+    await save.mutateAsync({ current: workspace, next: { ...workspace, runs }, eventType: 'log.measurements.updated' })
+    setMeasurementDraftState(null)
+    setNotice('Результаты измерений сохранены.')
+    return true
+  }
+  const discardMeasurementDraft = () => setMeasurementDraftState(null)
+  useReportUnsavedChanges(measurementDirty, undefined, { save: saveMeasurementDraft, discard: discardMeasurementDraft })
 
   if (query.isLoading || !workspace) return <div className="page-loading page-loading--inline"><span /><p>Загружаем каротажи…</p></div>
 
@@ -107,12 +158,13 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
     if (validateBgdWellLogDraft(draft, well.depth).length) return false
     const runId = currentRun === 'new' ? `LOGV2-${well.id}-MANUAL-${crypto.randomUUID()}` : currentRun.id
     const nextRun: LogRunV2 = currentRun === 'new'
-      ? { id: runId, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, status: 'draft', curves: buildCurves(draft.curveCodes, runId), rawArtifactId: `RAW-${runId}`, parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: { measuredAt: draft.measuredAt, operator: draft.operator.trim(), instrument: draft.instrument.trim(), zone: draft.zone.trim(), isPrimary: draft.isPrimary, comment: draft.comment.trim() } }
-      : { ...currentRun, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, curves: buildCurves(draft.curveCodes, runId, currentRun.curves), parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: { measuredAt: draft.measuredAt, operator: draft.operator.trim(), instrument: draft.instrument.trim(), zone: draft.zone.trim(), isPrimary: draft.isPrimary, comment: draft.comment.trim() } }
+      ? { id: runId, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, status: 'draft', curves: buildCurves(draft.curveCodes, runId), measurements: demoMeasurements(runId, draft.from, draft.to, draft.step, buildCurves(draft.curveCodes, runId)), rawArtifactId: `RAW-${runId}`, parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: { measuredAt: draft.measuredAt, operator: draft.operator.trim(), instrument: draft.instrument.trim(), zone: draft.zone.trim(), isPrimary: draft.isPrimary, isControl: draft.isControl, probe: draft.probe.trim(), instrumentDiameterCm: draft.instrumentDiameterCm, boreholeDiameterCm: draft.boreholeDiameterCm, comment: draft.comment.trim() } }
+      : { ...currentRun, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, curves: buildCurves(draft.curveCodes, runId, currentRun.curves), measurements: currentRun.measurements ?? demoMeasurements(runId, draft.from, draft.to, draft.step, currentRun.curves), parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: { measuredAt: draft.measuredAt, operator: draft.operator.trim(), instrument: draft.instrument.trim(), zone: draft.zone.trim(), isPrimary: draft.isPrimary, isControl: draft.isControl, probe: draft.probe.trim(), instrumentDiameterCm: draft.instrumentDiameterCm, boreholeDiameterCm: draft.boreholeDiameterCm, comment: draft.comment.trim() } }
     const others = workspace.runs.map((run) => draft.isPrimary && run.id !== runId ? { ...run, survey: { ...getLogSurveyMetadata(run), isPrimary: false } } : run)
     const nextRuns = currentRun === 'new' ? [...others, nextRun] : others.map((run) => run.id === runId ? nextRun : run)
     await save.mutateAsync({ current: workspace, next: { ...workspace, runs: nextRuns }, eventType: currentRun === 'new' ? 'log.run.created' : 'log.run.updated' })
     setSelectedId(runId)
+    setActiveList('all')
     setEditorRun(null)
     setNotice(currentRun === 'new' ? 'Каротаж добавлен в карточку скважины.' : 'Каротаж сохранён.')
     return true
@@ -128,7 +180,6 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
     save.mutate({ current: workspace, next: { ...workspace, runs: workspace.runs.filter((item) => item.id !== run.id) }, eventType: 'log.run.deleted' }, {
       onSuccess: (next) => {
         setSelectedId(next.runs[0]?.id ?? '')
-        setViewerOpen(false)
         setNotice('Каротаж удалён. Операция записана в аудит.')
       },
     })
@@ -138,38 +189,41 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
     {error && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span><strong>Не удалось обновить каротажи</strong>{String(error.message ?? error).split('\n').map((line) => <small key={line}>{line}</small>)}</span></div>}
     {notice && <div className="success-message" role="status"><CheckCircle2 size={17} /><span><strong>Каротажи обновлены</strong>{notice}</span></div>}
 
-    <section className="bgd-log-summary" aria-label="Сводка по каротажам">
-      <article><span><RadioTower size={19} /></span><div><strong>{workspace.runs.length}</strong><small>каротажных набора</small></div></article>
-      <article><span><ScanLine size={19} /></span><div><strong>{curveCount}</strong><small>типов каналов</small></div></article>
-      <article><span><Star size={19} /></span><div><strong>{primary?.name ?? 'Не выбран'}</strong><small>основной каротаж</small></div></article>
+    <header className="bgd-log-toolbar">
+      <div className="bgd-log-tabs" role="tablist" aria-label="Список каротажей">
+        <button ref={controlTabRef} type="button" role="tab" id="bgd-logs-control-tab" aria-controls="bgd-logs-table-panel" aria-selected={activeList === 'control'} tabIndex={activeList === 'control' ? 0 : -1} disabled={measurementDirty && activeList !== 'control'} onKeyDown={(event) => moveTabFocus(event, 'control')} onClick={() => setActiveList('control')}>Контрольные каротажи <span>{controlRuns.length}</span></button>
+        <button ref={allTabRef} type="button" role="tab" id="bgd-logs-all-tab" aria-controls="bgd-logs-table-panel" aria-selected={activeList === 'all'} tabIndex={activeList === 'all' ? 0 : -1} disabled={measurementDirty && activeList !== 'all'} onKeyDown={(event) => moveTabFocus(event, 'all')} onClick={() => setActiveList('all')}>Все каротажи <span>{workspace.runs.length}</span></button>
+      </div>
+      <div className="bgd-log-toolbar__actions">
+        <Button size="sm" disabled={!canEdit || save.isPending || measurementDirty} onClick={() => setEditorRun('new')}><Plus size={15} /> Добавить</Button>
+        <Button size="sm" variant="secondary" disabled={!canEdit || importDemo.isPending || measurementDirty} onClick={() => importDemo.mutate(workspace)}>{importDemo.isPending ? 'Обрабатываем…' : <><FileUp size={15} /> Загрузить LAS</>}</Button>
+      </div>
+    </header>
 
-    </section>
-
-    <div className="bgd-logs-layout">
-      <Panel className="bgd-log-registry" title="Каротажи" description="Исследования этой скважины и их состояние." action={<Button size="sm" disabled={!canEdit || save.isPending} onClick={() => setEditorRun('new')}><Plus size={15} /> Добавить</Button>}>
-        {workspace.runs.length ? <div className="bgd-log-list">{workspace.runs.map((run) => {
+    <div className="bgd-log-table-scroll" id="bgd-logs-table-panel" role="tabpanel" aria-labelledby={activeList === 'control' ? 'bgd-logs-control-tab' : 'bgd-logs-all-tab'}>
+      <table className="bgd-log-table" aria-label={activeList === 'control' ? 'Контрольные каротажи скважины' : 'Все каротажи скважины'}>
+        <thead><tr><th scope="col">Тип каротажа</th><th scope="col">Дата</th><th scope="col">Оператор</th><th scope="col">Прибор</th><th scope="col">Зонд</th><th scope="col">Основной</th><th scope="col">Глубина, м</th><th scope="col">Шаг, м</th><th scope="col">Диаметр прибора / скважины, см</th><th scope="col">Состояние</th></tr></thead>
+        <tbody>{visibleRuns.map((run) => {
           const survey = getLogSurveyMetadata(run)
           const status = statusPresentation[run.status]
-          return <button type="button" key={run.id} className={run.id === selected?.id ? 'is-selected' : ''} onClick={() => { setSelectedId(run.id); setViewerOpen(false) }}>
-            <span className="bgd-log-list__icon"><RadioTower size={18} /></span>
-            <span><strong>{run.name}</strong><small>{formatDate(survey.measuredAt)} · {survey.instrument}</small><em>{run.from.toLocaleString('ru-RU')}–{run.to.toLocaleString('ru-RU')} м · {run.curves.length} канала</em></span>
-            <span className="bgd-log-list__status">{survey.isPrimary && <Star size={14} aria-label="Основной каротаж" />}<Badge tone={status.tone}>{status.label}</Badge></span>
-          </button>
-        })}</div> : <div className="geobase-empty"><RadioTower size={22} /><strong>Каротажей пока нет</strong><span>Добавьте первый набор вручную или загрузите LAS-файл.</span></div>}
-        <div className="bgd-log-import"><span><FileUp size={18} /><span><strong>Импорт каротажа</strong><small>Загрузка и проверка LAS-файла</small></span></span><Button size="sm" variant="secondary" disabled={!canEdit || importDemo.isPending} onClick={() => importDemo.mutate(workspace)}>{importDemo.isPending ? 'Обрабатываем…' : 'Загрузить LAS'}</Button></div>
-      </Panel>
-
-      {selected ? <LogInspector
-        run={selected}
-        canEdit={canEdit}
-        pending={save.isPending}
-        viewerOpen={viewerOpen}
-        onToggleViewer={() => setViewerOpen((current) => !current)}
-        onEdit={() => setEditorRun(selected)}
-        onPrimary={() => setPrimary(selected)}
-        onDelete={() => deleteRun(selected)}
-      /> : <Panel className="bgd-log-inspector" title="Сведения о каротаже" description="Выберите или добавьте каротаж."><div className="geobase-empty"><ScanLine size={22} /><strong>Нет выбранного набора</strong><span>Подробности и каналы появятся здесь.</span></div></Panel>}
+          return <tr key={run.id} className={`${run.id === selected?.id ? 'is-selected' : ''} ${measurementDirty && run.id !== selected?.id ? 'is-disabled' : ''}`} aria-selected={run.id === selected?.id} tabIndex={measurementDirty && run.id !== selected?.id ? -1 : 0} onClick={() => { if (!measurementDirty || run.id === selected?.id) setSelectedId(run.id) }} onKeyDown={(event) => { if ((event.key === 'Enter' || event.key === ' ') && (!measurementDirty || run.id === selected?.id)) { event.preventDefault(); setSelectedId(run.id) } }}>
+            <th scope="row"><span className="bgd-log-table__select">{run.name}</span><small>{run.id}</small></th>
+            <td>{survey.measuredAt ? formatDate(survey.measuredAt) : '—'}</td>
+            <td>{survey.operator || '—'}</td>
+            <td>{survey.instrument || '—'}</td>
+            <td>{survey.probe || '—'}</td>
+            <td>{survey.isPrimary ? <span className="bgd-log-main-flag"><Star size={14} /> Да</span> : '—'}</td>
+            <td className="is-numeric">{formatNumber(run.to)}</td>
+            <td className="is-numeric">{formatNumber(run.step)}</td>
+            <td className="is-numeric">{formatNumber(survey.instrumentDiameterCm)} / {formatNumber(survey.boreholeDiameterCm)}</td>
+            <td><Badge tone={status.tone}>{status.label}</Badge></td>
+          </tr>
+        })}</tbody>
+      </table>
+      {!visibleRuns.length && <div className="geobase-empty bgd-log-table-empty"><RadioTower size={22} /><strong>{activeList === 'control' ? 'Контрольных каротажей пока нет' : 'Каротажей пока нет'}</strong><span>{activeList === 'control' ? 'Отметьте набор как контрольный при добавлении или редактировании.' : 'Добавьте первый набор вручную или загрузите LAS-файл.'}</span></div>}
     </div>
+
+    {selected ? <LogInspector run={selected} measurements={measurementDraft} onMeasurementsChange={(points) => setMeasurementDraftState({ runId: selected.id, points })} onSaveMeasurements={() => { void saveMeasurementDraft() }} onDiscardMeasurements={discardMeasurementDraft} canEdit={canEdit} pending={save.isPending} dirty={measurementDirty} onEdit={() => setEditorRun(selected)} onPrimary={() => setPrimary(selected)} onDelete={() => deleteRun(selected)} /> : <Panel className="bgd-log-inspector" title="Данные измерений" description="Выберите каротаж или добавьте новый."><p className="bgd-log-empty-hint">Результаты измерений появятся здесь в табличном виде.</p></Panel>}
 
     {editorRun && <LogSurveyDialog
       key={editorRun === 'new' ? 'new' : editorRun.id}
@@ -183,46 +237,37 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
   </div>
 }
 
-function LogInspector({ run, canEdit, pending, viewerOpen, onToggleViewer, onEdit, onPrimary, onDelete }: { run: LogRunV2; canEdit: boolean; pending: boolean; viewerOpen: boolean; onToggleViewer: () => void; onEdit: () => void; onPrimary: () => void; onDelete: () => void }) {
+function LogInspector({ run, measurements, onMeasurementsChange, onSaveMeasurements, onDiscardMeasurements, canEdit, pending, dirty, onEdit, onPrimary, onDelete }: { run: LogRunV2; measurements: LogMeasurementPoint[]; onMeasurementsChange: (points: LogMeasurementPoint[]) => void; onSaveMeasurements: () => void; onDiscardMeasurements: () => void; canEdit: boolean; pending: boolean; dirty: boolean; onEdit: () => void; onPrimary: () => void; onDelete: () => void }) {
   const survey = getLogSurveyMetadata(run)
   const status = statusPresentation[run.status]
-  return <Panel className="bgd-log-inspector" title={run.name} description={`${run.id}`} action={<Badge tone={status.tone} dot>{status.label}</Badge>}>
-    <div className="bgd-log-facts">
-      <article><CalendarDays size={17} /><span><small>Дата</small><strong>{formatDate(survey.measuredAt)}</strong></span></article>
-      <article><UserRound size={17} /><span><small>Оператор</small><strong>{survey.operator}</strong></span></article>
-      <article><Wrench size={17} /><span><small>Прибор</small><strong>{survey.instrument}</strong></span></article>
-      <article><Gauge size={17} /><span><small>Интервал и шаг</small><strong>{run.from}–{run.to} м · {run.step} м</strong></span></article>
-      <article><ScanLine size={17} /><span><small>Зона</small><strong>{survey.zone}</strong></span></article>
-      <article><FileUp size={17} /><span><small>Источник</small><strong>{run.source} · {run.parserProfile}</strong></span></article>
+  const updatePoint = (pointId: string, patch: Partial<LogMeasurementPoint>) => onMeasurementsChange(measurements.map((point) => point.id === pointId ? { ...point, ...patch } : point))
+  const addPoint = () => {
+    const depth = Number(((measurements.at(-1)?.depth ?? run.from - run.step) + run.step).toFixed(2))
+    const values = Object.fromEntries(run.curves.map((curve) => [curve.id, null]))
+    onMeasurementsChange([...measurements, { id: `${run.id}-POINT-${crypto.randomUUID()}`, depth, values }])
+  }
+  return <Panel className="bgd-log-inspector" title="Данные выбранного каротажа" description={`${run.name} · ${run.id}`} action={<Badge tone={status.tone} dot>{status.label}</Badge>}>
+    <div className="bgd-log-selected-toolbar">
+      <span>{survey.isControl ? 'Контрольный набор' : 'Обычный набор'} · {survey.zone || 'Ствол скважины'} · {run.source}</span>
+      <div className="bgd-log-inspector__actions">
+        {canEdit && <><Button size="sm" variant="secondary" disabled={pending || dirty || survey.isPrimary} onClick={onPrimary}><Star size={15} /> {survey.isPrimary ? 'Основной' : 'Сделать основным'}</Button><Button size="sm" variant="secondary" disabled={pending || dirty} onClick={onEdit}><Pencil size={15} /> Изменить</Button><Button size="sm" variant="quiet" disabled={pending || dirty} onClick={onDelete}><Trash2 size={15} /> Удалить</Button></>}
+      </div>
     </div>
     <div className="bgd-log-comment"><strong>Комментарий</strong><p>{survey.comment || 'Комментарий не добавлен.'}</p></div>
-    <div className="bgd-log-curves" role="table" aria-label="Каналы выбранного каротажа">
-      <div className="bgd-log-curves__head" role="row"><span>Канал</span><span>Данные</span><span>Диапазон</span><span>Шкала</span></div>
-      {run.curves.map((curve) => {
-        const spec = curve.code in curveCatalog ? curveCatalog[curve.code as keyof typeof curveCatalog] : { label: curve.label, unit: curve.unit, range: '—', color: curve.color, scale: curve.scale }
-        return <div role="row" key={curve.id}><span role="cell"><i style={{ background: curve.color }} /> <strong>{curve.code}</strong></span><span role="cell">{spec.label}<small>{curve.unit}</small></span><span role="cell">{spec.range} {curve.unit}</span><span role="cell">{curve.scale === 'log' ? 'Логарифмическая' : 'Линейная'}</span></div>
-      })}
+    <div className="bgd-log-measurements-toolbar"><span>{measurements.length} точек измерения</span>{canEdit && <div><Button size="sm" variant="secondary" disabled={pending} onClick={addPoint}><Plus size={14} /> Добавить строку</Button><Button size="sm" variant="secondary" disabled={pending || !dirty} onClick={onDiscardMeasurements}>Отменить</Button><Button size="sm" disabled={pending || !dirty} onClick={onSaveMeasurements}><Save size={14} /> Сохранить значения</Button></div>}</div>
+    <div className="bgd-log-measurements-scroll">
+      <table className="bgd-log-measurements" aria-label={`Измерения каротажа ${run.name}`}>
+        <caption>Демонстрационные значения измерений</caption>
+        <thead><tr><th scope="col">Глубина, м</th>{run.curves.map((curve) => <th scope="col" key={curve.id}>{curve.code}<small>{curve.unit}</small></th>)}{canEdit && <th scope="col">Действие</th>}</tr></thead>
+        <tbody>{measurements.length ? measurements.map((point, index) => <tr key={point.id}>
+          <th scope="row" className="is-numeric">{canEdit ? <input aria-label={`Глубина, м, строка ${index + 1}`} type="number" step="any" disabled={pending} value={point.depth} onChange={(event) => { if (event.target.value !== '' && Number.isFinite(Number(event.target.value))) updatePoint(point.id, { depth: Number(event.target.value) }) }} /> : formatNumber(point.depth)}</th>
+          {run.curves.map((curve) => <td key={curve.id} className="is-numeric">{canEdit ? <input aria-label={`${curve.code}, строка ${index + 1}`} type="number" step="any" disabled={pending} value={point.values[curve.id] ?? ''} onChange={(event) => { const value = event.target.value; const parsed = value === '' ? null : Number(value); if (parsed === null || Number.isFinite(parsed)) updatePoint(point.id, { values: { ...point.values, [curve.id]: parsed } }) }} /> : formatNumber(point.values[curve.id])}</td>)}
+          {canEdit && <td className="bgd-log-row-action"><Button size="sm" variant="quiet" disabled={pending} aria-label={`Удалить строку измерения ${index + 1}`} onClick={() => onMeasurementsChange(measurements.filter((item) => item.id !== point.id))}><Trash2 size={14} /></Button></td>}
+        </tr>) : <tr><td className="bgd-log-empty-cell" colSpan={run.curves.length + (canEdit ? 2 : 1)}>Измерения не добавлены. Добавьте строку, чтобы внести первое значение.</td></tr>}</tbody>
+      </table>
     </div>
-    <div className="bgd-log-inspector__actions">
-      <Button size="sm" variant="secondary" onClick={onToggleViewer}><ScanLine size={15} /> {viewerOpen ? 'Скрыть кривые' : 'Показать кривые'}</Button>
-      {canEdit && <><Button size="sm" variant="secondary" disabled={pending || survey.isPrimary} onClick={onPrimary}><Star size={15} /> {survey.isPrimary ? 'Основной' : 'Сделать основным'}</Button><Button size="sm" variant="secondary" disabled={pending} onClick={onEdit}><Pencil size={15} /> Изменить</Button><Button size="sm" variant="quiet" disabled={pending} onClick={onDelete}><Trash2 size={15} /> Удалить</Button></>}
-    </div>
-    {viewerOpen && <LogCurvePreview run={run} />}
+    <p className="bgd-log-hidden-curves-note">Графическое отображение кривых временно скрыто.</p>
   </Panel>
-}
-
-function LogCurvePreview({ run }: { run: LogRunV2 }) {
-  const [depth, setDepth] = useState(Math.min(run.to, Math.max(run.from, run.from + (run.to - run.from) * .68)))
-  const lines = ['M48 0 C20 60 78 120 43 180 S78 300 28 350 S80 465 45 600', 'M70 0 C42 60 78 130 35 200 S75 320 40 420 S69 510 30 600', 'M28 0 C72 70 35 130 75 205 S22 310 68 400 S32 520 66 600', 'M38 0 C60 90 24 150 68 230 S35 350 74 430 S25 520 54 600']
-  const ratio = run.to === run.from ? 0 : (depth - run.from) / (run.to - run.from)
-  return <section className="bgd-log-viewer" aria-label="Просмотр каротажных кривых">
-    <header><span><ScanLine size={16} /> Курсор: <strong>{depth.toFixed(1)} м</strong></span><input aria-label="Глубина просмотра" type="range" min={run.from} max={run.to} step={run.step} value={depth} onChange={(event) => setDepth(Number(event.target.value))} /></header>
-    <div className="bgd-log-viewer__canvas" style={{ gridTemplateColumns: `54px repeat(${run.curves.length}, minmax(100px, 1fr))` }}>
-      <div className="bgd-log-viewer__ruler">{[0, .25, .5, .75, 1].map((mark) => <span key={mark} style={{ top: `${mark * 100}%` }}>{Math.round(run.from + (run.to - run.from) * mark)} м</span>)}</div>
-      {run.curves.map((curve, index) => <div className="bgd-log-viewer__track" key={curve.id}><strong>{curve.code}<small>{curve.label} · {curve.unit}</small></strong><svg viewBox="0 0 100 600" preserveAspectRatio="none"><path stroke={curve.color} d={lines[index % lines.length]} /></svg></div>)}
-      <div className="bgd-log-viewer__cursor" style={{ top: `${ratio * 100}%` }}><span>{depth.toFixed(1)} м</span></div>
-    </div>
-  </section>
 }
 
 function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }: { initial: BgdWellLogDraft; title: string; wellDepth: number; pending: boolean; onClose: () => void; onSave: (draft: BgdWellLogDraft) => Promise<boolean> }) {
@@ -240,7 +285,7 @@ function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }
 
   return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
     <section className="geobase-dialog geobase-dialog--log" role="dialog" aria-modal="true" aria-labelledby="log-editor-title">
-      <header><div><span><RadioTower size={20} /></span><div><h2 id="log-editor-title">{title}</h2><p>Сведения об исследовании, интервале и каналах данных.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть форму каротажа"><X size={19} /></button></header>
+      <header><div><span><RadioTower size={20} /></span><div><h2 id="log-editor-title">{title}</h2><p>Реквизиты набора и параметры замера.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть форму каротажа"><X size={19} /></button></header>
       <div className="geobase-dialog__body bgd-log-form">
         {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}
         <div className="form-grid bgd-well-form-grid">
@@ -248,15 +293,19 @@ function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }
           <label className="field"><span className="field__label">Дата <em>*</em></span><input type="date" disabled={pending} value={draft.measuredAt} onChange={(event) => update('measuredAt', event.target.value)} /></label>
           <label className="field"><span className="field__label">Оператор <em>*</em></span><input disabled={pending} value={draft.operator} onChange={(event) => update('operator', event.target.value)} placeholder="ФИО специалиста" /></label>
           <label className="field"><span className="field__label">Прибор <em>*</em></span><input disabled={pending} value={draft.instrument} onChange={(event) => update('instrument', event.target.value)} placeholder="Например, РКС-3" /></label>
+          <label className="field"><span className="field__label">Зонд</span><input disabled={pending} value={draft.probe} onChange={(event) => update('probe', event.target.value)} placeholder="Тип зонда" maxLength={255} /></label>
           <label className="field"><span className="field__label">Зона</span><input disabled={pending} value={draft.zone} onChange={(event) => update('zone', event.target.value)} /></label>
           <label className="field"><span className="field__label">Источник</span><select disabled={pending} value={draft.source} onChange={(event) => update('source', event.target.value as LogRunV2['source'])}><option value="station">Ручной ввод / станция</option><option value="LAS">LAS</option><option value="DAT">DAT</option></select></label>
-          <label className="field"><span className="field__label">От, м <em>*</em></span><input type="number" min="0" step="any" disabled={pending} value={draft.from} onChange={(event) => update('from', Number(event.target.value))} /></label>
-          <label className="field"><span className="field__label">До, м <em>*</em></span><input type="number" min="0" step="any" disabled={pending} value={draft.to} onChange={(event) => update('to', Number(event.target.value))} /></label>
+          <label className="field"><span className="field__label">Начальная глубина, м <em>*</em></span><input type="number" min="0" step="any" disabled={pending} value={draft.from} onChange={(event) => update('from', Number(event.target.value))} /></label>
+          <label className="field"><span className="field__label">Глубина до, м <em>*</em></span><input type="number" min="0" step="any" disabled={pending} value={draft.to} onChange={(event) => update('to', Number(event.target.value))} /></label>
           <label className="field"><span className="field__label">Шаг, м <em>*</em></span><input type="number" min="0.01" step="0.01" disabled={pending} value={draft.step} onChange={(event) => update('step', Number(event.target.value))} /></label>
+          <label className="field"><span className="field__label">Диаметр прибора, см</span><input type="number" min="0.01" step="any" disabled={pending} value={draft.instrumentDiameterCm ?? ''} onChange={(event) => update('instrumentDiameterCm', event.target.value === '' ? null : Number(event.target.value))} /></label>
+          <label className="field"><span className="field__label">Диаметр скважины, см</span><input type="number" min="0.01" step="any" disabled={pending} value={draft.boreholeDiameterCm ?? ''} onChange={(event) => update('boreholeDiameterCm', event.target.value === '' ? null : Number(event.target.value))} /></label>
         </div>
-        <fieldset className="bgd-log-channel-picker"><legend>Каналы данных <em>*</em></legend>{editableCurveCodes.map((code) => <label key={code}><input type="checkbox" checked={draft.curveCodes.includes(code)} disabled={pending} onChange={(event) => update('curveCodes', event.target.checked ? [...draft.curveCodes, code] : draft.curveCodes.filter((item) => item !== code))} /><span><i style={{ background: curveCatalog[code].color }} /><strong>{code}</strong><small>{curveCatalog[code].label}</small></span></label>)}</fieldset>
+        <fieldset className="bgd-log-curve-picker"><legend>Измеряемые кривые <em>*</em></legend>{editableCurveCodes.map((code) => <label key={code}><input type="checkbox" checked={draft.curveCodes.includes(code)} disabled={pending} onChange={(event) => update('curveCodes', event.target.checked ? [...draft.curveCodes, code] : draft.curveCodes.filter((item) => item !== code))} /><span><i style={{ background: curveCatalog[code].color }} /><strong>{code}</strong><small>{curveCatalog[code].label}</small></span></label>)}</fieldset>
         <label className="field"><span className="field__label">Комментарий</span><textarea rows={3} disabled={pending} value={draft.comment} onChange={(event) => update('comment', event.target.value)} placeholder="Уточнения по прибору, качеству или условиям измерения" /></label>
         <label className="bgd-log-primary-check"><input type="checkbox" checked={draft.isPrimary} disabled={pending} onChange={(event) => update('isPrimary', event.target.checked)} /><Star size={16} /><span><strong>Основной каротаж</strong><small>Использовать как приоритетный набор скважины</small></span></label>
+        <label className="bgd-log-primary-check"><input type="checkbox" checked={draft.isControl} disabled={pending} onChange={(event) => update('isControl', event.target.checked)} /><span><strong>Контрольный каротаж</strong><small>Показывать набор во вкладке контрольных каротажей</small></span></label>
       </div>
       <footer><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={pending} onClick={submit}><Save size={15} /> Сохранить</Button></footer>
     </section>

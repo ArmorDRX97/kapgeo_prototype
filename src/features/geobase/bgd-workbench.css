@@ -86,7 +86,9 @@
 }
 
 @container (max-width: 880px) {
-  .bgd-logs-layout, .bgd-core-layout, .bgd-lithology-layout, .bgd-deviation-layout, .bgd-ore-layout, .bgd-ore-layout--merged { grid-template-columns: minmax(0, 1fr); }
+  .bgd-log-toolbar { align-items: flex-start; flex-direction: column; }
+  .bgd-log-toolbar__actions { width: 100%; justify-content: flex-end; }
+  .bgd-core-layout, .bgd-lithology-layout, .bgd-deviation-layout, .bgd-ore-layout, .bgd-ore-layout--merged { grid-template-columns: minmax(0, 1fr); }
   .bgd-well-form-grid, .bgd-well-language-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bgd-log-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bgd-ore-context { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -94,6 +96,14 @@
   .bgd-lithology-main { order: -1; }
 }
 @container (max-width: 540px) {
+  .bgd-log-toolbar__actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .bgd-log-toolbar__actions .button { justify-content: center; }
+  .bgd-log-tabs { width: 100%; overflow-x: auto; }
+  .bgd-log-tabs button { flex: 1 0 auto; justify-content: center; }
+  .bgd-log-selected-toolbar { align-items: flex-start; flex-direction: column; }
+  .bgd-log-inspector__actions { justify-content: flex-start; }
+  .bgd-log-measurements-toolbar { align-items: flex-start; flex-direction: column; }
+  .bgd-log-measurements-toolbar > div { width: 100%; justify-content: flex-start; }
   .bgd-well-form-grid, .bgd-well-language-grid, .bgd-well-coordinate-grid, .bgd-well-coordinate-grid section > div { grid-template-columns: minmax(0, 1fr); }
   .bgd-log-summary { grid-template-columns: minmax(0, 1fr); }
   .bgd-ore-context { grid-template-columns: minmax(0, 1fr); }

@@ -1,7 +1,8 @@
 export type LogCurveCode = 'GR' | 'SP' | 'RES' | 'CALI' | 'GR_DERIVED' | 'GR_MERGED'
 export type LogCurve = { id: string; code: LogCurveCode; label: string; unit: string; scale: 'linear' | 'log'; color: string; sourceCurveIds?: string[]; formula?: string }
-export type LogSurveyMetadata = { measuredAt: string; operator: string; instrument: string; zone: string; isPrimary: boolean; comment: string }
-export type LogRunV2 = { id: string; name: string; source: 'LAS' | 'DAT' | 'station'; from: number; to: number; step: number; status: 'draft' | 'qc_issues' | 'qc_passed' | 'review'; curves: LogCurve[]; rawArtifactId: string; parserProfile: string; survey?: LogSurveyMetadata }
+export type LogSurveyMetadata = { measuredAt: string; operator: string; instrument: string; zone: string; isPrimary: boolean; comment: string; isControl?: boolean; probe?: string; instrumentDiameterCm?: number | null; boreholeDiameterCm?: number | null }
+export type LogMeasurementPoint = { id: string; depth: number; values: Record<string, number | null> }
+export type LogRunV2 = { id: string; name: string; source: 'LAS' | 'DAT' | 'station'; from: number; to: number; step: number; status: 'draft' | 'qc_issues' | 'qc_passed' | 'review'; curves: LogCurve[]; measurements?: LogMeasurementPoint[]; rawArtifactId: string; parserProfile: string; survey?: LogSurveyMetadata }
 export type LogImportStaging = { id: string; fileName: string; sizeLabel: string; checksum: string; source: 'bundled fixture' | 'local demo fixture'; parserProfile: 'LAS 2.0' | 'DAT station' | 'station table'; depthChannel: string; depthUnit: 'м' | 'ft'; nullValue: number; mapping: Array<{ source: string; target: LogCurveCode | 'ignore'; unit: string }>; issues: Array<{ id: string; severity: 'warning' | 'error'; text: string }>; rejectedRows: number; state: 'selected' | 'parsed' | 'qc_ready' | 'applied' }
 export type LogViewerLayout = { id: string; name: string; trackOrder: LogCurveCode[]; widths: Record<string, number>; visibleRange: { from: number; to: number }; selectedDepth: number; overlay: boolean }
 export type LogMarker = { id: string; depth: number; label: string; kind: 'gap' | 'spike' | 'note' }

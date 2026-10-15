@@ -162,6 +162,7 @@ export type Well = {
   completeness: number
   activeTask?: string
   aiConflicts: number
+  construction?: ConstructionInterval[]
   bgd?: WellBgdData
 }
 

@@ -1,4 +1,4 @@
-import { BookOpen, Compass, FileText, Gauge, Info, Layers3, MapPin, RadioTower, Ruler, TestTube2, Wrench } from 'lucide-react'
+import { BookOpen, Compass, FileText, Gauge, Info, Layers3, MapPin, RadioTower, Ruler, TestTube2, Wrench, Pipette } from 'lucide-react'
 import type { BgdWellSection } from './bgdWellSection'
 
 export const bgdWellNavigationGroups = [
@@ -6,6 +6,7 @@ export const bgdWellNavigationGroups = [
     { id: 'description', label: 'Описание', icon: Info },
     { id: 'geometry', label: 'Координаты и глубина', icon: MapPin },
     { id: 'drilling', label: 'Проходка и освоение', icon: Wrench },
+    { id: 'construction', label: 'Конструкция скважины', icon: Pipette },
     { id: 'passport', label: 'Паспорт', icon: BookOpen },
     { id: 'documentation', label: 'Документация', icon: FileText },
   ] },

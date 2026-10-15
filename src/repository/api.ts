@@ -1,5 +1,6 @@
 import type { ConditionSet, CreateDepositInput, Deposit, DepositOccurrence, GeologicalMasterData, GeologicalSite, UpdateDepositPatch } from '../entities/geology-master/model/types'
 import type { WellCoreWorkspace } from '../entities/well-core/model/types'
+import { validateConstruction } from '../entities/well-construction/model/validation'
 import type { WellGeologyWorkspace } from '../entities/well-geology/model/types'
 import type { WellLogWorkspace } from '../entities/well-log/model/types'
 import type { WellDeviationWorkspace } from '../entities/well-deviation/model/types'
@@ -78,6 +79,14 @@ export async function updateWell(input: UpdateWellInput): Promise<Well> {
     status: data.bgd?.statusHistory.at(-1)?.status ?? current.status,
 
   })
+}
+
+export async function saveWellConstruction(wellId: string, construction: NonNullable<Well['construction']>): Promise<Well> {
+  await wait(250)
+  const current = await demoWellDataRepository.getWell(wellId)
+  const error = validateConstruction(construction, current.depth)
+  if (error) throw new Error(error)
+  return demoWellDataRepository.updateWell(current, { ...current, construction: structuredClone(construction) })
 }
 
 export async function fetchWellCoreWorkspace(wellId: string) {

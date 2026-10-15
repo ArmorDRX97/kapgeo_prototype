@@ -7,6 +7,10 @@ export type BgdWellLogDraft = LogSurveyMetadata & {
   to: number
   step: number
   curveCodes: LogCurveCode[]
+  isControl: boolean
+  probe: string
+  instrumentDiameterCm: number | null
+  boreholeDiameterCm: number | null
 }
 
 export function getLogSurveyMetadata(run: LogRunV2): LogSurveyMetadata {
@@ -17,6 +21,10 @@ export function getLogSurveyMetadata(run: LogRunV2): LogSurveyMetadata {
     zone: 'Ствол скважины',
     isPrimary: false,
     comment: 'Комментарий не добавлен.',
+    isControl: false,
+    probe: '',
+    instrumentDiameterCm: null,
+    boreholeDiameterCm: null,
   }
 }
 
@@ -29,6 +37,9 @@ export function validateBgdWellLogDraft(draft: BgdWellLogDraft, wellDepth: numbe
   if (draft.from < 0 || draft.to <= draft.from) errors.push('Интервал должен иметь корректные границы «от» и «до».')
   if (wellDepth > 0 && draft.to > wellDepth) errors.push('Интервал каротажа не может быть глубже скважины.')
   if (draft.step <= 0) errors.push('Шаг измерения должен быть больше нуля.')
-  if (!draft.curveCodes.length) errors.push('Выберите хотя бы один канал данных.')
+  if (!draft.curveCodes.length) errors.push('Выберите хотя бы одну измеряемую кривую.')
+  if (draft.probe.length > 255) errors.push('Название зонда не должно превышать 255 символов.')
+  if (draft.instrumentDiameterCm !== null && (!Number.isFinite(draft.instrumentDiameterCm) || draft.instrumentDiameterCm <= 0)) errors.push('Диаметр прибора должен быть больше нуля.')
+  if (draft.boreholeDiameterCm !== null && (!Number.isFinite(draft.boreholeDiameterCm) || draft.boreholeDiameterCm <= 0)) errors.push('Диаметр скважины должен быть больше нуля.')
   return errors
 }
