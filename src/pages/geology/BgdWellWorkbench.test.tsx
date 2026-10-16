@@ -190,7 +190,9 @@ describe('BGD object → section → workspace', () => {
     fireEvent.change(await screen.findByLabelText('Название скважины *'), { target: { value: '2299' } })
     fireEvent.click(screen.getByRole('button', { name: 'Проходка и освоение' }))
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить и перейти' }))
-    await screen.findByRole('button', { name: 'Добавить интервалы' })
+    // Creating the well also invalidates/refetches its data before the section
+    // becomes ready. The 15s test budget does not extend findBy's default 1s.
+    await screen.findByRole('button', { name: 'Добавить интервалы' }, { timeout: 5_000 })
     const table = within(screen.getByRole('heading', { name: 'Интервалы бурения' }).closest('section')!)
     for (const count of [1, 5, 10, 20]) {
       const before = table.queryAllByLabelText(/Интервал .*Диаметр/).length
@@ -212,11 +214,11 @@ describe('BGD object → section → workspace', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Удалить интервал 2' }))
     fireEvent.click(screen.getByRole('button', { name: 'Описание' }))
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить и перейти' }))
-    await screen.findByLabelText('Название скважины *')
+    await screen.findByLabelText('Название скважины *', {}, { timeout: 5_000 })
     fireEvent.click(screen.getByRole('button', { name: 'Проходка и освоение' }))
     expect(screen.getByLabelText('Интервал 1: Диаметр, мм')).toHaveValue(190)
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить изменения' }))
-    await waitFor(() => expect(onSaved).toHaveBeenCalled())
+    await waitFor(() => expect(onSaved).toHaveBeenCalled(), { timeout: 5_000 })
     expect(onSaved.mock.calls[0]?.[0].bgd.drilling.intervals).toEqual([
       expect.objectContaining({ drillingDiameter: 190, depthFrom: 0, depthTo: 25, drillingTool: 'Алмазная коронка', flushingAgent: 'Техническая вода' }),
     ])
