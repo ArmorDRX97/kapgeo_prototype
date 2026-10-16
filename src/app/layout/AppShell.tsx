@@ -18,6 +18,7 @@ import { fetchPlatformPreferences, fetchWells } from '../../repository/api'
 import { GeologyNavigator } from './GeologyNavigator'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { ModuleNavigation } from './ModuleNavigation'
+import { BrandMark } from '../../shared/ui/BrandMark'
 
 export function AppShell({ children }: PropsWithChildren) {
   const { persona, signOut } = useSession()
@@ -84,7 +85,7 @@ export function AppShell({ children }: PropsWithChildren) {
     <a className="skip-link" href="#main-content">Перейти к содержимому</a>
     <header className="topbar topbar--modules">
       <Link className="topbar-brand" to={persona?.homeRoute ?? '/geology/bgd'} aria-label="AI KAPGEO — рабочая область">
-        <span className="brand__mark"><span /></span>
+        <BrandMark />
         <span className="brand__text"><strong>AI KAPGEO</strong><small>Industrial intelligence</small></span>
       </Link>
       <span className="topbar__divider" aria-hidden="true" />

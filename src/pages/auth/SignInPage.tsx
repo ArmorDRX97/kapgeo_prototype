@@ -5,6 +5,7 @@ import { flushSync } from 'react-dom'
 import type { UserPersona } from '../../entities/session/model/types'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { Button } from '../../shared/ui/Button'
+import { BrandMark } from '../../shared/ui/BrandMark'
 
 export function SignInPage() {
   const navigate = useNavigate()
@@ -24,7 +25,7 @@ export function SignInPage() {
     <main className="auth-layout">
       <section className="auth-visual" aria-label="О системе">
         <div className="brand brand--large">
-          <span className="brand__mark"><span /></span>
+          <BrandMark />
           <span className="brand__text"><strong>AI KAPGEO</strong><small>Industrial intelligence platform</small></span>
         </div>
         <div className="auth-visual__content">

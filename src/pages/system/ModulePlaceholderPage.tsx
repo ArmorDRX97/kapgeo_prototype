@@ -23,19 +23,19 @@ function ModulePlaceholder({ eyebrow, title, description, icon: Icon, accent }: 
 }
 
 export function TechnologyModulePage() {
-  return <ModulePlaceholder eyebrow="Производственный контур" title="Геотехнология" description="Технологические процессы, режимы эксплуатации и оперативная работа с производственными объектами." icon={Network} accent="#0f766e" />
+  return <ModulePlaceholder eyebrow="Производственный контур" title="Геотехнология" description="Технологические процессы, режимы эксплуатации и оперативная работа с производственными объектами." icon={Network} accent="var(--color-brand-700)" />
 }
 
 export function GeologyModulePage() {
-  return <ModulePlaceholder eyebrow="Геологический контур" title="Геология" description="Интерпретация геологических данных, разрезы, ресурсы и профильные процессы будут развиваться как самостоятельный модуль рядом с БГД." icon={Mountain} accent="#0f766e" />
+  return <ModulePlaceholder eyebrow="Геологический контур" title="Геология" description="Интерпретация геологических данных, разрезы, ресурсы и профильные процессы будут развиваться как самостоятельный модуль рядом с БГД." icon={Mountain} accent="var(--color-brand-700)" />
 }
 
 export function ModelingModulePage() {
-  return <ModulePlaceholder eyebrow="Расчётный контур" title="Моделирование" description="Геотехнологические модели, сценарии расчёта и подготовка согласованных вариантов." icon={Boxes} accent="#2767a8" />
+  return <ModulePlaceholder eyebrow="Расчётный контур" title="Моделирование" description="Геотехнологические модели, сценарии расчёта и подготовка согласованных вариантов." icon={Boxes} accent="var(--color-brand-600)" />
 }
 
 export function AnalyticsModulePage() {
-  return <ModulePlaceholder eyebrow="Аналитический контур" title="Аналитика" description="Сводные показатели, отчётность и контроль качества данных для принятия решений." icon={BarChart3} accent="#6d4bb1" />
+  return <ModulePlaceholder eyebrow="Аналитический контур" title="Аналитика" description="Сводные показатели, отчётность и контроль качества данных для принятия решений." icon={BarChart3} accent="var(--color-accent-700)" />
 }
 
 export function AccessDeniedPage({ moduleName }: { moduleName: string }) {

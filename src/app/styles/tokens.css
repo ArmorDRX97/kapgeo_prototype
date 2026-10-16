@@ -29,15 +29,23 @@
   --font-size-sm: 12px;
   --font-size-base: 14px;
 
-  --color-brand-50: #ecfdf9;
-  --color-brand-100: #d1faef;
-  --color-brand-200: #99f6e4;
-  --color-brand-300: #5eead4;
-  --color-brand-400: #2dd4bf;
-  --color-brand-500: #14b8a6;
-  --color-brand-600: #0f8a7d;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e59;
+  /* Corporate blue from the supplied reference; orange is a supporting accent. */
+  --color-brand-50: #f0f5fc;
+  --color-brand-100: #e0ebfa;
+  --color-brand-200: #bdd2f0;
+  --color-brand-300: #91b3e1;
+  --color-brand-400: #5f91ce;
+  --color-brand-500: #2864ae;
+  --color-brand-600: #194b94;
+  --color-brand-700: #0e3479;
+  --color-brand-800: #0b285e;
+  --color-accent-50: #fff7e9;
+  --color-accent-100: #ffebc5;
+  --color-accent-200: #f7d297;
+  --color-accent-500: #e79b24;
+  --color-accent-700: #94530b;
+  --brand-focus-halo: color-mix(in srgb, var(--color-brand-500) 18%, transparent);
+  --brand-shadow: color-mix(in srgb, var(--color-brand-700) 20%, transparent);
 
   --color-blue-50: #eff6ff;
   --color-blue-200: #bfdbfe;
@@ -58,21 +66,21 @@
   --color-green-600: #16a34a;
   --color-green-700: #15803d;
 
-  --surface-app: #f3f6f8;
+  --surface-app: #f3f6fa;
   --surface-panel: #ffffff;
   --surface-subtle: #f7f9fb;
   --surface-raised: #ffffff;
-  --surface-dark: #0b1721;
-  --surface-dark-2: #102431;
-  --surface-dark-3: #173442;
+  --surface-dark: #0b1730;
+  --surface-dark-2: #112544;
+  --surface-dark-3: #19365d;
 
-  --text-primary: #10212c;
-  --text-secondary: #536671;
-  --text-tertiary: #7b8d97;
-  --text-inverse: #f5fbfa;
-  --border-default: #dbe3e8;
-  --border-strong: #c4d0d7;
-  --focus-ring: #38bdf8;
+  --text-primary: #15243a;
+  --text-secondary: #53647c;
+  --text-tertiary: #65758c;
+  --text-inverse: #f7faff;
+  --border-default: #dce3ee;
+  --border-strong: #c1cde0;
+  --focus-ring: #2864ae;
 
   --sidebar-width: 252px;
   --sidebar-collapsed: 76px;

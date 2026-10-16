@@ -44,6 +44,12 @@ function logDraft(run: LogRunV2): BgdWellLogDraft {
     probe: survey.probe ?? '',
     instrumentDiameterCm: survey.instrumentDiameterCm ?? null,
     boreholeDiameterCm: survey.boreholeDiameterCm ?? null,
+    detectorLengthCm: survey.detectorLengthCm ?? null,
+    ecProbeLengthM: survey.ecProbeLengthM ?? null,
+    measurementPointCount: survey.measurementPointCount ?? null,
+    drillingFluidDensity: survey.drillingFluidDensity ?? '',
+    casingStringType: survey.casingStringType ?? '',
+    coefficient: survey.coefficient ?? null,
   }
 }
 
@@ -64,6 +70,12 @@ function emptyLogDraft(well: Well): BgdWellLogDraft {
     probe: '',
     instrumentDiameterCm: null,
     boreholeDiameterCm: null,
+    detectorLengthCm: null,
+    ecProbeLengthM: null,
+    measurementPointCount: null,
+    drillingFluidDensity: '',
+    casingStringType: '',
+    coefficient: null,
     curveCodes: ['GR'],
   }
 }
@@ -157,9 +169,10 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
   const saveEditor = async (draft: BgdWellLogDraft, currentRun: LogRunV2 | 'new') => {
     if (validateBgdWellLogDraft(draft, well.depth).length) return false
     const runId = currentRun === 'new' ? `LOGV2-${well.id}-MANUAL-${crypto.randomUUID()}` : currentRun.id
+    const nextSurvey = { measuredAt: draft.measuredAt, operator: draft.operator.trim(), instrument: draft.instrument.trim(), zone: draft.zone.trim(), isPrimary: draft.isPrimary, isControl: draft.isControl, probe: draft.probe.trim(), instrumentDiameterCm: draft.instrumentDiameterCm, boreholeDiameterCm: draft.boreholeDiameterCm, detectorLengthCm: draft.detectorLengthCm ?? null, ecProbeLengthM: draft.ecProbeLengthM ?? null, measurementPointCount: draft.measurementPointCount ?? null, drillingFluidDensity: (draft.drillingFluidDensity ?? '').trim(), casingStringType: (draft.casingStringType ?? '').trim(), coefficient: draft.coefficient ?? null, comment: draft.comment.trim() }
     const nextRun: LogRunV2 = currentRun === 'new'
-      ? { id: runId, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, status: 'draft', curves: buildCurves(draft.curveCodes, runId), measurements: demoMeasurements(runId, draft.from, draft.to, draft.step, buildCurves(draft.curveCodes, runId)), rawArtifactId: `RAW-${runId}`, parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: { measuredAt: draft.measuredAt, operator: draft.operator.trim(), instrument: draft.instrument.trim(), zone: draft.zone.trim(), isPrimary: draft.isPrimary, isControl: draft.isControl, probe: draft.probe.trim(), instrumentDiameterCm: draft.instrumentDiameterCm, boreholeDiameterCm: draft.boreholeDiameterCm, comment: draft.comment.trim() } }
-      : { ...currentRun, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, curves: buildCurves(draft.curveCodes, runId, currentRun.curves), measurements: currentRun.measurements ?? demoMeasurements(runId, draft.from, draft.to, draft.step, currentRun.curves), parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: { measuredAt: draft.measuredAt, operator: draft.operator.trim(), instrument: draft.instrument.trim(), zone: draft.zone.trim(), isPrimary: draft.isPrimary, isControl: draft.isControl, probe: draft.probe.trim(), instrumentDiameterCm: draft.instrumentDiameterCm, boreholeDiameterCm: draft.boreholeDiameterCm, comment: draft.comment.trim() } }
+      ? { id: runId, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, status: 'draft', curves: buildCurves(draft.curveCodes, runId), measurements: demoMeasurements(runId, draft.from, draft.to, draft.step, buildCurves(draft.curveCodes, runId)), rawArtifactId: `RAW-${runId}`, parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: nextSurvey }
+      : { ...currentRun, name: draft.name.trim(), source: draft.source, from: draft.from, to: draft.to, step: draft.step, curves: buildCurves(draft.curveCodes, runId, currentRun.curves), measurements: currentRun.measurements ?? demoMeasurements(runId, draft.from, draft.to, draft.step, currentRun.curves), parserProfile: draft.source === 'LAS' ? 'LAS 2.0' : draft.source === 'DAT' ? 'DAT station' : 'station table', survey: nextSurvey }
     const others = workspace.runs.map((run) => draft.isPrimary && run.id !== runId ? { ...run, survey: { ...getLogSurveyMetadata(run), isPrimary: false } } : run)
     const nextRuns = currentRun === 'new' ? [...others, nextRun] : others.map((run) => run.id === runId ? nextRun : run)
     await save.mutateAsync({ current: workspace, next: { ...workspace, runs: nextRuns }, eventType: currentRun === 'new' ? 'log.run.created' : 'log.run.updated' })
@@ -202,7 +215,7 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
 
     <div className="bgd-log-table-scroll" id="bgd-logs-table-panel" role="tabpanel" aria-labelledby={activeList === 'control' ? 'bgd-logs-control-tab' : 'bgd-logs-all-tab'}>
       <table className="bgd-log-table" aria-label={activeList === 'control' ? 'Контрольные каротажи скважины' : 'Все каротажи скважины'}>
-        <thead><tr><th scope="col">Тип каротажа</th><th scope="col">Дата</th><th scope="col">Оператор</th><th scope="col">Прибор</th><th scope="col">Зонд</th><th scope="col">Основной</th><th scope="col">Глубина, м</th><th scope="col">Шаг, м</th><th scope="col">Диаметр прибора / скважины, см</th><th scope="col">Состояние</th></tr></thead>
+        <thead><tr><th scope="col">Тип каротажа</th><th scope="col">Дата</th><th scope="col">Оператор</th><th scope="col">Прибор</th><th scope="col">Зонд</th><th scope="col">Основной</th><th scope="col">Глубина, м</th><th scope="col">Шаг, м</th><th scope="col">Диаметр прибора / скважины, см</th><th scope="col">Длина детектора, см</th><th scope="col">Длина зонда ЭК, м</th><th scope="col">Количество точек замера</th><th scope="col">Плотность бурового раствора, г/см³</th><th scope="col">Вид обсадной колонны</th><th scope="col">Коэффициент</th><th scope="col">Комментарий</th><th scope="col">Состояние</th></tr></thead>
         <tbody>{visibleRuns.map((run) => {
           const survey = getLogSurveyMetadata(run)
           const status = statusPresentation[run.status]
@@ -216,6 +229,13 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
             <td className="is-numeric">{formatNumber(run.to)}</td>
             <td className="is-numeric">{formatNumber(run.step)}</td>
             <td className="is-numeric">{formatNumber(survey.instrumentDiameterCm)} / {formatNumber(survey.boreholeDiameterCm)}</td>
+            <td className="is-numeric">{formatNumber(survey.detectorLengthCm)}</td>
+            <td className="is-numeric">{formatNumber(survey.ecProbeLengthM)}</td>
+            <td className="is-numeric">{formatNumber(survey.measurementPointCount, 0)}</td>
+            <td>{survey.drillingFluidDensity || '—'}</td>
+            <td>{survey.casingStringType || '—'}</td>
+            <td className="is-numeric">{formatNumber(survey.coefficient, 6)}</td>
+            <td><span className="bgd-log-table__comment" title={survey.comment}>{survey.comment || '—'}</span></td>
             <td><Badge tone={status.tone}>{status.label}</Badge></td>
           </tr>
         })}</tbody>
@@ -301,6 +321,12 @@ function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }
           <label className="field"><span className="field__label">Шаг, м <em>*</em></span><input type="number" min="0.01" step="0.01" disabled={pending} value={draft.step} onChange={(event) => update('step', Number(event.target.value))} /></label>
           <label className="field"><span className="field__label">Диаметр прибора, см</span><input type="number" min="0.01" step="any" disabled={pending} value={draft.instrumentDiameterCm ?? ''} onChange={(event) => update('instrumentDiameterCm', event.target.value === '' ? null : Number(event.target.value))} /></label>
           <label className="field"><span className="field__label">Диаметр скважины, см</span><input type="number" min="0.01" step="any" disabled={pending} value={draft.boreholeDiameterCm ?? ''} onChange={(event) => update('boreholeDiameterCm', event.target.value === '' ? null : Number(event.target.value))} /></label>
+          <label className="field"><span className="field__label">Длина детектора, см</span><input type="number" min="0" step="any" disabled={pending} value={draft.detectorLengthCm ?? ''} onChange={(event) => update('detectorLengthCm', event.target.value === '' ? null : Number(event.target.value))} /></label>
+          <label className="field"><span className="field__label">Длина зонда ЭК, м</span><input type="number" min="0" step="any" disabled={pending} value={draft.ecProbeLengthM ?? ''} onChange={(event) => update('ecProbeLengthM', event.target.value === '' ? null : Number(event.target.value))} /></label>
+          <label className="field"><span className="field__label">Количество точек замера</span><input type="number" min="0" step="1" disabled={pending} value={draft.measurementPointCount ?? ''} onChange={(event) => update('measurementPointCount', event.target.value === '' ? null : Number(event.target.value))} /></label>
+          <label className="field"><span className="field__label">Плотность бурового раствора, г/см³</span><input disabled={pending} value={draft.drillingFluidDensity ?? ''} onChange={(event) => update('drillingFluidDensity', event.target.value)} /></label>
+          <label className="field"><span className="field__label">Вид обсадной колонны</span><input disabled={pending} value={draft.casingStringType ?? ''} onChange={(event) => update('casingStringType', event.target.value)} /></label>
+          <label className="field"><span className="field__label">Коэффициент</span><input type="number" step="any" disabled={pending} value={draft.coefficient ?? ''} onChange={(event) => update('coefficient', event.target.value === '' ? null : Number(event.target.value))} /></label>
         </div>
         <fieldset className="bgd-log-curve-picker"><legend>Измеряемые кривые <em>*</em></legend>{editableCurveCodes.map((code) => <label key={code}><input type="checkbox" checked={draft.curveCodes.includes(code)} disabled={pending} onChange={(event) => update('curveCodes', event.target.checked ? [...draft.curveCodes, code] : draft.curveCodes.filter((item) => item !== code))} /><span><i style={{ background: curveCatalog[code].color }} /><strong>{code}</strong><small>{curveCatalog[code].label}</small></span></label>)}</fieldset>
         <label className="field"><span className="field__label">Комментарий</span><textarea rows={3} disabled={pending} value={draft.comment} onChange={(event) => update('comment', event.target.value)} placeholder="Уточнения по прибору, качеству или условиям измерения" /></label>

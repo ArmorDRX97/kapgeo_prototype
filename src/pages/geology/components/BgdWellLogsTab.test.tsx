@@ -44,8 +44,8 @@ describe('BGD well log tables', () => {
     expect(within(controlTable).queryByText('Комплекс ГК + ПС + КС')).not.toBeInTheDocument()
   })
 
-  it('saves probe, depth-step and diameter attributes and marks a run as control', async () => {
-    renderLogs()
+  it('creates, displays and edits survey attributes without losing them on remount', async () => {
+    const view = renderLogs()
     await screen.findByRole('table', { name: 'Все каротажи скважины' })
     fireEvent.click(screen.getByRole('button', { name: 'Добавить' }))
     const dialog = await screen.findByRole('dialog', { name: 'Добавить каротаж' })
@@ -56,6 +56,8 @@ describe('BGD well log tables', () => {
     fireEvent.change(within(dialog).getByLabelText('Шаг, м *'), { target: { value: '0.5' } })
     fireEvent.change(within(dialog).getByLabelText('Диаметр прибора, см'), { target: { value: '3.8' } })
     fireEvent.change(within(dialog).getByLabelText('Диаметр скважины, см'), { target: { value: '15.2' } })
+    const newFields = { 'Длина детектора, см': '12.5', 'Длина зонда ЭК, м': '0.6', 'Количество точек замера': '241', 'Плотность бурового раствора, г/см³': '1,12 ± 0,02', 'Вид обсадной колонны': 'ПВХ QA', 'Коэффициент': '0.87', 'Комментарий': 'QA реквизиты каротажа' }
+    for (const [label, value] of Object.entries(newFields)) fireEvent.change(within(dialog).getByLabelText(label), { target: { value } })
     fireEvent.click(within(dialog).getByLabelText(/Контрольный каротаж/))
     fireEvent.click(within(dialog).getByRole('button', { name: /Сохранить/ }))
 
@@ -63,12 +65,27 @@ describe('BGD well log tables', () => {
       const workspace = await fetchWellLogWorkspace(primaryWell.id)
       const created = workspace.runs.find((run) => run.name === 'Гамма-каротаж')
       expect(created?.survey).toMatchObject({ isControl: true, probe: 'ГК-38', instrumentDiameterCm: 3.8, boreholeDiameterCm: 15.2 })
+      expect(created?.survey).toMatchObject({ detectorLengthCm: 12.5, ecProbeLengthM: 0.6, measurementPointCount: 241, drillingFluidDensity: '1,12 ± 0,02', casingStringType: 'ПВХ QA', coefficient: 0.87, comment: 'QA реквизиты каротажа' })
       expect(created?.to).toBe(120)
       expect(created?.step).toBe(0.5)
       expect(created?.measurements?.length).toBeGreaterThan(0)
     })
     fireEvent.click(screen.getByRole('tab', { name: /Контрольные каротажи/ }))
-    expect(within(screen.getByRole('table', { name: 'Контрольные каротажи скважины' })).getByText('Гамма-каротаж')).toBeInTheDocument()
+    const row = within(screen.getByRole('table', { name: 'Контрольные каротажи скважины' })).getByText('Гамма-каротаж').closest('tr')!
+    for (const value of ['12,5', '0,6', '241', '1,12 ± 0,02', 'ПВХ QA', '0,87', 'QA реквизиты каротажа']) expect(within(row).getByText(value)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить' }))
+    const editDialog = await screen.findByRole('dialog', { name: 'Редактировать каротаж' })
+    expect(within(editDialog).getByLabelText('Количество точек замера')).toHaveValue(241)
+    fireEvent.change(within(editDialog).getByLabelText('Коэффициент'), { target: { value: '0' } })
+    fireEvent.change(within(editDialog).getByLabelText('Плотность бурового раствора, г/см³'), { target: { value: 'н/о' } })
+    fireEvent.click(within(editDialog).getByRole('button', { name: /Сохранить/ }))
+    await waitFor(async () => expect((await fetchWellLogWorkspace(primaryWell.id)).runs.find((run) => run.name === 'Гамма-каротаж')?.survey).toMatchObject({ coefficient: 0, drillingFluidDensity: 'н/о', detectorLengthCm: 12.5, ecProbeLengthM: 0.6, measurementPointCount: 241, casingStringType: 'ПВХ QA' }))
+    view.unmount()
+    renderLogs()
+    const savedTable = await screen.findByRole('table', { name: 'Все каротажи скважины' })
+    const savedRow = within(savedTable).getByText('Гамма-каротаж').closest('tr')!
+    expect(within(savedRow).getByText('н/о')).toBeInTheDocument()
+    expect(within(savedRow).getByText('0')).toBeInTheDocument()
   })
 
   it('keeps the table read-only when the caller denies edit access', async () => {

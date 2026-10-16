@@ -2,7 +2,7 @@
 .topbar__module-nav .module-trigger:hover, .topbar__module-nav .module-trigger[aria-expanded="true"] { color: var(--color-brand-800); background: var(--color-brand-50); }
 .topbar__module-nav .module-trigger:active { background: var(--color-brand-100); }
 .topbar__module-nav .module-trigger.is-active { color: var(--color-brand-800); }
-.module-trigger.is-active::after { position: absolute; inset: auto var(--space-3) 0; height: 3px; content: ''; background: var(--color-brand-600); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.module-trigger.is-active::after { position: absolute; inset: auto var(--space-3) 0; height: 3px; content: ''; background: var(--color-accent-500); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
 .module-trigger__copy { display: grid; gap: 2px; text-align: left; white-space: nowrap; }
 .module-trigger__copy small { color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: 400; }
 .module-trigger__chevron { transition: transform var(--duration-fast) var(--ease-standard); }
