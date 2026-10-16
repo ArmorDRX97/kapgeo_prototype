@@ -19,6 +19,7 @@ export const nodeSchema = z.object({
   featured: z.boolean().default(false),
   overviewPosition: z.object({ x: z.number(), y: z.number() }).optional(),
   scope: z.enum(['domain', 'implemented', 'retained', 'planned']).default('domain'),
+  knowledgeBasis: z.enum(['source', 'legacy', 'requirement', 'open', 'context']).default('context'),
   delivery: z.object({ status: z.enum(['prototype', 'partial', 'placeholder', 'deferred', 'excluded']), note: text }).optional(),
   evidence,
   explanation: z.object({

@@ -1,13 +1,933 @@
 [
-  {"id":"g19","title":"РП геологического модуля, 2019","kind":"manual","reference":"geo-module-refs/manual-review.md · руководство, 339 страниц","asOf":"2026-10-14"},
-  {"id":"alpha18","title":"Альфа 2018: руководство интерпретации ГИС","kind":"manual","reference":"geo-module-refs/Interpretation/manual-map.md · руководство, 183 страницы","asOf":"2026-10-14"},
-  {"id":"gm25","title":"GeoMap 2025: геологическое картирование","kind":"manual","reference":"geo-module-refs/InteractivePlan/sources.md · руководство, 16 страниц","asOf":"2026-10-14"},
-  {"id":"video-oct14","title":"Встреча 14.10: карта, блоки и разрезы","kind":"video-audit","reference":"geo-module-refs/VideoAudit-2026-10-14/implementation-report.md · VA-01…18","asOf":"2026-10-14"},
-  {"id":"design-review","title":"Дизайн.pdf: аудит 14 замечаний","kind":"review","reference":"geo-module-refs/DesignAudit-2026-10-14/README.md и tasks.md · D-00…13 / DR-01…13","asOf":"2026-10-14"},
-  {"id":"alpha-current","title":"Интерпретация: фактическая реализация и ограничения","kind":"implementation","reference":"geo-module-refs/Interpretation/implementation-report.md · профиль alpha-prototype-2","asOf":"2026-10-14"},
-  {"id":"section-current","title":"Разрезы: реализация, решения и визуальный пример","kind":"implementation","reference":"geo-module-refs/geology-implementation-report.md; reference-reconstruction.md; docs/implementation-status.md","asOf":"2026-10-14"},
-  {"id":"map-current","title":"План месторождения: автономный редактор","kind":"implementation","reference":"geo-module-refs/InteractivePlan/implementation-report.md; VideoAudit-2026-10-14/implementation-report.md","asOf":"2026-10-14"},
-  {"id":"bgd-current","title":"БГД: действующие данные, доступ и кондиции","kind":"implementation","reference":"docs/implementation-status.md; docs/task/bgd-workbench-refresh.md; docs/ui-ux/modules/02-geology.md","asOf":"2026-10-14"},
-  {"id":"menu-current","title":"Состав меню и границы пустых пунктов","kind":"decision","reference":"src/app/layout/ModuleNavigation.tsx; docs/task/module-menu-refresh.md; docs/implementation-status.md","asOf":"2026-10-14"},
-  {"id":"team-current","title":"Внутренняя карта команды: изоляция","kind":"implementation","reference":"src/internal/knowledge-map/README.md и integration/protocol.ts","asOf":"2026-10-14"}
+  {
+    "id": "d001",
+    "title": "D001 · 2026-06-22 16.20.35.jpg",
+    "kind": "review",
+    "reference": "docs-ref/knowledge/sources/D001/review.md · исходный ID D001",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d002",
+    "title": "D002 · AI_KAPGEO_—_Матрица_ролей_по_всей_системе.docx",
+    "kind": "decision",
+    "reference": "docs-ref/knowledge/sources/D002/review.md · исходный ID D002",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d003",
+    "title": "D003 · Lot_4494080_2026-07-21.pdf",
+    "kind": "decision",
+    "reference": "docs-ref/knowledge/sources/D003/review.md · исходный ID D003",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d004",
+    "title": "D004 · Scheme (1).png",
+    "kind": "review",
+    "reference": "docs-ref/knowledge/sources/D004/review.md · исходный ID D004",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d005",
+    "title": "D005 · db_schema.pdf",
+    "kind": "review",
+    "reference": "docs-ref/knowledge/sources/D005/review.md · исходный ID D005",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d006",
+    "title": "D006 · ggis_tables_structure.xlsx",
+    "kind": "review",
+    "reference": "docs-ref/knowledge/sources/D006/review.md · исходный ID D006",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d007",
+    "title": "D007 · ГМ (1).docx",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D007/review.md · исходный ID D007",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d008",
+    "title": "D008 · GeoBase.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D008/review.md · исходный ID D008",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d009",
+    "title": "D009 · GeoBroach.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D009/review.md · исходный ID D009",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d010",
+    "title": "D010 · GeoColumn.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D010/review.md · исходный ID D010",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d011",
+    "title": "D011 · GeoExport.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D011/review.md · исходный ID D011",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d012",
+    "title": "D012 · GeoImport.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D012/review.md · исходный ID D012",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d013",
+    "title": "D013 · GeoMap.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D013/review.md · исходный ID D013",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d014",
+    "title": "D014 · GeoModel2D.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D014/review.md · исходный ID D014",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d015",
+    "title": "D015 · GeoModel3D.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D015/review.md · исходный ID D015",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d016",
+    "title": "D016 · GeoPattern.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D016/review.md · исходный ID D016",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d017",
+    "title": "D017 · GeoSection.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D017/review.md · исходный ID D017",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d018",
+    "title": "D018 · GeoUnit.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D018/review.md · исходный ID D018",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d019",
+    "title": "D019 · РП по геологическому модулю.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D019/review.md · исходный ID D019",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d020",
+    "title": "D020 · ММ (1).docx",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D020/review.md · исходный ID D020",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d021",
+    "title": "D021 · РП Моделирующий модуль.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D021/review.md · исходный ID D021",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d022",
+    "title": "D022 · Обзор — копия (1).pptx",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D022/review.md · исходный ID D022",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d023",
+    "title": "D023 · Описание таблиц.xlsx",
+    "kind": "review",
+    "reference": "docs-ref/knowledge/sources/D023/review.md · исходный ID D023",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d024",
+    "title": "D024 · Руководство_пользователя_программы_Альфа_2018 (1).pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D024/review.md · исходный ID D024",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d025",
+    "title": "D025 · Схема функционала (2).pptx",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D025/review.md · исходный ID D025",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d026",
+    "title": "D026 · ТМ (1).docx",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D026/review.md · исходный ID D026",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d027",
+    "title": "D027 · РП ГИС.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D027/review.md · исходный ID D027",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d028",
+    "title": "D028 · РП Измерения ГТП.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D028/review.md · исходный ID D028",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d029",
+    "title": "D029 · РП Измерения ГТП_old.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D029/review.md · исходный ID D029",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d030",
+    "title": "D030 · РП Контоль кислоты.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D030/review.md · исходный ID D030",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d031",
+    "title": "D031 · РП Контоль кислоты_old.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D031/review.md · исходный ID D031",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d032",
+    "title": "D032 · РП Контоль насосов.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D032/review.md · исходный ID D032",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d033",
+    "title": "D033 · РП РВР.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D033/review.md · исходный ID D033",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d034",
+    "title": "D034 · РП РВР_old.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D034/review.md · исходный ID D034",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d035",
+    "title": "D035 · РП Технологический модуль.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D035/review.md · исходный ID D035",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d036",
+    "title": "D036 · РП Технологический план.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D036/review.md · исходный ID D036",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d037",
+    "title": "D037 · РП Экспертно аналитический модуль.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D037/review.md · исходный ID D037",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d038",
+    "title": "D038 · ФТ модулей (2).pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D038/review.md · исходный ID D038",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d039",
+    "title": "D039 · ЭАМ (1).docx",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D039/review.md · исходный ID D039",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "d040",
+    "title": "D040 · РП Экспертно аналитический модуль.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D040/review.md · исходный ID D040",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v001",
+    "title": "V001 · GeoMap 01 Создание проекта  2.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V001/review.md · исходный ID V001",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v002",
+    "title": "V002 · GeoMap 01 Создание проекта .mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V002/review.md · исходный ID V002",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v003",
+    "title": "V003 · GeoMap 02 Создание кривых линий.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V003/review.md · исходный ID V003",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v004",
+    "title": "V004 · GeoMap 03 Создание контуров.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V004/review.md · исходный ID V004",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v005",
+    "title": "V005 · GeoMap 04 Карта продуктивности.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V005/review.md · исходный ID V005",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v006",
+    "title": "V006 · GeoMap 05 Отображение в других программах.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V006/review.md · исходный ID V006",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v007",
+    "title": "V007 · VID-20260119-WA0007.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V007/review.md · исходный ID V007",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v008",
+    "title": "V008 · Геотехнологический разрез -  2020-11-09 10-26-32.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V008/review.md · исходный ID V008",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v009",
+    "title": "V009 · 01 Запасы - Введение.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V009/review.md · исходный ID V009",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v010",
+    "title": "V010 · 02 Запасы - Подготовка.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V010/review.md · исходный ID V010",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v011",
+    "title": "V011 · 03 Запасы - Выделение Рудных Пересечений.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V011/review.md · исходный ID V011",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v012",
+    "title": "V012 · 03b Запасы - Выделение РП(Детали).mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V012/review.md · исходный ID V012",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v013",
+    "title": "V013 · 04 Запасы - Оконтуривание блока.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V013/review.md · исходный ID V013",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v014",
+    "title": "V014 · 04b Запасы - Оконтуривание блока, изменение контура.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V014/review.md · исходный ID V014",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v015",
+    "title": "V015 · 05 Запасы - Подсчет запасов.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V015/review.md · исходный ID V015",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v016",
+    "title": "V016 · 06 Запасы - Посчетный план.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V016/review.md · исходный ID V016",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v017",
+    "title": "V017 · bandicam 2019-04-16 09-11-45-252.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V017/review.md · исходный ID V017",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v018",
+    "title": "V018 · bandicam 2019-04-16 09-29-06-333.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V018/review.md · исходный ID V018",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v019",
+    "title": "V019 · bandicam 2019-04-16 09-40-30-046.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V019/review.md · исходный ID V019",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v020",
+    "title": "V020 · bandicam 2019-04-16 09-50-50-848.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V020/review.md · исходный ID V020",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v021",
+    "title": "V021 · bandicam 2019-04-16 10-24-49-678.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V021/review.md · исходный ID V021",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v022",
+    "title": "V022 · bandicam 2019-04-16 10-29-04-826.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V022/review.md · исходный ID V022",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v023",
+    "title": "V023 · bandicam 2019-04-16 10-41-01-346.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V023/review.md · исходный ID V023",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v024",
+    "title": "V024 · bandicam 2019-04-16 10-57-48-001.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V024/review.md · исходный ID V024",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v025",
+    "title": "V025 · bandicam 2019-04-16 11-07-23-359.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V025/review.md · исходный ID V025",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v026",
+    "title": "V026 · bandicam 2019-04-16 11-17-25-533.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V026/review.md · исходный ID V026",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v027",
+    "title": "V027 · bandicam 2019-04-16 11-27-12-875.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V027/review.md · исходный ID V027",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v028",
+    "title": "V028 · bandicam 2019-04-16 11-36-31-433.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V028/review.md · исходный ID V028",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v029",
+    "title": "V029 · bandicam 2019-04-16 11-47-48-677.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V029/review.md · исходный ID V029",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v030",
+    "title": "V030 · bandicam 2019-04-16 11-57-51-794.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V030/review.md · исходный ID V030",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v031",
+    "title": "V031 · bandicam 2019-04-16 12-24-06-835.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V031/review.md · исходный ID V031",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v032",
+    "title": "V032 · bandicam 2019-04-16 12-44-00-882.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V032/review.md · исходный ID V032",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v033",
+    "title": "V033 · bandicam 2019-04-17 08-51-27-683.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V033/review.md · исходный ID V033",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v034",
+    "title": "V034 · bandicam 2019-04-17 09-02-21-523.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V034/review.md · исходный ID V034",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v035",
+    "title": "V035 · bandicam 2019-04-17 09-12-41-016.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V035/review.md · исходный ID V035",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v036",
+    "title": "V036 · bandicam 2019-04-17 09-23-32-627.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V036/review.md · исходный ID V036",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v037",
+    "title": "V037 · bandicam 2019-04-17 09-48-04-872.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V037/review.md · исходный ID V037",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v038",
+    "title": "V038 · bandicam 2019-04-17 10-00-10-207.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V038/review.md · исходный ID V038",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v039",
+    "title": "V039 · bandicam 2019-04-18 13-11-34-601.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V039/review.md · исходный ID V039",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v040",
+    "title": "V040 · bandicam 2019-04-18 13-21-26-944.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V040/review.md · исходный ID V040",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v041",
+    "title": "V041 · bandicam 2019-04-18 13-29-57-555.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V041/review.md · исходный ID V041",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v042",
+    "title": "V042 · bandicam 2019-04-18 14-01-43-168.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V042/review.md · исходный ID V042",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v043",
+    "title": "V043 · bandicam 2019-04-18 14-11-51-765.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V043/review.md · исходный ID V043",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v044",
+    "title": "V044 · bandicam 2019-04-18 14-24-55-337.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V044/review.md · исходный ID V044",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v045",
+    "title": "V045 · bandicam 2019-04-18 14-35-23-627.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V045/review.md · исходный ID V045",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v046",
+    "title": "V046 · bandicam 2019-04-19 08-31-38-486.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V046/review.md · исходный ID V046",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v047",
+    "title": "V047 · bandicam 2019-04-19 08-47-01-684.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V047/review.md · исходный ID V047",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v048",
+    "title": "V048 · bandicam 2019-04-19 08-57-38-632.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V048/review.md · исходный ID V048",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v049",
+    "title": "V049 · bandicam 2019-04-19 09-07-10-032.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V049/review.md · исходный ID V049",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v050",
+    "title": "V050 · bandicam 2019-04-19 09-17-26-923.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V050/review.md · исходный ID V050",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v051",
+    "title": "V051 · bandicam 2019-04-19 09-27-49-169.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V051/review.md · исходный ID V051",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v052",
+    "title": "V052 · bandicam 2019-04-19 10-11-40-385.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V052/review.md · исходный ID V052",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v053",
+    "title": "V053 · Моделирующий модуль 1.avi",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V053/review.md · исходный ID V053",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v054",
+    "title": "V054 · Запись Каратау 2023-06-04 Программа ГТП.webm",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V054/review.md · исходный ID V054",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v055",
+    "title": "V055 · Запись Каратау 2023-06-04 Программа Кислота.webm",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V055/review.md · исходный ID V055",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v056",
+    "title": "V056 · Запись Каратау 2023-06-04 Программа Химпробы.webm",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V056/review.md · исходный ID V056",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v057",
+    "title": "V057 · Запись Каратау 2023-06-05 Программа ПНА.webm",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V057/review.md · исходный ID V057",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v058",
+    "title": "V058 · Запись Каратау 2023-06-05 Программа РВР.webm",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V058/review.md · исходный ID V058",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v059",
+    "title": "V059 · 01 GTP просмотр и удаление записей по объектам.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V059/review.md · исходный ID V059",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v060",
+    "title": "V060 · 02 GTP Ручной ввод показаний по закачным скважинам.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V060/review.md · исходный ID V060",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v061",
+    "title": "V061 · 03 GTP Ввод данных из шаблонов Excel.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V061/review.md · исходный ID V061",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v062",
+    "title": "V062 · 04 GTP Чтение данных SCADA.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V062/review.md · исходный ID V062",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v063",
+    "title": "V063 · 05 GTP Отчет в MS Excel.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V063/review.md · исходный ID V063",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v064",
+    "title": "V064 · 06 GTP Отключение скважин.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V064/review.md · исходный ID V064",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v065",
+    "title": "V065 · 07 GPT Детальный отчет и оперативная сводка.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V065/review.md · исходный ID V065",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v066",
+    "title": "V066 · 08 GTP Редактирование причин остановки.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V066/review.md · исходный ID V066",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v067",
+    "title": "V067 · Добавление ёмкости стороннего предприятия.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V067/review.md · исходный ID V067",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v068",
+    "title": "V068 · ПереносДанныхИзВременнойТаблицы.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V068/review.md · исходный ID V068",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v069",
+    "title": "V069 · Суточный отчёт.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V069/review.md · исходный ID V069",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v070",
+    "title": "V070 · 0 Введение.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V070/review.md · исходный ID V070",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v071",
+    "title": "V071 · 1 Подключение к БД.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V071/review.md · исходный ID V071",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v072",
+    "title": "V072 · 2 Главное окно ПО.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V072/review.md · исходный ID V072",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v073",
+    "title": "V073 · 3 Создание записи по РВР.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V073/review.md · исходный ID V073",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v074",
+    "title": "V074 · 4 Редактирование и удаление записи.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V074/review.md · исходный ID V074",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v075",
+    "title": "V075 · 5 Создание отчета.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V075/review.md · исходный ID V075",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v076",
+    "title": "V076 · 6 Предприятия-исполнители.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V076/review.md · исходный ID V076",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v077",
+    "title": "V077 · ХимПроба Импорт из Excel.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V077/review.md · исходный ID V077",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v078",
+    "title": "V078 · Блокировка скважин.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V078/review.md · исходный ID V078",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v079",
+    "title": "V079 · Блокировка скважин_2.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V079/review.md · исходный ID V079",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v080",
+    "title": "V080 · Ошибки подключения контрольных точек.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V080/review.md · исходный ID V080",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v081",
+    "title": "V081 · Колонны СНК.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V081/review.md · исходный ID V081",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "v082",
+    "title": "V082 · Экспертно-аналитическая система 2020-11-09 10-14-01.mp4",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/videos/V082/review.md · исходный ID V082",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "g19",
+    "title": "g19 · alias → D019 · РП по геологическому модулю.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D019/review.md · исходный ID D019; совместимый alias g19",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "alpha18",
+    "title": "alpha18 · alias → D024 · Руководство_пользователя_программы_Альфа_2018 (1).pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D024/review.md · исходный ID D024; совместимый alias alpha18",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "alpha-current",
+    "title": "alpha-current · alias → D024 · Руководство_пользователя_программы_Альфа_2018 (1).pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D024/review.md · исходный ID D024; совместимый alias alpha-current",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "gm25",
+    "title": "gm25 · alias → D013 · GeoMap.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D013/review.md · исходный ID D013; совместимый alias gm25",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "map-current",
+    "title": "map-current · alias → D013 · GeoMap.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D013/review.md · исходный ID D013; совместимый alias map-current",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "video-oct14",
+    "title": "video-oct14 · alias → modules/geology/maps/reference-video-memory.md · память по V001–V006",
+    "kind": "video-audit",
+    "reference": "docs-ref/knowledge/modules/geology/maps/reference-video-memory.md · память по V001–V006; не отдельное свидетельство встречи 14.10; совместимый alias video-oct14",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "design-review",
+    "title": "design-review · alias → quality/questions.md · память по V001–V006",
+    "kind": "review",
+    "reference": "docs-ref/knowledge/quality/questions.md · память по V001–V006; не отдельное свидетельство встречи 14.10; совместимый alias design-review",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "section-current",
+    "title": "section-current · alias → D017 · GeoSection.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D017/review.md · исходный ID D017; совместимый alias section-current",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "bgd-current",
+    "title": "bgd-current · alias → D008 · GeoBase.pdf",
+    "kind": "manual",
+    "reference": "docs-ref/knowledge/sources/D008/review.md · исходный ID D008; совместимый alias bgd-current",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "menu-current",
+    "title": "menu-current · alias → D003 · Lot_4494080_2026-07-21.pdf",
+    "kind": "decision",
+    "reference": "docs-ref/knowledge/sources/D003/review.md · исходный ID D003; совместимый alias menu-current",
+    "asOf": "2026-10-16"
+  },
+  {
+    "id": "team-current",
+    "title": "team-current · alias → D002 · AI_KAPGEO_—_Матрица_ролей_по_всей_системе.docx",
+    "kind": "decision",
+    "reference": "docs-ref/knowledge/sources/D002/review.md · исходный ID D002; совместимый alias team-current",
+    "asOf": "2026-10-16"
+  }
 ]

@@ -7,7 +7,8 @@ import { deliveryStatusLabels, nodeLabels, relationScopeLabels } from '../../ent
 interface Props { node: KnowledgeNode; index: KnowledgeIndex; pinned: boolean; focused: boolean; onClose: () => void; onOpen: (id: string) => void; onPin: () => void; onFocus: () => void; onPath: (id: string) => void; onShare: () => void }
 const scopeLabels = { domain: '', implemented: 'Есть в текущем прототипе', retained: 'Реализация сохранена, вход скрыт', planned: 'Назначение области · пока заглушка' }
 const deliveryIcons = { prototype: CheckCircle2, partial: CircleMinus, placeholder: CircleDashed, deferred: Clock3, excluded: Ban }
-const sourceKindLabels = { manual: 'Руководство', 'video-audit': 'Видео-аудит', review: 'Аудит', implementation: 'Реализация', decision: 'Решение' }
+const sourceKindLabels = { manual: 'Руководство', 'video-audit': 'Видеоматериал', review: 'Обзор / схема', implementation: 'Реализация', decision: 'Требования / роли' }
+const knowledgeBasisLabels = { source: 'Группа источников', legacy: 'Старая система · материалы и демонстрации', requirement: 'Требования и функциональная структура', open: 'Открытый вопрос · правило не установлено', context: 'Предметный контекст · учебное объяснение' }
 
 function resolvedEvidence(evidence: KnowledgeEdge['evidence'], index: KnowledgeIndex) {
   const seen = new Set<string>()
@@ -43,8 +44,9 @@ export function DetailPanel({ node, index, pinned, focused, onClose, onOpen, onP
     <div className="detail-scroll" ref={scroll}>
       <div className="eyebrow">{index.byCategory.get(node.categoryId)?.shortTitle}</div>
       <h2>{node.title}</h2><p className="detail-summary">{node.summary}</p>
+      <p className="module-scope">{knowledgeBasisLabels[node.knowledgeBasis]}</p>
       {node.delivery && <section className={`delivery-status status-${node.delivery.status}`}><DeliveryIcon size={15} /><div><h3>Статус в KAPGEO · {deliveryStatusLabels[node.delivery.status]}</h3><p>{node.delivery.note}</p></div></section>}
-      {node.type === 'module' && !node.delivery && <p className={`module-scope scope-${node.scope}`}><Check size={14} />{scopeLabels[node.scope]}</p>}
+      {node.type === 'module' && !node.delivery && node.scope !== 'domain' && <p className={`module-scope scope-${node.scope}`}><Check size={14} />{scopeLabels[node.scope]}</p>}
       <div className="detail-actions"><button className={`button ${focused ? 'primary' : ''}`} onClick={onFocus}><Crosshair size={15} />{focused ? 'Выйти из фокуса' : 'Фокус'}</button><button className="button" onClick={() => onPath(node.id)}><Route size={15} />Путь</button><button className="icon-button" onClick={onShare} aria-label="Скопировать ссылку на элемент"><Link2 size={17} /></button></div>
       <section><h3>Что это?</h3><p>{explanation.what}</p></section>
       <section><h3>Зачем нужно?</h3><p>{explanation.why}</p></section>

@@ -16,8 +16,10 @@ for (const file of await sources(moduleRoot)) {
 }
 if (process.argv.includes('--built')) {
   const root = resolve(moduleRoot, '../../..')
-  const product = await readFile(resolve(root, 'dist/index.html'), 'utf8')
-  const atlas = await readFile(resolve(root, 'dist/internal/knowledge-map.html'), 'utf8')
+  const outputArg = process.argv.indexOf('--out-dir')
+  const output = resolve(root, outputArg >= 0 ? process.argv[outputArg + 1] : 'dist')
+  const product = await readFile(resolve(output, 'index.html'), 'utf8')
+  const atlas = await readFile(resolve(output, 'internal/knowledge-map.html'), 'utf8')
   const css = html => [...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)].map(match => match[1])
   if (!css(product).length || !css(atlas).length || css(product).some(path => css(atlas).includes(path))) throw new Error('Product and atlas styles must be emitted independently')
   if (product.includes('knowledge-map-')) throw new Error('Atlas entry is eagerly loaded by the product HTML')

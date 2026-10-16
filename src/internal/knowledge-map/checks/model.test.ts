@@ -38,12 +38,12 @@ describe('Целостная учебная модель', () => {
     expect(() => validateModel(contains)).toThrow(/вложенность расходится/)
   })
   it('distinguishes planned and retained modules from existing capabilities', () => {
-    expect(knowledge.byId.get('module-technology')?.scope).toBe('planned')
-    expect(knowledge.byId.get('module-geology')?.scope).toBe('implemented')
-    expect(knowledge.byId.get('module-geology')?.delivery?.status).toBe('partial')
-    expect(knowledge.byId.get('module-bgd')?.scope).toBe('implemented')
+    expect(knowledge.byId.get('module-technology')?.knowledgeBasis).toBe('requirement')
+    expect(knowledge.byId.get('module-geology')?.scope).toBe('domain')
+    expect(knowledge.byId.get('module-geology')?.delivery).toBeUndefined()
+    expect(knowledge.byId.get('module-bgd')?.parentId).toBe('module-geology')
     expect(knowledge.byId.get('site')?.explanation.example).toContain('независимо')
-    expect(knowledge.byId.get('cutoff-limits')?.explanation.next).toContain('один общий набор')
+    expect(knowledge.byId.get('cutoff-limits')?.explanation.what).toContain('формулы')
   })
 })
 describe('Paths, cycles and progressive graph views', () => {

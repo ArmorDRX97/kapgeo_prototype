@@ -11,6 +11,10 @@ coverage/
 # Historical inputs and analysis artifacts stay local and are never published.
 archive/
 
+# Reference originals and working knowledge remain local.
+/docs-ref/
+/docs_ref/
+
 # Temporary local authorization artifacts.
 .gh-auth-*.tmp
 # Local QA and source-material artifacts are not part of the published prototype.
