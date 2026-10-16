@@ -35,16 +35,24 @@ describe('BGD deposit navigation', () => {
     expect(route.navigate).toHaveBeenCalledWith({ to: '/geology/bgd/$depositId/wells/new', params: { depositId: 'DEP-SARYTAU' } })
   })
 
-  it('opens the filter control as a status selector', async () => {
+  it('opens a side filter panel, filters wells, and restores them with reset', async () => {
     mount()
     const button = screen.getByRole('button', { name: 'Фильтр' })
     expect(button).toHaveAttribute('aria-expanded', 'false')
     fireEvent.click(button)
     expect(button).toHaveAttribute('aria-expanded', 'true')
+    const dialog = screen.getByRole('dialog', { name: 'Фильтры скважин' })
+    expect(screen.getByRole('complementary', { name: 'Навигация модуля БГД' })).not.toContainElement(dialog)
     const select = screen.getByRole('combobox', { name: 'Статус скважины' })
     fireEvent.change(select, { target: { value: 'Требует внимания' } })
     expect(await screen.findByRole('button', { name: /^WELL-1042$/ })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^WELL-1010$/ })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Сбросить фильтры' }))
+    expect(await screen.findByRole('button', { name: /^WELL-1010$/ })).toBeInTheDocument()
+    expect(select).toHaveValue('all')
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(button).toHaveFocus()
   })
 
   it('opens the unified deposit overview directly from the collapse-button row', async () => {

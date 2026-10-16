@@ -36,9 +36,7 @@
 .app-workspace--bgd .well-navigator__filter-button:hover { color: var(--color-brand-800); border-color: var(--color-brand-200); background: var(--color-brand-50); }
 .app-workspace--bgd .well-navigator__filter-button:active { color: var(--color-brand-800); border-color: var(--color-brand-300); background: var(--color-brand-100); }
 .app-workspace--bgd .well-navigator__filter-button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.app-workspace--bgd .well-navigator__filter-popover { display: grid; gap: var(--space-2); margin: 0 var(--space-2) var(--space-2); padding: var(--space-3); border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-panel); box-shadow: var(--shadow-sm); }
-.app-workspace--bgd .well-navigator__filter-popover label { color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: 650; }
-.app-workspace--bgd .well-navigator__filter-popover select { min-height: var(--space-9); padding-inline: var(--space-2); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-panel); font: inherit; }
+.app-workspace--bgd .well-navigator__filter-button[aria-expanded="true"], .app-workspace--bgd .well-navigator__filter-button[data-active="true"] { color: var(--color-brand-800); border-color: var(--color-brand-200); background: var(--color-brand-50); }
 .app-workspace--bgd .well-navigator__list { padding-inline: 0; }
 .geology-navigator__rail { margin: var(--space-3) auto; writing-mode: vertical-rl; font-size: var(--font-size-sm); color: var(--text-secondary); }
 .app-workspace--bgd > .geology-navigator.is-collapsed { width: var(--bgd-navigation-rail); flex-basis: var(--bgd-navigation-rail); padding: var(--space-1); }

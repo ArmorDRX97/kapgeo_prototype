@@ -34,8 +34,6 @@
 .section-registry nav a[aria-current="page"] { background: var(--color-brand-50); color: var(--color-brand-800); box-shadow: inset 3px 0 var(--color-brand-600); }
 .section-registry__empty { padding: var(--space-2); color: var(--text-secondary); }
 .is-registry-collapsed .section-registry { padding: var(--space-1); }
-.section-registry-filters { position: fixed; z-index: 100; display: grid; gap: var(--space-3); width: min(300px, calc(100vw - var(--space-6))); max-height: calc(100dvh - var(--space-6)); overflow: auto; padding: var(--space-4); border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-panel); box-shadow: var(--shadow-lg); }
-.section-registry-filters > header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .section-document { min-width: 0; min-height: 0; overflow: auto; }
 .section-document-empty { display: grid; place-items: center; min-height: 100%; padding: var(--space-6); text-align: center; background: var(--surface-app); }
 .section-document-empty > div { max-width: 640px; }
