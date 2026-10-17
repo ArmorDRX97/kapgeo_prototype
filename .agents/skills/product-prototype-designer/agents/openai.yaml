@@ -1,6 +1,0 @@
-interface:
-  display_name: "Product Prototype Designer"
-  short_description: "Product UX and React prototype design"
-  default_prompt: "Используй $product-prototype-designer для проектирования и реализации сквозного сценария KAPGEO."
-policy:
-  allow_implicit_invocation: true

@@ -1,6 +1,0 @@
-interface:
-  display_name: "Prototype Flow QA"
-  short_description: "Verify interactive prototype flows and states"
-  default_prompt: "Используй $prototype-flow-qa для проверки затронутого пользовательского сценария KAPGEO."
-policy:
-  allow_implicit_invocation: true
