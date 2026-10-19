@@ -21,11 +21,26 @@ function band(id: string, name: string, rock: 'sand' | 'clay' | 'silt', upper: n
 /** Editable, invented reconstruction of the visual motifs in the audited video. */
 export function referenceSection(): GeologySection {
   const section: GeologySection = {
-    ...createSection('GTR-01', 'Северный · профиль 01'), demoPreset: 'video-reference-v1',
+    ...createSection('GTR-01', 'Северный · профиль 01'), demoPreset: 'video-reference-v3',
     top: -442, bottom: -535, profile: [{ x: 0, y: 0 }, { x: 160, y: 3 }, { x: 350, y: -1 }],
-    wellIds: referenceWellSources.map(well => well.id),
-    sourceRevisions: Object.fromEntries(referenceWellSources.map(well => [well.id, well.revision])),
-    metadata: { depositBody: 'Северный участок', createdOn: '2026-10-13', compiledBy: 'Демонстрационный геолог', checkedBy: '' },
+    mapGeometry: {
+      segments: {
+        'GTR-01-v1:GTR-01-v2': [{ x: 0, y: 0 }, { x: 160, y: 0 }],
+        'GTR-01-v2:GTR-01-v3': [{ x: 0, y: 100 }, { x: 190, y: 100 }],
+      },
+      wells: Object.fromEntries([
+        [14, 4], [48, -6], [102, 7], [151, -4], [59, 103], [119, 91], [177, 105],
+        [-25, 45], [35, 48], [95, 42], [155, 47], [215, 43], [30, 145], [155, 148],
+      ].map(([x, y], i) => [`GTR-W${i + 1}`, { x: x!, y: y! }])),
+    },
+    // Fictional fixture membership keeps each segment's well list populated; runtime assignment rules are still pending.
+    segmentWells: {
+      'GTR-01-v1:GTR-01-v2': ['GTR-W1', 'GTR-W2', 'GTR-W3', 'GTR-W4'],
+      'GTR-01-v2:GTR-01-v3': ['GTR-W5', 'GTR-W6', 'GTR-W7'],
+    },
+    wellIds: referenceWellSources.slice(0, 7).map(well => well.id),
+    sourceRevisions: Object.fromEntries(referenceWellSources.slice(0, 7).map(well => [well.id, well.revision])),
+    metadata: { geoBlock: 'ГБ-01', techBlock: 'ТБ-01', mapProfileGroup: 'north-demo', mapProfileOrder: 1, depositBody: 'Северный участок', createdOn: '2026-10-13', compiledBy: 'Демонстрационный геолог', checkedBy: '' },
     description: 'Сложное строение северного участка: разветвлённые проницаемые пласты, рудные линзы, выклинивания, внутренние исключения и границы окисления. Учебная реконструкция визуальных примеров.',
     columnSettings: { all: {
       width: 8, offset: 0, lithology: true, intervals: true, curves: true, curveMin: 0, curveMax: 160,
@@ -92,7 +107,7 @@ export function referenceSection(): GeologySection {
     { id: 'REF-FAULT-WEST', name: 'Западный наклонный разлом', type: 'fault', closed: false, reversed: false, smooth: false, points: [[128,-442],[138,-471],[153,-499],[169,-535]].map(point) },
     { id: 'REF-FAULT-EAST', name: 'Восточный локальный разлом', type: 'fault', closed: false, reversed: false, smooth: false, points: [[247,-466],[260,-492],[278,-530]].map(point) },
   ]
-  section.graphics.push(...referenceWellSources.flatMap((well,index)=>referenceLocalClay[index]!.map(([id,top,bottom],n)=>{
+  section.graphics.push(...referenceWellSources.slice(0,referenceLocalClay.length).flatMap((well,index)=>referenceLocalClay[index]!.map(([id,top,bottom],n)=>{
     const x=stationAtDepth(section,well,well.collar.z-(top+bottom)/2).x
     const left=Math.max(1,x-(4+index%3*3+n*2)),right=Math.min(length-1,x+(7+(index+n)%4*3))
     return region(`REF-LOCAL-${index}-${id}`,`Глинистая прослойка ${well.name} · ${n+1}`,'clay',[[left,(top+bottom)/2],[x,top],[x+(right-x)*.55,top-.08],[right,(top+bottom)/2-.12],[x,bottom],[x-(x-left)*.4,bottom+.08]],true)

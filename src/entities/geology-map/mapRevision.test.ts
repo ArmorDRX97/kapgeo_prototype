@@ -30,11 +30,11 @@ describe('video audit map contracts',()=>{
   })
   it('retains edited legacy source geometry and names while resolving new anchors without collisions',()=>{
     const old=legacyInitialMaps()[0]!,fresh=initialMaps()[0]!,target=fresh.objects.find(o=>o.id==='block-0')!.parts[0]!.nodes[0]!.anchor!.wellId,well=old.objects.find(o=>o.id===target)!
-    well.parts[0]!.nodes[1]!.x+=12;well.name=fresh.objects.find(o=>o.kind==='well'&&o.id!==target)!.name
+    well.parts[0]!.nodes[0]!.x+=12;well.name=fresh.objects.find(o=>o.kind==='well'&&o.id!==target)!.name
     const next=upgradeMap(old)
     expect(next.objects.find(o=>o.id===well.id)).toEqual(well)
     expect(projectSchema.safeParse(next).success).toBe(true)
-    expect(next.objects.find(o=>o.id==='block-0')!.parts[0]!.nodes[0]!.x).toBe(well.parts[0]!.nodes[1]!.x)
+    expect(next.objects.find(o=>o.id==='block-0')!.parts[0]!.nodes[0]!.x).toBe(well.parts[0]!.nodes[0]!.x)
   })
   it('snaps only visible targets and stores the chosen collar/bottom identity',()=>{
     const p=initialMaps()[0]!,well=p.objects.find(o=>o.kind==='well')!,bottom=well.parts[0]!.nodes[1]!

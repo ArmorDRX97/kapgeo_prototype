@@ -28,25 +28,26 @@ export type SectionGraphic = {
 }
 export type SectionDrawing = { id: string; name: string; horizontalScale: number; verticalScale: number; top: number; bottom: number; left: number; right: number; planHeight: number; paper: 'A4' | 'A3'; landscape: boolean; margin: number; layers: string[]; description: string; overlap?: number; center?: boolean; pageOrder?: 'rows' | 'columns'; profileOffset?: number; separator?: number; bottomField?: number; appendix?: string; firstSheet?: number; legendSize?: number; wellIds?: string[]; lithologyColumns?: boolean; stems?: boolean; logColumns?: boolean; intervalColumns?: boolean; oreParameters?: boolean; legend?: boolean; staticLevel?: number; frozenBoundary?: number; columnSettings?: Record<string,ColumnSettings>; wellDecorations?: Record<string, { coreColor?: string; filterFrom?: number; filterTo?: number }> }
 export type GeologySection = {
-  demoPreset?: 'video-reference-v1'
+  demoPreset?: 'video-reference-v1' | 'video-reference-v2' | 'video-reference-v3'
   schemaVersion: 1; id: string; revision: number; synthetic: true; scope: 'geology-section-prototype'
   title: string; depositId: string; depositName: string; stage: SectionStage; kind: 'main' | 'auxiliary'
   year: number; description: string; top: number; bottom: number; status: 'draft' | 'locked'
   profile: XY[]; wellIds: string[]; sourceRevisions: Record<string, number>
-  profileVertexIds?: string[]; segmentWells?: Record<string, string[]>
+  mapGeometry?: { segments: Record<string, [XY, XY]>; wells: Record<string, XY> }
+  profileVertexIds?: string[]; segmentWells?: Record<string, string[]>; profileRadiusM?: number
   participation: Record<SectionLayer, string[]>; links: Record<SectionLayer, CorrelationLink[]>
   graphics: SectionGraphic[]; drawings: SectionDrawing[]
   contourEdits?: Record<string, ContourEdit[]>; smoothLayers?: SectionLayer[]
   arcEdits?: Record<string, ArcEdit[]>
   contourArcEdits?: Record<string, ContourArcEdit[]>
   bottomExtensions?: Record<string, number>
-  metadata?: { geoBlock?: string; techBlock?: string; depositBody: string; createdOn: string; compiledBy: string; checkedBy: string }
+  metadata?: { geoBlock?: string; techBlock?: string; mapProfileGroup?: string; mapProfileOrder?: number; depositBody: string; createdOn: string; compiledBy: string; checkedBy: string }
   columnSettings?: Record<string, ColumnSettings>
   auxiliary?: SectionAuxiliary[]
   sourceOverrides?: Record<string, { revision: number; technology: SectionInterval[]; ore: SectionInterval[]; uncorrected: SectionInterval[]; offbalance: SectionInterval[] }>
 }
 export const sectionViews: Array<{ id: SectionView; label: string }> = [
-  { id: 'overview', label: 'Разрез' }, { id: 'map', label: 'Карта' },
+  { id: 'map', label: 'Карта' }, { id: 'overview', label: 'Разрез' },
   { id: 'technology', label: 'Технологический горизонт' }, { id: 'lithology', label: 'Литология' }, { id: 'ore', label: 'Рудное тело' },
   { id: 'offbalance', label: 'Технологический забаланс' }, { id: 'oxidation', label: 'Зона окисления' }, { id: 'drawing', label: 'Чертёж' },
 ]

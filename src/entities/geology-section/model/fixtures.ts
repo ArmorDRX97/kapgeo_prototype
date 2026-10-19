@@ -20,7 +20,7 @@ export const sectionWellSources: SectionWellSource[] = Array.from({ length: 7 },
 export function createSection(id: string, title: string): GeologySection {
   return { schemaVersion: 1, id, revision: 0, synthetic: true, scope: 'geology-section-prototype', title,
     depositId: 'GTR-LOCAL-NORTH', depositName: 'Полигон Северный', stage: 'exploration', kind: 'main', year: 2026, description: '', top: 10, bottom: -45, status: 'draft',
-    profile: [{ x: 0, y: 30 }, { x: 470, y: 125 }], wellIds: [], sourceRevisions: {},
+    profile: [{ x: 0, y: 30 }, { x: 470, y: 125 }], wellIds: [], sourceRevisions: {}, profileRadiusM: 20,
     participation: { technology: [], ore: [], uncorrected: [], offbalance: [] }, links: { technology: [], ore: [], uncorrected: [], offbalance: [] }, graphics: [], drawings: [] }
 }
 
@@ -29,5 +29,8 @@ export function initialSections(): GeologySection[] {
   section.wellIds = sectionWellSources.slice(0, 5).map(w => w.id)
   section.sourceRevisions = Object.fromEntries(sectionWellSources.slice(0, 5).map(w => [w.id, w.revision]))
   for (const layer of ['technology', 'ore', 'uncorrected'] as const) section.participation[layer] = [...section.wellIds]
-  return [section, { ...createSection('GTR-02', 'Северный · профиль 02'), status: 'locked', description: 'Зафиксированный разрез для просмотра.' }]
+  const parallel = createSection('GTR-02', 'Северный · профиль 02')
+  parallel.profile = [{ x: 0, y: 75 }, { x: 160, y: 78 }, { x: 350, y: 74 }]
+  parallel.metadata = { mapProfileGroup: 'north-demo', mapProfileOrder: 2, depositBody: '', createdOn: '', compiledBy: '', checkedBy: '' }
+  return [section, { ...parallel, status: 'locked', description: 'Зафиксированный параллельный разрез для просмотра.' }]
 }

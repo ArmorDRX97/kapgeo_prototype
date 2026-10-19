@@ -4,6 +4,7 @@ import { referenceWellSources } from './referenceSources'
 import { correlationIssues, layerPolygons } from '../lib/correlation'
 import { graphicIssues } from '../lib/geometry'
 import { validateSection } from '../../../repository/demo/sectionRepository'
+import { sectionSegments } from '../lib/segments'
 
 describe('video reference demonstration', () => {
   it('is a valid editable document with distinct layers, branches and interior holes', () => {
@@ -22,9 +23,9 @@ describe('video reference demonstration', () => {
   })
   it('contains deterministic source curves and independent geometries without real identifiers', () => {
     expect(referenceSection()).toEqual(referenceSection())
-    expect(referenceWellSources).toHaveLength(7)
+    expect(referenceWellSources).toHaveLength(14)
     for (const well of referenceWellSources) {
-      expect(well.name).toMatch(/^ГС-10\d$/)
+      expect(well.name).toMatch(/^ГС-1\d{2}$/)
       for (const layer of ['technology', 'ore', 'uncorrected', 'offbalance'] as const) {
         for (const interval of well[layer]) {
           expect(interval.from).toBeGreaterThan(0)
@@ -34,5 +35,10 @@ describe('video reference demonstration', () => {
       }
       expect(well.curves.every(curve => curve.samples.length > 250)).toBe(true)
     }
+  })
+  it('seeds the video example wells on the first segment without inferring membership by position', () => {
+    const section = referenceSection(), segments = sectionSegments(section)
+    expect(segments[0]?.wellIds).toEqual(['GTR-W1', 'GTR-W2', 'GTR-W3', 'GTR-W4'])
+    expect(segments[1]?.wellIds).toEqual(['GTR-W5', 'GTR-W6', 'GTR-W7'])
   })
 })

@@ -53,7 +53,7 @@ function noise(index: number, well: number) {
   return (value - Math.floor(value)) * 2 - 1
 }
 
-export const referenceWellSources: SectionWellSource[] = stations.map((x, index) => {
+const primaryReferenceWellSources: SectionWellSource[] = stations.map((x, index) => {
   const z = collars[index]!, depth = depths[index]!, y = offsets[index]!, dx = drifts[index]!
   const zones = technology[index]!, oreZones = ore[index]!
   const materialBands = [
@@ -91,3 +91,25 @@ export const referenceWellSources: SectionWellSource[] = stations.map((x, index)
     offbalance: intervals(offbalance[index]!, z, 'REF-B', 'impermeable'), lithology, curves,
   }
 })
+
+// Parallel-row wells are separate invented map fixtures. Existing seven
+// source coordinates stay fixed so saved section geometry remains valid.
+const parallelStations = [12, 68, 124, 180, 236, 292, 338]
+const parallelReferenceWellSources = primaryReferenceWellSources.map((well, index): SectionWellSource => {
+  const suffix = '-P'
+  const dx = parallelStations[index]! - well.collar.x
+  return {
+    ...well,
+    id: `GTR-W${index + 8}`,
+    name: `ГС-${index + 108}`,
+    collar: { ...well.collar, x: parallelStations[index]!, y: well.collar.y + 75 },
+    trajectory: well.trajectory.map(point => ({ ...point, x: point.x + dx, y: point.y + 75 })),
+    technology: well.technology.map(interval => ({ ...interval, id: `${interval.id}${suffix}` })),
+    ore: well.ore.map(interval => ({ ...interval, id: `${interval.id}${suffix}` })),
+    uncorrected: well.uncorrected.map(interval => ({ ...interval, id: `${interval.id}${suffix}` })),
+    offbalance: well.offbalance.map(interval => ({ ...interval, id: `${interval.id}${suffix}` })),
+    lithology: well.lithology.map(interval => ({ ...interval, id: `${interval.id}${suffix}` })),
+    curves: well.curves.map(curve => ({ ...curve, samples: curve.samples.map(sample => ({ ...sample, value: sample.value === null ? null : Math.max(0, sample.value + (index % 3 - 1) * 2) })) })),
+  }
+})
+export const referenceWellSources = [...primaryReferenceWellSources, ...parallelReferenceWellSources]

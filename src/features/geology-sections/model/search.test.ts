@@ -18,7 +18,7 @@ it('opens legacy profile and wells links in the unified section tab without losi
       view: 'overview', mode: undefined, q: 'Северный', year: 2026, groupBy: 'year', kind: 'main',
     })
   }
-  expect(sectionViews[0]).toEqual({ id: 'overview', label: 'Разрез' })
+  expect(sectionViews[0]).toEqual({ id: 'map', label: 'Карта' })
   expect(sectionViews.some(view => ['profile', 'wells'].includes(view.id))).toBe(false)
 })
 

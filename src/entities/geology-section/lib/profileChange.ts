@@ -6,7 +6,7 @@ import { graphicIssues } from './geometry'
 /** Boundary-attached nodes follow the frame; free/manual coordinates retain their values. */
 export function profileWithBoundaries(section: GeologySection, profile: XY[]): GeologySection {
   const length=profileLength(profile)
-  return {...section,profile,contourEdits:Object.fromEntries(Object.entries(section.contourEdits??{}).map(([layer,edits])=>[layer,edits.map(e=>e.boundary?{...e,x:e.side==='left'?0:length}:e)]))}
+  return {...section,profile,mapGeometry:JSON.stringify(profile)===JSON.stringify(section.profile)?section.mapGeometry:section.mapGeometry?{...section.mapGeometry,segments:{}}:undefined,contourEdits:Object.fromEntries(Object.entries(section.contourEdits??{}).map(([layer,edits])=>[layer,edits.map(e=>e.boundary?{...e,x:e.side==='left'?0:length}:e)]))}
 }
 
 /** Report dependent geometry before replacing a trace; never rebase manual work implicitly. */

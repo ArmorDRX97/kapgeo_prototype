@@ -8,10 +8,12 @@ import { editContourArc, ringKey, polygonIssues, ringsIntersect, insideRing, ope
 import { projectSectionPoint } from './segments'
 
 export const sourceFor = (section: GeologySection, well: SectionWellSource): SectionWellSource => {
-  const source = section.demoPreset === 'video-reference-v1' ? referenceWellSources.find(w => w.id === well.id) ?? well : well
+  const source = section.demoPreset?.startsWith('video-reference-') ? referenceWellSources.find(w => w.id === well.id) ?? well : well
   return { ...source, ...section.sourceOverrides?.[well.id] }
 }
-export const sectionSources = (section: GeologySection): SectionWellSource[] => sectionWellSources.map(well => sourceFor(section, well))
+export const sectionSources = (section: GeologySection): SectionWellSource[] => section.demoPreset?.startsWith('video-reference-')
+  ? referenceWellSources.map(well => ({ ...well, ...section.sourceOverrides?.[well.id] }))
+  : sectionWellSources.map(well => sourceFor(section, well))
 export function stationAtDepth(section: GeologySection, well: SectionWellSource, md: number): XZ {
   const p = pointAtDepth(sourceFor(section, well), md)
   return { x: projectSectionPoint(section, well.id, p).station, z: p.z }

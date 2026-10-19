@@ -1,10 +1,15 @@
 import { useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { defaultPersona } from '../../../entities/session/model/personas'
+import { SessionContext } from '../../../entities/session/model/sessionContext'
 import { initialSections } from '../../../entities/geology-section/model/fixtures'
 import { SectionGraphicWorkspace } from './SectionGraphicWorkspace'
 import { SectionCanvas } from './SectionCanvas'
 import { GraphicEditor } from './GraphicEditor'
+import { ProfileMap } from './ProfileMap'
+import { CorrelationEditor } from './CorrelationEditor'
 
 afterEach(() => { cleanup(); localStorage.clear(); vi.unstubAllGlobals() })
 describe('graph and tools composition', () => {
@@ -16,6 +21,27 @@ describe('graph and tools composition', () => {
     expect(within(tools).getByRole('checkbox', { name: 'Сетка' })).toBeTruthy()
     expect(within(tools).queryByLabelText('Графическая область, прокрутка разреза')).toBeNull()
     expect(container.querySelector('.section-graph-stage')?.contains(screen.getByLabelText('Графическая область, прокрутка разреза'))).toBe(true)
+  })
+  it('places section-map tools in the right panel while keeping the map in the main surface', () => {
+    const { container } = render(<SectionGraphicWorkspace title="Карта"><ProfileMap section={initialSections()[0]!} disabled={false} onChange={vi.fn()} onPending={vi.fn()} /></SectionGraphicWorkspace>)
+    const tools = screen.getByRole('complementary', { name: 'Инструменты разреза' })
+    const map = screen.getByRole('group', { name: 'Карта скважин и линий сегмента' })
+    const mapTools = within(tools).getByRole('group', { name: 'Инструменты карты профиля' })
+    const pan = within(mapTools).getByRole('button', { name: 'Переместить карту' })
+    expect(pan).toHaveClass('section-icon-tool')
+    expect(pan).toHaveAttribute('title', 'Переместить карту')
+    expect(pan.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    expect(within(mapTools).getByRole('button', { name: 'Независимый сегмент' })).toBeInTheDocument()
+    expect(container.querySelector('.section-graph-stage')?.contains(map)).toBe(true)
+    expect(tools.contains(map)).toBe(false)
+  })
+  it('keeps correlation editing tools compact while preserving their accessible names', () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={client}><SessionContext.Provider value={{ status: 'authenticated', persona: defaultPersona, signIn: () => defaultPersona, signOut: vi.fn(), switchPersona: vi.fn() }}><SectionGraphicWorkspace title="Технологический горизонт"><CorrelationEditor section={initialSections()[0]!} layer="technology" disabled={false} onChange={vi.fn()} onSelect={vi.fn()} onPending={vi.fn()} /></SectionGraphicWorkspace></SessionContext.Provider></QueryClientProvider>)
+    const group = screen.getByRole('group', { name: 'Команды графического редактирования' })
+    const unlink = within(group).getByRole('button', { name: 'Разъединить на графике' })
+    expect(unlink).toHaveClass('section-icon-tool')
+    expect(unlink).toHaveAttribute('title', 'Разъединить на графике')
   })
   it('preserves an uncommitted geometry draft and its plot when the tools are collapsed', () => {
     function Harness() {

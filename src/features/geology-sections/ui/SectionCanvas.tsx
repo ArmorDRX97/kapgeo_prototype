@@ -4,7 +4,6 @@ import { layerAnchors, layerPolygons, polygonPath, sectionSources, stationAtDept
 import { visibleTracks, trackName } from '../../../entities/geology-section/lib/columnTracks'
 import { profileLength } from '../../../entities/geology-section/lib/profile'
 import { resolveGraphicPoints } from '../../../entities/geology-section/lib/boundaries'
-import { Button } from '../../../shared/ui/Button'
 
 import { defaultColumns, rockNames, layerNames } from '../model/presentation'
 import { useSectionView } from '../model/viewPreferences'
@@ -18,6 +17,8 @@ import { plotFrame } from '../model/plotFrame'
 import { plotHeaders, type PlotHeaders } from '../model/plotHeaders'
 import { PlotColumnHeaders } from './PlotColumnHeaders'
 import { GraphHelp, PlotSurface, ToolCategory } from './SectionGraphicWorkspace'
+import { SectionToolButton } from './SectionToolButton'
+import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react'
 
 export type CanvasHandle = { id: string; label: string; point: XZ; kind?: 'graphic'|'pinch'|'auxiliary'|'boundary'|'extension' }
 export type HandlePhase = 'start' | 'move' | 'end' | 'cancel'
@@ -57,7 +58,7 @@ export function SectionSvg({ section, layers = ['technology'], graphicTypes, sho
   const px = useCallback((x: number) => 42 + (x - left) / (right - left) * (width - 84), [left, right, width]), py = useCallback((z: number) => frame.top + (top - z) / (top - bottom) * frame.height, [top, bottom, frame.top, frame.height])
   const pointString = (points: XZ[]) => points.map(p => `${px(p.x)},${py(p.z)}`).join(' ')
   const graphics = section.graphics.filter(g => !g.parentId && (!graphicTypes || graphicTypes.includes(g.type)))
-  const reference = section.demoPreset === 'video-reference-v1'
+  const reference = section.demoPreset?.startsWith('video-reference-')
   const xTicks = axisTicks(left, right, frame.width, 72), zTicks = axisTicks(bottom, top, frame.height, 40)
   const lithologyContacts = !clean
     ? sectionSources(section).filter(well => section.wellIds.includes(well.id)).flatMap(well => [...new Set(well.lithology.flatMap(interval => [interval.from, interval.to]))].map(md => ({ well, md, point: stationAtDepth(section, well, md) })).filter(({ point }) => point.x >= left && point.x <= right && point.z >= bottom && point.z <= top))
@@ -195,14 +196,14 @@ export function SectionCanvas(props: CanvasProps) {
     zoomTo(wheelZoom(view.zoom, event, .5, 4), fx, fy)
   }, true)
   const readPoint = useCallback((point: XZ) => { if (cursor.current) cursor.current.textContent = `Курсор: X ${point.x.toFixed(2)} м · Z ${point.z.toFixed(2)} м` }, [])
-  return <><ToolCategory category="display" state={props.surfaceState}><div className="section-actions"><Button variant="secondary" aria-label="Увеличить разрез" onClick={() => zoomTo(Math.min(4, view.zoom * 1.25))}>＋</Button><Button variant="secondary" aria-label="Уменьшить разрез" onClick={() => zoomTo(Math.max(.5, view.zoom / 1.25))}>−</Button><Button variant="quiet" onClick={() => { setCenter(null); setView({ ...view, zoom: 1, ratio: 1 }) }}>Вписать</Button><label>Вертикальное увеличение<select value={view.ratio} onChange={e => setView({ ...view, ratio: Number(e.target.value) })}><option value={.6}>0,6×</option><option value={1}>1×</option><option value={1.5}>1,5×</option><option value={2}>2×</option></select></label><span className="section-muted">Экран {Math.round(view.zoom * 100)}% · масштаб чертежа задаётся отдельно</span></div>
+  return <><ToolCategory category="display" state={props.surfaceState}><div className="section-actions"><div className="section-tool-icon-grid" role="group" aria-label="Масштаб разреза"><SectionToolButton icon={ZoomIn} label="Увеличить разрез" onClick={() => zoomTo(Math.min(4, view.zoom * 1.25))} /><SectionToolButton icon={ZoomOut} label="Уменьшить разрез" onClick={() => zoomTo(Math.max(.5, view.zoom / 1.25))} /><SectionToolButton icon={Maximize2} label="Вписать" variant="quiet" onClick={() => { setCenter(null); setView({ ...view, zoom: 1, ratio: 1 }) }} /></div><label>Вертикальное увеличение<select value={view.ratio} onChange={e => setView({ ...view, ratio: Number(e.target.value) })}><option value={.6}>0,6×</option><option value={1}>1×</option><option value={1.5}>1,5×</option><option value={2}>2×</option></select></label><span className="section-muted">Экран {Math.round(view.zoom * 100)}% · масштаб чертежа задаётся отдельно</span></div>
     <div className="section-actions" role="group" aria-label="Видимость на экране"><label><input type="checkbox" checked={view.grid} onChange={e => setView({ ...view, grid: e.target.checked })} />Сетка</label><label><input type="checkbox" checked={view.graphics} onChange={e => setView({ ...view, graphics: e.target.checked })} />Границы и зоны</label>{available.map(layer => <label key={layer}><input type="checkbox" checked={view.layers.includes(layer)} onChange={e => setView({ ...view, layers: e.target.checked ? [...view.layers, layer] : view.layers.filter(l => l !== layer) })} />{layerNames[layer]}</label>)}</div>
     </ToolCategory>{props.surfaceState !== 'inactive' && <GraphHelp><p className="section-muted">{props.onPoint ? 'Построение: ЛКМ добавляет точку' : 'ЛКМ + перетаскивание — перемещение'} · колёсико — масштаб · Shift + колёсико — по горизонтали · ПКМ — сведения</p></GraphHelp>}
     <PlotSurface state={props.surfaceState}><GraphicInspection onSelect={props.onAnchor || props.onGraphic ? id => { if (props.section.graphics.some(g => g.id === id)) props.onGraphic?.(id); else props.onAnchor?.(id) } : undefined}><div {...pan.events} ref={viewport} style={{ "--section-header-height": `${headers.top}px` } as CSSProperties} className={`section-canvas-scroll section-canvas-viewport${props.onPoint ? '' : ' is-pannable'}${pan.panning ? ' is-panning' : ''}`} tabIndex={0} aria-label="Графическая область, прокрутка разреза" onKeyDown={event => {
       const delta = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[event.key]
       if (!delta) return
       event.preventDefault(); setCenter({ x: (bounds.left + bounds.right) / 2 + delta[0]! * (bounds.right - bounds.left) / 10, z: (bounds.top + bounds.bottom) / 2 + delta[1]! * (bounds.top - bounds.bottom) / 10 })
-    }}><SectionSvg {...props} {...bounds} headerLayout={headers} width={size.width} height={size.height} layers={view.layers} showGrid={view.grid} showGraphics={view.graphics && props.showGraphics !== false} onReadPoint={readPoint} /></div></GraphicInspection><p ref={cursor} className="section-muted">Курсор: расстояние X и абсолютная высота Z в метрах</p><p className={`section-legend section-canvas-legend${props.section.demoPreset === 'video-reference-v1' ? ' section-canvas-legend--reference' : ''}`} aria-label="Условные обозначения разреза">
+    }}><SectionSvg {...props} {...bounds} headerLayout={headers} width={size.width} height={size.height} layers={view.layers} showGrid={view.grid} showGraphics={view.graphics && props.showGraphics !== false} onReadPoint={readPoint} /></div></GraphicInspection><p ref={cursor} className="section-muted">Курсор: расстояние X и абсолютная высота Z в метрах</p><p className={`section-legend section-canvas-legend${props.section.demoPreset?.startsWith('video-reference-') ? ' section-canvas-legend--reference' : ''}`} aria-label="Условные обозначения разреза">
       {(!props.graphicTypes || props.graphicTypes.includes('lithology')) && (['sand', 'clay', 'silt'] as const).map(rock => <span key={rock}><i aria-hidden="true" className={`section-canvas-legend__swatch section-canvas-legend__swatch--${rock}`} />{rockNames[rock]}</span>)}
       {view.layers.map(layer => <span key={layer}><i aria-hidden="true" className={`section-canvas-legend__swatch section-canvas-legend__swatch--${layer}`} />{layerNames[layer]}</span>)}
       {(!props.graphicTypes || props.graphicTypes.includes('oxidation')) && <span>┴ Линия окисления</span>}

@@ -1,11 +1,11 @@
 import { type MapObject, type MapProject } from './model'
 
 type GridWell = { object: MapObject; row: number; column: number }
-type AnchoredPoint = { id: string; x: number; y: number; anchor: { wellId: string; target: 'bottom' } }
+type AnchoredPoint = { id: string; x: number; y: number; anchor: { wellId: string; target: 'collar' } }
 
-function bottomPoint(well: GridWell, id: string): AnchoredPoint {
-  const bottom = well.object.parts[0]!.nodes[1]!
-  return { id, x: bottom.x, y: bottom.y, anchor: { wellId: well.object.id, target: 'bottom' } }
+function collarPoint(well: GridWell, id: string): AnchoredPoint {
+  const collar = well.object.parts[0]!.nodes[0]!
+  return { id, x: collar.x, y: collar.y, anchor: { wellId: well.object.id, target: 'collar' } }
 }
 
 function nearestInRow(wells: GridWell[], row: number, column: number): GridWell {
@@ -16,13 +16,19 @@ function blockFor(wells: GridWell[], blockIndex: number): MapObject {
   const rowStart = Math.floor(blockIndex * 12 / 5)
   const rowEnd = Math.min(11, Math.floor((blockIndex + 1) * 12 / 5))
   const middle = Math.floor((rowStart + rowEnd) / 2)
-  const selected = [nearestInRow(wells,rowStart,1+blockIndex%2),nearestInRow(wells,rowStart,11+blockIndex%3),nearestInRow(wells,middle,15),nearestInRow(wells,rowEnd,13-blockIndex%2),nearestInRow(wells,rowEnd,2),nearestInRow(wells,middle,0)]
+  const edgeColumns = [1 + blockIndex % 2, 4 + blockIndex % 2, 7, 10, 13, 15]
+  const selected = [
+    ...edgeColumns.map(column => nearestInRow(wells, rowStart, column)),
+    nearestInRow(wells, middle, 15),
+    ...[14 - blockIndex % 2, 11, 8, 5, 2].map(column => nearestInRow(wells, rowEnd, column)),
+    nearestInRow(wells, middle, 0),
+  ]
     .filter((well,index,items)=>items.findIndex(item=>item.object.id===well.object.id)===index)
-  const centerX = selected.reduce((sum, well) => sum + well.object.parts[0]!.nodes[1]!.x, 0) / selected.length
-  const centerY = selected.reduce((sum, well) => sum + well.object.parts[0]!.nodes[1]!.y, 0) / selected.length
+  const centerX = selected.reduce((sum, well) => sum + well.object.parts[0]!.nodes[0]!.x, 0) / selected.length
+  const centerY = selected.reduce((sum, well) => sum + well.object.parts[0]!.nodes[0]!.y, 0) / selected.length
   const ordered = selected.sort((a, b) => {
-    const pointA = a.object.parts[0]!.nodes[1]!
-    const pointB = b.object.parts[0]!.nodes[1]!
+    const pointA = a.object.parts[0]!.nodes[0]!
+    const pointB = b.object.parts[0]!.nodes[0]!
     return Math.atan2(pointA.y - centerY, pointA.x - centerX) - Math.atan2(pointB.y - centerY, pointB.x - centerX)
   })
   return {
@@ -30,19 +36,20 @@ function blockFor(wells: GridWell[], blockIndex: number): MapObject {
     name: `Геоблок ${110 + blockIndex}`,
     attributes: { type: '', depth: 0, value: 0, note: '' },
     label: { visible: true, dx: 8, dy: -8 },
-    parts: [{ id: `block-${blockIndex}-part`, nodes: ordered.map((well, i) => bottomPoint(well, `block-${blockIndex}-n${i}`)) }],
+    parts: [{ id: `block-${blockIndex}-part`, nodes: ordered.map((well, i) => collarPoint(well, `block-${blockIndex}-n${i}`)) }],
     style: { stroke: '#43a9ae', fill: 'none', width: 1.2, paperWidth: .18, dash: 'solid', opacity: 1 },
   }
 }
 
 function profileFor(wells: GridWell[], profileIndex: number): MapObject {
-  const selected = [0, 4, 8, 11].map(row => nearestInRow(wells, row, Math.round(profileIndex * 1.65 + row * 0.45)))
+  const selectedRows = [0, 2, 4, 6, 8, 10, 11]
+  const selected = selectedRows.map(row => nearestInRow(wells, row, Math.round(profileIndex * 1.65 + row * 0.45)))
   return {
     id: `profile-${profileIndex}`, layerId: 'profiles', kind: 'profile', shape: 'straight', closed: false,
     name: `Р-${String(profileIndex + 1).padStart(2, '0')}`,
     attributes: { type: '', depth: 0, value: 0, note: '' },
     label: { visible: true, dx: 8, dy: -8 },
-    parts: [{ id: `profile-${profileIndex}-part`, nodes: selected.map((well, i) => bottomPoint(well, `profile-${profileIndex}-n${i}`)) }],
+    parts: [{ id: `profile-${profileIndex}-part`, nodes: selected.map((well, i) => collarPoint(well, `profile-${profileIndex}-n${i}`)) }],
     style: { stroke: '#56636d', fill: 'none', width: .8, paperWidth: .18, dash: 'solid', opacity: 1 },
   }
 }

@@ -42,6 +42,18 @@ describe('design and PDF flows', () => {
     expect(section).toEqual(before)
   })
 
+  it('limits segment candidates to wells in the section and inside the selected radius', () => {
+    const section = initialSections()[0]!
+    section.profile = [{ x: 35, y: 40 }, { x: 100, y: 40 }]
+    section.profileRadiusM = 20
+    const actualSegmentId = sectionSegments(section)[0]!.id
+    render(<SegmentWellPicker section={section} segmentId={actualSegmentId} onApply={vi.fn()} onClose={vi.fn()} />)
+    expect(screen.getByRole('dialog').querySelector('p:nth-of-type(2)')?.textContent).toContain('в радиусе 20 м от сегмента')
+    const available = screen.getByLabelText('Доступные скважины')
+    expect(available.querySelector('option[value="GTR-W1"]')).not.toBeNull()
+    expect(available.querySelector('option[value="GTR-W5"]')).toBeNull()
+  })
+
   it('renders updated drawing settings and preserves them through section validation', () => {
     const source = initialSections()[0]!, drawing = { ...newDrawing(source, 'print'), layers: ['ore'], planHeight: 10 }
     source.wellIds = source.wellIds.slice(0, 2)

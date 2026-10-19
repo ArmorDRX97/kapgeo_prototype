@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createSection, initialSections } from '../../entities/geology-section/model/fixtures'
+import { referenceSection } from '../../entities/geology-section/model/referenceSection'
 import { sectionRepository } from './sectionRepository'
 import { SECTION_STORAGE_KEY, SECTION_DEMO_BACKUP_KEY } from './sectionStorageKeys'
 import { userPersonas } from '../../entities/session/model/personas'
@@ -12,7 +13,7 @@ describe('shared reference demonstration bootstrap', () => {
     original[0]!.revision = 7; original[0]!.title = 'Название пользователя'
     localStorage.setItem(SECTION_STORAGE_KEY, JSON.stringify([...original, independent]))
     const docs = await sectionRepository.demoList()
-    expect(docs[0]).toMatchObject({ id: 'GTR-01', title: 'Название пользователя', revision: 8, demoPreset: 'video-reference-v1' })
+    expect(docs[0]).toMatchObject({ id: 'GTR-01', title: 'Название пользователя', revision: 8, demoPreset: 'video-reference-v3', metadata: { geoBlock: 'ГБ-01', techBlock: 'ТБ-01' }, segmentWells: { 'GTR-01-v1:GTR-01-v2': ['GTR-W1', 'GTR-W2', 'GTR-W3', 'GTR-W4'], 'GTR-01-v2:GTR-01-v3': ['GTR-W5', 'GTR-W6', 'GTR-W7'] } })
     expect(docs[1]).toEqual(original[1]); expect(docs[2]).toEqual(independent)
     expect(JSON.parse(localStorage.getItem(SECTION_DEMO_BACKUP_KEY)!)).toEqual(original[0])
     const editor = userPersonas.find(persona => persona.id === 'geo.ivanova')!
@@ -23,11 +24,18 @@ describe('shared reference demonstration bootstrap', () => {
   it('seeds one new common document, and never recreates a removed one', async () => {
     const docs = await sectionRepository.demoList()
     expect(docs).toHaveLength(2)
-    expect(docs[0]?.demoPreset).toBe('video-reference-v1')
+    expect(docs[0]?.demoPreset).toBe('video-reference-v3')
     expect(docs[0]?.revision).toBe(0)
     expect(localStorage.getItem(SECTION_DEMO_BACKUP_KEY)).toBeNull()
     localStorage.setItem(SECTION_STORAGE_KEY, JSON.stringify([docs[1]]))
     expect(await sectionRepository.demoList()).toEqual([docs[1]])
+  })
+  it('adds block metadata to a saved v2 reference while preserving user edits', async () => {
+    const previous = { ...referenceSection(), demoPreset: 'video-reference-v2', revision: 4, title: 'Сохранённый пример', description: 'Пользовательский текст', metadata: { ...referenceSection().metadata!, geoBlock: 'ГБ-02', techBlock: '' } }
+    localStorage.setItem(SECTION_STORAGE_KEY, JSON.stringify([previous]))
+    const docs = await sectionRepository.demoList()
+    expect(docs[0]).toMatchObject({ revision: 5, title: 'Сохранённый пример', description: 'Пользовательский текст', demoPreset: 'video-reference-v3', metadata: { geoBlock: 'ГБ-02', techBlock: 'ТБ-01' } })
+    expect(JSON.parse(localStorage.getItem(SECTION_DEMO_BACKUP_KEY)!)).toEqual(previous)
   })
   it('leaves an unreadable registry and a failed write intact', async () => {
     localStorage.setItem(SECTION_STORAGE_KEY, '{invalid')

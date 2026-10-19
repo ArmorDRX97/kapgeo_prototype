@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initialSections } from '../../../entities/geology-section/model/fixtures'
+import { referenceSection } from '../../../entities/geology-section/model/referenceSection'
 import { referenceWellSources } from '../../../entities/geology-section/model/referenceSources'
 import { pointAtDepth } from '../../../entities/geology-section/lib/profile'
 import { ProfileMap } from './ProfileMap'
@@ -57,6 +58,67 @@ describe('profile map gestures', () => {
     expect(container.querySelector('[data-map-axes]')).not.toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Карта скважин и линий сегмента' }).getAttribute('viewBox')).toBe('-30 -230 550 250')
   })
+  it('shows all source wells on the section map, including wells outside the current section', () => {
+    render(<ProfileMap section={initialSections()[0]!} disabled onChange={vi.fn()} onPending={vi.fn()} />)
+    expect(screen.getByRole('button', { name: 'ГС-107: сведения' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Демонстрационный контур геоблока' })).toBeInTheDocument()
+  })
+  it('renders the current section as two disconnected parallel segments, with independent movement', () => {
+    const section = referenceSection(), change = vi.fn()
+    const { container } = render(<ProfileMap section={section} documents={[section, initialSections()[1]!]} disabled={false} onChange={change} onPending={vi.fn()} />)
+    const lines = [...container.querySelectorAll('[data-map-segment] line')]
+    expect(lines).toHaveLength(2)
+    expect(lines.map(line => [line.getAttribute('y1'),line.getAttribute('y2')])).toEqual([['0','0'],['-100','-100']])
+    expect(container.querySelector('[data-map-profile]')).toBeNull()
+    expect(container.querySelectorAll('.section-map__vertex')).toHaveLength(4)
+    fireEvent.click(screen.getByRole('button', { name: 'Переместить сегмент целиком' }))
+    fireEvent.change(screen.getByLabelText('Перенос сегмента X, м'), { target: { value: '30' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Перенести сегмент' }))
+    const next = change.mock.calls[0]![0]
+    expect(next.mapGeometry.segments['GTR-01-v1:GTR-01-v2']).toEqual([{x:30,y:0},{x:190,y:0}])
+    expect(next.mapGeometry.segments['GTR-01-v2:GTR-01-v3']).toEqual(section.mapGeometry!.segments['GTR-01-v2:GTR-01-v3'])
+    expect(next.profile).toEqual(section.profile)
+    expect(next.mapGeometry.wells).toEqual(section.mapGeometry!.wells)
+  })
+  it('uses the selected map segment when offering nearby wells', () => {
+    const section = referenceSection()
+    render(<ProfileMap section={section} disabled={false} onChange={vi.fn()} onPending={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Назначить скважины сегменту' }))
+    const available=screen.getByLabelText('Доступные скважины')
+    expect(available.querySelector('option[value="GTR-W5"]')).toBeNull()
+    expect(screen.getByLabelText('Скважины сегмента').textContent).toContain('ГС-101')
+  })
+  it('finds the demo geological or technological block and shows its section trace', () => {
+    const section = referenceSection()
+    render(<ProfileMap section={section} documents={[section]} disabled onChange={vi.fn()} onPending={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText('Найти блок'), { target: { value: 'ГБ-01' } })
+    expect(screen.getByRole('status')).toHaveTextContent('Блок ГБ-01: показана трасса разреза «Северный · профиль 01». Контур на карте демонстрационный.')
+  })
+  it('keeps the selected segment panel focused on well names and collapses edit actions', () => {
+    render(<ProfileMap section={{...referenceSection(),mapGeometry:undefined}} disabled={false} onChange={vi.fn()} onPending={vi.fn()} />)
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Выбрать сегмент 1 профиля' }), { button: 0 })
+    const segment = screen.getByRole('region', { name: 'Скважины сегмента 1' })
+    expect(segment.querySelectorAll('li')).toHaveLength(4)
+    const actions = screen.getByText('Действия с сегментом').closest('details')
+    expect(actions).not.toHaveAttribute('open')
+    expect(screen.getByLabelText('Выровнять по забою').closest('details')).toBe(actions)
+  })
+  it('opens the segment well picker with only section wells inside the selected radius', () => {
+    const section = initialSections()[0]!, onChange = vi.fn()
+    section.profile = [{ x: 35, y: 40 }, { x: 100, y: 40 }]
+    section.profileRadiusM = 20
+    render(<ProfileMap section={section} disabled={false} onChange={onChange} onPending={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Назначить скважины сегменту' }))
+    const available = screen.getByLabelText('Доступные скважины')
+    expect(available.querySelector('option[value="GTR-W1"]')).not.toBeNull()
+    expect(available.querySelector('option[value="GTR-W2"]')).toBeNull()
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Радиус подбора для сегмента, м' }), { target: { value: '30' } })
+    expect(available.querySelector('option[value="GTR-W2"]')).not.toBeNull()
+    fireEvent.change(available, { target: { value: 'GTR-W2' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить →' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Применить состав' }))
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ profileRadiusM: 30, segmentWells: { [`${section.id}-v1:${section.id}-v2`]: ['GTR-W2'] } }))
+  })
   it('pans in viewing mode without modifying the profile or adding wells', () => {
     const change = vi.fn()
     render(<ProfileMap section={initialSections()[0]!} disabled={true} onChange={change} onPending={vi.fn()} />)
@@ -69,6 +131,19 @@ describe('profile map gestures', () => {
     expect(after[1]).toBeCloseTo(before[1]! - 20)
     expect(change).not.toHaveBeenCalled()
   })
+  it('provides a dedicated map movement tool in the right-side toolbar', () => {
+    const change = vi.fn()
+    render(<ProfileMap section={initialSections()[0]!} disabled={false} onChange={change} onPending={vi.fn()} />)
+    const map = screen.getByRole('group', { name: 'Карта скважин и линий сегмента' })
+    const before = map.getAttribute('viewBox')!.split(' ').map(Number)
+    fireEvent.click(screen.getByRole('button', { name: 'Переместить карту' }))
+    fireEvent.pointerDown(map, { button: 0, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(map, { clientX: 150, clientY: 130 }); fireEvent.pointerUp(map)
+    const after = map.getAttribute('viewBox')!.split(' ').map(Number)
+    expect(after[0]).toBeCloseTo(before[0]! - 50)
+    expect(after[1]).toBeCloseTo(before[1]! - 30)
+    expect(change).not.toHaveBeenCalled()
+  })
   it('zooms with the wheel and does not add a well on right click', () => {
     const change = vi.fn()
     render(<ProfileMap section={initialSections()[0]!} disabled={false} onChange={change} onPending={vi.fn()} />)
@@ -77,7 +152,8 @@ describe('profile map gestures', () => {
     fireEvent.wheel(map, { deltaY: -100, clientX: 100, clientY: 100 })
     const after = map.getAttribute('viewBox')!.split(' ').map(Number)
     expect(after[2]).toBeLessThan(before[2]!)
-    fireEvent.click(screen.getByRole('button', { name: 'Состав скважин' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Скважины разреза' }))
+    expect(screen.getByText(/Это меняет общий состав разреза; назначение скважины выбранному сегменту настраивается отдельно/)).toBeTruthy()
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Добавить ГС-107 в разрез' }), { button: 2 })
     expect(change).not.toHaveBeenCalled()
   })
@@ -114,6 +190,16 @@ describe('profile map gestures', () => {
     expect(change.mock.calls[0]![0]).toMatchObject({ profile: [{ x: 0, y: 30 }, { x: 470, y: 125 }], wellIds: section.wellIds })
     expect(pending).toHaveBeenLastCalledWith(false)
   })
+  it('keeps section-segment coordinates free near wells unless snapping is enabled', () => {
+    const section = initialSections()[0]!, change = vi.fn()
+    render(<ProfileMap section={section} disabled={false} onChange={change} onPending={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Новый профиль' }))
+    point(36, 41)
+    point(470, 125)
+    const dialog = screen.getByRole('dialog', { name: 'Новый профиль на карте' })
+    expect(dialog).toHaveTextContent('X 36.00 · Y 41.00 м')
+    expect(change).not.toHaveBeenCalled()
+  })
   it('cancels a partial gesture with Escape and rejects a zero-length candidate', () => {
     const section = initialSections()[0]!, change = vi.fn(), pending = vi.fn()
     render(<ProfileMap section={section} disabled={false} onChange={change} onPending={pending} />)
@@ -139,7 +225,7 @@ describe('profile map gestures', () => {
   it('adds wells with keyboard without changing the profile or layer participation and respects read-only', () => {
     const section = initialSections()[0]!, change = vi.fn()
     const view = render(<ProfileMap section={section} disabled={false} onChange={change} onPending={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Состав скважин' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Скважины разреза' }))
     fireEvent.keyDown(screen.getByRole('button', { name: 'Добавить ГС-107 в разрез' }), { key: 'Enter' })
     const next = change.mock.calls[0]![0]
     expect(next.wellIds).toEqual([...section.wellIds, 'GTR-W7'])

@@ -6,6 +6,7 @@ import {
   ChevronDown,
   CircleUserRound,
   CodeXml,
+  Eye,
   LogOut,
   Menu,
   Mountain,
@@ -113,6 +114,7 @@ export function AppShell({ children }: PropsWithChildren) {
           <div className="topbar-profile__separator" />
           <Link to="/team/knowledge-map" search={{ from: currentHref }} role="menuitem" className="topbar-profile__team-tool" onClick={() => setProfileOpen(false)}><CodeXml size={19} aria-hidden="true" /><span><strong>Карта взаимосвязей</strong><small>Для команды · разработка</small></span></Link>
           <div className="topbar-profile__separator" />
+          {pathname.startsWith('/geology/plans/') && <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); window.dispatchEvent(new Event('kapgeo:open-plan-display')) }}><Eye size={17} />Отображение плана</button>}
           <button type="button" role="menuitem" onClick={logOut}><LogOut size={17} />Выйти</button>
         </div>}
       </div>

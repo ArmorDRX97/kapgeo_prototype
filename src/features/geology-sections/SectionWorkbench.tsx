@@ -2,7 +2,7 @@ import { profileWithBoundaries } from '../../entities/geology-section/lib/profil
 import { useState } from 'react'
 import { useBlocker } from '@tanstack/react-router'
 import { Save, Undo2, Redo2, Trash2, Download } from 'lucide-react'
-import type { GeologySection, SectionView } from '../../entities/geology-section/model/types'
+import type { GeologySection } from '../../entities/geology-section/model/types'
 import { sectionViews } from '../../entities/geology-section/model/types'
 import { repairSection } from '../../entities/geology-section/lib/repair'
 import { profileIssues } from '../../entities/geology-section/lib/profile'
@@ -10,7 +10,6 @@ import type { UserPersona } from '../../entities/session/model/types'
 import { canEditSection, sectionRepository } from '../../repository/demo/sectionRepository'
 import { Button } from '../../shared/ui/Button'
 import { DiscardChangesDialog } from '../../shared/ui/DiscardChangesDialog'
-import { WorkspaceTabs } from '../../shared/ui/WorkspaceTabs'
 import { validateSectionSearch, type SectionSearch } from './model/search'
 import { useSharedAuxiliary } from './model/useSharedAuxiliary'
 import { staleAuxiliary } from '../../entities/geology-section/lib/sharedAuxiliary'
@@ -21,6 +20,7 @@ import { GraphicEditor } from './ui/GraphicEditor'
 import { DrawingEditor } from './ui/DrawingEditor'
 import { SectionGraphicWorkspace, PlotSurface } from './ui/SectionGraphicWorkspace'
 import { SectionDocumentHeader } from './ui/SectionDocumentHeader'
+import { SectionAreaNavigation } from './ui/SectionAreaNavigation'
 import { reconcileProfile } from '../../entities/geology-section/lib/segments'
 import './sections.css'
 
@@ -30,7 +30,7 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
   const [error, setError] = useState(''), [notice, setNotice] = useState('')
   const [pendingGeometry, setPendingGeometry] = useState(false)
   const shared = useSharedAuxiliary(), stale = staleAuxiliary(section, shared.data ?? [])
-  const editable = canEditSection(persona, saved), dirty = JSON.stringify(section) !== JSON.stringify(saved), view = search.view ?? 'overview'
+  const editable = canEditSection(persona, saved), dirty = JSON.stringify(section) !== JSON.stringify(saved), view = search.view ?? 'map'
   const routeBlocker = useBlocker({ withResolver: true, disabled: !dirty && !pendingGeometry, enableBeforeUnload: dirty || pendingGeometry, shouldBlockFn: ({ current, next }) => {
     const destination = validateSectionSearch(next.search as Record<string, unknown>)
     return next.pathname !== current.pathname || pendingGeometry && (destination.view !== search.view || destination.mode !== search.mode)
@@ -73,8 +73,8 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
     <SectionDocumentHeader section={section} status={!editable ? 'readonly' : pendingGeometry ? 'pending' : dirty ? 'dirty' : 'saved'} actions={documentActions} message={notice} />
     {(error && routeBlocker?.status !== 'blocked' || stale.length > 0) && <div className="section-document-alerts">{messages}</div>}
 
-    <div className="section-workbench__body"><WorkspaceTabs tabs={sectionViews} value={view} label="Разделы разреза" onChange={id => onSearch({ view: id as SectionView })}><div className="section-workbench__main">{graphView ? <SectionGraphicWorkspace title={sectionViews.find(v => v.id === view)?.label ?? 'Разрез'}>{editor}{deleteAction}</SectionGraphicWorkspace> : editor}
-    </div></WorkspaceTabs></div>
+    <div className="section-workbench__body"><SectionAreaNavigation value={view} onChange={id => onSearch({ view: id })}><div className="section-workbench__main">{graphView ? <SectionGraphicWorkspace title={sectionViews.find(v => v.id === view)?.label ?? 'Разрез'}>{editor}{deleteAction}</SectionGraphicWorkspace> : editor}
+    </div></SectionAreaNavigation></div>
 
     {!graphView && <>{deleteAction}</>}
     {routeBlocker?.status === 'blocked' && <DiscardChangesDialog error={error} onStay={() => routeBlocker.reset()} onDiscard={() => routeBlocker.proceed()} onSave={editable ? () => save(true) : undefined} />}

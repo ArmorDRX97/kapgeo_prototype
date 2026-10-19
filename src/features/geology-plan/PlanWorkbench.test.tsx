@@ -12,6 +12,7 @@ describe('map workbench operation boundaries', () => {
   it('protects source geometry while allowing inspection and explicit well type edits',()=>{
     const p=initialMaps()[0]!,well=p.objects.find(o=>o.kind==='well')!
     render(<PlanWorkbench initial={p} persona={userPersonas[0]!} search={{selection:well.id}} onSearch={vi.fn()} onSaved={vi.fn()} onDeleted={vi.fn()} registry={null} registryOpen onRegistryToggle={vi.fn()} />)
+    expect(screen.getByLabelText('Привязка')).toHaveValue('collar')
     for(const name of ['Переместить объект','Добавить точку','Удалить точку','Переместить подпись','Удалить объект']) expect(screen.getByRole('button',{name})).toBeDisabled()
     expect(screen.getByRole('combobox',{name:'Тип скважины'})).toBeEnabled()
     fireEvent.click(screen.getByText(/Координаты точек/))
@@ -35,6 +36,28 @@ describe('map workbench operation boundaries', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить план' }))
     const saved = JSON.parse(localStorage.getItem(MAP_STORAGE_KEY)!).projects.find((d: { id: string }) => d.id === 'test')
     expect(saved.objects[0].parts[0].nodes.map((n: { x: number; y: number }) => [n.x, n.y])).toEqual([[60000, 94000], [60000, 94100]])
+  })
+  it('opens display settings from the profile-menu action and saves them locally', () => {
+    const p = emptyMap('display-test', 'Plan')
+    render(<PlanWorkbench initial={p} persona={userPersonas[0]!} search={{}} onSearch={vi.fn()} onSaved={vi.fn()} onDeleted={vi.fn()} registry={null} registryOpen onRegistryToggle={vi.fn()} />)
+    expect(screen.getByRole('region', { name: 'Условные обозначения плана' })).toBeInTheDocument()
+    fireEvent(window, new Event('kapgeo:open-plan-display'))
+    expect(screen.getByRole('heading', { name: 'Отображение плана' })).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Координатная сетка'))
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить отображение' }))
+    expect(screen.queryByRole('heading', { name: 'Отображение плана' })).not.toBeInTheDocument()
+    expect(JSON.parse(localStorage.getItem('kapgeo.map.display.display-test')!)).toMatchObject({ grid: false })
+    fireEvent(window, new Event('kapgeo:open-plan-display'))
+    expect(screen.getByRole('heading', { name: 'Отображение плана' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Координатная сетка')).not.toBeChecked()
+  })
+  it('explains the map object drawing flow in the help dialog', () => {
+    render(<PlanWorkbench initial={emptyMap('help-test', 'Plan')} persona={userPersonas[0]!} search={{}} onSearch={vi.fn()} onSaved={vi.fn()} onDeleted={vi.fn()} registry={null} registryOpen onRegistryToggle={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Как работать' }))
+    expect(screen.getByRole('heading', { name: 'Как работать с планом' })).toBeInTheDocument()
+    expect(screen.getByText('Создать объект')).toBeInTheDocument()
+    expect(screen.getByText(/Выберите слой и тип объекта в правой панели/)).toBeInTheDocument()
+    expect(screen.getByText(/Нажмите «Завершить ввод».*«Применить»/)).toBeInTheDocument()
   })
   it('permits personal visibility in read-only without writing the document', () => {
     const p = emptyMap('test', 'Plan')

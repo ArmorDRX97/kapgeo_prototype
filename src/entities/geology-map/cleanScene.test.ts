@@ -24,6 +24,8 @@ describe('cleanMapScene', () => {
     expect(wells).toHaveLength(180)
     expect(blocks).toHaveLength(5)
     expect(profiles).toHaveLength(9)
+    expect(profiles.every(profile => profile.parts[0]!.nodes.length === 7)).toBe(true)
+    expect(blocks.every(block => block.parts[0]!.nodes.length >= 12)).toBe(true)
     expect(scene.objects).toHaveLength(194)
     expect(scene.objects.some(object => object.kind === 'contour')).toBe(false)
     expect(scene.layers).toEqual([
@@ -45,9 +47,9 @@ describe('cleanMapScene', () => {
       for (const node of object.parts.flatMap(part => part.nodes)) {
         const anchor = node.anchor!
         const well = byId.get(anchor.wellId)!
-        const bottom = well.parts[0]!.nodes[1]!
-        expect(anchor.target).toBe('bottom')
-        expect({ x: node.x, y: node.y }).toEqual({ x: bottom.x, y: bottom.y })
+        const circle = well.parts[0]!.nodes[0]!
+        expect(anchor.target).toBe('collar')
+        expect({ x: node.x, y: node.y }).toEqual({ x: circle.x, y: circle.y })
       }
     }
     expect(new Set(blocks.map(block => JSON.stringify(block.parts[0]!.nodes.map(({ x, y }) => [x, y])))).size).toBeGreaterThan(1)
