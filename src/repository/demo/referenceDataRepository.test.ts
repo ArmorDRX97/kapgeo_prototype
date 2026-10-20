@@ -26,7 +26,7 @@ describe('ReferenceDataRepository', () => {
     const shown = await repository.get()
     expect(shown.version).toBe(stored.data.version)
     expect(shown.entries.map(item => item.id)).toEqual(stored.data.entries.map(item => item.id))
-    expect(shown.entries.find(item => item.id === entry.id)?.values).toEqual({ code: 'REF-1', name_ru: 'Типы месторождений · 1', name_kk: 'Жазба 1', name_en: 'Custom translated name' })
+    expect(shown.entries.find(item => item.id === entry.id)?.values).toEqual({ code: 'REF-1', name_ru: 'Пластовое', name_kk: 'Қабаттық', name_en: 'Custom translated name' })
     expect(shown.entries.find(item => item.dictionaryId === 'reff_device')?.values).toEqual(stored.data.entries.find(item => item.dictionaryId === 'reff_device')?.values)
     expect((await demoDatabase.get<DemoRecord<ReferenceWorkspace>>('records', key))?.data).toEqual(stored.data)
     await expect(repository.execute({ operation: 'created', dictionaryId: 'deposit_type', values: { ...names, code: 'ref-1' }, expectedVersion: shown.version }, admin)).rejects.toThrow()

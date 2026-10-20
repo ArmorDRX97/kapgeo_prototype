@@ -40,8 +40,8 @@ export function referenceSection(): GeologySection {
     },
     wellIds: referenceWellSources.slice(0, 7).map(well => well.id),
     sourceRevisions: Object.fromEntries(referenceWellSources.slice(0, 7).map(well => [well.id, well.revision])),
-    metadata: { geoBlock: 'ГБ-01', techBlock: 'ТБ-01', mapProfileGroup: 'north-demo', mapProfileOrder: 1, depositBody: 'Северный участок', createdOn: '2026-10-13', compiledBy: 'Демонстрационный геолог', checkedBy: '' },
-    description: 'Сложное строение северного участка: разветвлённые проницаемые пласты, рудные линзы, выклинивания, внутренние исключения и границы окисления. Учебная реконструкция визуальных примеров.',
+    metadata: { geoBlock: 'ГБ-01', techBlock: 'ТБ-01', mapProfileGroup: 'north-demo', mapProfileOrder: 1, depositBody: 'Северный участок', createdOn: '2026-10-13', compiledBy: 'А. Садыкова', checkedBy: '' },
+    description: 'Сложное строение северного участка: разветвлённые проницаемые пласты, рудные линзы, выклинивания, внутренние исключения и границы окисления.',
     columnSettings: { all: {
       width: 8, offset: 0, lithology: true, intervals: true, curves: true, curveMin: 0, curveMax: 160,
       tracks: [{ id: 'ref-lith', type: 'lithology', width: 8 }, { id: 'ref-interval', type: 'intervals', width: 3 }, { id: 'ref-rs', type: 'curve', curveId: 'rs', width: 26 }, { id: 'ref-gr', type: 'curve', curveId: 'gr', width: 28 }],

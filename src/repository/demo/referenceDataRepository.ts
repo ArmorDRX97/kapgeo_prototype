@@ -6,6 +6,10 @@ import { hasPermission } from '../../shared/auth/permissions'
 import { demoDatabase, type DemoRecord } from './demoDatabase'
 
 const key = 'reference-data:standalone-workspace'
+const initialNames: Record<string, readonly (readonly [string, string, string])[]> = {
+  deposit_type: [['Пластовое', 'Қабаттық', 'Stratiform'], ['Гидротермальное', 'Гидротермалды', 'Hydrothermal'], ['Осадочное', 'Шөгінді', 'Sedimentary']],
+  reff_colour: [['Серый', 'Сұр', 'Gray'], ['Жёлтый', 'Сары', 'Yellow'], ['Бурый', 'Қоңыр', 'Brown']],
+}
 export type ReferenceCommand = {
   operation: ReferenceChange['operation']
   dictionaryId: string
@@ -34,6 +38,8 @@ function seed(): ReferenceWorkspace {
       if (typeof value === 'string' && field.maxLength) value = value.slice(0, field.maxLength)
       return [field.key, value]
     }))
+    const names = initialNames[definition.id]?.[index - 1]
+    if (names) { values.name_ru = names[0]; values.name_kk = names[1]; values.name_en = names[2] }
     if (definition.id === 'reff_grain_fraction') { values.size_from_mm = index / 10; values.size_to_mm = index }
     const prefix = definition.id === 'reff_device' ? 'REF-DEVICE' : definition.id === 'device_type' ? 'REF-DEVICE-TYPE' : definition.id === 'deposit_type' ? 'REF-DEPOSIT' : `DEMO-${definition.id}`
     return { dictionaryId: definition.id, id: `${prefix}-${index}`, values, active, version: 1 }
@@ -68,7 +74,8 @@ function currentLabels(input: ReferenceWorkspace): ReferenceWorkspace {
       else if (field.type === 'textarea') legacy = `Вымышленное описание записи ${index}. Не используется в других модулях.`
       else legacy = `Демо ${index}`
       if (field.maxLength) legacy = legacy.slice(0, field.maxLength)
-      if (entry.values[field.key] === legacy) entry.values[field.key] = original.values[field.key]!
+      const generic = field.key === 'name_ru' ? `${definition.label} · ${index}` : field.key === 'name_kk' ? `Жазба ${index}` : field.key === 'name_en' ? `Entry ${index}` : undefined
+      if (entry.values[field.key] === legacy || initialNames[definition.id] && entry.values[field.key] === generic) entry.values[field.key] = original.values[field.key]!
     }
   }
   workspace.entries.forEach(normalizeEntry)

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { userPersonas } from '../../entities/session/model/personas'
@@ -20,16 +20,16 @@ describe('ReferenceDataPage workbench', () => {
   beforeEach(async () => { state.search = {}; state.reader = false; state.navigate.mockReset().mockImplementation((location: { search: typeof state.search }) => { state.search = location.search }); await demoDatabase.reset() })
   afterEach(async () => { cleanup(); await demoDatabase.reset() })
 
-  it('keeps the empty inspector and filters the card list using three keyboard-accessible tabs', async () => {
+  it('keeps the empty editor and filters the compact catalog using keyboard-accessible tabs', async () => {
     mount()
     expect(await screen.findByText('Выберите справочник')).toBeInTheDocument()
     expect(screen.getAllByRole('tab')).toHaveLength(3)
-    fireEvent.click(screen.getByRole('tab', { name: /Reff справочники/ }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Reff' }))
     expect(screen.queryByRole('button', { name: /Типы месторождений deposit_type/ })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Справочник цветов reff_colour/ })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Поиск справочника'), { target: { value: 'reff_quantity' } })
     fireEvent.click(screen.getByRole('button', { name: /reff_quantity/ }))
-    expect(state.navigate).toHaveBeenCalledWith({ to: '/admin/references', search: { dictionary: 'reff_quantity' } })
+    expect(state.navigate).toHaveBeenCalledWith({ to: '/admin/references', search: { dictionary: 'reff_quantity' }, resetScroll: false })
   })
 
   it('edits ordinary values inline, cancels drafts, saves and displays history without an editor modal', async () => {
@@ -47,8 +47,7 @@ describe('ReferenceDataPage workbench', () => {
     fireEvent.click(screen.getByRole('button', { name: 'История' }))
     expect(screen.getByRole('heading', { name: 'История изменений' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Закрыть историю' })).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.queryByRole('button', { name: 'Экспорт' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Запись' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Экспорт' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Сохранить' })).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Запись справочника' })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть историю' }))
@@ -85,7 +84,68 @@ describe('ReferenceDataPage workbench', () => {
     mount()
     await waitFor(() => expect(screen.getByLabelText(/Код системы координат/)).toBeDisabled())
     expect(screen.queryByRole('button', { name: 'Сохранить' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Удалить' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Удалить запись' })).not.toBeInTheDocument()
     expect(screen.getByText('Только просмотр')).toBeInTheDocument()
+  })
+
+  it('filters visible records by status and search, then opens a record without a select', async () => {
+    state.search = { dictionary: 'deposit_type' }
+    mount()
+    const list = await screen.findByRole('region', { name: 'Записи справочника' })
+    expect(within(list).getAllByRole('button')).toHaveLength(3)
+    expect(screen.queryByRole('combobox', { name: 'Запись справочника' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('radio', { name: 'Неактивные' }))
+    expect(within(list).getAllByRole('button')).toHaveLength(1)
+    fireEvent.click(within(list).getByRole('button', { name: /Осадочное/ }))
+    expect(state.navigate).toHaveBeenLastCalledWith({ to: '/admin/references', search: { dictionary: 'deposit_type', entry: 'REF-DEPOSIT-3' }, resetScroll: false })
+    expect(screen.getByLabelText(/Наименование на русском/)).toHaveValue('Осадочное')
+    fireEvent.change(screen.getByLabelText('Поиск записи'), { target: { value: 'нет такого значения' } })
+    expect(screen.getByText('Записи не найдены')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Наименование на русском/)).toHaveValue('Осадочное')
+  })
+
+  it('saves the active switch and clears the dirty state when a change is reverted', async () => {
+    state.search = { dictionary: 'deposit_type' }
+    mount()
+    const toggle = await screen.findByRole('switch', { name: 'Активная запись' })
+    expect(toggle).toBeChecked()
+    fireEvent.click(toggle)
+    expect(screen.getByText('Есть несохранённые изменения')).toBeInTheDocument()
+    fireEvent.click(toggle)
+    expect(screen.queryByText('Есть несохранённые изменения')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled()
+    fireEvent.click(toggle)
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+    await screen.findByText('Изменение выполнено. Данные сохранены.')
+    expect((await referenceDataRepository.get()).entries.find(entry => entry.id === 'REF-DEPOSIT-1')?.active).toBe(false)
+  })
+
+  it('keeps translations while switching languages and reveals a hidden invalid field on save', async () => {
+    state.search = { dictionary: 'deposit_type' }
+    mount()
+    await screen.findByLabelText(/Наименование на русском/)
+    fireEvent.click(screen.getByRole('radio', { name: 'English' }))
+    const english = screen.getByLabelText(/Name in English/)
+    fireEvent.change(english, { target: { value: '' } })
+    fireEvent.click(screen.getByRole('radio', { name: 'Русский' }))
+    expect(english).not.toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+    expect(screen.getByRole('radio', { name: 'English' })).toBeChecked()
+    expect(english).toBeVisible()
+    expect(screen.getByText('Заполните обязательное поле.')).toBeInTheDocument()
+    expect((await referenceDataRepository.get()).changes).toHaveLength(0)
+  })
+
+  it('keeps the current record and draft when discarding is declined', async () => {
+    state.search = { dictionary: 'deposit_type' }
+    mount()
+    const field = await screen.findByLabelText(/Наименование на русском/)
+    fireEvent.change(field, { target: { value: 'Несохранённый вариант' } })
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    fireEvent.click(within(screen.getByRole('region', { name: 'Записи справочника' })).getByRole('button', { name: /Гидротермальное/ }))
+    expect(confirm).toHaveBeenCalledOnce()
+    expect(state.navigate).not.toHaveBeenCalled()
+    expect(field).toHaveValue('Несохранённый вариант')
+    confirm.mockRestore()
   })
 })

@@ -20,7 +20,7 @@ function mount() {
   return client
 }
 
-describe('Profile demo reset', () => {
+describe('Profile data reset', () => {
   beforeEach(() => { vi.clearAllMocks() })
   afterEach(cleanup)
 
@@ -28,7 +28,7 @@ describe('Profile demo reset', () => {
     let finish!: () => void
     mocks.reset.mockImplementation(() => new Promise<void>((resolve) => { finish = resolve }))
     const client = mount()
-    const reset = screen.getByRole('button', { name: 'Сбросить демо-данные' })
+    const reset = screen.getByRole('button', { name: 'Сбросить данные' })
     expect(reset.closest('section')).toBe(document.querySelector('.page-stack')?.lastElementChild)
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
     fireEvent.click(reset)
@@ -44,12 +44,12 @@ describe('Profile demo reset', () => {
   it('keeps the session and cache when reset fails and allows retry', async () => {
     mocks.reset.mockRejectedValueOnce(new Error('Storage unavailable')).mockResolvedValueOnce(undefined)
     const client = mount()
-    fireEvent.click(screen.getByRole('button', { name: 'Сбросить демо-данные' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сбросить данные' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось сбросить данные')
     expect(mocks.signOut).not.toHaveBeenCalled()
     expect(mocks.navigate).not.toHaveBeenCalled()
     expect(client.getQueryData(['cached-demo-record'])).toEqual({ value: 'edited' })
-    fireEvent.click(screen.getByRole('button', { name: 'Сбросить демо-данные' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сбросить данные' }))
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ to: '/auth/sign-in', replace: true }))
   })
 })

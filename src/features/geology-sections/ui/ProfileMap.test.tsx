@@ -61,7 +61,7 @@ describe('profile map gestures', () => {
   it('shows all source wells on the section map, including wells outside the current section', () => {
     render(<ProfileMap section={initialSections()[0]!} disabled onChange={vi.fn()} onPending={vi.fn()} />)
     expect(screen.getByRole('button', { name: 'ГС-107: сведения' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Демонстрационный контур геоблока' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Контур геоблока' })).toBeInTheDocument()
   })
   it('renders the current section as two disconnected parallel segments, with independent movement', () => {
     const section = referenceSection(), change = vi.fn()
@@ -88,11 +88,11 @@ describe('profile map gestures', () => {
     expect(available.querySelector('option[value="GTR-W5"]')).toBeNull()
     expect(screen.getByLabelText('Скважины сегмента').textContent).toContain('ГС-101')
   })
-  it('finds the demo geological or technological block and shows its section trace', () => {
+  it('finds the geological or technological block and shows its section trace', () => {
     const section = referenceSection()
     render(<ProfileMap section={section} documents={[section]} disabled onChange={vi.fn()} onPending={vi.fn()} />)
     fireEvent.change(screen.getByLabelText('Найти блок'), { target: { value: 'ГБ-01' } })
-    expect(screen.getByRole('status')).toHaveTextContent('Блок ГБ-01: показана трасса разреза «Северный · профиль 01». Контур на карте демонстрационный.')
+    expect(screen.getByRole('status')).toHaveTextContent('Блок ГБ-01: показана трасса разреза «Северный · профиль 01».')
   })
   it('keeps the selected segment panel focused on well names and collapses edit actions', () => {
     render(<ProfileMap section={{...referenceSection(),mapGeometry:undefined}} disabled={false} onChange={vi.fn()} onPending={vi.fn()} />)

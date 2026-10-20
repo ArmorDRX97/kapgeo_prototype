@@ -75,7 +75,7 @@ export function calculateGamma(well: InterpretationWell, doc: AlphaDocument) {
   if (coverage <= 0) throw new Error('В выбранном интервале нет пригодных данных ГК.')
   const computed = gammaIntervals(well, doc)
   if (p.stage === 'final' && computed.rows.some(r => !electroCoverage(doc.electro.rows, r.from, r.to))) throw new Error('Для окончательной ГК нужна литология без пропусков на рудных интервалах. Уточните ЭК или используйте предварительный режим.')
-  return result(well, doc, 'gamma', computed.rows, `${computed.converged ? 'Контакты стабилизировались.' : 'Достигнут предел уточнений; проверьте контакты вручную.'} Покрытие ГК ${Math.min(100, coverage / (p.to - p.from) * 100).toFixed(1)}%. Локальный ${p.algorithm === 'iterative' ? 'итерационный' : 'взвешенный'} профиль; до ${p.profile.iterations} итераций. Поправки и таблицы — явно заданные коэффициенты прототипа, не промышленная МВИ.`)
+  return result(well, doc, 'gamma', computed.rows, `${computed.converged ? 'Контакты стабилизировались.' : 'Достигнут предел уточнений; проверьте контакты вручную.'} Покрытие ГК ${Math.min(100, coverage / (p.to - p.from) * 100).toFixed(1)}%. Применён ${p.algorithm === 'iterative' ? 'итерационный' : 'взвешенный'} профиль; до ${p.profile.iterations} итераций. Коэффициенты поправок и таблиц указаны в параметрах расчёта.`)
 }
 export function calculateCurrent(well: InterpretationWell, doc: AlphaDocument) {
   const p = doc.parameters.current; sourceRecord(well, doc, p.recordId, 'TK'); assertDepth(p.from, p.to, well.depth)

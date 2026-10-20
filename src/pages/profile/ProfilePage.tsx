@@ -59,8 +59,8 @@ export function ProfilePage() {
         <div className="profile-persona-list" aria-label="Доступные роли">{userPersonas.map((item) => <button key={item.id} type="button" className={item.id === persona?.id ? 'is-active' : ''} onClick={() => switchPersona(item.id)}><span className="avatar avatar--sm">{item.initials}</span><span><strong>{item.position}</strong><small>{item.name} · {item.scope}</small></span>{item.id === persona?.id ? <Check size={17} /> : <UsersRound size={16} />}</button>)}</div>
       </Panel>
     </div>
-    <Panel className="profile-reset" title="Сброс демо-данных" description="Вернуть исходные данные прототипа. Все внесённые изменения будут удалены. После сброса откроется страница авторизации.">
-      <Button variant="danger" disabled={resetting} onClick={() => void reset()}><RotateCcw size={16} />{resetting ? 'Сбрасываем…' : 'Сбросить демо-данные'}</Button>
+    <Panel className="profile-reset" title="Сбросить данные" description="Вернуть исходное состояние системы. Все внесённые изменения будут удалены. После сброса откроется страница авторизации.">
+      <Button variant="danger" disabled={resetting} onClick={() => void reset()}><RotateCcw size={16} />{resetting ? 'Сбрасываем…' : 'Сбросить данные'}</Button>
       {resetError && <p className="form-alert form-alert--error" role="alert">{resetError}</p>}
     </Panel>
   </div>

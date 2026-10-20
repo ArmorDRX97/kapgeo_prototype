@@ -277,7 +277,7 @@ function LogInspector({ run, measurements, onMeasurementsChange, onSaveMeasureme
     <div className="bgd-log-measurements-toolbar"><span>{measurements.length} точек измерения</span>{canEdit && <div><Button size="sm" variant="secondary" disabled={pending} onClick={addPoint}><Plus size={14} /> Добавить строку</Button><Button size="sm" variant="secondary" disabled={pending || !dirty} onClick={onDiscardMeasurements}>Отменить</Button><Button size="sm" disabled={pending || !dirty} onClick={onSaveMeasurements}><Save size={14} /> Сохранить значения</Button></div>}</div>
     <div className="bgd-log-measurements-scroll">
       <table className="bgd-log-measurements" aria-label={`Измерения каротажа ${run.name}`}>
-        <caption>Демонстрационные значения измерений</caption>
+        <caption>Значения измерений</caption>
         <thead><tr><th scope="col">Глубина, м</th>{run.curves.map((curve) => <th scope="col" key={curve.id}>{curve.code}<small>{curve.unit}</small></th>)}{canEdit && <th scope="col">Действие</th>}</tr></thead>
         <tbody>{measurements.length ? measurements.map((point, index) => <tr key={point.id}>
           <th scope="row" className="is-numeric">{canEdit ? <input aria-label={`Глубина, м, строка ${index + 1}`} type="number" step="any" disabled={pending} value={point.depth} onChange={(event) => { if (event.target.value !== '' && Number.isFinite(Number(event.target.value))) updatePoint(point.id, { depth: Number(event.target.value) }) }} /> : formatNumber(point.depth)}</th>

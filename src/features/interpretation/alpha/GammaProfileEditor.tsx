@@ -21,7 +21,7 @@ export function GammaProfileEditor({ well, doc, onChange }: { well: Interpretati
       <div className="alpha-pair">{number('casingThickness', 'Толщина обсадки, мм')}{number('casingDensity', 'Плотность обсадки, г/см³')}</div>
       {number('casingAttenuation', 'Коэффициент поглощения обсадки, см²/г')}
       <div className="alpha-pair">{number('caliperFrom', 'Первичная КМ: от, м')}{number('caliperTo', 'Первичная КМ: до, м')}</div>
-      <p>{corrections}</p><p>Локальная модель: поправка поглощения = exp(μ × массовый слой). Нулевой μ оставляет поправку нейтральной; нормативные коэффициенты в прототип не подставлены.</p>
+      <p>{corrections}</p><p>Поправка поглощения рассчитывается как exp(μ × массовый слой). При нулевом μ поправка не применяется. Нормативные коэффициенты не заданы.</p>
     </Group>
     <Group title="Зависимости Крр">
       {number('krrImpermeable', 'Крр непроницаемых пород')}
