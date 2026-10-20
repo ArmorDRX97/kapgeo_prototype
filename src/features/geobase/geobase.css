@@ -256,7 +256,7 @@
 .bgd-log-table .is-numeric, .bgd-log-measurements .is-numeric { text-align: right; font-variant-numeric: tabular-nums; }
 .bgd-log-main-flag { display: inline-flex; align-items: center; gap: 4px; color: var(--color-warning-700); }
 .bgd-log-table-empty { margin: var(--space-4); }
-.bgd-well-construction__toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3); color:var(--text-secondary); font-size:var(--font-size-sm); }
+.bgd-well-construction__toolbar { display:flex; flex-wrap:wrap; gap:var(--space-3); justify-content:space-between; align-items:center; margin-bottom:var(--space-3); color:var(--text-secondary); font-size:var(--font-size-sm); }
 .bgd-well-construction__layout { display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:var(--space-4); align-items:start; }
 .bgd-well-construction__table-wrap { overflow:auto; border:1px solid var(--border-default); border-radius:var(--radius-md); }
 .bgd-well-construction__table { width:100%; min-width:900px; border-collapse:collapse; font-size:var(--font-size-sm); }
@@ -269,7 +269,11 @@
 .bgd-well-construction__editor label { display:grid; gap:var(--space-1); color:var(--text-secondary); font-size:var(--font-size-xs); }
 .bgd-well-construction__editor input,.bgd-well-construction__editor select { width:100%; min-width:0; min-height:36px; padding:var(--space-2); border:1px solid var(--border-default); border-radius:var(--radius-sm); background:var(--surface-canvas); color:var(--text-primary); }
 .bgd-well-construction__pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-2); }
-.bgd-well-construction__toolbar > div { display:flex; gap:var(--space-2); }
+.bgd-well-construction__toolbar > div { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); }
+.bgd-construction-import.button { background:var(--color-brand-50); border-color:var(--color-brand-200); color:var(--color-brand-700); }
+.bgd-construction-import.button:hover:not(:disabled) { background:var(--color-brand-100); border-color:var(--color-brand-300); }
+.bgd-construction-import > svg { color:var(--color-green-700); }
+.bgd-construction-import__format { padding:2px 5px; border-radius:4px; background:var(--surface-panel); border:1px solid var(--border-default); color:var(--text-secondary); font-size:10px; line-height:1.2; font-weight:500; }
 .bgd-well-construction__scheme svg { display:block; width:100%; max-width:900px; height:380px; }
 .bgd-well-construction__table tr:focus-visible { outline:2px solid var(--focus-ring); outline-offset:-2px; }
 @media (max-width:1000px) { .bgd-well-construction__layout { grid-template-columns:1fr; } }
