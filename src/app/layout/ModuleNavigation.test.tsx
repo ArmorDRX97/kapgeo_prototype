@@ -23,13 +23,14 @@ describe('module dropdown navigation', () => {
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { callback(0); return 1 }); vi.stubGlobal('cancelAnimationFrame', vi.fn())
   })
   afterEach(() => { cleanup(); vi.unstubAllGlobals() })
-  it('shows the requested geology structure and keeps four placeholders on the current page', () => {
+  it('shows the requested geology structure and keeps three placeholders on the current page', () => {
     render(<ModuleNavigation persona={persona} />)
     const trigger = screen.getByRole('button', { name: 'Геология' })
     expect(trigger).toHaveAttribute('aria-expanded', 'false'); fireEvent.click(trigger)
     const menu = screen.getByRole('menu', { name: 'Подмодули геологии' }), items = within(menu).getAllByRole('menuitem')
     expect(items.map(item => item.textContent)).toEqual(['Интерпретация', 'Интерпретация по керну и литологии', 'Планшет ГИС', 'Паспорт скважины', 'Интерактивный план месторождения', 'Разрезы и развертки', 'Подсчёт запасов'])
-    expect(items.filter(item => item.tagName === 'A')).toHaveLength(3)
+    expect(items.filter(item => item.tagName === 'A')).toHaveLength(4)
+    expect(within(menu).getByRole('menuitem', { name: 'Паспорт скважины' })).toHaveAttribute('href', '/geology/passports')
     expect(items[0]).toHaveAttribute('aria-current', 'page')
     for (const item of items.filter(item => item.tagName === 'BUTTON')) {
       fireEvent.click(item); expect(item).not.toHaveAttribute('href'); expect(screen.getByRole('status')).toHaveTextContent(`Раздел «${item.textContent}» пока не подключён.`)
@@ -71,6 +72,16 @@ describe('module dropdown navigation', () => {
     state.location = { pathname: '/analytics', search: {} }; view.rerender(<ModuleNavigation persona={persona} />)
     fireEvent.click(screen.getByRole('button', { name: 'Геология' }))
     expect(screen.getByRole('menuitem', { name: 'Интерактивный план месторождения' })).toHaveAttribute('href', '/geology/plans/MAP-01?selection=well-49')
+  })
+  it('keeps the passport well selection on return from another module', () => {
+    state.location = { pathname: '/geology/passports', search: { well: 'PS-301' } }
+    const view = render(<ModuleNavigation persona={persona} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Геология' }))
+    expect(screen.getByRole('menuitem', { name: 'Паспорт скважины' })).toHaveAttribute('aria-current', 'page')
+    fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Паспорт скважины' }), { key: 'Escape' })
+    state.location = { pathname: '/analytics', search: {} }; view.rerender(<ModuleNavigation persona={persona} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Геология' }))
+    expect(screen.getByRole('menuitem', { name: 'Паспорт скважины' })).toHaveAttribute('href', '/geology/passports?well=PS-301')
   })
   it('shows all geotechnology placeholders to the geologist without granting technology access', () => {
     expect(hasPermission(persona, 'technology.view')).toBe(false)

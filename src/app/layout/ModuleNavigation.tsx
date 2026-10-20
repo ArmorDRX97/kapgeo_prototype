@@ -42,7 +42,7 @@ export function ModuleNavigation({ persona }: { persona: UserPersona | null }) {
   const [open, setOpen] = useState<MenuId | null>(null), [position, setPosition] = useState({ left: 12, top: 68, width: 384 }), [notice, setNotice] = useState('Выберите раздел'), [pressed, setPressed] = useState('')
   const menuRef = useRef<HTMLDivElement>(null), triggers = useRef<Partial<Record<MenuId, HTMLButtonElement>>>({}), openFocus = useRef<'current' | 'last'>('current'), menuId = useId()
   const isGeology = location.pathname.startsWith('/geology') && !location.pathname.startsWith('/geology/bgd')
-  const current = location.pathname.startsWith('/geology/interpretation') ? 'interpretation' : location.pathname.startsWith('/geology/sections') ? 'sections' : location.pathname.startsWith('/geology/plans') ? 'map' : ''
+  const current = location.pathname.startsWith('/geology/interpretation') ? 'interpretation' : location.pathname.startsWith('/geology/sections') ? 'sections' : location.pathname.startsWith('/geology/plans') ? 'map' : location.pathname.startsWith('/geology/passports') ? 'passport' : ''
   // This menu contains presentation-only buttons; it grants no module access.
   const shown = open && (open === 'technology' ? !!persona : hasPermission(persona, 'geology.view'))
   const place = useCallback((id: MenuId) => {
@@ -95,6 +95,7 @@ export function ModuleNavigation({ persona }: { persona: UserPersona | null }) {
           if (open === 'geology' && item.id === 'sections') return context.section ? <Link key={item.id} {...props} to="/geology/sections/$sectionId" params={{ sectionId: context.section.id }} search={context.section.search}>{content}</Link> : <Link key={item.id} {...props} to="/geology/sections">{content}</Link>
           if (open === 'geology' && item.id === 'interpretation') return context.alpha ? <Link key={item.id} {...props} to="/geology/interpretation/$method" params={{ method: context.alpha.method }} search={context.alpha.search}>{content}</Link> : <Link key={item.id} {...props} to="/geology/interpretation" search={context.legacy}>{content}</Link>
           if (open === 'geology' && item.id === 'map') return context.plan ? <Link key={item.id} {...props} to="/geology/plans/$projectId" params={{ projectId: context.plan.id }} search={context.plan.search}>{content}</Link> : <Link key={item.id} {...props} to="/geology/plans">{content}</Link>
+          if (open === 'geology' && item.id === 'passport') return <Link key={item.id} {...props} to="/geology/passports" search={context.passport}>{content}</Link>
           return <button key={item.id} role="menuitem" type="button" className={props.className} onClick={() => selectStub(item.id, item.label)}>{content}</button>
         })}
       </div>

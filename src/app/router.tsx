@@ -14,6 +14,8 @@ import { AlphaInterpretationPage } from '../pages/geology/AlphaInterpretationPag
 import { validateAlphaSearch } from '../features/interpretation/alpha/search'
 import { SectionsPage } from '../pages/geology/SectionsPage'
 import { PlansPage } from '../pages/geology/PlansPage'
+import { WellPassportsPage } from '../pages/geology/WellPassportsPage'
+import { validatePassportSearch } from '../features/well-passport/model'
 import { validatePlanSearch } from '../features/geology-plan/search'
 import { validateSectionSearch } from '../features/geology-sections/model/search'
 import { validateInterpretationSearch } from '../features/interpretation/model/search'
@@ -61,6 +63,7 @@ const alphaInterpretationRoute = createRoute({ getParentRoute: () => rootRoute, 
 const sectionsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/sections', component: SectionsPage })
 const sectionRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/sections/$sectionId', validateSearch: validateSectionSearch, component: SectionsPage })
 const plansRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/plans', component: PlansPage })
+const passportsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/passports', validateSearch: validatePassportSearch, component: WellPassportsPage })
 const planRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/plans/$projectId', validateSearch: validatePlanSearch, component: PlansPage })
 const geoBaseRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd', component: GeoBasePage })
 const geoBaseDepositRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId', validateSearch: validateDepositSectionSearch, beforeLoad: ({ params, search }) => {
@@ -87,6 +90,7 @@ const routeTree = rootRoute.addChildren([
   sectionsRoute,
   sectionRoute,
   plansRoute,
+  passportsRoute,
   planRoute,
   geoBaseRoute,
   geoBaseDepositRoute,
