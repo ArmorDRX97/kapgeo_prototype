@@ -94,16 +94,21 @@ export function GeologyNavigator({ mobileOpen, onClose, collapsed = false, onTog
       {collapsed && <span className="geology-navigator__rail">Скважины</span>}
       <div id="bgd-well-context" className="geology-navigator__body">
       <section className="well-navigator">
-        <header><div><strong>Скважины</strong><span>{depositWells.length}</span></div>{currentDeposit && hasPermission(persona, 'geology.bgd.well.create') && <button type="button" aria-label="Добавить скважину" onClick={() => void navigate({ to: '/geology/bgd/$depositId/wells/new', params: { depositId: currentDeposit.id } })}><Plus size={18} aria-hidden="true" />Добавить</button>}</header>
+        <header>
+          <div className="well-navigator__title"><strong>Скважины</strong><span className="well-navigator__count" aria-label="Количество скважин">{depositWells.length}</span></div>
+          <div className="well-navigator__actions">
+            {currentDeposit && hasPermission(persona, 'geology.bgd.well.create') && <button className="well-navigator__add" type="button" aria-label="Добавить скважину" onClick={() => void navigate({ to: '/geology/bgd/$depositId/wells/new', params: { depositId: currentDeposit.id } })}><Plus size={18} aria-hidden="true" />Добавить</button>}
+            <button ref={filterTrigger} type="button" className="well-navigator__filter-button" aria-expanded={filtersOpen} aria-haspopup="dialog" aria-controls={filtersOpen ? 'well-navigator-filters' : undefined} data-active={statusFilter !== 'all'} onClick={() => setFiltersOpen((open) => !open)}><SlidersHorizontal size={17} aria-hidden="true" />Фильтр{statusFilter !== 'all' && <span aria-hidden="true">1</span>}</button>
+          </div>
+        </header>
         <div className="well-navigator__search-row">
           <label className="well-navigator__search"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по скважинам" aria-label="Поиск по скважинам" /></label>
-          <button ref={filterTrigger} type="button" className="well-navigator__filter-button" aria-expanded={filtersOpen} aria-haspopup="dialog" aria-controls={filtersOpen ? 'well-navigator-filters' : undefined} data-active={statusFilter !== 'all'} onClick={() => setFiltersOpen((open) => !open)}><SlidersHorizontal size={17} aria-hidden="true" />Фильтр{statusFilter !== 'all' && <span aria-hidden="true">1</span>}</button>
         </div>
         {filtersOpen && !collapsed && <FilterPopover id="well-navigator-filters" title="Фильтры скважин" anchor={filterTrigger} onClose={closeFilters} footer={<><p>Найдено {visibleWells.length} из {depositWells.length}. Фильтры применяются сразу.</p><Button variant="secondary" onClick={() => setStatusFilter('all')}>Сбросить фильтры</Button></>}><label>Статус скважины<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as WellStatusFilter)}><option value="all">Все статусы</option><option value="Работает">Работает</option><option value="Требует внимания">Требует внимания</option><option value="Отключена">Отключена</option><option value="На проверке">На проверке</option></select></label></FilterPopover>}
         <div className="well-navigator__list">
           {wellsQuery.isLoading && <span className="well-navigator__empty">Загружаем скважины…</span>}
           {!wellsQuery.isLoading && visibleWells.map((well) => <div key={well.id} className={`well-navigator__item${selectedWellId === well.id ? ' is-active' : ''}`}>
-            <button type="button" className="well-navigator__open" aria-current={selectedWellId === well.id ? 'page' : undefined} onClick={() => openWell(well.id)}><span><strong>WELL-{well.code.replace(/^WELL-/, '')}</strong></span></button>
+            <button type="button" className="well-navigator__open" aria-current={selectedWellId === well.id ? 'page' : undefined} onClick={() => openWell(well.id)}><span><strong>WELL-{well.code.replace(/^WELL-/, '')}</strong></span>{selectedWellId === well.id && <span className="well-navigator__selected" aria-hidden="true" />}</button>
           </div>)}
           {!wellsQuery.isLoading && !visibleWells.length && <span className="well-navigator__empty">Скважины по выбранным условиям не найдены.</span>}
         </div>

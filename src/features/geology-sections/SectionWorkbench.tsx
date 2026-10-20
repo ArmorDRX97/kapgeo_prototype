@@ -13,6 +13,7 @@ import { DiscardChangesDialog } from '../../shared/ui/DiscardChangesDialog'
 import { validateSectionSearch, type SectionSearch } from './model/search'
 import { useSharedAuxiliary } from './model/useSharedAuxiliary'
 import { staleAuxiliary } from '../../entities/geology-section/lib/sharedAuxiliary'
+import { SectionToolButton } from './ui/SectionToolButton'
 import { SectionSetup } from './ui/SectionSetup'
 import { ProfileMap } from './ui/ProfileMap'
 import { CorrelationEditor } from './ui/CorrelationEditor'
@@ -57,7 +58,7 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
     a.href = url; a.download = `${section.id}-разрез.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
   const graphView = view !== 'overview'
-  const documentActions = <div className="section-actions"><Button variant="quiet" size="sm" disabled={pendingGeometry} aria-label="Скачать копию разреза JSON" title="Скачать копию разреза JSON" onClick={backup}><Download size={17} /></Button><Button variant="quiet" size="sm" aria-label="Отменить действие разреза" disabled={!editable || pendingGeometry || !past.length} onClick={undo}><Undo2 size={18} /></Button><Button variant="quiet" size="sm" aria-label="Повторить действие разреза" disabled={!editable || pendingGeometry || !future.length} onClick={redo}><Redo2 size={18} /></Button><Button size="sm" disabled={!editable || !dirty} onClick={() => save()}><Save size={17} />Сохранить разрез</Button></div>
+  const documentActions = <div className="section-actions"><SectionToolButton variant="quiet" icon={Download} label="Скачать копию разреза JSON" disabled={pendingGeometry} onClick={backup} /><SectionToolButton variant="quiet" icon={Undo2} label="Отменить действие разреза" title="Отменить последнее изменение" disabled={!editable || pendingGeometry || !past.length} onClick={undo} /><SectionToolButton variant="quiet" icon={Redo2} label="Повторить действие разреза" title="Повторить отменённое изменение" disabled={!editable || pendingGeometry || !future.length} onClick={redo} /><Button size="sm" disabled={!editable || !dirty || pendingGeometry} title={pendingGeometry ? 'Сначала примените правки геометрии' : !dirty ? 'Все изменения сохранены' : 'Сохранить изменения разреза'} onClick={() => save()}><Save size={17} />Сохранить разрез</Button></div>
   const messages = <>{error && routeBlocker?.status !== 'blocked' && <p role="alert" className="section-error">{error}</p>}
     {stale.length > 0 && <p role="status" className="section-preview">Изменились общие вспомогательные опоры: {stale.length}. Сохранена прежняя геометрия. Откройте опоры соответствующего слоя и примените коррекцию.</p>}</>
   const deleteAction = editable && <Button variant="quiet" className="section-delete" disabled={dirty || pendingGeometry} onClick={() => {
@@ -65,18 +66,17 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
       try { sectionRepository.remove(saved.id, saved.revision, persona); onDeleted?.() } catch (problem) { setError(problem instanceof Error ? problem.message : 'Не удалось удалить разрез.') }
     }}><Trash2 size={15} />Удалить разрез</Button>
   const editor = view === 'overview' ? <SectionSetup {...props} onPending={setPendingGeometry} onMap={()=>onSearch({...search,view:'map'})} /> : view === 'map' ? <ProfileMap documents={documents} {...props} onPending={setPendingGeometry} /> : !graphicReady ? <PlotSurface><p role="alert" className="section-error">Для графической области исправьте профиль и диапазон высот во вкладке «Разрез». Черновик сохранён в текущей рабочей области.</p></PlotSurface> : view === 'drawing' ? <DrawingEditor {...props} selection={search.selection} onSelect={select} /> : <>
-        {view === 'technology' && <div className="section-actions" role="group" aria-label="Режим технологии">{(['layers', 'foundation'] as const).map((mode, i) => <Button key={mode} variant={(search.mode ?? 'layers') === mode ? 'primary' : 'secondary'} onClick={() => onSearch({ view, mode })}>{['Пропластки', 'Фундамент и разломы'][i]}</Button>)}</div>}
-        {view === 'ore' && <div className="section-actions" role="group" aria-label="Источник руды">{(['corrected', 'uncorrected'] as const).map((mode, i) => <Button key={mode} variant={(search.mode ?? 'corrected') === mode ? 'primary' : 'secondary'} onClick={() => onSearch({ view, mode })}>{['В технологической толще', 'Без поправок'][i]}</Button>)}</div>}
+        {view === 'technology' && <div className="section-actions section-mode-switch" role="group" aria-label="Режим технологии">{(['layers', 'foundation'] as const).map((mode, i) => <Button key={mode} variant={(search.mode ?? 'layers') === mode ? 'primary' : 'secondary'} onClick={() => onSearch({ view, mode })}>{['Пропластки', 'Фундамент и разломы'][i]}</Button>)}</div>}
+        {view === 'ore' && <div className="section-actions section-mode-switch" role="group" aria-label="Источник руды">{(['corrected', 'uncorrected'] as const).map((mode, i) => <Button key={mode} variant={(search.mode ?? 'corrected') === mode ? 'primary' : 'secondary'} onClick={() => onSearch({ view, mode })}>{['В технологической толще', 'Без поправок'][i]}</Button>)}</div>}
         {view === 'lithology' || view === 'oxidation' || view === 'technology' && search.mode === 'foundation' ? <GraphicEditor key={`${view}-${search.mode}`} {...props} onPending={setPendingGeometry} mode={view === 'technology' ? search.mode as 'foundation' : view} selection={search.selection} onSelect={select} /> : <CorrelationEditor onPending={setPendingGeometry} key={`${view}-${search.mode}`} {...props} layer={view === 'ore' ? search.mode === 'uncorrected' ? 'uncorrected' : 'ore' : view === 'offbalance' ? 'offbalance' : 'technology'} selection={search.selection} onSelect={select} />}
       </>
   return <div className={`section-workbench${graphView ? ' section-workbench--graph' : ''}`}>
-    <SectionDocumentHeader section={section} status={!editable ? 'readonly' : pendingGeometry ? 'pending' : dirty ? 'dirty' : 'saved'} actions={documentActions} message={notice} />
+    <SectionDocumentHeader section={section} status={!editable ? 'readonly' : pendingGeometry ? 'pending' : dirty ? 'dirty' : 'saved'} actions={documentActions} secondaryActions={deleteAction} message={notice} />
     {(error && routeBlocker?.status !== 'blocked' || stale.length > 0) && <div className="section-document-alerts">{messages}</div>}
 
-    <div className="section-workbench__body"><SectionAreaNavigation value={view} onChange={id => onSearch({ view: id })}><div className="section-workbench__main">{graphView ? <SectionGraphicWorkspace title={sectionViews.find(v => v.id === view)?.label ?? 'Разрез'}>{editor}{deleteAction}</SectionGraphicWorkspace> : editor}
+    <div className="section-workbench__body"><SectionAreaNavigation value={view} onChange={id => onSearch({ view: id })}><div className="section-workbench__main">{graphView ? <SectionGraphicWorkspace view={view} title={sectionViews.find(v => v.id === view)?.label ?? 'Разрез'}>{editor}</SectionGraphicWorkspace> : editor}
     </div></SectionAreaNavigation></div>
 
-    {!graphView && <>{deleteAction}</>}
     {routeBlocker?.status === 'blocked' && <DiscardChangesDialog error={error} onStay={() => routeBlocker.reset()} onDiscard={() => routeBlocker.proceed()} onSave={editable ? () => save(true) : undefined} />}
   </div>
 }

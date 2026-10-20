@@ -13,11 +13,11 @@ import { CorrelationEditor } from './CorrelationEditor'
 
 afterEach(() => { cleanup(); localStorage.clear(); vi.unstubAllGlobals() })
 describe('graph and tools composition', () => {
-  it('places camera controls on the right and the interactive plot in the central surface', () => {
+  it('keeps camera controls above the plot and display options in the inspector', () => {
     const { container } = render(<SectionGraphicWorkspace title="Разрез"><SectionCanvas section={initialSections()[0]!} /></SectionGraphicWorkspace>)
     const tools = screen.getByRole('complementary', { name: 'Инструменты разреза' })
     fireEvent.click(within(tools).getByRole('button', { name: 'Отображение' }))
-    expect(within(tools).getByRole('button', { name: 'Увеличить разрез' })).toBeTruthy()
+    expect(container.querySelector('.section-graph-camera')?.contains(screen.getByRole('button', { name: 'Увеличить разрез' }))).toBe(true)
     expect(within(tools).getByRole('checkbox', { name: 'Сетка' })).toBeTruthy()
     expect(within(tools).queryByLabelText('Графическая область, прокрутка разреза')).toBeNull()
     expect(container.querySelector('.section-graph-stage')?.contains(screen.getByLabelText('Графическая область, прокрутка разреза'))).toBe(true)
@@ -29,7 +29,7 @@ describe('graph and tools composition', () => {
     const mapTools = within(tools).getByRole('group', { name: 'Инструменты карты профиля' })
     const pan = within(mapTools).getByRole('button', { name: 'Переместить карту' })
     expect(pan).toHaveClass('section-icon-tool')
-    expect(pan).toHaveAttribute('title', 'Переместить карту')
+    expect(pan).not.toHaveAttribute('title')
     expect(pan.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
     expect(within(mapTools).getByRole('button', { name: 'Независимый сегмент' })).toBeInTheDocument()
     expect(container.querySelector('.section-graph-stage')?.contains(map)).toBe(true)

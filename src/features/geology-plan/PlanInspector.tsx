@@ -1,7 +1,24 @@
+import { useState } from 'react'
 import { LockKeyhole } from 'lucide-react'
 import { kindNames, type MapProject } from '../../entities/geology-map/model'
 
 export function MapLayerTree({ project, selected, layerId, onLayer, onSelect, onChange, disabled }: { project: MapProject; selected?: string; layerId: string; onLayer: (id: string) => void; onSelect: (id: string) => void; onChange: (p: MapProject) => void; disabled: boolean }) {
-  const render = (parentId: string | null, depth = 0): React.ReactNode => project.layers.filter(l => l.parentId === parentId).map(l => <div key={l.id} className="map-tree-group" style={{ '--tree-depth': depth } as React.CSSProperties}><div className={`map-layer-row${l.id === layerId ? ' is-selected' : ''}`}><input aria-label={`Видимость слоя ${l.name}`} type="checkbox" checked={l.visible} disabled={disabled} onChange={e => onChange({ ...project, layers: project.layers.map(n => n.id === l.id ? { ...n, visible: e.target.checked } : n) })} /><button type="button" onClick={() => onLayer(l.id)} title={l.name}>{l.name}</button><span title={l.locked ? 'Слой заблокирован' : 'Объектов'}>{l.locked ? <LockKeyhole size={13} aria-label="Слой заблокирован" /> : project.objects.filter(o => o.layerId === l.id).length}</span></div><details open={project.objects.some(o => o.layerId === l.id && o.id === selected)}><summary className="map-tree-count">Объекты · {project.objects.filter(o => o.layerId === l.id).length}</summary><div className="map-tree-objects">{project.objects.filter(o => o.layerId === l.id).map(o => <button key={o.id} type="button" className={o.id === selected ? 'is-selected' : ''} onClick={() => onSelect(o.id)} title={`${kindNames[o.kind]}: ${o.name}`}><span className="map-object-swatch" style={{ background: o.style.stroke }} />{o.name}</button>)}</div></details>{render(l.id, depth + 1)}</div>)
-  return <div className="map-tree">{render(null)}</div>
+  const [expanded, setExpanded] = useState<{ selection?: string; layers: Record<string, boolean> }>({ layers: {} })
+  const overrides = expanded.selection === selected ? expanded.layers : {}
+  const render = (parentId: string | null, depth = 0): React.ReactNode => project.layers.filter(layer => layer.parentId === parentId).map(layer => {
+    const objects = project.objects.filter(object => object.layerId === layer.id)
+    const open = overrides[layer.id] ?? objects.some(object => object.id === selected)
+    return <div key={layer.id} className="map-tree-group" style={{ '--tree-depth': depth } as React.CSSProperties}>
+      <div className={`map-layer-row${layer.id === layerId ? ' is-selected' : ''}`}>
+        <input aria-label={`Видимость слоя ${layer.name}`} type="checkbox" checked={layer.visible} disabled={disabled} onChange={event => onChange({ ...project, layers: project.layers.map(item => item.id === layer.id ? { ...item, visible: event.target.checked } : item) })} />
+        <button type="button" onClick={() => onLayer(layer.id)} aria-pressed={layer.id === layerId} title={layer.name}>{layer.name}</button>
+        <span title={`${objects.length} объектов`}>{objects.length}</span>{layer.locked && <LockKeyhole size={13} aria-label="Слой заблокирован" />}
+      </div>
+      <details open={open}>
+        <summary className="map-tree-count" onClick={event => { event.preventDefault(); setExpanded({ selection: selected, layers: { ...overrides, [layer.id]: !open } }) }}>Объекты · {objects.length}</summary>
+        <div className="map-tree-objects">{objects.map(object => <button key={object.id} type="button" className={object.id === selected ? 'is-selected' : ''} aria-pressed={object.id === selected} onClick={() => onSelect(object.id)} title={`${kindNames[object.kind]}: ${object.name}`}><span className="map-object-swatch" style={{ background: object.style.stroke }} /><span>{object.name}</span>{object.id === selected && <i aria-hidden="true" className="map-selection-dot" />}</button>)}{!objects.length && <p className="map-muted">В слое пока нет объектов.</p>}</div>
+      </details>{render(layer.id, depth + 1)}
+    </div>
+  })
+  return <div className="map-tree" aria-label="Слои и объекты плана">{render(null)}</div>
 }

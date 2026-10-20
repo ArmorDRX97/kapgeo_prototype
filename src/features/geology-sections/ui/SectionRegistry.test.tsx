@@ -32,15 +32,15 @@ describe('compact section registry', () => {
   it('collapses a registry group while preserving its count and chosen grouping',()=>{
     render(<Harness />)
     const summary=screen.getByText('Детальная разведка'),group=summary.closest('details')!
-    expect(group.open).toBe(false)
-    expect(within(group).getByText('100')).toBeTruthy()
-    expect(screen.queryAllByRole('link')).toHaveLength(0)
-    fireEvent.click(summary)
     expect(group.open).toBe(true)
+    expect(within(group).getByText('100')).toBeTruthy()
     expect(screen.getAllByRole('link')).toHaveLength(100)
     expect(group.querySelector('.section-registry-group__items a[aria-current="page"]')).toBeTruthy()
     fireEvent.click(summary)
     expect(group.open).toBe(false)
+    expect(screen.queryAllByRole('link')).toHaveLength(0)
+    fireEvent.click(summary)
+    expect(group.open).toBe(true)
   })
   it('opens filters on demand and combines them with quick search, then resets an empty result', () => {
     render(<Harness />)
