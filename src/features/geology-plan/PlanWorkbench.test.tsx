@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { PlanWorkbench } from './PlanWorkbench'
 import { emptyMap, initialMaps } from '../../entities/geology-map/fixtures'
 import { userPersonas } from '../../entities/session/model/personas'
@@ -55,7 +55,7 @@ describe('map workbench operation boundaries', () => {
     render(<PlanWorkbench initial={emptyMap('help-test', 'Plan')} persona={userPersonas[0]!} search={{}} onSearch={vi.fn()} onSaved={vi.fn()} onDeleted={vi.fn()} registry={null} registryOpen onRegistryToggle={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Как работать' }))
     expect(screen.getByRole('heading', { name: 'Как работать с планом' })).toBeInTheDocument()
-    expect(screen.getByText('Создать объект')).toBeInTheDocument()
+    expect(within(screen.getByRole('dialog', { name: 'Как работать с планом' })).getByText('Создать объект')).toBeInTheDocument()
     expect(screen.getByText(/Выберите слой и тип объекта в правой панели/)).toBeInTheDocument()
     expect(screen.getByText(/Нажмите «Завершить ввод».*«Применить»/)).toBeInTheDocument()
   })

@@ -41,7 +41,7 @@ describe('graph and tools composition', () => {
     const group = screen.getByRole('group', { name: 'Команды графического редактирования' })
     const unlink = within(group).getByRole('button', { name: 'Разъединить на графике' })
     expect(unlink).toHaveClass('section-icon-tool')
-    expect(unlink).toHaveAttribute('title', 'Разъединить на графике')
+    expect(unlink).not.toHaveAttribute('title')
   })
   it('preserves an uncommitted geometry draft and its plot when the tools are collapsed', () => {
     function Harness() {
