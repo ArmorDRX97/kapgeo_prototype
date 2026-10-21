@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { FileSpreadsheet, Plus, Save, Trash2 } from 'lucide-react'
+import { Download, FileSpreadsheet, Plus, Save, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { validateConstruction } from '../../../entities/well-construction/model/validation'
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
@@ -29,7 +29,12 @@ export function BgdWellConstructionTab({ well, canEdit, onDirtyChange }: { well:
   useReportUnsavedChanges(dirty, onDirtyChange, { save: async () => { if (errors) return false; await mutation.mutateAsync(); return true }, discard })
   return <div className="bgd-well-construction">
     <Panel title="Конструкция скважины" description="Конструктивные элементы задаются интервалами глубины.">
-      <div className="bgd-well-construction__toolbar"><span>{items.length} элементов конструкции</span>{canEdit && <div><Button size="sm" variant="secondary" className="bgd-construction-import" aria-label="Импорт Excel" disabled={mutation.isPending}><FileSpreadsheet size={16} /><span>Импорт</span><span className="bgd-construction-import__format">Excel</span></Button><Button size="sm" variant="secondary" disabled={mutation.isPending} onClick={add}><Plus size={15} /> Добавить</Button><Button size="sm" variant="quiet" disabled={!items.length || mutation.isPending} onClick={() => { setItems([]); setSelectedId(''); setDraft(empty()) }}><Trash2 size={15} /> Удалить все</Button></div>}</div>
+      <div className="bgd-well-construction__toolbar"><span>{items.length} элементов конструкции</span>{canEdit && <div>
+        <Button size="sm" variant="secondary" className="bgd-construction-import" aria-label="Импорт Excel" disabled={mutation.isPending}><FileSpreadsheet size={16} /><span>Импорт</span><span className="bgd-construction-import__format">Excel</span></Button>
+        <Button size="sm" variant="secondary" disabled={mutation.isPending}><Download size={16} />Экспорт</Button>
+        <Button size="sm" variant="secondary" disabled={mutation.isPending} onClick={add}><Plus size={15} /> Добавить</Button>
+        <Button size="sm" variant="quiet" disabled={!items.length || mutation.isPending} onClick={() => { setItems([]); setSelectedId(''); setDraft(empty()) }}><Trash2 size={15} /> Удалить все</Button>
+      </div>}</div>
       <div className="bgd-well-construction__layout">
         <div className="bgd-well-construction__table-wrap">
           <table className="bgd-well-construction__table">
