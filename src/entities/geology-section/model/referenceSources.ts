@@ -1,3 +1,4 @@
+import { bendReferenceWell } from './referenceTrace'
 import type { SectionInterval, SectionWellSource } from './types'
 
 // Invented sources in the coordinate/depth range seen in the reference video.
@@ -113,3 +114,5 @@ const parallelReferenceWellSources = primaryReferenceWellSources.map((well, inde
   }
 })
 export const referenceWellSources = [...primaryReferenceWellSources, ...parallelReferenceWellSources]
+
+export const bentReferenceWellSources = referenceWellSources.map(bendReferenceWell)

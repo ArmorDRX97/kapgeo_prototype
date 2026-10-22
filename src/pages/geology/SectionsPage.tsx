@@ -28,7 +28,7 @@ export function SectionsPage() {
   const [geoBlock, setGeoBlock] = useState(''), [techBlock, setTechBlock] = useState('')
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['geology-sections-prototype'] })
   const entries = useMemo(() => sectionRegistryEntries(query.data ?? []), [query.data])
-  const selectedEntry = entries.find(entry => entry.id === sectionId)
+  const selectedEntry = entries.find(entry => entry.id === sectionId) ?? (/^GTR-DEMO-\d+$/.test(sectionId ?? '') ? entries.find(entry => entry.id === 'GTR-01') : undefined)
   const selected = query.data?.find(d => d.id === selectedEntry?.documentId)
   const create = () => {
     try {

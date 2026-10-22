@@ -543,7 +543,7 @@
 .section-field-map .map-canvas-wrap { min-height: 280px; }
 .section-field-members { margin: 18px 0; padding-top: 14px; border-top: 1px solid var(--border-default); font-size: 12px; }
 .section-field-members ul { list-style: none; padding: 0; max-height: 200px; overflow: auto; }
-.section-field-members button { border: 0; background: transparent; color: var(--color-brand-600); padding: 5px 0; font: inherit; cursor: pointer; }
+.section-field-members li button { border: 0; background: transparent; color: var(--color-brand-600); padding: 5px 0; font: inherit; cursor: pointer; }
 .section-field-selection { border: 1px solid var(--color-brand-200); background: var(--color-brand-50); border-radius: 8px; padding: 12px; font-size: 12px; }
 .section-field-selection dl { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
 .section-field-selection dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
@@ -583,3 +583,11 @@
 .section-field-search .map-find .map-find-input input { min-height: 0 !important; height: auto; background: transparent !important; }
 
 @media (max-width: 1050px) { .section-workbench--graph .section-area-navigation { display: flex; flex-direction: column; } .section-workbench--graph .section-area-navigation__nav { flex: none; } }
+
+.section-map-assignment-actions { display: grid; gap: 4px; margin: 12px 0 4px; }
+.section-map-assignment-actions .button { justify-content: center; }
+.section-map-assignment-hint { display: flex; align-items: center; gap: 10px; padding: 9px 12px; margin-bottom: 8px; border: 1px solid var(--color-brand-200); border-radius: 8px; background: var(--color-brand-50); color: var(--text-primary); font-size: 12px; }
+.section-map-assignment-hint > span { flex: 1; }
+.section-map-assignment-hint > svg { flex-shrink: 0; }
+.section-map-feedback { margin: 0 0 8px; padding: 8px 12px; border-left: 3px solid var(--color-brand-500); background: var(--surface-panel); font-size: 13px; color: var(--text-primary); }
+.section-field-selection .button { margin-top: 6px; }

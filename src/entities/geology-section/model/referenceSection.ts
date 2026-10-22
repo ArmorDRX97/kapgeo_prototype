@@ -1,3 +1,4 @@
+import { referenceTrace } from './referenceTrace'
 import { createSection } from './fixtures'
 import { referenceWellSources, referenceLocalClay } from './referenceSources'
 import type { GeologySection, SectionGraphic, SectionLayer, XZ } from './types'
@@ -21,22 +22,13 @@ function band(id: string, name: string, rock: 'sand' | 'clay' | 'silt', upper: n
 /** Editable, invented reconstruction of the visual motifs in the audited video. */
 export function referenceSection(): GeologySection {
   const section: GeologySection = {
-    ...createSection('GTR-01', 'Северный · профиль 01'), demoPreset: 'video-reference-v3',
-    top: -442, bottom: -535, profile: [{ x: 0, y: 0 }, { x: 160, y: 3 }, { x: 350, y: -1 }],
-    mapGeometry: {
-      segments: {
-        'GTR-01-v1:GTR-01-v2': [{ x: 0, y: 0 }, { x: 160, y: 0 }],
-        'GTR-01-v2:GTR-01-v3': [{ x: 0, y: 100 }, { x: 190, y: 100 }],
-      },
-      wells: Object.fromEntries([
-        [14, 4], [48, -6], [102, 7], [151, -4], [59, 103], [119, 91], [177, 105],
-        [-25, 45], [35, 48], [95, 42], [155, 47], [215, 43], [30, 145], [155, 148],
-      ].map(([x, y], i) => [`GTR-W${i + 1}`, { x: x!, y: y! }])),
-    },
+    ...createSection('GTR-01', 'Северный · профиль 01'), demoPreset: 'video-reference-v5',
+    stage: 'detailed', top: -442, bottom: -535, profile: referenceTrace.map(p => ({ ...p })),
     // Fictional fixture membership keeps each segment's well list populated; runtime assignment rules are still pending.
     segmentWells: {
-      'GTR-01-v1:GTR-01-v2': ['GTR-W1', 'GTR-W2', 'GTR-W3', 'GTR-W4'],
-      'GTR-01-v2:GTR-01-v3': ['GTR-W5', 'GTR-W6', 'GTR-W7'],
+      'GTR-01-v1:GTR-01-v2': ['GTR-W1', 'GTR-W2'],
+      'GTR-01-v2:GTR-01-v3': ['GTR-W3', 'GTR-W4', 'GTR-W5'],
+      'GTR-01-v3:GTR-01-v4': ['GTR-W6', 'GTR-W7'],
     },
     wellIds: referenceWellSources.slice(0, 7).map(well => well.id),
     sourceRevisions: Object.fromEntries(referenceWellSources.slice(0, 7).map(well => [well.id, well.revision])),

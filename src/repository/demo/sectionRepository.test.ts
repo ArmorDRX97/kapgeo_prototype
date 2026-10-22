@@ -8,6 +8,14 @@ import { referenceWellSources } from '../../entities/geology-section/model/refer
 const editor = userPersonas.find(p => p.id === 'geo.ivanova')!, reader = userPersonas.find(p => p.id === 'gis.askarov')!
 afterEach(() => { localStorage.removeItem(SECTION_STORAGE_KEY); vi.restoreAllMocks() })
 describe('isolated section persistence', () => {
+  it('saves segment capture radii and rejects invalid values without losing the saved state', async () => {
+    const doc = initialSections()[0]!, id = 'GTR-01-v1:GTR-01-v2'
+    const saved = sectionRepository.save({ ...doc, segmentRadiiM: { [id]: 35 } }, 0, editor)
+    expect((await sectionRepository.list()).find(s => s.id === saved.id)?.segmentRadiiM).toEqual({ [id]: 35 })
+    const raw = localStorage.getItem(SECTION_STORAGE_KEY)
+    expect(() => sectionRepository.save({ ...saved, segmentRadiiM: { [id]: -1 } }, saved.revision, editor)).toThrow()
+    expect(localStorage.getItem(SECTION_STORAGE_KEY)).toBe(raw)
+  })
   it('persists an explicit reference preset and accepts its deep MD ranges without migrating other documents', async () => {
     const section = createSection('REFERENCE-PERSISTENCE', 'Разрез по эталону'), well = referenceWellSources[0]!
     section.demoPreset = 'video-reference-v1'; section.top = 200; section.bottom = -1000

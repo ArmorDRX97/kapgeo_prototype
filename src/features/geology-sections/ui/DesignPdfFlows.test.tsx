@@ -32,6 +32,8 @@ describe('design and PDF flows', () => {
     section.segmentWells = { [actualSegmentId]: [first, second] }
     const before = structuredClone(section), onApply = vi.fn(), onClose = vi.fn()
     render(<SegmentWellPicker section={section} segmentId={actualSegmentId} onApply={onApply} onClose={onClose} />)
+    expect(screen.getByLabelText('Доступные скважины')).toHaveValue('')
+    expect(screen.getByLabelText('Скважины сегмента')).toHaveValue('')
     fireEvent.change(screen.getByLabelText('Доступные скважины'), { target: { value: added } })
     fireEvent.click(screen.getByRole('button', { name: 'Добавить →' }))
     fireEvent.change(screen.getByLabelText('Скважины сегмента'), { target: { value: second } })

@@ -8,7 +8,7 @@ import { graphicIssues } from '../../entities/geology-section/lib/geometry'
 import { resolveGraphicPoints } from '../../entities/geology-section/lib/boundaries'
 import type { UserPersona } from '../../entities/session/model/types'
 import { hasPermission } from '../../shared/auth/permissions'
-import { SECTION_STORAGE_KEY, SECTION_DEMO_BACKUP_KEY } from './sectionStorageKeys'
+import { SECTION_STORAGE_KEY, SECTION_DEMO_BACKUP_KEY, SECTION_PROFILE_BACKUP_KEY, SECTION_BENT_PROFILE_BACKUP_KEY } from './sectionStorageKeys'
 import { trackIssues } from '../../entities/geology-section/lib/columnTracks'
 import { retireRhythms } from '../../entities/geology-section/lib/retireRhythms'
 import { validateSharedSnapshots } from './sharedAuxiliaryRepository'
@@ -23,13 +23,13 @@ const layerIds = z.object({ technology: ids, ore: ids, uncorrected: ids, offbala
 const links = z.array(z.object({ id: z.string(), a: z.string(), b: z.string() }))
 const sourceIntervals = z.array(z.object({ id: z.string(), from: num.nonnegative(), to: positive, kind: z.enum(['permeable', 'impermeable']), grade: num.optional() }))
 const schema = z.object({
-  demoPreset: z.enum(['video-reference-v1', 'video-reference-v2', 'video-reference-v3']).optional(),
+  demoPreset: z.enum(['video-reference-v1', 'video-reference-v2', 'video-reference-v3', 'video-reference-v4', 'video-reference-v5']).optional(),
   schemaVersion: z.literal(1), id: z.string().min(1), revision: num.int().nonnegative(), synthetic: z.literal(true), scope: z.literal('geology-section-prototype'),
   title: z.string().trim().min(1).max(120), depositId: z.literal('GTR-LOCAL-NORTH'), depositName: z.literal('Полигон Северный'),
   stage: z.enum(sectionStageValues), kind: z.enum(['main', 'auxiliary']), year: num.int().min(1900).max(2100), description: z.string().max(5000),
   top: num, bottom: num, status: z.enum(['draft', 'locked']), profile: z.array(xy), wellIds: ids, sourceRevisions: z.record(z.string(), num.int().positive()),
   mapGeometry: z.object({ segments: z.record(z.string(), z.tuple([xy, xy])), wells: z.record(z.string(), xy) }).optional(),
-  profileVertexIds: ids.optional(), segmentWells: z.record(z.string(),ids).optional(), profileRadiusM: num.min(0).max(100000).optional(),
+  profileVertexIds: ids.optional(), segmentWells: z.record(z.string(),ids).optional(), profileRadiusM: num.min(0).max(100000).optional(), segmentRadiiM: z.record(z.string(), num.min(0).max(100000)).optional(),
   participation: layerIds, links: z.object({ technology: links, ore: links, uncorrected: links, offbalance: links }),
   graphics: z.array(z.object({ id: z.string(), type: z.enum(['lithology', 'oxidation', 'roof', 'base', 'foundation', 'fault']), name: z.string().trim().min(1), points: z.array(xz), closed: z.boolean(), reversed: z.boolean(), smooth: z.boolean(), rock: z.enum(['sand', 'clay', 'silt']).optional(), unitId: z.string().optional(), parentId: z.string().optional(), references: ids.optional(), contourLinks: ids.optional(), contourSnapshot: z.array(xz).optional(), detachedFromContour: z.boolean().optional() })),
   drawings: z.array(z.object({ id: z.string(), name: z.string().min(1), horizontalScale: positive, verticalScale: positive, top: num, bottom: num, left: num, right: num, planHeight: num.nonnegative(), paper: z.enum(['A4', 'A3']), landscape: z.boolean(), margin: num.nonnegative(), layers: ids, description: z.string(), overlap: num.min(0).max(20).optional(), center: z.boolean().optional(), pageOrder: z.enum(['rows', 'columns']).optional(), profileOffset: num.min(-100).max(100).optional(), separator: num.min(0).max(100).optional(), bottomField: num.min(26).max(200).optional(), appendix: z.string().max(60).optional(), firstSheet: positive.int().max(9999).optional(), legendSize: num.min(2).max(20).optional(), wellIds: ids.optional(), lithologyColumns: z.boolean().optional(), stems: z.boolean().optional(), logColumns: z.boolean().optional(), intervalColumns: z.boolean().optional(), oreParameters: z.boolean().optional(), legend: z.boolean().optional(), staticLevel: num.optional(), frozenBoundary: num.optional(), columnSettings: z.record(z.string(), z.object({ width: num.min(2).max(40), offset: num, lithology: z.boolean(), intervals: z.boolean(), curves: z.boolean(), curveMin: num, curveMax: num, curvesFirst: z.boolean().optional(), tracks: z.array(z.object({ id: z.string().min(1), type: z.enum(['lithology', 'intervals', 'curve']), curveId: z.string().optional(), width: num.min(2).max(80) })).max(12).optional(), curveSettings: z.record(z.string(), z.object({ visible: z.boolean(), min: num, max: num, from: num.nonnegative(), to: positive })).optional() })).optional(), wellDecorations: z.record(z.string(),z.object({coreColor:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),filterFrom:num.nonnegative().optional(),filterTo:num.nonnegative().optional()})).optional() })),
@@ -107,15 +107,15 @@ export const sectionRepository = {
   async demoList() {
     const docs = read(), previous = docs.find(doc => doc.id === 'GTR-01')
     if (!previous) return docs
+    if (previous.demoPreset === 'video-reference-v5') return docs
     const reference = referenceSection()
-    const needsMapLayout = !previous.mapGeometry && JSON.stringify(previous.profile) === JSON.stringify(reference.profile)
-    const existingParallel = docs.find(doc => doc.id === 'GTR-02')
-    if (!needsMapLayout && previous.demoPreset === 'video-reference-v3' && previous.metadata?.mapProfileGroup === 'north-demo' && existingParallel?.metadata?.mapProfileGroup === 'north-demo') return docs
     const hadSavedDocument = localStorage.getItem(SECTION_STORAGE_KEY) !== null
-    const next = previous.demoPreset === 'video-reference-v2' || previous.demoPreset === 'video-reference-v3'
-      ? validateSection({ ...previous, mapGeometry: needsMapLayout ? reference.mapGeometry : previous.mapGeometry, demoPreset: 'video-reference-v3', revision: previous.revision + (hadSavedDocument ? 1 : 0), metadata: { ...previous.metadata, geoBlock: previous.metadata?.geoBlock || 'ГБ-01', techBlock: previous.metadata?.techBlock || 'ТБ-01', mapProfileGroup: 'north-demo', mapProfileOrder: 1 } })
+    const next = previous.demoPreset === 'video-reference-v2' || previous.demoPreset === 'video-reference-v3' || previous.demoPreset === 'video-reference-v4'
+      ? validateSection({ ...previous, mapGeometry: undefined, demoPreset: 'video-reference-v5', profile: reference.profile, profileVertexIds: undefined, segmentWells: Object.fromEntries(Object.entries(reference.segmentWells!).map(([id, wells]) => [id, wells.filter(w => previous.wellIds.includes(w))])), revision: previous.revision + (hadSavedDocument ? 1 : 0), metadata: { ...previous.metadata, geoBlock: previous.metadata?.geoBlock || 'ГБ-01', techBlock: previous.metadata?.techBlock || 'ТБ-01', mapProfileGroup: 'north-demo', mapProfileOrder: 1 } })
       : validateSection({ ...referenceSection(), title: previous.title, status: previous.status, revision: hadSavedDocument ? previous.revision + 1 : 0 })
     if (hadSavedDocument && !localStorage.getItem(SECTION_DEMO_BACKUP_KEY)) localStorage.setItem(SECTION_DEMO_BACKUP_KEY, JSON.stringify(previous))
+    if (hadSavedDocument && previous.mapGeometry && !localStorage.getItem(SECTION_PROFILE_BACKUP_KEY)) localStorage.setItem(SECTION_PROFILE_BACKUP_KEY, JSON.stringify(previous))
+    if (hadSavedDocument && !localStorage.getItem(SECTION_BENT_PROFILE_BACKUP_KEY)) localStorage.setItem(SECTION_BENT_PROFILE_BACKUP_KEY, JSON.stringify(previous))
     const updated = docs.map(doc => {
       if (doc.id === previous.id) return next
       if (doc.id === 'GTR-02' && doc.status === 'locked' && !doc.metadata?.mapProfileGroup) {

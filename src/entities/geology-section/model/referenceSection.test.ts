@@ -36,9 +36,10 @@ describe('video reference demonstration', () => {
       expect(well.curves.every(curve => curve.samples.length > 250)).toBe(true)
     }
   })
-  it('seeds the video example wells on the first segment without inferring membership by position', () => {
+  it('assigns the seven example wells to three ordered segments', () => {
     const section = referenceSection(), segments = sectionSegments(section)
-    expect(segments[0]?.wellIds).toEqual(['GTR-W1', 'GTR-W2', 'GTR-W3', 'GTR-W4'])
-    expect(segments[1]?.wellIds).toEqual(['GTR-W5', 'GTR-W6', 'GTR-W7'])
+    expect(segments[0]?.wellIds).toEqual(['GTR-W1', 'GTR-W2'])
+    expect(segments[1]?.wellIds).toEqual(['GTR-W3', 'GTR-W4', 'GTR-W5'])
+    expect(segments[2]?.wellIds).toEqual(['GTR-W6', 'GTR-W7'])
   })
 })

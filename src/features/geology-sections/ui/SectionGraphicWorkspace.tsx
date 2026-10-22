@@ -14,7 +14,7 @@ export function PlotToolbar({ children, state }: { children: ReactNode; state?: 
   return target ? createPortal(<div className="section-camera-controls">{children}</div>, target) : null
 }
 const viewHints: Partial<Record<SectionView, string>> = {
-  map: 'Выберите профиль или скважину. Для изменения сегмента откройте редактор текущего разреза.',
+  map: 'Профиль, сегменты и скважины выбранного разреза.',
   technology: 'Соединяйте интервалы соседних скважин и уточняйте границы горизонта.',
   lithology: 'Выберите область на разрезе или создайте новую литологическую границу.',
   ore: 'Сопоставляйте рудные интервалы и редактируйте контуры рудных тел.',

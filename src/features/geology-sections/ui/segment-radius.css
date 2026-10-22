@@ -1,0 +1,12 @@
+.section-segment-radius { flex: none; display: grid; gap: 8px; padding: 12px; margin-block: 12px; border: 1px solid var(--color-brand-200); border-radius: 8px; background: var(--color-brand-50); }
+.section-segment-radius header { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+.section-segment-radius header > span { color: var(--text-secondary); font-size: 11px; white-space: nowrap; }
+.section-segment-radius > label { font-size: 12px; color: var(--text-secondary); }
+.section-segment-radius__input { display: flex; align-items: center; gap: 8px; }
+.section-workbench .section-segment-radius .section-segment-radius__input input { flex: none; width: 92px; max-width: 92px; min-height: 36px; height: 36px; padding: 6px 10px; border: 1px solid var(--border-default); border-radius: 6px; font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; background: var(--surface-panel); color: var(--text-primary); }
+.section-segment-radius__input > span { font-size: 11px; line-height: 16px; color: var(--text-secondary); }
+.section-segment-radius > p { margin: 0; font-size: 11px; line-height: 17px; color: var(--text-secondary); }
+.section-document-setup .section-segment-radius { margin: 0 10px 10px; }
+
+.section-corridor-key { display: inline-flex; align-items: center; gap: 6px; color: var(--color-brand-700); }
+.section-corridor-key::before { content: ""; width: 18px; height: 12px; border: 1px dashed #3d78c9; background: rgb(37 99 189 / .1); border-radius: 3px; }

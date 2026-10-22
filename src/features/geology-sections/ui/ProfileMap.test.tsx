@@ -86,22 +86,14 @@ describe('profile map gestures', () => {
     expect(screen.getByRole('button', { name: 'ГС-107: сведения' })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Контур геоблока' })).toBeInTheDocument()
   })
-  it('renders the current section as two disconnected parallel segments, with independent movement', () => {
+  it('renders the reference as one continuous profile with shared vertices', () => {
     const section = referenceSection(), change = vi.fn()
-    const { container } = render(<ProfileMap section={section} documents={[section, initialSections()[1]!]} disabled={false} onChange={change} onPending={vi.fn()} />)
-    const lines = [...container.querySelectorAll('[data-map-segment] line')]
-    expect(lines).toHaveLength(2)
-    expect(lines.map(line => [line.getAttribute('y1'),line.getAttribute('y2')])).toEqual([['0','0'],['-100','-100']])
-    expect(container.querySelector('[data-map-profile]')).toBeNull()
+    const { container } = render(<ProfileMap section={section} disabled={false} onChange={change} onPending={vi.fn()} />)
+    expect(section.mapGeometry).toBeUndefined()
+    expect(container.querySelectorAll('[data-map-segment]')).toHaveLength(0)
+    const line = screen.getByRole('button', { name: 'Линия профиля: сведения' })
+    expect(line.getAttribute('points')).toBe(section.profile.map(p => `${p.x},${-p.y}`).join(' '))
     expect(container.querySelectorAll('.section-map__vertex')).toHaveLength(4)
-    fireEvent.click(screen.getByRole('button', { name: 'Переместить сегмент целиком' }))
-    fireEvent.change(screen.getByLabelText('Перенос сегмента X, м'), { target: { value: '30' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Перенести сегмент' }))
-    const next = change.mock.calls[0]![0]
-    expect(next.mapGeometry.segments['GTR-01-v1:GTR-01-v2']).toEqual([{x:30,y:0},{x:190,y:0}])
-    expect(next.mapGeometry.segments['GTR-01-v2:GTR-01-v3']).toEqual(section.mapGeometry!.segments['GTR-01-v2:GTR-01-v3'])
-    expect(next.profile).toEqual(section.profile)
-    expect(next.mapGeometry.wells).toEqual(section.mapGeometry!.wells)
   })
   it('uses the selected map segment when offering nearby wells', () => {
     const section = referenceSection()
@@ -121,7 +113,7 @@ describe('profile map gestures', () => {
     render(<ProfileMap section={{...referenceSection(),mapGeometry:undefined}} disabled={false} onChange={vi.fn()} onPending={vi.fn()} />)
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Выбрать сегмент 1 профиля' }), { button: 0 })
     const segment = screen.getByRole('region', { name: 'Скважины сегмента 1' })
-    expect(segment.querySelectorAll('li')).toHaveLength(4)
+    expect(segment.querySelectorAll('li')).toHaveLength(2)
     const actions = screen.getByText('Действия с сегментом').closest('details')
     expect(actions).not.toHaveAttribute('open')
     expect(screen.getByLabelText('Выровнять по забою').closest('details')).toBe(actions)
@@ -140,7 +132,7 @@ describe('profile map gestures', () => {
     fireEvent.change(available, { target: { value: 'GTR-W2' } })
     fireEvent.click(screen.getByRole('button', { name: 'Добавить →' }))
     fireEvent.click(screen.getByRole('button', { name: 'Применить состав' }))
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ profileRadiusM: 30, segmentWells: { [`${section.id}-v1:${section.id}-v2`]: ['GTR-W2'] } }))
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ profileRadiusM: 20, segmentRadiiM: { [`${section.id}-v1:${section.id}-v2`]: 30 }, segmentWells: { [`${section.id}-v1:${section.id}-v2`]: ['GTR-W2'] } }))
   })
   it('pans in viewing mode without modifying the profile or adding wells', () => {
     const change = vi.fn()

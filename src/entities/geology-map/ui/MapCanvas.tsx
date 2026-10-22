@@ -5,13 +5,14 @@ import { gridLabel, gridLabelTicks, mapGridTicks } from '../grid'
 import { wellSymbol, wellSymbolPath } from '../wellSymbols'
 import { changedNode, translated } from '../fixtures'
 import { paintWells } from '../paintWells'
+import { corridorPath } from '../corridor'
 import { TopoAttribution, TopoBasemap } from './TopoBasemap'
 import './map-canvas.css'
 
 export type PlanTool = 'select' | 'draw' | 'move' | 'add' | 'delete' | 'measure' | 'label'
 type Props = { project: MapProject; camera: Camera | null; onCamera: (camera: Camera) => void; selected?: string; draft: MapObject | null; tool: PlanTool; editable: boolean; snap: (p: XY, radius: number) => SnapPoint; onSelect: (ids: string[]) => void; onDraft: (object: MapObject) => void; onPoint: (p: SnapPoint) => void; onNode: (id: string) => void; onCancel: () => void; grid: boolean; labels: boolean; values: boolean; measure: XY[]; rasterUrl?: string }
 type Gesture = { pointer: number; start: XY; moved: boolean; camera: Camera; world: XY; object?: MapObject; node?: string; label?: boolean }
-export function MapCanvas(props: Props & { hiddenWellTypes?: string[]; topography?: boolean; highlightWellsOnHover?: boolean }) {
+export function MapCanvas(props: Props & { hiddenWellTypes?: string[]; topography?: boolean; highlightWellsOnHover?: boolean; highlightSegment?: [XY, XY]; focusWellIds?: string[]; corridor?: { points: [XY, XY]; radius: number }; segmentAnnotations?: Array<{ a: XY; b: XY; label: string }>; vertexAnnotations?: Array<{ point: XY; label: string }>; onSegmentSelect?: (index: number) => void }) {
   const svg = useRef<SVGSVGElement>(null), wrap = useRef<HTMLDivElement>(null), gesture = useRef<Gesture | null>(null), clip = useId().replace(/:/g, '')
   const [size, setSize] = useState<Size>({ width: 900, height: 700 }), [panning, setPanning] = useState(false), [cursor, setCursor] = useState<XY | null>(null), [hover, setHover] = useState<string>(''), [snapHint,setSnapHint] = useState<SnapPoint | null>(null)
   const wellCanvas = useRef<HTMLCanvasElement>(null)
@@ -34,7 +35,7 @@ export function MapCanvas(props: Props & { hiddenWellTypes?: string[]; topograph
     return objects
   }, [props.project, props.draft, props.hiddenWellTypes])
   const wells = useMemo(() => rendered.filter(o => o.kind === 'well'), [rendered]), batchWells = !!props.project.fieldVersion || props.project.objects.length > 1000
-  useEffect(() => { if (batchWells && wellCanvas.current) paintWells(wellCanvas.current, wells, camera, size, props.selected, props.labels, props.values, hoveredWell) }, [batchWells, wells, camera, size, props.selected, props.labels, props.values, hoveredWell])
+  useEffect(() => { if (batchWells && wellCanvas.current) paintWells(wellCanvas.current, wells, camera, size, props.selected, props.labels, props.values, hoveredWell, props.focusWellIds) }, [batchWells, wells, camera, size, props.selected, props.labels, props.values, hoveredWell, props.focusWellIds])
   const selected = props.draft ?? rendered.find(o => o.id === props.selected)
   const wellIndex = useMemo(() => {
     const index = new Map<string, MapObject[]>()
@@ -81,7 +82,20 @@ export function MapCanvas(props: Props & { hiddenWellTypes?: string[]; topograph
       else props.onDraft(translated(g.object, p.x - g.world.x, p.y - g.world.y))
     } else { setPanning(true); props.onCamera({ x: g.camera.x + (at.y - g.start.y) / g.camera.scale, y: g.camera.y - (at.x - g.start.x) / g.camera.scale, scale: g.camera.scale }) }
   }
-  const up = (e: PointerEvent<SVGSVGElement>) => { const g = gesture.current; gesture.current = null; setPanning(false); if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId); if (g && !g.moved && !g.node && props.tool === 'select') props.onSelect(candidates(screenToWorld(local(e), camera, size)).map(o => o.id)) }
+  const up = (e: PointerEvent<SVGSVGElement>) => {
+    const g = gesture.current; gesture.current = null; setPanning(false)
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId)
+    if (g && !g.moved && !g.node && props.tool === 'select') {
+      const point = screenToWorld(local(e), camera, size), hits = candidates(point), first = hits[0]
+      if (first?.kind === 'profile' && props.onSegmentSelect) {
+        const nodes = first.parts[0]!.nodes
+        const segments = nodes.slice(1).map((b, i) => ({ index: i, distance: distance(point, projectOnSegment(point, nodes[i]!, b)) }))
+        const nearest = segments.sort((a, b) => a.distance - b.distance)[0]
+        if (nearest) props.onSegmentSelect(nearest.index)
+      }
+      props.onSelect(hits.map(o => o.id))
+    }
+  }
   const nw = screenToWorld({ x: m.left, y: m.top }, camera, size), se = screenToWorld({ x: size.width - m.right, y: size.height - m.bottom }, camera, size)
   const gridSettings = props.project.grid ?? defaultMapGrid
   const xTicks = mapGridTicks(se.x,nw.x,80/camera.scale,gridSettings,'x'), yTicks = mapGridTicks(nw.y,se.y,100/camera.scale,gridSettings,'y'), rulerMeters = 10 ** Math.floor(Math.log10(100 / camera.scale)), rulerWidth = rulerMeters * camera.scale
@@ -92,12 +106,13 @@ export function MapCanvas(props: Props & { hiddenWellTypes?: string[]; topograph
       if (e.key === '+' || e.key === '-') { e.preventDefault(); props.onCamera(zoomCamera(camera, e.key === '+' ? 1.25 : .8, { x: size.width / 2, y: size.height / 2 }, size)) }
       if (e.key === 'F10' && e.shiftKey && selected) { e.preventDefault(); props.onSelect([selected.id]) }
     }}>
-      <defs><marker id={`${clip}-arrow`} viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1L7 4L0 7" fill="none" stroke="context-stroke" /></marker><clipPath id={clip}><rect x={m.left} y={m.top} width={Math.max(1, size.width - m.left - m.right)} height={Math.max(1, size.height - m.top - m.bottom)} /></clipPath></defs>
+      <defs><marker id={`${clip}-arrow`} viewBox="0 0 8 8" refX="7" refY="4" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 1L7 4L0 7" fill="none" stroke="context-stroke" /></marker><clipPath id={clip}><rect x={m.left} y={m.top} width={Math.max(1, size.width - m.left - m.right)} height={Math.max(1, size.height - m.top - m.bottom)} /></clipPath></defs>
       <rect width={size.width} height={size.height} className="map-sheet" />
       <g clipPath={`url(#${clip})`}>
         {props.topography && <TopoBasemap camera={camera} size={size} />}
         {props.rasterUrl && props.project.underlay?.visible && (() => { const u = props.project.underlay, p = to(u); return <image href={props.rasterUrl} x={p.x} y={p.y} width={u.width * camera.scale} height={u.height * camera.scale} opacity={u.opacity} transform={`rotate(${u.angle} ${p.x} ${p.y})`} preserveAspectRatio="none" /> })()}
         {props.grid && <g className="map-grid">{xTicks.map(x => <path key={`x${x}`} style={{stroke:gridSettings.color,strokeWidth:gridSettings.width}} d={`M${m.left},${to({ x, y: camera.y }).y}H${size.width - m.right}`} />)}{yTicks.map(y => <path key={`y${y}`} style={{stroke:gridSettings.color,strokeWidth:gridSettings.width}} d={`M${to({ x: camera.x, y }).x},${m.top}V${size.height - m.bottom}`} />)}</g>}
+        {props.corridor && props.corridor.radius > 0 && <path data-segment-corridor={props.corridor.radius} aria-label={`Зона захвата: ${props.corridor.radius} м в каждую сторону`} d={corridorPath(to(props.corridor.points[0]), to(props.corridor.points[1]), props.corridor.radius * camera.scale)} fill="#2563bd" fillOpacity=".1" stroke="#3d78c9" strokeWidth="1.3" strokeDasharray="6 4" pointerEvents="none" />}
         {rendered.map(o => { if (batchWells && (o.kind === 'well' || o.kind === 'profile')) return null; const active = o.id === props.selected || o.id === props.draft?.id, a = to(o.parts[0]?.nodes[0] ?? { x: 0, y: 0 }); return <g key={o.id} data-object={o.id} className={active ? 'map-object is-selected' : 'map-object'}>
           <title>{o.name}</title>
           {o.kind === 'well' && o.parts[0]!.nodes.length === 2 ? (() => { const b=to(o.parts[0]!.nodes[1]!), radius=active?5:3.8, symbol=wellSymbol(o.attributes.type), paths=wellSymbolPath(a,b,radius); return <><path data-well-direction={o.id} d={paths.direction} stroke={symbol.color} strokeWidth={active?1.5:.8} fill="none"/><circle cx={a.x} cy={a.y} r={radius} fill="var(--surface-panel)" stroke={symbol.color} strokeWidth={active?1.5:1}/><path data-well-cross={o.id} d={paths.cross} stroke={symbol.color} strokeWidth="1"/>{props.labels && o.label.visible && (camera.scale>=1.6 || active) && <text x={a.x+o.label.dx} y={a.y+o.label.dy} className="map-well-label">{o.name}</text>}{props.values && (camera.scale>=2 || active) && <text x={a.x+o.label.dx} y={a.y+o.label.dy+12} className="map-value-label">{o.attributes.value.toFixed(2)}</text>}</> })() : <><path d={objectPath(o,to)} fill={o.closed?o.style.fill:'none'} fillOpacity={o.style.opacity} fillRule="evenodd" stroke={o.style.stroke} strokeWidth={active?o.style.width+1:o.style.width} strokeDasharray={o.style.dash==='dash'?'8 4':o.style.dash==='dot'?'2 4':undefined} markerEnd={o.kind==='profile'?`url(#${clip}-arrow)`:undefined}/>{props.labels && o.label.visible && o.kind!=='contour' && (!batchWells || active || o.kind === 'profile' || camera.scale >= .45) && (()=>{const nodes=o.parts[0]?.nodes??[], position=o.kind==='block' && nodes.length ? to({x:nodes.reduce((v,n)=>v+n.x,0)/nodes.length,y:nodes.reduce((v,n)=>v+n.y,0)/nodes.length}):a;return <text x={position.x+o.label.dx} y={position.y+o.label.dy} className="map-profile-label">{o.name}</text>})()}</>}
@@ -105,6 +120,13 @@ export function MapCanvas(props: Props & { hiddenWellTypes?: string[]; topograph
         </g> })}
         {batchWells && <foreignObject width={size.width} height={size.height} pointerEvents="none"><canvas ref={wellCanvas} data-field-wells={wells.length} data-hovered-well={hoveredWell || undefined} aria-label={`${wells.length} скважин на карте`} style={{ width: '100%', height: '100%', display: 'block' }} /></foreignObject>}
         {batchWells && rendered.filter(o => o.kind === 'profile').map(o => { const active = o.id === props.selected, a = to(o.parts[0]!.nodes[0]!); return <g key={`overlay-${o.id}`} data-field-profile={o.id}><path d={objectPath(o, to)} fill="none" stroke={active ? 'var(--color-primary, #194b94)' : o.style.stroke} strokeWidth={active ? o.style.width + 1.5 : o.style.width} opacity={active ? 1 : .9} strokeDasharray={o.style.dash === 'dash' ? '8 4' : o.style.dash === 'dot' ? '2 4' : undefined} markerEnd={`url(#${clip}-arrow)`} />{props.labels && o.label.visible && (active || camera.scale >= .24) && <text x={a.x + 6} y={a.y + 14} className="map-profile-label">{o.name}</text>}</g> })}
+        {props.highlightSegment && <path data-active-segment="true" d={`M${to(props.highlightSegment[0]).x},${to(props.highlightSegment[0]).y}L${to(props.highlightSegment[1]).x},${to(props.highlightSegment[1]).y}`} stroke="#164e9e" strokeWidth="4" fill="none" pointerEvents="none" />}
+        {camera.scale >= .25 && props.segmentAnnotations?.map((segment, index) => {
+          const a = to(segment.a), b = to(segment.b), length = Math.hypot(b.x - a.x, b.y - a.y) || 1
+          const x = a.x + (b.x - a.x) * .58 - (b.y - a.y) / length * 19, y = a.y + (b.y - a.y) * .58 + (b.x - a.x) / length * 19
+          return <g key={`segment-label-${index}`} data-segment-label={index + 1} role={props.onSegmentSelect ? 'button' : undefined} tabIndex={props.onSegmentSelect ? 0 : undefined} aria-label={`Выбрать ${segment.label.toLocaleLowerCase()}`} onPointerDown={e => { if (props.onSegmentSelect) e.stopPropagation() }} onClick={e => { if (props.onSegmentSelect) { e.stopPropagation(); props.onSegmentSelect(index) } }} onKeyDown={e => { if (props.onSegmentSelect && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); props.onSegmentSelect(index) } }} style={{ cursor: props.onSegmentSelect ? 'pointer' : undefined, pointerEvents: props.onSegmentSelect ? undefined : 'none' }}><path d={`M${a.x},${a.y}L${b.x},${b.y}`} stroke="transparent" strokeWidth="16" fill="none" /><text x={x} y={y} className="map-segment-label" textAnchor="middle">{segment.label}</text></g>
+        })}
+        {camera.scale >= .25 && props.vertexAnnotations?.map((vertex, index) => { const p = to(vertex.point); return <g key={`vertex-label-${index}`} data-profile-vertex={index} pointerEvents="none"><circle cx={p.x} cy={p.y} r="4.5" fill="white" stroke="#194b94" strokeWidth="1.8" /><text x={p.x - 10} y={p.y - 12} className="map-segment-label" textAnchor="end">{vertex.label}</text></g> })}
         {selected && props.editable && props.tool !== 'measure' && <g>{selected.shape === 'bezier' && <path d={selected.parts.map(p => p.nodes.map((n, i) => `${i ? 'L' : 'M'}${to(n).x},${to(n).y}`).join(' ')).join(' ')} className="map-control-line" />}{selected.parts.flatMap(p => p.nodes.map((n, i) => { const s = to(n); return <g key={n.id} data-node={n.id} className="map-node"><circle cx={s.x} cy={s.y} r={10} fill="transparent" /><circle cx={s.x} cy={s.y} r={selected.shape === 'bezier' && i % 3 !== 0 ? 3 : 4.5} className={`map-node-dot${n.anchor ? ' is-bound' : ''}`} /><title>{`${selected.kind === 'well' ? i === 0 ? 'Устье' : 'Забой' : `Точка ${i + 1}${n.anchor ? ' · '+props.project.objects.find(w=>w.id===n.anchor!.wellId)?.name+' · привязано' : ' · свободная'}`} · X ${n.x.toFixed(2)} · Y ${n.y.toFixed(2)}`}</title></g> }))}</g>}
         {snapHint?.anchor && <g className="map-snap-hint" pointerEvents="none"><circle cx={to(snapHint).x} cy={to(snapHint).y} r="10"/><text x={to(snapHint).x+12} y={to(snapHint).y-12}>Привязка · {props.project.objects.find(w=>w.id===snapHint.anchor!.wellId)?.name} · {snapHint.anchor.target==='bottom'?'забой':'устье'}</text></g>}
         {props.measure.length > 0 && <g className="map-measure"><path d={props.measure.map((p, i) => `${i ? 'L' : 'M'}${to(p).x},${to(p).y}`).join(' ')} />{props.measure.map((p, i) => <circle key={i} cx={to(p).x} cy={to(p).y} r={4} />)}{props.measure.length === 2 && <text x={to(props.measure[1]!).x + 8} y={to(props.measure[1]!).y - 8}>{distance(props.measure[0]!, props.measure[1]!).toFixed(2)} м</text>}</g>}

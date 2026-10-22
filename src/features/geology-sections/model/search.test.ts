@@ -1,5 +1,12 @@
 import { expect, it } from 'vitest'
 import { validateSectionSearch } from './search'
+
+it('retains only the selected document segment and well context', () => {
+  expect(validateSectionSearch({ view: 'overview', segment: '1', mapWell: 'GTR-W4' })).toMatchObject({ segment: 1, mapWell: 'GTR-W4' })
+  expect(validateSectionSearch({ view: 'map', segment: 2, mapWell: 'field-well-p0-28-22' })).toMatchObject({ segment: 2, mapWell: 'field-well-p0-28-22' })
+  expect(validateSectionSearch({ segment: -1, mapWell: 'other' })).toMatchObject({ segment: undefined, mapWell: undefined })
+  expect(validateSectionSearch({ fieldProfile: 'field-profile-p0-17' })).not.toHaveProperty('fieldProfile')
+})
 import { sectionViews } from '../../../entities/geology-section/model/types'
 import { sectionStageValues } from '../../../entities/geology-section/model/stages'
 it('accepts all six stages independently of main/auxiliary and retains grouping context',()=>{

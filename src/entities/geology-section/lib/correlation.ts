@@ -1,19 +1,26 @@
+import { fieldWellSource } from '../model/fieldWellSources'
 import polygonClipping from 'polygon-clipping'
 import type { GeologySection, SectionLayer, SectionAnchor, XZ, SectionWellSource } from '../model/types'
 import { sectionWellSources } from '../model/fixtures'
-import { referenceWellSources } from '../model/referenceSources'
+import { referenceWellSources, bentReferenceWellSources } from '../model/referenceSources'
 import { pointAtDepth, profileLength } from './profile'
 import { heightOnArc, sampleArc } from './curves'
 import { editContourArc, ringKey, polygonIssues, ringsIntersect, insideRing, openRing } from './contourArc'
 import { projectSectionPoint } from './segments'
 
 export const sourceFor = (section: GeologySection, well: SectionWellSource): SectionWellSource => {
-  const source = section.demoPreset?.startsWith('video-reference-') ? referenceWellSources.find(w => w.id === well.id) ?? well : well
+  const reference = section.demoPreset === 'video-reference-v5' ? bentReferenceWellSources : referenceWellSources
+  const source = section.demoPreset?.startsWith('video-reference-') ? reference.find(w => w.id === well.id) ?? well : well
   return { ...source, ...section.sourceOverrides?.[well.id] }
 }
-export const sectionSources = (section: GeologySection): SectionWellSource[] => section.demoPreset?.startsWith('video-reference-')
-  ? referenceWellSources.map(well => ({ ...well, ...section.sourceOverrides?.[well.id] }))
-  : sectionWellSources.map(well => sourceFor(section, well))
+export function sectionSources(section: GeologySection): SectionWellSource[] {
+  const base = section.demoPreset?.startsWith('video-reference-')
+    ? section.demoPreset === 'video-reference-v5' ? bentReferenceWellSources : referenceWellSources
+    : sectionWellSources
+  const ids = new Set(base.map(w => w.id))
+  const added = section.wellIds.filter(id => !ids.has(id)).map(fieldWellSource).filter((w): w is SectionWellSource => !!w)
+  return [...base, ...added].map(well => ({ ...well, ...section.sourceOverrides?.[well.id] }))
+}
 export function stationAtDepth(section: GeologySection, well: SectionWellSource, md: number): XZ {
   const p = pointAtDepth(sourceFor(section, well), md)
   return { x: projectSectionPoint(section, well.id, p).station, z: p.z }

@@ -26,10 +26,12 @@ export function createSection(id: string, title: string): GeologySection {
 
 export function initialSections(): GeologySection[] {
   const section = createSection('GTR-01', 'Северный · профиль 01')
+  section.stage = 'detailed'
   section.wellIds = sectionWellSources.slice(0, 5).map(w => w.id)
   section.sourceRevisions = Object.fromEntries(sectionWellSources.slice(0, 5).map(w => [w.id, w.revision]))
   for (const layer of ['technology', 'ore', 'uncorrected'] as const) section.participation[layer] = [...section.wellIds]
   const parallel = createSection('GTR-02', 'Северный · профиль 02')
+  parallel.stage = 'operationalExploration'
   parallel.profile = [{ x: 0, y: 75 }, { x: 160, y: 78 }, { x: 350, y: 74 }]
   parallel.metadata = { mapProfileGroup: 'north-demo', mapProfileOrder: 2, depositBody: '', createdOn: '', compiledBy: '', checkedBy: '' }
   return [section, { ...parallel, status: 'locked', description: 'Зафиксированный параллельный разрез для просмотра.' }]

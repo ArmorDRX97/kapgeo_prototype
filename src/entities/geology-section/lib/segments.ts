@@ -31,7 +31,12 @@ export function reconcileProfile(before: GeologySection, next: GeologySection): 
     const direct=segments.find(s=>s.id===key), reverse=segments.find(s=>`${ids[s.index+1]}:${ids[s.index]}`===key)
     if(direct||reverse) memberships[(direct??reverse)!.id]=wells.filter(id=>next.wellIds.includes(id));else lost+=wells.length
   }
-  return {section:{...candidate,segmentWells:memberships},lost}
+  const radii: Record<string, number> = {}
+  for (const [key, radius] of Object.entries(next.segmentRadiiM ?? before.segmentRadiiM ?? {})) {
+    const segment = segments.find(s => s.id === key || `${ids[s.index+1]}:${ids[s.index]}` === key)
+    if (segment) radii[segment.id] = radius
+  }
+  return {section:{...candidate,segmentWells:memberships,segmentRadiiM:next.segmentRadiiM || before.segmentRadiiM ? radii : undefined},lost}
 }
 export function segmentMembershipIssues(section: GeologySection): string[] {
   const ids=vertexIds(section),segments=sectionSegments(section), used=new Set<string>(),errors:string[]=[]

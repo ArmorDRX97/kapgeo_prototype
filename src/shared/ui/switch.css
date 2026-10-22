@@ -1,0 +1,13 @@
+.ui-switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding-block: 10px; border-bottom: 1px solid var(--border-default); }
+.ui-switch-row:last-child { border-bottom: 0; }
+.ui-switch-row > div { display: grid; gap: 4px; min-width: 0; }
+.ui-switch-row > div > span { color: var(--text-primary); font-size: 13px; line-height: 18px; }
+.ui-switch-row small { color: var(--text-secondary); font-size: 11px; line-height: 16px; }
+.ui-switch { display: inline-flex; align-items: center; width: 38px; min-width: 38px; height: 22px; padding: 3px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface-muted, #d9e2ef); cursor: pointer; transition: background 130ms, border-color 130ms; }
+.ui-switch > span { width: 14px; height: 14px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgb(15 23 42 / .2); transition: transform 130ms; }
+.ui-switch[aria-checked="true"] { border-color: var(--color-brand-700); background: var(--color-brand-700); }
+.ui-switch[aria-checked="true"] > span { transform: translateX(16px); }
+.ui-switch:focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 3px; }
+.ui-switch-row.is-disabled { opacity: .55; }
+.ui-switch:disabled { cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { .ui-switch, .ui-switch > span { transition: none; } }
