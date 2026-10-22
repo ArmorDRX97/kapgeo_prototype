@@ -8,6 +8,7 @@ export function GeoBaseDepositConditionsPage() {
   const navigate = useNavigate({ from: '/geology/bgd/$depositId/conditions' })
 
   return <GeologyDatabaseDeposit
+    onOpenWell={wellId => void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId }, search: {} })}
     depositId={depositId}
     key={depositId}
     view="conditions"

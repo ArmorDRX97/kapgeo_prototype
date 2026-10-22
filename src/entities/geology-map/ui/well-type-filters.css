@@ -1,0 +1,19 @@
+.well-type-filters { flex: none; padding: 10px 14px; background: var(--surface-panel); border-bottom: 1px solid var(--border-default); }
+.well-type-filters__summary { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.well-type-filters__summary strong { font-weight: 650; }
+.well-type-filters__summary small { font-weight: 400; color: var(--text-tertiary); font-size: 11px; }
+.well-type-filters__summary button { border: 0; padding: 0; background: transparent; color: var(--color-brand-600); font: inherit; font-size: 12px; cursor: pointer; }
+.well-type-filters__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.well-type-filters__chips button { display: flex; align-items: center; gap: 6px; padding: 5px 9px; min-height: 30px; border-radius: 6px; border: 1px solid var(--border-default); background: var(--surface-subtle); font: inherit; font-size: 11px; color: var(--text-secondary); cursor: pointer; }
+.well-type-filters__chips button[aria-pressed="true"] { background: var(--color-brand-50); border-color: var(--color-brand-200); color: var(--text-primary); }
+.well-type-filters__chips button[aria-pressed="false"] { opacity: .48; }
+.well-type-filters__chips i { display: grid; place-items: center; border: 1px solid; border-radius: 50%; width: 12px; height: 12px; font-size: 11px; font-style: normal; line-height: 1; }
+.well-type-filters__chips small { color: var(--text-tertiary); font-size: 10px; font-variant-numeric: tabular-nums; }
+.well-type-filters p { margin: 8px 0 0; font-size: 12px; color: var(--text-secondary); }
+
+.well-type-filters--compact { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.well-type-filters--compact .well-type-filters__summary { order: 2; margin: 0; }
+.well-type-filters--compact .well-type-filters__summary:empty { display: none; }
+.well-type-filters--compact .well-type-filters__chips { flex: 1; gap: 5px; }
+.well-type-filters--compact .well-type-filters__chips button { padding: 4px 7px; min-height: 28px; }
+.well-type-filters--compact > p { order: 3; flex-basis: 100%; margin: 0; }

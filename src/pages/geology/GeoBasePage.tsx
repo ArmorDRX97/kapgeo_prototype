@@ -26,7 +26,7 @@ export function GeoBasePage() {
   }, [currentDepositId, isResolving, navigate])
 
   if (isResolving || currentDepositId) {
-    return <div className="page-loading"><span /><p>Открываем основные сведения…</p></div>
+    return <div className="page-loading"><span /><p>Открываем месторождение…</p></div>
   }
 
   const error = masterQuery.error ?? preferencesQuery.error

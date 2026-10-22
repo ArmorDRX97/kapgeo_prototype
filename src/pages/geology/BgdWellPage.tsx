@@ -1,3 +1,4 @@
+import { bgdFieldWell } from '../../features/geobase/model/bgdField'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { WellEditorPage } from './NewWellPage'
 import type { BgdWellSection } from '../../features/geobase/model/bgdWellSection'
@@ -32,6 +33,6 @@ export function BgdWellPage() {
     onViewChange={(view) => void navigate({ search: { ...search, view }, resetScroll: false })}
     onTabChange={(tab: BgdWellSection) => void navigate({ search: { tab: tab === 'description' ? undefined : tab }, resetScroll: false })}
     onCancel={() => void navigate({ to: '/geology/bgd/$depositId', params: { depositId } })}
-    onSaved={(well) => void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId: well.id }, search, replace: true, resetScroll: false })}
+    onSaved={(well) => void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId: bgdFieldWell(wellId) ? wellId : well.id }, search, replace: true, resetScroll: false })}
   />
 }

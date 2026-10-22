@@ -17,6 +17,16 @@ describe('independent map repository', () => {
     expect(() => mapRepository.save({ ...locked!, locked: false }, geo)).toThrow('Нет разрешения')
     expect(() => mapRepository.save(p!, viewer)).toThrow('Нет разрешения')
   })
+  it('stores only field edits and leaves the section scene unchanged', async () => {
+    const { fieldSectionScene } = await import('../../entities/geology-map/fieldScene')
+    const p = (await mapRepository.list())[0]!, profile = p.objects.find(o => o.kind === 'profile')!
+    mapRepository.save({ ...p, objects: p.objects.map(o => o.id === profile.id ? { ...o, name: 'Новый профиль' } : o) }, geo)
+    const raw = localStorage.getItem('kapgeo.geology.field-layout.v2')!
+    expect(raw.length).toBeLessThan(20000)
+    expect(JSON.parse(raw).objects).toHaveLength(1)
+    expect((await mapRepository.list())[0]!.objects.find(o => o.id === profile.id)!.name).toBe('Новый профиль')
+    expect(fieldSectionScene().objects.find(o => o.id === profile.id)!.name).toBe(profile.name)
+  })
   it('rejects stale saves and deletes without overwriting another window', async () => {
     const p = (await mapRepository.list())[0]!, saved = mapRepository.save(p, geo)
     expect(() => mapRepository.save({ ...p, title: 'stale' }, geo)).toThrow('другом окне')
@@ -36,7 +46,7 @@ describe('independent map repository', () => {
     const p = (await mapRepository.list())[0]!, a = p.objects.find(o => o.kind === 'well')!, b = p.objects.filter(o => o.kind === 'well')[1]!
     expect(() => mapRepository.save({ ...p, objects: p.objects.map(o => o.id === b.id ? { ...o, name: a.name } : o) }, geo)).toThrow('Номер скважины')
     const created = mapRepository.save(emptyMap('new', 'New plan'), geo); mapRepository.remove(created, geo)
-    expect((await mapRepository.list()).map(p => p.id)).toEqual(['MAP-01', 'MAP-02', 'MAP-03'])
+    expect((await mapRepository.list()).map(p => p.id)).toEqual(['MAP-FIELD', 'MAP-01', 'MAP-02', 'MAP-03'])
   })
   it('rejects source well movement/deletion while allowing an explicit type change',async()=>{
     const p=(await mapRepository.list())[0]!,well=p.objects.find(o=>o.kind==='well')!

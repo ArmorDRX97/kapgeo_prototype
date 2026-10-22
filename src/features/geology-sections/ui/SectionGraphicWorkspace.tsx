@@ -14,7 +14,7 @@ export function PlotToolbar({ children, state }: { children: ReactNode; state?: 
   return target ? createPortal(<div className="section-camera-controls">{children}</div>, target) : null
 }
 const viewHints: Partial<Record<SectionView, string>> = {
-  map: 'Выберите сегмент на карте, чтобы настроить его положение и скважины.',
+  map: 'Выберите профиль или скважину. Для изменения сегмента откройте редактор текущего разреза.',
   technology: 'Соединяйте интервалы соседних скважин и уточняйте границы горизонта.',
   lithology: 'Выберите область на разрезе или создайте новую литологическую границу.',
   ore: 'Сопоставляйте рудные интервалы и редактируйте контуры рудных тел.',
@@ -54,10 +54,10 @@ export function SectionGraphicWorkspace({ title, view, children }: { title: stri
   useEffect(() => { content.current?.querySelectorAll('[data-tool-body]').forEach(node => { node.scrollTop = 0 }) }, [title])
   const groups = [{ id: 'objects' as ToolId, label: 'Работа с объектами', icon: MousePointer2 }, { id: 'display' as ToolId, label: 'Отображение', icon: Eye }, { id: 'coordinates' as ToolId, label: view === 'drawing' ? 'Состав чертежа' : 'Координаты точек', icon: ScanLine }]
   return <PlotToolbarContext.Provider value={camera}><PlotSurfaceContext.Provider value={surface}><ToolContext.Provider value={{ targets: { display, coordinates, footer }, help, reveal: setActive }}>
-    <div className={`section-graphic-workspace${open ? '' : ' is-tools-collapsed'}`}>
+    <div className={`section-graphic-workspace${view === 'map' ? ' section-graphic-workspace--map' : ''}${open ? '' : ' is-tools-collapsed'}`}>
       <div className="section-graph-center">
-        <header className="section-graph-center__header"><div className="section-graph-heading"><h2>{title}</h2>{view && <p>{viewHints[view]}</p>}</div><div className="section-graph-center__actions"><Button variant="quiet" size="sm" onClick={() => setHelpOpen(true)} aria-haspopup="dialog"><Info size={17} />Как работать</Button><Button variant="quiet" size="sm" aria-expanded={open} aria-controls="section-graphic-tools" onClick={() => setOpen(!open)}>{open ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}{open ? 'Скрыть инструменты' : 'Показать инструменты'}</Button></div></header>
-        <div className="section-graph-camera" ref={setCamera} aria-label="Управление видом" />
+        <header className="section-graph-center__header"><div className="section-graph-heading"><h2>{title}</h2>{view && <p>{viewHints[view]}</p>}</div>{view === 'map' && <div className="section-graph-camera" ref={setCamera} aria-label="Управление видом" />}<div className="section-graph-center__actions"><Button variant="quiet" size="sm" onClick={() => setHelpOpen(true)} aria-haspopup="dialog"><Info size={17} />Как работать</Button><Button variant="quiet" size="sm" aria-expanded={open} aria-controls="section-graphic-tools" onClick={() => setOpen(!open)}>{open ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}{open ? 'Скрыть инструменты' : 'Показать инструменты'}</Button></div></header>
+        {view !== 'map' && <div className="section-graph-camera" ref={setCamera} aria-label="Управление видом" />}
         <div className="section-graph-stage" ref={setSurface}><p className="section-graph-empty">Выберите или создайте объект в панели инструментов.</p></div>
       </div>
       <aside id="section-graphic-tools" className="section-graphic-tools" aria-label="Инструменты разреза" hidden={!open}>

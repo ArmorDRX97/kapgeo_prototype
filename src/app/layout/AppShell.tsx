@@ -19,9 +19,12 @@ import { fetchPlatformPreferences, fetchWells } from '../../repository/api'
 import { GeologyNavigator } from './GeologyNavigator'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { ModuleNavigation } from './ModuleNavigation'
+import { bgdFieldWells } from '../../features/geobase/model/bgdField'
+import { useUiLocale } from '../../shared/lib/useUiLocale'
 import { BrandMark } from '../../shared/ui/BrandMark'
 
 export function AppShell({ children }: PropsWithChildren) {
+  const locale = useUiLocale()
   const { persona, signOut } = useSession()
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
@@ -59,17 +62,19 @@ export function AppShell({ children }: PropsWithChildren) {
   useEffect(() => {
     const preferences = preferencesQuery.data
     if (!preferences) return
-    document.documentElement.lang = preferences.locale
+    document.documentElement.lang = locale
     document.documentElement.dataset.density = preferences.density
     document.documentElement.dataset.contrast = preferences.contrast ? 'high' : 'normal'
     document.documentElement.dataset.motion = preferences.reducedMotion ? 'reduced' : 'normal'
-  }, [preferencesQuery.data])
+  }, [preferencesQuery.data, locale])
 
   const searchResults = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase('ru')
     if (query.length < 2) return []
-    return (wellsQuery.data ?? []).filter((well) => `${well.code} ${well.type} ${well.site} ${well.profile}`.toLocaleLowerCase('ru').includes(query)).slice(0, 7)
-  }, [searchQuery, wellsQuery.data])
+    const fieldResults = isBgd ? bgdFieldWells.filter(w => `${w.name} ${w.attributes.type} ${w.site}`.toLocaleLowerCase('ru').includes(query)).slice(0, 7).map(w => ({ id: w.id, code: w.name, type: w.attributes.type, site: w.site, bgd: { depositId: pathname.match(/^\/geology\/bgd\/([^/]+)/)?.[1] ?? preferencesQuery.data?.currentDepositId ?? 'DEP-SARYTAU' } })) : []
+    const existing = (wellsQuery.data ?? []).filter((well) => `${well.code} ${well.type} ${well.site} ${well.profile}`.toLocaleLowerCase('ru').includes(query)).slice(0, 7)
+    return [...fieldResults, ...existing].slice(0, 7)
+  }, [searchQuery, wellsQuery.data, isBgd, pathname, preferencesQuery.data?.currentDepositId])
 
   const openWell = (wellId: string, depositId: string) => {
     setSearchOpen(false)

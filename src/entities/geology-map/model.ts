@@ -22,9 +22,9 @@ export type MapObject = z.infer<typeof objectSchema>
 export const projectSchema = z.object({
   schemaVersion: z.literal(1), id: z.string().min(1), title: z.string().trim().min(1).max(120), deposit: z.literal('Полигон Северный'), lens: z.string().max(60), date: z.string(), author: z.string().max(120), description: z.string().max(2000),
   scope: z.literal('north'), locked: z.boolean(), revision: z.number().int().min(0),
-  sceneVersion: z.literal(2).optional(), migrationNote: z.string().max(500).optional(), grid: gridSchema.optional(),
+  sceneVersion: z.literal(2).optional(), fieldVersion: z.union([z.literal(1), z.literal(2)]).optional(), migrationNote: z.string().max(500).optional(), grid: gridSchema.optional(),
   layers: z.array(z.object({ id: z.string().min(1), parentId: z.string().nullable(), name: z.string().trim().min(1).max(120), visible: z.boolean(), locked: z.boolean() })).max(100),
-  objects: z.array(objectSchema).max(5000),
+  objects: z.array(objectSchema).max(20000),
   underlay: z.object({ key: z.string(), name: z.string(), x: z.number().finite(), y: z.number().finite(), width: z.number().positive().max(1e6), height: z.number().positive().max(1e6), angle: z.number().finite(), opacity: z.number().min(0).max(1), visible: z.boolean() }).nullable(),
   print: z.object({ paper: z.enum(['A4', 'A3', 'A2', 'A1', 'A0']), landscape: z.boolean(), scale: z.number().min(100).max(100000) }),
 }).superRefine((p, ctx) => {
@@ -35,19 +35,20 @@ export const projectSchema = z.object({
     while (parent) { if (visited.has(parent) || !p.layers.some(l => l.id === parent)) { ctx.addIssue({ code: 'custom', message: 'Неверное дерево слоёв.' }); break }; visited.add(parent); parent = p.layers.find(l => l.id === parent)!.parentId }
   }
   const names = new Set<string>()
+  const wellsById = new Map(p.objects.filter(o => o.kind === 'well').map(o => [o.id, o]))
   for (const o of p.objects) {
     if (!p.layers.some(l => l.id === o.layerId)) ctx.addIssue({ code: 'custom', message: 'Объект без слоя.' })
     const problem = objectIssues(o)
     for (const message of problem) ctx.addIssue({ code: 'custom', message: `${o.name}: ${message}` })
     if (o.kind === 'well') { const name = o.name.toLocaleLowerCase(); if (names.has(name)) ctx.addIssue({ code: 'custom', message: 'Номер скважины уже существует.' }); names.add(name) }
     for (const node of o.parts.flatMap(part => part.nodes)) if (node.anchor) {
-      const well = p.objects.find(w => w.id === node.anchor!.wellId && w.kind === 'well')
+      const well = wellsById.get(node.anchor.wellId)
       const target = well?.parts[0]?.nodes[node.anchor.target === 'collar' ? 0 : 1]
       if (!target || o.kind === 'well' || Math.hypot(node.x - target.x, node.y - target.y) > .001) ctx.addIssue({ code: 'custom', message: 'Привязка точки не соответствует скважине.' })
     }
     if (o.segmentWells) {
       const keys = new Set(o.parts.flatMap(part => part.nodes.slice(1).map((node, i) => `${part.nodes[i]!.id}:${node.id}`)))
-      for (const [key, ids] of Object.entries(o.segmentWells)) if (!keys.has(key) || new Set(ids).size !== ids.length || ids.some(id => !p.objects.some(w => w.id === id && w.kind === 'well'))) ctx.addIssue({ code: 'custom', message: 'Проверьте состав скважин сегмента.' })
+      for (const [key, ids] of Object.entries(o.segmentWells)) if (!keys.has(key) || new Set(ids).size !== ids.length || ids.some(id => !wellsById.has(id))) ctx.addIssue({ code: 'custom', message: 'Проверьте состав скважин сегмента.' })
     }
   }
 })

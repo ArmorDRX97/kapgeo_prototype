@@ -1,6 +1,7 @@
 import { Check, ChevronDown, Languages } from 'lucide-react'
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react'
 import './language-switcher.css'
+import { setUiLocale, useUiLocale } from '../../shared/lib/useUiLocale'
 
 const languages = [
   { code: 'ru', label: 'Русский', nativeName: 'Русский' },
@@ -17,6 +18,7 @@ function LanguageFlag({ code }: { code: typeof languages[number]['code'] }) {
 }
 
 export function LanguageSwitcher() {
+  const locale = useUiLocale(), selectedLanguage = languages.find(l => l.code === locale)!
   const [open, setOpen] = useState(false)
   const id = useId()
   const rootRef = useRef<HTMLDivElement>(null)
@@ -48,7 +50,7 @@ export function LanguageSwitcher() {
   return <div className="language-switcher" ref={rootRef} onBlur={(event) => {
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false)
   }}>
-    <button ref={triggerRef} className="language-switcher__trigger" type="button" aria-label="Язык интерфейса: Русский" title="Язык интерфейса: Русский"
+    <button ref={triggerRef} className="language-switcher__trigger" type="button" aria-label={`Язык интерфейса: ${selectedLanguage.label}`} title={`Язык интерфейса: ${selectedLanguage.label}`}
       aria-haspopup="menu" aria-expanded={open} aria-controls={open ? id : undefined}
       onClick={() => { initialFocus.current = 0; setOpen((value) => !value) }}
       onKeyDown={(event) => {
@@ -56,14 +58,14 @@ export function LanguageSwitcher() {
           event.preventDefault(); initialFocus.current = event.key === 'ArrowUp' ? languages.length - 1 : 0; setOpen(true)
         }
       }}>
-      <Languages size={19} aria-hidden="true" /><span>Русский</span><ChevronDown className="language-switcher__chevron" size={14} aria-hidden="true" />
+      <Languages size={19} aria-hidden="true" /><span>{selectedLanguage.nativeName}</span><ChevronDown className="language-switcher__chevron" size={14} aria-hidden="true" />
     </button>
     {open && <div id={id} className="language-switcher__menu" role="menu" aria-label="Язык интерфейса" onKeyDown={onMenuKeyDown}>
       <p className="language-switcher__heading">Язык интерфейса</p>
       {languages.map((language, index) => <button key={language.code} ref={(element) => { itemRefs.current[index] = element }}
-        type="button" role="menuitemradio" aria-label={language.label} aria-checked={language.code === 'ru'} tabIndex={-1} onClick={closeAndFocus}>
+        type="button" role="menuitemradio" aria-label={language.label} aria-checked={language.code === locale} tabIndex={-1} onClick={() => { setUiLocale(language.code); closeAndFocus() }}>
         <LanguageFlag code={language.code} /><span className="language-switcher__label"><strong>{language.label}</strong>{language.code !== 'ru' && <small lang={language.code}>{language.nativeName}</small>}</span>
-        {language.code === 'ru' && <Check size={17} aria-hidden="true" />}
+        {language.code === locale && <Check size={17} aria-hidden="true" />}
       </button>)}
     </div>}
   </div>

@@ -1,0 +1,34 @@
+.map-canvas-area { flex:1; min-height:300px; display:flex; flex-direction:column; min-width:0; }
+.map-canvas-wrap { flex:1; min-height:280px; overflow:hidden; touch-action:none; cursor:default; user-select:none; }
+.map-canvas-wrap.is-panning { cursor:grabbing; }
+.map-canvas-wrap svg { display:block; }
+.map-sheet { fill:var(--surface-panel); }
+.map-grid path { fill:none; stroke:var(--border-default); stroke-width:.6; }
+.map-frame { fill:none; stroke:var(--border-strong); stroke-width:1; pointer-events:none; }
+.map-axis-labels { font-size:11px; fill:var(--text-secondary); pointer-events:none; }
+.map-well-label { fill:var(--color-violet-600); font-size:10px; paint-order:stroke; stroke:var(--surface-panel); stroke-width:2px; }
+.map-value-label { fill:var(--text-secondary); font-size:9px; }
+.map-profile-label { fill:var(--text-secondary); font-size:11px; paint-order:stroke; stroke:var(--surface-panel); stroke-width:3px; }
+.map-object.is-selected { filter:drop-shadow(0 0 2px var(--color-brand-300)); }
+.map-control-line { fill:none; stroke:var(--color-blue-500); stroke-width:1; stroke-dasharray:4 3; }
+.map-node { cursor:move; }
+.map-node-dot { fill:var(--surface-panel); stroke:var(--color-blue-600); stroke-width:1.5; }
+.map-measure { fill:var(--color-blue-600); stroke:var(--color-blue-600); }
+.map-measure path { fill:none; stroke-width:2; stroke-dasharray:5 3; }
+.map-measure text { stroke:none; font-size:12px; paint-order:stroke; }
+.map-ruler rect { fill:var(--surface-panel); fill-opacity:.9; }
+.map-ruler path { fill:none; stroke:var(--text-primary); stroke-width:1.5; }
+.map-ruler text { font-size:11px; fill:var(--text-primary); }
+.map-canvas-status { display:flex; justify-content:space-between; gap:var(--space-2); padding:var(--space-1) var(--space-3); background:var(--surface-panel); border-top:1px solid var(--border-default); font-size:var(--font-size-sm); color:var(--text-secondary); }
+.map-canvas-status span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.map-node-dot.is-bound { fill:var(--color-brand-600); stroke:var(--surface-panel); }
+.map-snap-hint circle { fill:none; stroke:var(--color-brand-600); stroke-width:2; }
+.map-snap-hint text { font-size:11px; fill:var(--color-brand-700); paint-order:stroke; stroke:var(--surface-panel); stroke-width:3; stroke-linejoin:round; }
+.map-canvas-area { padding: 12px 12px 0; background: var(--surface-subtle); }
+.map-canvas-wrap { border: 1px solid var(--border-default); border-radius: 10px; background: var(--surface-panel); }
+.map-canvas-status { flex: none; min-height: 32px; padding: 8px 0; border-top: 0; background: transparent; font-size: 11px; }
+.map-canvas-wrap:is([data-tool=draw], [data-tool=measure], [data-tool=add], [data-tool=delete]), .map-canvas-wrap[data-tool=delete] .map-node { cursor: crosshair; }
+.map-canvas-wrap:is([data-tool=move], [data-tool=label]) { cursor: move; }
+.map-canvas-wrap.is-panning { cursor: grabbing; }
+
+.map-canvas-wrap.is-well-hovered:not(.is-panning) { cursor: pointer; }

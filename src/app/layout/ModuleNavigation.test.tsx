@@ -67,11 +67,17 @@ describe('module dropdown navigation', () => {
     fireEvent.click(items.at(-1)!); expect(screen.getByRole('status')).toHaveTextContent('Раздел «AI» пока не подключён.')
   })
   it('restores an independent map project and selection after leaving geology', () => {
-    state.location = { pathname: '/geology/plans/MAP-01', search: { selection: 'well-49' } }
+    state.location = { pathname: '/geology/plans/MAP-FIELD', search: { selection: 'field-well-1' } }
     const view = render(<ModuleNavigation persona={persona} />)
     state.location = { pathname: '/analytics', search: {} }; view.rerender(<ModuleNavigation persona={persona} />)
     fireEvent.click(screen.getByRole('button', { name: 'Геология' }))
-    expect(screen.getByRole('menuitem', { name: 'Интерактивный план месторождения' })).toHaveAttribute('href', '/geology/plans/MAP-01?selection=well-49')
+    expect(screen.getByRole('menuitem', { name: 'Интерактивный план месторождения' })).toHaveAttribute('href', '/geology/plans/MAP-FIELD?selection=field-well-1')
+  })
+  it('opens the full deposit instead of an old remembered small plan', () => {
+    sessionStorage.setItem('kapgeo.geology.plan-navigation.v1', JSON.stringify({ id: 'MAP-01', search: { selection: 'well-49' } }))
+    render(<ModuleNavigation persona={persona} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Геология' }))
+    expect(screen.getByRole('menuitem', { name: 'Интерактивный план месторождения' })).toHaveAttribute('href', '/geology/plans')
   })
   it('keeps the passport well selection on return from another module', () => {
     state.location = { pathname: '/geology/passports', search: { well: 'PS-301' } }

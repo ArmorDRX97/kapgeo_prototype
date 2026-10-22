@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initialSections } from '../../../entities/geology-section/model/fixtures'
 import { referenceSection } from '../../../entities/geology-section/model/referenceSection'
@@ -23,6 +23,29 @@ const point = (x: number, y: number) => {
   fireEvent.pointerUp(map, { button: 0 })
 }
 describe('profile map gestures', () => {
+  it('keeps coordinate rulers at the viewport edges on wide and tall maps without stretching geometry', () => {
+    let resize = () => {}
+    vi.stubGlobal('ResizeObserver', class { constructor(callback: () => void) { resize = callback } observe() {} disconnect() {} })
+    const { container } = render(<ProfileMap section={referenceSection()} disabled onChange={vi.fn()} onPending={vi.fn()} />)
+    const map = screen.getByRole('group', { name: 'Карта скважин и линий сегмента' }), viewport = map.parentElement!
+    for (const [viewportWidth, viewportHeight] of [[1200, 400], [400, 800]]) {
+      Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: viewportWidth })
+      Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: viewportHeight })
+      act(() => resize())
+      const [x, y, width, height] = map.getAttribute('viewBox')!.split(' ').map(Number) as [number, number, number, number]
+      expect(width / height).toBeCloseTo(viewportWidth! / viewportHeight!)
+      const xLabels = [...container.querySelectorAll('[data-map-axis="x"]')], yLabels = [...container.querySelectorAll('[data-map-axis="y"]')]
+      expect(xLabels.length).toBeGreaterThan(0); expect(yLabels.length).toBeGreaterThan(0)
+      for (const label of yLabels) expect((Number(label.getAttribute('x')) - x) / width * viewportWidth!).toBeCloseTo(8)
+      for (const label of xLabels) expect((y + height - Number(label.getAttribute('y'))) / height * viewportHeight!).toBeCloseTo(8)
+      fireEvent.keyDown(map, { key: 'ArrowRight' })
+      fireEvent.click(screen.getByRole('button', { name: 'Приблизить' }))
+      const [nextX, nextY, nextWidth, nextHeight] = map.getAttribute('viewBox')!.split(' ').map(Number) as [number, number, number, number]
+      expect(nextWidth / nextHeight).toBeCloseTo(viewportWidth! / viewportHeight!)
+      expect((Number(container.querySelector('[data-map-axis="y"]')!.getAttribute('x')) - nextX) / nextWidth * viewportWidth!).toBeCloseTo(8)
+      expect((nextY + nextHeight - Number(container.querySelector('[data-map-axis="x"]')!.getAttribute('y'))) / nextHeight * viewportHeight!).toBeCloseTo(8)
+    }
+  })
   it('centers the reference extent and keeps coordinate labels within the camera while panning and zooming', () => {
     const section = { ...initialSections()[0]!, demoPreset: 'video-reference-v1' as const, profile: [{ x: 0, y: 0 }, { x: 350, y: 0 }] }, change = vi.fn()
     const { container } = render(<ProfileMap section={section} disabled onChange={change} onPending={vi.fn()} />)

@@ -5,6 +5,7 @@ import { defaultPersona } from '../../entities/session/model/personas'
 import type { UserPersona } from '../../entities/session/model/types'
 import { SessionContext } from '../../entities/session/model/sessionContext'
 import { demoDatabase } from '../../repository/demo/demoDatabase'
+import { bgdFieldWells } from '../../features/geobase/model/bgdField'
 import { primaryWell } from '../../repository/data/wells'
 import { GeologyNavigator } from './GeologyNavigator'
 
@@ -23,6 +24,8 @@ describe('BGD deposit navigation', () => {
 
   it('marks only the selected well and groups actions above the full-width search', async () => {
     mount()
+    await screen.findByRole('button', { name: 'Открыть месторождение Сарытау' })
+    fireEvent.change(screen.getByLabelText('Поиск по скважинам'), { target: { value: '1010' } })
     const well = await screen.findByRole('button', { name: /^WELL-1010/ })
     expect(well).toHaveTextContent(/^WELL-1010$/)
     expect(well.querySelector('svg, i')).toBeNull()
@@ -53,10 +56,10 @@ describe('BGD deposit navigation', () => {
     expect(screen.getByRole('complementary', { name: 'Навигация модуля БГД' })).not.toContainElement(dialog)
     const select = screen.getByRole('combobox', { name: 'Статус скважины' })
     fireEvent.change(select, { target: { value: 'Требует внимания' } })
-    expect(await screen.findByRole('button', { name: /^WELL-1042$/ })).toBeInTheDocument()
+    expect(await screen.findByText(bgdFieldWells.find(w => w.status === 'Требует внимания')!.name)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^WELL-1010$/ })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить фильтры' }))
-    expect(await screen.findByRole('button', { name: /^WELL-1010$/ })).toBeInTheDocument()
+    expect(await screen.findByText(bgdFieldWells[0]!.name)).toBeInTheDocument()
     expect(select).toHaveValue('all')
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -77,6 +80,8 @@ describe('BGD deposit navigation', () => {
 
   it('preserves the selected well section and view', async () => {
     mount()
+    await screen.findByRole('button', { name: 'Открыть месторождение Сарытау' })
+    fireEvent.change(screen.getByLabelText('Поиск по скважинам'), { target: { value: '1010' } })
     fireEvent.click(await screen.findByRole('button', { name: /^WELL-1010/ }))
     expect(route.navigate).toHaveBeenLastCalledWith({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId: 'DEP-SARYTAU', wellId: primaryWell.id }, search: { tab: 'lithology', view: 'composite' }, resetScroll: false })
   })
@@ -87,5 +92,15 @@ describe('BGD deposit navigation', () => {
     expect(screen.queryByRole('button', { name: 'Редактировать' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('Поиск по скважинам')).toBeEnabled()
     expect(screen.queryByRole('button', { name: 'Добавить скважину' })).not.toBeInTheDocument()
+  })
+  it('loads the catalogue in batches of 80 and searches beyond the loaded batch', async () => {
+    mount()
+    await screen.findByRole('button', { name: 'Открыть месторождение Сарытау' })
+    expect(document.querySelectorAll('.bgd-well-type-dot')).toHaveLength(80)
+    fireEvent.click(screen.getByRole('button', { name: 'Показать ещё 80' }))
+    expect(document.querySelectorAll('.bgd-well-type-dot')).toHaveLength(160)
+    fireEvent.change(screen.getByLabelText('Поиск по скважинам'), { target: { value: bgdFieldWells[8000]!.name } })
+    expect(await screen.findByText(bgdFieldWells[8000]!.name)).toBeInTheDocument()
+    expect(document.querySelectorAll('.bgd-well-type-dot').length).toBeLessThan(80)
   })
 })

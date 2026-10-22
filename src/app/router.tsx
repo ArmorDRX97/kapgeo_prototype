@@ -62,7 +62,11 @@ const interpretationRoute = createRoute({ getParentRoute: () => rootRoute, path:
 const alphaInterpretationRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/interpretation/$method', validateSearch: validateAlphaSearch, component: AlphaInterpretationPage })
 const sectionsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/sections', component: SectionsPage })
 const sectionRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/sections/$sectionId', validateSearch: validateSectionSearch, component: SectionsPage })
-const plansRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/plans', component: PlansPage })
+const plansRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/plans', beforeLoad: async () => {
+  let first: string | undefined
+  try { first = (await mapRepository.list())[0]?.id } catch { /* The page owns storage recovery. */ }
+  if (first) throw redirect({ to: '/geology/plans/$projectId', params: { projectId: first }, search: {}, replace: true })
+}, component: PlansPage })
 const passportsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/passports', validateSearch: validatePassportSearch, component: WellPassportsPage })
 const planRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/plans/$projectId', validateSearch: validatePlanSearch, component: PlansPage })
 const geoBaseRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd', component: GeoBasePage })

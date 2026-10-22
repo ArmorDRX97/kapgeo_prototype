@@ -1,0 +1,4 @@
+.topo-attribution > div { width: fit-content; max-width: 100%; margin-left: auto; padding: 3px 5px; border-radius: 3px; background: rgb(255 255 255 / .92); color: #354554; font: 10px/16px "Segoe UI", sans-serif; }
+.topo-attribution a { color: #245580; text-decoration: underline; }
+.topo-load-error { display: flex; gap: 8px; align-items: center; padding: 6px 8px; border: 1px solid var(--border-default); border-radius: 5px; background: var(--surface-panel); color: var(--text-secondary); font: 11px/16px "Segoe UI", sans-serif; }
+.topo-load-error button { border: 0; background: transparent; color: var(--color-brand-700); padding: 0; cursor: pointer; font: inherit; }

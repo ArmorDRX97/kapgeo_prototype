@@ -1,3 +1,4 @@
+import { BGD_TEMPLATE_WELL_ID, bgdFieldWell } from '../../features/geobase/model/bgdField'
 import { useBlocker } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Calculator, CircleAlert, Plus, ShieldCheck, Trash2 } from 'lucide-react'
@@ -55,7 +56,8 @@ function numberValue(value: string): number | null {
 
 export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: controlledActiveTab, activeView: controlledView, onViewChange, onTabChange, onCancel, onSaved }: { depositId?: string; wellId?: string; activeTab?: BgdWellSection; activeView?: string; onViewChange?: (view: string) => void; onTabChange?: (tab: BgdWellSection) => void; onCancel: () => void; onSaved: (well: Well) => void }) {
   const [createdWellId, setCreatedWellId] = useState<string>()
-  const wellId = requestedWellId ?? createdWellId
+  const fieldWell = bgdFieldWell(requestedWellId)
+  const wellId = fieldWell ? BGD_TEMPLATE_WELL_ID : requestedWellId ?? createdWellId
   const { persona } = useSession()
   const queryClient = useQueryClient()
   const masterQuery = useQuery({ queryKey: ['geology-master'], queryFn: fetchGeologicalMasterData })
@@ -220,7 +222,7 @@ export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: 
 
   </>
 
-  return <UnsavedChangesContext.Provider value={guardContext}><div className="bgd-well-workbench"><BgdWellNavigation section={activeTab} onChange={setActiveTab} wellCode={editing ? `WELL-${form.code}` : 'Новая скважина'} /><div className="page-stack geobase-page bgd-well-page">
+  return <UnsavedChangesContext.Provider value={guardContext}><div className="bgd-well-workbench"><BgdWellNavigation section={activeTab} onChange={setActiveTab} wellCode={editing ? fieldWell?.name ?? `WELL-${form.code}` : 'Новая скважина'} /><div className="page-stack geobase-page bgd-well-page">
     {!canSave && <div className="form-alert"><ShieldCheck size={17} /><span>Карточка открыта только для чтения. Доступные поля определяются назначенными правами.</span></div>}
     {editing && !canEditAll && canSave && <div className="form-alert"><ShieldCheck size={17} /><span>{activeTab === 'lithology' ? 'Литология доступна для просмотра. Изменение интервалов требует права полного редактирования скважины.' : activeTab === 'ore-intervals' && canManageGeophysicalOreIntervals ? 'Доступно управление выделениями по гамма-каротажу и КНД. Керн и паспортные источники — только чтение.' : activeTab === 'deviation' && canManageDeviation ? canAdministerDeviation ? 'Доступны промеры, расчёт, удаление, выбор основного промера и импорт инклинометрии.' : 'Доступны ввод, редактирование, расчёт, удаление и выбор основного промера. Импорт требует расширенного права.' : canEditTechnology ? 'Доступно изменение типа, состояния и показателей освоения. Остальные поля — только чтение.' : activeTab === 'logs' && canManageLogs ? 'Доступно управление каротажами этой скважины. Паспортные и геологические поля — только чтение.' : activeTab === 'core-runs' && canManageCoreMeasurements ? 'Доступно управление промером внутри выбранного рейса. Сами рейсы и пробы — только чтение.' : 'Доступно изменение глубины по каротажу. Остальные поля — только чтение.'}</span></div>}
     {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span><strong>Проверьте форму</strong>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}

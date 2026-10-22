@@ -535,3 +535,51 @@
 .section-create-fields .section-search { margin: 0; }
 .section-create-fields :is(input, select) { min-width: 0; width: 100%; height: 40px; padding-inline: 10px; border: 1px solid var(--border-default); border-radius: 7px; background: var(--surface-panel); color: var(--text-primary); font-size: 13px; }
 @media (max-width: 600px) { .section-document-empty > div { padding: 24px 16px; } .section-document-empty__steps { grid-template-columns: minmax(0, 1fr); } }
+.section-map-mode { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.section-field-context { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 4px 0 10px; font-size: 12px; color: var(--text-secondary); }
+.section-field-context small { margin-left: auto; color: var(--text-tertiary); }
+.section-field-map { flex: 1; min-height: 320px; display: flex; min-width: 0; }
+.section-field-map .map-canvas-area { padding: 0; }
+.section-field-map .map-canvas-wrap { min-height: 280px; }
+.section-field-members { margin: 18px 0; padding-top: 14px; border-top: 1px solid var(--border-default); font-size: 12px; }
+.section-field-members ul { list-style: none; padding: 0; max-height: 200px; overflow: auto; }
+.section-field-members button { border: 0; background: transparent; color: var(--color-brand-600); padding: 5px 0; font: inherit; cursor: pointer; }
+.section-field-selection { border: 1px solid var(--color-brand-200); background: var(--color-brand-50); border-radius: 8px; padding: 12px; font-size: 12px; }
+.section-field-selection dl { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
+.section-field-selection dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.section-plot-surface > .well-type-filters { border: 1px solid var(--border-default); border-radius: 7px; margin-top: 8px; }
+
+/* Compact section workspace; the field map shares the plan's top type filters. */
+.section-layout { --section-registry-width: 208px; --section-tools-width: 280px; }
+.section-registry { padding: 8px; gap: 6px; }
+.section-registry > header { min-height: 36px; }
+.section-registry nav a { min-height: 46px; padding: 6px 8px; }
+.section-area-navigation:not(.is-collapsed) { grid-template-columns: 160px minmax(0, 1fr); }
+.section-area-navigation__nav { padding: 8px; }
+.section-area-navigation__group button { min-height: 36px; padding: 6px; font-size: 12px; gap: 6px; }
+.section-workbench > .section-workbench__header { min-height: 54px; padding: 6px 12px; }
+.section-workbench__header .section-icon-tool { width: 32px; min-width: 32px; height: 32px; }
+.section-graphic-tools > header { padding: 8px 10px; }
+.section-tools-group > h3 > button { min-height: 38px; padding: 7px 10px; }
+.section-tools-group__body { padding: 12px 10px; }
+.section-graphic-workspace--map .section-graph-center__header { min-height: 42px; padding: 4px 8px; align-items: center; }
+.section-graphic-workspace--map .section-graph-heading p { display: none; }
+.section-graphic-workspace--map .section-graph-camera { min-height: 32px; padding: 0; border: 0; }
+.section-graphic-workspace--map .section-graph-center__actions { margin-left: auto; width: auto; }
+.section-graphic-workspace--map .section-graph-stage { padding: 6px 8px 0; }
+.section-graphic-workspace--map .section-plot-surface > .well-type-filters--compact { padding: 5px 0 6px; margin: 0 0 6px; border: 0; border-bottom: 1px solid var(--border-default); border-radius: 0; }
+.section-field-map .map-canvas-wrap { border-radius: 6px; }
+.section-field-map .map-canvas-status { min-height: 22px; padding: 4px 0; font-size: 10px; }
+.section-field-search .map-find { padding: 0; margin: 8px 0 12px; border: 0; }
+.section-field-search .map-find-results { left: 0; right: 0; }
+.section-field-inspector .section-search { margin-bottom: 10px; }
+.section-field-inspector .section-search select { height: 34px; min-height: 34px; font-size: 12px; }
+.section-map-mode { margin-bottom: 12px; }
+.section-field-members { margin: 12px 0; padding-top: 10px; }
+.section-field-members ul { max-height: 160px; }
+@media (max-width: 1200px) { .section-layout { --section-registry-width: 196px; --section-tools-width: 260px; } }
+@media (max-width: 1050px) { .section-area-navigation:not(.is-collapsed) { display: block; } }
+
+.section-field-search .map-find .map-find-input input { min-height: 0 !important; height: auto; background: transparent !important; }
+
+@media (max-width: 1050px) { .section-workbench--graph .section-area-navigation { display: flex; flex-direction: column; } .section-workbench--graph .section-area-navigation__nav { flex: none; } }

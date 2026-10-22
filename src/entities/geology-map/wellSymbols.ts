@@ -1,10 +1,10 @@
 /** Preliminary prototype legend; no numeric suffix is interpreted as a type. */
 export const wellTypes = [
-  { name: 'Откачная', color: '#214b3c' },
-  { name: 'Закачная', color: '#b69a25' },
-  { name: 'Наблюдательная', color: '#435b9d' },
-  { name: 'Разведочная', color: '#3a979b' },
-  { name: 'Проектная', color: '#7b728c' },
+  { name: 'Откачная', color: '#23705b' },
+  { name: 'Закачная', color: '#b78c12' },
+  { name: 'Наблюдательная', color: '#5365b5' },
+  { name: 'Разведочная', color: '#168fa2' },
+  { name: 'Проектная', color: '#9371ab' },
 ] as const
 export function wellSymbol(type: string) { return wellTypes.find(t => t.name === type) ?? { name: type || 'Тип не указан', color: '#697781' } }
 /** Line follows real collar → bottom coordinates; the cross belongs inside the collar. */

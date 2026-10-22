@@ -7,6 +7,7 @@ import { demoDatabase } from '../../repository/demo/demoDatabase'
 import { primaryWell } from '../../repository/data/wells'
 import { fetchWell } from '../../repository/api'
 import { WellEditorPage } from './NewWellPage'
+import { bgdFieldWells } from '../../features/geobase/model/bgdField'
 
 const blocker = vi.fn()
 vi.mock('@tanstack/react-router', () => ({ useBlocker: (options: unknown) => blocker(options) }))
@@ -21,6 +22,16 @@ function renderWorkbench(readOnly = false, wellId?: string) {
 describe('BGD object → section → workspace', () => {
   beforeEach(async () => { await demoDatabase.reset(); blocker.mockClear() })
   afterEach(async () => { cleanup(); vi.unstubAllGlobals(); await demoDatabase.reset() })
+  it('opens the same prepared data for any field well while showing the selected name', async () => {
+    renderWorkbench(false, bgdFieldWells[0]!.id)
+    const name = await screen.findByLabelText('Название скважины *')
+    expect(name).toHaveValue(1010)
+    expect(screen.getByRole('complementary', { name: 'Разделы выбранной скважины' })).toHaveTextContent(bgdFieldWells[0]!.name)
+    cleanup()
+    renderWorkbench(false, bgdFieldWells[8000]!.id)
+    expect(await screen.findByLabelText('Название скважины *')).toHaveValue(1010)
+    expect(screen.getByRole('complementary', { name: 'Разделы выбранной скважины' })).toHaveTextContent(bgdFieldWells[8000]!.name)
+  })
 
   it('edits impermeable intervals in a compact table and persists added and removed rows', async () => {
     const onSaved = renderWorkbench(false, primaryWell.id)
