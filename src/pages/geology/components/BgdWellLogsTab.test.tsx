@@ -54,9 +54,10 @@ describe('BGD well log tables', () => {
     fireEvent.change(within(dialog).getByLabelText('Зонд'), { target: { value: 'ГК-38' } })
     fireEvent.change(within(dialog).getByLabelText('Глубина до, м *'), { target: { value: '120' } })
     fireEvent.change(within(dialog).getByLabelText('Шаг, м *'), { target: { value: '0.5' } })
-    fireEvent.change(within(dialog).getByLabelText('Диаметр прибора, см'), { target: { value: '3.8' } })
-    fireEvent.change(within(dialog).getByLabelText('Диаметр скважины, см'), { target: { value: '15.2' } })
-    const newFields = { 'Длина детектора, см': '12.5', 'Длина зонда ЭК, м': '0.6', 'Количество точек замера': '241', 'Плотность бурового раствора, г/см³': '1,12 ± 0,02', 'Вид обсадной колонны': 'ПВХ QA', 'Коэффициент': '0.87', 'Комментарий': 'QA реквизиты каротажа' }
+    const removedFields = ['Диаметр прибора, см', 'Диаметр скважины, см', 'Длина детектора, см', 'Длина зонда ЭК, м', 'Количество точек замера', 'Плотность бурового раствора, г/см³', 'Вид обсадной колонны']
+    for (const label of removedFields) expect(within(dialog).queryByLabelText(label)).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: /Диаметр|Длина детектора|Длина зонда|Количество точек|Плотность бурового|Вид обсадной/ })).not.toBeInTheDocument()
+    const newFields = { 'Множитель значения': '1.25', 'Коэффициент': '0.87', 'Комментарий': 'QA реквизиты каротажа' }
     for (const [label, value] of Object.entries(newFields)) fireEvent.change(within(dialog).getByLabelText(label), { target: { value } })
     fireEvent.click(within(dialog).getByLabelText(/Контрольный каротаж/))
     fireEvent.click(within(dialog).getByRole('button', { name: /Сохранить/ }))
@@ -64,27 +65,27 @@ describe('BGD well log tables', () => {
     await waitFor(async () => {
       const workspace = await fetchWellLogWorkspace(primaryWell.id)
       const created = workspace.runs.find((run) => run.name === 'Гамма-каротаж')
-      expect(created?.survey).toMatchObject({ isControl: true, probe: 'ГК-38', instrumentDiameterCm: 3.8, boreholeDiameterCm: 15.2 })
-      expect(created?.survey).toMatchObject({ detectorLengthCm: 12.5, ecProbeLengthM: 0.6, measurementPointCount: 241, drillingFluidDensity: '1,12 ± 0,02', casingStringType: 'ПВХ QA', coefficient: 0.87, comment: 'QA реквизиты каротажа' })
+      expect(created?.survey).toMatchObject({ isControl: true, probe: 'ГК-38', valueMultiplier: 1.25 })
+      expect(created?.survey).toMatchObject({ coefficient: 0.87, comment: 'QA реквизиты каротажа' })
       expect(created?.to).toBe(120)
       expect(created?.step).toBe(0.5)
       expect(created?.measurements?.length).toBeGreaterThan(0)
     })
     fireEvent.click(screen.getByRole('tab', { name: /Контрольные каротажи/ }))
     const row = within(screen.getByRole('table', { name: 'Контрольные каротажи скважины' })).getByText('Гамма-каротаж').closest('tr')!
-    for (const value of ['12,5', '0,6', '241', '1,12 ± 0,02', 'ПВХ QA', '0,87', 'QA реквизиты каротажа']) expect(within(row).getByText(value)).toBeInTheDocument()
+    for (const value of ['1,25', '0,87', 'QA реквизиты каротажа']) expect(within(row).getByText(value)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Изменить' }))
     const editDialog = await screen.findByRole('dialog', { name: 'Редактировать каротаж' })
-    expect(within(editDialog).getByLabelText('Количество точек замера')).toHaveValue(241)
+    expect(within(editDialog).getByLabelText('Множитель значения')).toHaveValue(1.25)
     fireEvent.change(within(editDialog).getByLabelText('Коэффициент'), { target: { value: '0' } })
-    fireEvent.change(within(editDialog).getByLabelText('Плотность бурового раствора, г/см³'), { target: { value: 'н/о' } })
+    fireEvent.change(within(editDialog).getByLabelText('Множитель значения'), { target: { value: '2.5' } })
     fireEvent.click(within(editDialog).getByRole('button', { name: /Сохранить/ }))
-    await waitFor(async () => expect((await fetchWellLogWorkspace(primaryWell.id)).runs.find((run) => run.name === 'Гамма-каротаж')?.survey).toMatchObject({ coefficient: 0, drillingFluidDensity: 'н/о', detectorLengthCm: 12.5, ecProbeLengthM: 0.6, measurementPointCount: 241, casingStringType: 'ПВХ QA' }))
+    await waitFor(async () => expect((await fetchWellLogWorkspace(primaryWell.id)).runs.find((run) => run.name === 'Гамма-каротаж')?.survey).toMatchObject({ coefficient: 0, valueMultiplier: 2.5 }))
     view.unmount()
     renderLogs()
     const savedTable = await screen.findByRole('table', { name: 'Все каротажи скважины' })
     const savedRow = within(savedTable).getByText('Гамма-каротаж').closest('tr')!
-    expect(within(savedRow).getByText('н/о')).toBeInTheDocument()
+    expect(within(savedRow).getByText('2,5')).toBeInTheDocument()
     expect(within(savedRow).getByText('0')).toBeInTheDocument()
   })
 

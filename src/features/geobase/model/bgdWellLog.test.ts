@@ -34,11 +34,9 @@ describe('validateBgdWellLogDraft', () => {
     ])
   })
 
-  it('rejects an invalid probe length and non-positive optional diameters', () => {
+  it('rejects an excessively long probe name', () => {
     expect(validateBgdWellLogDraft({ ...validDraft, probe: 'x'.repeat(256), instrumentDiameterCm: 0, boreholeDiameterCm: -1 }, 612.4)).toEqual([
       'Название зонда не должно превышать 255 символов.',
-      'Диаметр прибора должен быть больше нуля.',
-      'Диаметр скважины должен быть больше нуля.',
     ])
   })
 
@@ -51,6 +49,7 @@ describe('validateBgdWellLogDraft', () => {
       drillingFluidDensity: '1,18 г/см³',
       casingStringType: 'Обсадная колонна Ø146 мм',
       coefficient: 0,
+      valueMultiplier: 0,
     }, 612.4)).toEqual([])
   })
 
@@ -69,17 +68,16 @@ describe('validateBgdWellLogDraft', () => {
       drillingFluidDensity: '',
       casingStringType: '',
       coefficient: null,
+      valueMultiplier: null,
     })
     const runWithSurvey = { survey: { ...validDraft, drillingFluidDensity: '1,18', coefficient: 0 } } as unknown as LogRunV2
     expect(getLogSurveyMetadata(runWithSurvey)).toMatchObject({ drillingFluidDensity: '1,18', coefficient: 0 })
   })
 
-  it('rejects invalid optional lengths, counts and non-finite coefficients', () => {
-    expect(validateBgdWellLogDraft({ ...validDraft, detectorLengthCm: 0, ecProbeLengthM: -1, measurementPointCount: 1.5, coefficient: Number.POSITIVE_INFINITY }, 612.4)).toEqual([
-      'Длина детектора должна быть больше нуля.',
-      'Длина зонда ЭК должна быть больше нуля.',
-      'Количество точек измерения должно быть неотрицательным целым числом.',
+  it('rejects non-finite multipliers and coefficients', () => {
+    expect(validateBgdWellLogDraft({ ...validDraft, detectorLengthCm: 0, ecProbeLengthM: -1, measurementPointCount: 1.5, valueMultiplier: Number.NaN, coefficient: Number.POSITIVE_INFINITY }, 612.4)).toEqual([
       'Коэффициент должен быть конечным числом.',
+      'Множитель значения должен быть конечным числом.',
     ])
   })
 })

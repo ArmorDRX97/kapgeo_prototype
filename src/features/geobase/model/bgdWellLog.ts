@@ -31,6 +31,7 @@ export function getLogSurveyMetadata(run: LogRunV2): LogSurveyMetadata {
     drillingFluidDensity: '',
     casingStringType: '',
     coefficient: null,
+    valueMultiplier: null,
   }
   return { ...defaults, ...run.survey }
 }
@@ -46,11 +47,7 @@ export function validateBgdWellLogDraft(draft: BgdWellLogDraft, wellDepth: numbe
   if (draft.step <= 0) errors.push('Шаг измерения должен быть больше нуля.')
   if (!draft.curveCodes.length) errors.push('Выберите хотя бы одну измеряемую кривую.')
   if (draft.probe.length > 255) errors.push('Название зонда не должно превышать 255 символов.')
-  if (draft.instrumentDiameterCm !== null && (!Number.isFinite(draft.instrumentDiameterCm) || draft.instrumentDiameterCm <= 0)) errors.push('Диаметр прибора должен быть больше нуля.')
-  if (draft.boreholeDiameterCm !== null && (!Number.isFinite(draft.boreholeDiameterCm) || draft.boreholeDiameterCm <= 0)) errors.push('Диаметр скважины должен быть больше нуля.')
-  if (draft.detectorLengthCm != null && (!Number.isFinite(draft.detectorLengthCm) || draft.detectorLengthCm <= 0)) errors.push('Длина детектора должна быть больше нуля.')
-  if (draft.ecProbeLengthM != null && (!Number.isFinite(draft.ecProbeLengthM) || draft.ecProbeLengthM <= 0)) errors.push('Длина зонда ЭК должна быть больше нуля.')
-  if (draft.measurementPointCount != null && (!Number.isFinite(draft.measurementPointCount) || !Number.isInteger(draft.measurementPointCount) || draft.measurementPointCount < 0)) errors.push('Количество точек измерения должно быть неотрицательным целым числом.')
   if (draft.coefficient != null && !Number.isFinite(draft.coefficient)) errors.push('Коэффициент должен быть конечным числом.')
+  if (draft.valueMultiplier != null && !Number.isFinite(draft.valueMultiplier)) errors.push('Множитель значения должен быть конечным числом.')
   return errors
 }
