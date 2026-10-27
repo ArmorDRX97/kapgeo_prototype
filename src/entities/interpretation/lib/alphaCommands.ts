@@ -10,11 +10,11 @@ export type EditableAlphaKey = 'electro' | 'gamma' | 'thermal' | 'caliper' | 'ox
 export function editableRows(doc: AlphaDocument, key: EditableAlphaKey): DepthInterval[] {
   return key === 'oxidation' || key === 'sections' || key === 'projects' ? doc[key] : doc[key].rows
 }
-type ManualInterval = DepthInterval & { rock?: RockCode; kf?: number; manualKf?: boolean; morphology?: OreInterval['morphology']; kind?: 'filter' | 'bentonite'; label?: string }
+type ManualInterval = DepthInterval & { rock?: RockCode; lithologyCode?: string; geochemistryCode?: string; kf?: number; manualKf?: boolean; morphology?: OreInterval['morphology']; kind?: 'filter' | 'bentonite'; label?: string }
 function install(well: InterpretationWell, before: AlphaDocument, key: EditableAlphaKey, rows: ManualInterval[]) {
   const next = structuredClone(before)
   const plain = rows.map(({ id, from, to }) => ({ id, from, to }))
-  if (key === 'electro') next.electro.rows = rows.map((r, i) => electroMetrics(well, next, plain[i]!, r.rock, r.manualKf ? r.kf : undefined))
+  if (key === 'electro') next.electro.rows = rows.map((r, i) => ({ ...electroMetrics(well, next, plain[i]!, r.rock, r.manualKf ? r.kf : undefined), ...(r.lithologyCode !== undefined ? { lithologyCode: r.lithologyCode } : {}), ...(r.geochemistryCode !== undefined ? { geochemistryCode: r.geochemistryCode } : {}) }))
   else if (key === 'gamma') { const record = gammaCurve(well, next); next.gamma.rows = rows.map((r, i) => oreMetrics(well, next, plain[i]!, r.morphology, record)) }
   else if (key === 'caliper') next.caliper.rows = plain.map(r => { const s = integrate(sourceRecord(well, next, next.parameters.caliper.recordId, 'CAL'), r.from, r.to); return { ...r, mean: s.mean === null ? null : rounded(s.mean), minimum: s.minimum === null ? null : rounded(s.minimum) } })
   else if (key === 'thermal') next.thermal.rows = plain

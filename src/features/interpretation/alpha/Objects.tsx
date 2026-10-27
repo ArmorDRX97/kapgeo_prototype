@@ -11,6 +11,8 @@ import { cutAlphaInterval, editAlphaInterval, fitFilterSections, refineAlphaOre,
 export function ObjectEditor({ well, doc, page, sub, row, onChange, onCancel, onDirty, disabled }: { well: InterpretationWell; doc: AlphaDocument; page: AlphaPage; sub: string; row: DepthInterval | MetalMark; onChange: (doc: AlphaDocument) => void; onCancel: () => void; onDirty: () => void; disabled: boolean }) {
   const [from, setFrom] = useState('depth' in row ? row.depth : row.from), [to, setTo] = useState('to' in row ? row.to : from)
   const [rock, setRock] = useState(doc.electro.rows.find(r => r.id === row.id)?.rock ?? 'sand')
+  const [lithologyCode, setLithologyCode] = useState(doc.electro.rows.find(r => r.id === row.id)?.lithologyCode ?? '')
+  const [geochemistryCode, setGeochemistryCode] = useState(doc.electro.rows.find(r => r.id === row.id)?.geochemistryCode ?? '')
   const [manualKf, setManualKf] = useState(doc.electro.rows.find(r => r.id === row.id)?.kf ?? 3)
   const [morphology, setMorphology] = useState(doc.gamma.rows.find(r => r.id === row.id)?.morphology ?? 'bag')
   const [label, setLabel] = useState('label' in row ? row.label : 'Бентогильзы'), [kind, setKind] = useState(doc.projects.find(r => r.id === row.id)?.kind ?? 'bentonite')
@@ -27,7 +29,7 @@ export function ObjectEditor({ well, doc, page, sub, row, onChange, onCancel, on
         const key = intervalKey(page, sub)
         if (key) {
           if (key === 'electro' && (manualKf < 0 || !Number.isFinite(manualKf))) throw new Error('Кф должен быть неотрицательным.')
-          next = key === 'gamma' && refine ? refineAlphaOre(well, doc, value, morphology) : editAlphaInterval(well, doc, key, { ...value, rock, kf: manualKf, manualKf: true, morphology, kind, label })
+          next = key === 'gamma' && refine ? refineAlphaOre(well, doc, value, morphology) : editAlphaInterval(well, doc, key, { ...value, rock, lithologyCode, geochemistryCode, kf: manualKf, manualKf: true, morphology, kind, label })
         } else if (page === 'current') {
           next.parameters.current = row.id === 'actual-filter' ? { ...doc.parameters.current, from, to } : { ...doc.parameters.current, to: from, sumpBottom: to }
           next.current = calculateCurrent(well, next); next = fitFilterSections(next)
@@ -44,7 +46,7 @@ export function ObjectEditor({ well, doc, page, sub, row, onChange, onCancel, on
   }
   return <form onChangeCapture={onDirty} onSubmit={e => { e.preventDefault(); apply() }}><h3>Свойства объекта</h3><fieldset disabled={disabled} className="alpha-parameters">
     <NumberField label={'depth' in row ? 'Глубина метки, м' : 'Объект: кровля, м'} value={from} onChange={setFrom} />{'to' in row && <NumberField label="Объект: подошва, м" value={to} onChange={setTo} />}
-    {page === 'electro' && <><SelectField label="Литотип" value={rock} onChange={v => setRock(v as typeof rock)} options={Object.entries(rockNames)} /><NumberField label="Ручной Кф, м/сут" value={manualKf} onChange={setManualKf} /></>}
+    {page === 'electro' && <><SelectField label="Литотип" value={rock} onChange={v => setRock(v as typeof rock)} options={Object.entries(rockNames)} /><label className="alpha-field">Литологический код<input maxLength={40} value={lithologyCode} onChange={e=>setLithologyCode(e.target.value)} /></label><label className="alpha-field">Геохимический код<input maxLength={40} value={geochemistryCode} onChange={e=>setGeochemistryCode(e.target.value)} /></label><p>Коды вводятся по таблице заказчика; демонстрационный крап не подтверждён по СТ НАК 16-2026.</p><NumberField label="Ручной Кф, м/сут" value={manualKf} onChange={setManualKf} /></>}
     {page === 'gamma' && sub !== 'oxidation' && <><SelectField label="Морфология руды" value={morphology} onChange={v => setMorphology(v as typeof morphology)} options={[["bag", "Мешок"], ["upper", "Верхнее крыло"], ["lower", "Нижнее крыло"], ["remnant", "Останец"]]} /><CheckField label="Уточнить границы руды по зависимостям" checked={refine} onChange={setRefine} /><p>Уточнение может разделить или исключить интервал, если он не проходит выбранный борт. Без флажка сохраняются заданные вручную границы.</p></>}
     {page === 'thermal' && (sub === 'induction' || sub === 'projects') && <label className="alpha-field"><span>Название объекта</span><input value={label} onChange={e => setLabel(e.target.value)} /></label>}
     {page === 'thermal' && sub === 'projects' && <SelectField label="Тип проекта" value={kind} onChange={v => setKind(v as typeof kind)} options={[["filter", "Проектный фильтр"], ["bentonite", "Бентогильзы"]]} />}

@@ -30,13 +30,13 @@ export function useGeologyNavigation() {
   const interpretation = location.pathname.startsWith('/geology/interpretation')
   const alpha = location.pathname.startsWith('/geology/interpretation/') && Object.hasOwn(alphaNames, location.pathname.split('/').at(-1)!)
   const previousAlpha = rememberedAlpha()
-  const alphaContext = alpha ? { method: location.pathname.split('/').at(-1)!, search: validateAlphaSearch(location.search) } : !interpretation ? previousAlpha : null
+  const alphaContext = alpha ? { method: location.pathname.split('/').at(-1)!, search: validateAlphaSearch(location.search) } : previousAlpha
   const remembered = rememberedSection()
   useEffect(() => {
     if (alpha) {
       try { sessionStorage.setItem(ALPHA_KEY, JSON.stringify({ method: location.pathname.split('/').at(-1), search: validateAlphaSearch(location.search) })) } catch { /* Optional return context. */ }
     } else if (interpretation && location.pathname === '/geology/interpretation') {
-      try { sessionStorage.setItem(KEY, JSON.stringify(validateInterpretationSearch(location.search))); sessionStorage.removeItem(ALPHA_KEY) } catch { /* Navigation works without storage. */ }
+      try { sessionStorage.setItem(KEY, JSON.stringify(validateInterpretationSearch(location.search))) } catch { /* Navigation works without storage. */ }
     } else if (location.pathname === '/geology/plans') {
       try { sessionStorage.removeItem(PLAN_KEY) } catch { /* Optional return context. */ }
     } else if (location.pathname.startsWith('/geology/plans/')) {

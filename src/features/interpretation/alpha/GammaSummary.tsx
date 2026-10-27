@@ -11,10 +11,10 @@ import { saveBlob, tableCsv } from './export'
 type Column = [key: string, label: string]
 const oreColumns: Column[] = [['category', 'Категория'], ['count', 'Интервалов'], ['thickness', 'm, м'], ['ra', 'Ra ср., %'], ['raMetro', 'mRa, м·%'], ['uranium', 'U ср., %'], ['metro', 'mc, м·%'], ['linearStock', 'Запас U, кг/м²']]
 const zoneColumns: Column[] = [['name', 'Область'], ['from', 'От, м'], ['to', 'До, м'], ['length', 'Длина, м'], ['ore', 'Руда, м'], ['uranium', 'U ср., %'], ['metro', 'mc, м·%'], ['linearStock', 'Запас U, кг/м²'], ['kf', 'Кф ср., м/сут'], ['coverage', 'Доля руды'], ['dilution', 'Доля безрудного']]
-const lftColumns: Column[] = [['lft', 'ЛФТ'], ['thickness', 'Руда, м'], ['uranium', 'U ср., %'], ['metro', 'mc, м·%'], ['kf', 'Кф ср., м/сут'], ['linearStock', 'Запас U, кг/м²']]
+const lftColumns: Column[] = [['lft', 'ЛФТ'], ['count', 'Интервалов'], ['thickness', 'Руда, м'], ['uranium', 'U ср., %'], ['metro', 'mc, м·%'], ['kf', 'Кф ср., м/сут'], ['linearStock', 'Запас U, кг/м²']]
 export function GammaSummary({ well, doc, disabled }: { well: InterpretationWell; doc: AlphaDocument; disabled: boolean }) {
   const categories = totalsByCategory(doc).map(r => ({ ...r, category: oreCategoryNames[r.category] })), overall = { category: 'Всего', ...oreTotals(doc.gamma.rows, doc.parameters.gamma.density) }
-  const lft = stocksByLft(doc).map(r => ({ ...r, lft: r.lft < 0 ? 'Нет литологии' : String(r.lft) }))
+  const lft = stocksByLft(doc).map(r => ({ ...r, count: doc.gamma.rows.filter(ore => doc.electro.rows.some(lith => (lith.rock === 'unknown' ? -1 : lith.lft) === r.lft && Math.min(ore.to,lith.to) > Math.max(ore.from,lith.from))).length, lft: r.lft < 0 ? 'Нет литологии' : String(r.lft) }))
   const actual = doc.current.rows.find(r => r.id === 'actual-filter'), zone = zadrSummary(doc, well.depth)
   const zones = [{ name: 'Предложение фильтра', ...zoneSummary(doc, doc.filterProposal) }, ...(actual ? [{ name: 'Фактический фильтр ТК', ...zoneSummary(doc, actual) }] : []), ...(zone ? [{ name: 'ЗАДР', ...zone }] : [])]
   const [error, setError] = useState('')

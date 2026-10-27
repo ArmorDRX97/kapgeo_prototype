@@ -1,5 +1,6 @@
+import { ScenarioWorkbench } from '../../features/geology-data/ScenarioWorkbench'
 import { Link } from '@tanstack/react-router'
-import { BarChart3, Boxes, Construction, Mountain, Network, ShieldX } from 'lucide-react'
+import { BarChart3, Construction, Mountain, Network, ShieldX } from 'lucide-react'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { Button } from '../../shared/ui/Button'
 import { PageHeader } from '../../shared/ui/PageHeader'
@@ -22,17 +23,12 @@ function ModulePlaceholder({ eyebrow, title, description, icon: Icon, accent }: 
   </div>
 }
 
-export function TechnologyModulePage() {
-  return <ModulePlaceholder eyebrow="Производственный контур" title="Геотехнология" description="Технологические процессы, режимы эксплуатации и оперативная работа с производственными объектами." icon={Network} accent="var(--color-brand-700)" />
-}
-
+export function TechnologyModulePage() { return <ScenarioWorkbench kind="technology" /> }
 export function GeologyModulePage() {
   return <ModulePlaceholder eyebrow="Геологический контур" title="Геология" description="Интерпретация геологических данных, разрезы, ресурсы и профильные процессы будут развиваться как самостоятельный модуль рядом с БГД." icon={Mountain} accent="var(--color-brand-700)" />
 }
 
-export function ModelingModulePage() {
-  return <ModulePlaceholder eyebrow="Расчётный контур" title="Моделирование" description="Геотехнологические модели, сценарии расчёта и подготовка согласованных вариантов." icon={Boxes} accent="var(--color-brand-600)" />
-}
+export function ModelingModulePage() { return <ScenarioWorkbench kind="modeling" /> }
 
 export function AnalyticsModulePage() {
   return <ModulePlaceholder eyebrow="Аналитический контур" title="Аналитика" description="Сводные показатели, отчётность и контроль качества данных для принятия решений." icon={BarChart3} accent="var(--color-accent-700)" />

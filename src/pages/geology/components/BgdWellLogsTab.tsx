@@ -1,4 +1,7 @@
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
+import { useModalFocus } from '../../../shared/lib/useModalFocus'
+import { Link } from '@tanstack/react-router'
+import { domainTokens } from '@kapgeo/geo-viz/tokens'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, CheckCircle2, FileUp, Pencil, Plus, RadioTower, Save, Star, Trash2, X } from 'lucide-react'
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
@@ -9,6 +12,7 @@ import { applyWellLogImport, beginWellLogImport, fetchWellLogWorkspace, saveWell
 import { Badge } from '../../../shared/ui/Badge'
 import { Button } from '../../../shared/ui/Button'
 import { Panel } from '../../../shared/ui/Panel'
+import { WorkspaceDialog } from '../../../shared/ui/WorkspaceDialog'
 
 const statusPresentation: Record<LogRunV2['status'], { label: string; tone: 'neutral' | 'warning' | 'info' | 'success' }> = {
   draft: { label: 'Черновик', tone: 'neutral' },
@@ -18,9 +22,9 @@ const statusPresentation: Record<LogRunV2['status'], { label: string; tone: 'neu
 }
 
 const curveCatalog: Record<'GR' | 'SP' | 'RES' | 'CALI', { label: string; unit: string; range: string; color: string; scale: LogCurve['scale'] }> = {
-  GR: { label: 'Гамма-каротаж', unit: 'API', range: '0–150', color: '#138b7a', scale: 'linear' },
-  SP: { label: 'Потенциал собственной поляризации', unit: 'мВ', range: '−80–40', color: '#3969c8', scale: 'linear' },
-  RES: { label: 'Кажущееся сопротивление', unit: 'Ом·м', range: '0–120', color: '#aa6a17', scale: 'log' },
+  GR: { label: 'Гамма-каротаж', unit: 'API', range: '0–150', color: domainTokens.curves.GR, scale: 'linear' },
+  SP: { label: 'Потенциал собственной поляризации', unit: 'мВ', range: '−80–40', color: domainTokens.curves.SP, scale: 'linear' },
+  RES: { label: 'Кажущееся сопротивление', unit: 'Ом·м', range: '0–120', color: domainTokens.curves.RS, scale: 'log' },
   CALI: { label: 'Кавернометрия', unit: 'мм', range: '80–260', color: '#7c3aed', scale: 'linear' },
 }
 
@@ -115,6 +119,7 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
   const query = useQuery({ queryKey: ['well-log-v2', well.id], queryFn: () => fetchWellLogWorkspace(well.id) })
   const [selectedId, setSelectedId] = useState('')
   const [editorRun, setEditorRun] = useState<LogRunV2 | 'new' | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
   useReportUnsavedChanges(Boolean(editorRun), onDirtyChange)
   const [activeList, setActiveList] = useState<'control' | 'all'>('all')
   const controlTabRef = useRef<HTMLButtonElement>(null)
@@ -134,7 +139,8 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
     onSuccess: (next) => {
       client.setQueryData(['well-log-v2', well.id], next)
       setSelectedId(next.runs.at(-1)?.id ?? '')
-      setNotice('LAS-файл загружен, сопоставлен и добавлен после QC-проверки.')
+      setImportOpen(false)
+      setNotice('Добавлен подготовленный пример LAS-каротажа. Чтение файла и QC в этом действии смоделированы.')
     },
   })
 
@@ -211,7 +217,7 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
       </div>
       <div className="bgd-log-toolbar__actions">
         <Button size="sm" disabled={!canEdit || save.isPending || measurementDirty} onClick={() => setEditorRun('new')}><Plus size={15} /> Добавить</Button>
-        <Button size="sm" variant="secondary" disabled={!canEdit || importDemo.isPending || measurementDirty} onClick={() => importDemo.mutate(workspace)}>{importDemo.isPending ? 'Обрабатываем…' : <><FileUp size={15} /> Загрузить LAS</>}</Button>
+        <Button size="sm" variant="secondary" disabled={!canEdit || importDemo.isPending || measurementDirty} onClick={() => setImportOpen(true)}>{importDemo.isPending ? 'Обрабатываем…' : <><FileUp size={15} /> Загрузить LAS</>}</Button>
       </div>
     </header>
 
@@ -237,11 +243,17 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
           </tr>
         })}</tbody>
       </table>
-      {!visibleRuns.length && <div className="geobase-empty bgd-log-table-empty"><RadioTower size={22} /><strong>{activeList === 'control' ? 'Контрольных каротажей пока нет' : 'Каротажей пока нет'}</strong><span>{activeList === 'control' ? 'Отметьте набор как контрольный при добавлении или редактировании.' : 'Добавьте первый набор вручную или загрузите LAS-файл.'}</span></div>}
+      {!visibleRuns.length && <div className="geobase-empty bgd-log-table-empty"><RadioTower size={22} /><strong>{activeList === 'control' ? 'Контрольных каротажей пока нет' : 'Каротажей пока нет'}</strong><span>{activeList === 'control' ? 'Отметьте набор как контрольный при добавлении или редактировании.' : 'Добавьте первый набор вручную или откройте пример импорта LAS.'}</span></div>}
     </div>
 
     {selected ? <LogInspector run={selected} measurements={measurementDraft} onMeasurementsChange={(points) => setMeasurementDraftState({ runId: selected.id, points })} onSaveMeasurements={() => { void saveMeasurementDraft() }} onDiscardMeasurements={discardMeasurementDraft} canEdit={canEdit} pending={save.isPending} dirty={measurementDirty} onEdit={() => setEditorRun(selected)} onPrimary={() => setPrimary(selected)} onDelete={() => deleteRun(selected)} /> : <Panel className="bgd-log-inspector" title="Данные измерений" description="Выберите каротаж или добавьте новый."><p className="bgd-log-empty-hint">Результаты измерений появятся здесь в табличном виде.</p></Panel>}
 
+    {importOpen && <WorkspaceDialog title="Импорт каротажа LAS" size="compact" pending={importDemo.isPending} onClose={() => setImportOpen(false)} footer={<><Button variant="secondary" disabled={importDemo.isPending} onClick={() => setImportOpen(false)}>Отмена</Button><Button disabled={!canEdit || importDemo.isPending} onClick={() => importDemo.mutate(workspace)}>{importDemo.isPending ? 'Добавляем пример…' : 'Добавить пример LAS'}</Button></>}>
+      <p>В прототипе можно добавить подготовленный пример комплексного каротажа: ГК, ПС и КС. Исходный LAS-файл не считывается, этап QC смоделирован.</p>
+      <p>Для проверки собственного набора используйте CSV-шаблон в разделе обмена данными.</p>
+      <Link className="button button--secondary button--sm" to="/geology/data">Открыть обмен данными</Link>
+      {importDemo.error && <p role="alert">{importDemo.error.message}</p>}
+    </WorkspaceDialog>}
     {editorRun && <LogSurveyDialog
       key={editorRun === 'new' ? 'new' : editorRun.id}
       initial={editorRun === 'new' ? emptyLogDraft(well) : logDraft(editorRun)}
@@ -299,9 +311,10 @@ function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }
   }
   useReportUnsavedChanges(JSON.stringify(draft) !== JSON.stringify(initial), undefined, { save: saveDraft, discard: onClose })
   const submit = () => { void saveDraft().catch(() => undefined) }
+  const dialogRef = useModalFocus(onClose, pending)
 
   return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
-    <section className="geobase-dialog geobase-dialog--log" role="dialog" aria-modal="true" aria-labelledby="log-editor-title">
+    <section ref={dialogRef} className="geobase-dialog geobase-dialog--log" role="dialog" aria-modal="true" aria-labelledby="log-editor-title">
       <header><div><span><RadioTower size={20} /></span><div><h2 id="log-editor-title">{title}</h2><p>Реквизиты набора и параметры замера.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть форму каротажа"><X size={19} /></button></header>
       <div className="geobase-dialog__body bgd-log-form">
         {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}

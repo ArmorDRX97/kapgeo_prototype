@@ -192,7 +192,7 @@ export type WellTechnicalData = {
   coreBoxes: CoreBox[]
 }
 
-export type Lithology = 'Суглинок' | 'Песчаник' | 'Алевролит' | 'Глина' | 'Рудный песчаник'
+export type Lithology = 'Песок мелкозернистый' | 'Песок среднезернистый' | 'Известняк' | 'Гравий' | 'Мергель' | 'Суглинок' | 'Песчаник' | 'Алевролит' | 'Глина' | 'Рудный песчаник'
 export type StratigraphyUnit = 'Q' | 'K2' | 'K1' | 'J3'
 
 export type GeologicalInterval = {
@@ -201,6 +201,8 @@ export type GeologicalInterval = {
   to: number
   lithology: Lithology
   stratigraphy: StratigraphyUnit
+  lithologyCode?: string
+  geochemistryCode?: string
   mineralization?: string
   color?: string
   colorDescription?: string

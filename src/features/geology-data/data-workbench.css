@@ -1,0 +1,39 @@
+.data-workbench { display:grid; gap:16px; min-width:0; }
+.data-workbench .panel { padding:20px; min-width:0; }
+.data-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:12px 0 18px; }
+.data-fields { border:0; padding:0; margin:0; display:grid; max-width:1200px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; align-items:end; }
+.data-fields label { display:grid; gap:6px; font-size:13px; }
+.data-fields input,.data-fields select,.data-workbench textarea { width:100%; min-height:36px; padding:7px 10px; border:1px solid var(--border-default,#c8d2df); border-radius:6px; color:var(--text-primary,#24364c); background:var(--surface-panel,#fff); }
+.data-fields input[type=checkbox] { width:18px; min-height:18px; }
+.data-fields .data-check { display:flex; min-height:38px; align-items:center; gap:8px; }
+.data-check input { flex:none; }
+.data-file-upload { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+.data-file-upload span { max-width:340px; overflow-wrap:anywhere; color:var(--text-secondary); font-size:var(--font-size-sm); }
+.data-feedback { margin:0; padding:12px 16px; border:1px solid var(--border-default); border-radius:var(--radius-md); background:var(--surface-panel); font-size:var(--font-size-sm); }
+.data-scroll { overflow:auto; max-width:100%; }
+.data-workbench table { border-collapse:collapse; width:100%; font-size:13px; text-align:left; }
+.data-workbench th,.data-workbench td { padding:10px 12px; border-bottom:1px solid var(--border-default,#dbe2ea); white-space:nowrap; }
+.data-workbench th { background:var(--surface-subtle,#f3f6fa); }
+.data-workbench caption { text-align:left; font-weight:600; padding:12px 0; }
+.data-workbench td button { color:var(--color-primary,#194b94); background:none; border:0; cursor:pointer; text-decoration:underline; }
+.data-workbench .is-selected { background:var(--surface-selected,#eaf2ff); }
+.data-note { font-size:12px; line-height:1.6; color:var(--text-secondary,#586b80); }
+.data-split { display:grid; grid-template-columns:220px minmax(0,1fr); gap:20px; align-items:start; }
+.data-depth-chart { width:220px; height:440px; font-size:12px; color:var(--text-primary,#24364c); }
+.data-workbench [role=alert] { color:var(--color-danger,#ad3131); }
+.data-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:18px 0; }
+.data-metrics article { padding:16px; border:1px solid var(--border-default,#dbe2ea); border-radius:8px; display:grid; gap:8px; }
+.data-metrics strong { font-size:25px; }
+.data-chart { width:100%; height:320px; background:var(--surface-subtle,#f3f6fa); border-radius:8px; }
+.data-workbench button:focus-visible,.data-depth-chart [role=button]:focus-visible { outline:2px solid #194b94; outline-offset:3px; }
+.geology-context { display:flex; align-items:center; flex-wrap:wrap; gap:12px; padding:10px 18px; border-bottom:1px solid var(--border-default,#dbe2ea); background:var(--surface-panel,#fff); font-size:12px; }
+.geology-context select { padding:5px; max-width:240px; border:1px solid var(--border-default,#c8d2df); border-radius:5px; background:var(--surface-panel,#fff); color:inherit; }
+@media(max-width:850px) { .data-split { grid-template-columns:1fr; }.data-depth-chart { height:240px; }.data-workbench .panel { padding:12px; } }
+
+.page-stack.data-workbench { padding:20px; }
+.data-workbench > .workspace-tab-panel { display:grid; gap:16px; }
+
+.app-frame--geology .app-workspace__content.content { display:flex; flex-direction:column; }
+.app-frame--geology .geology-context { flex-shrink:0; }
+.app-frame--geology .geology-module { flex:1; min-height:0; height:auto; }
+.app-frame--geology .app-workspace__content > .page-stack.data-workbench { flex:1; min-height:0; overflow:auto; }

@@ -12,6 +12,6 @@ export function BgdSaveBar({ status, ready, pending, disabled, onSave, label = '
 }) {
   return <footer className="bgd-save-bar" data-state={ready && !pending ? 'ready' : 'idle'} aria-busy={pending}>
     <span role="status">{status}</span>
-    <Button disabled={disabled || pending} onClick={onSave}><Save size={16} />{pending ? 'Сохраняем…' : label}</Button>
+    <Button disabled={disabled || pending || !ready} onClick={onSave}><Save size={16} />{pending ? 'Сохраняем…' : label}</Button>
   </footer>
 }

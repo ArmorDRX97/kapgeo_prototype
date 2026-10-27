@@ -97,7 +97,7 @@ export function AppShell({ children }: PropsWithChildren) {
       <span className="topbar__divider" aria-hidden="true" />
       <ModuleNavigation persona={persona} />
       {isBgd && <button className="topbar__geology-toggle" type="button" onClick={() => setGeologyNavOpen((value) => !value)} aria-expanded={geologyNavOpen} aria-label={geologyNavOpen ? 'Закрыть скважины' : 'Открыть скважины'}><Menu size={20} /><span>Скважины</span></button>}
-      <div className="global-search-wrap" ref={searchRef}>
+      <div className="global-search-wrap" ref={searchRef} onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); searchRef.current?.querySelector('input')?.focus(); setSearchOpen(false) } }}>
         <label className="global-search global-search--input"><Search size={17} /><input value={searchQuery} onFocus={() => setSearchOpen(true)} onChange={(event) => { setSearchQuery(event.target.value); setSearchOpen(true) }} placeholder="Поиск скважины" aria-label="Глобальный поиск скважины" />{searchQuery && <button type="button" onClick={() => setSearchQuery('')} aria-label="Очистить поиск"><X size={15} /></button>}</label>
         {searchOpen && searchQuery.trim().length >= 2 && <div className="global-search-results" role="listbox" aria-label="Результаты поиска">
           {searchResults.map((well) => <button key={well.id} type="button" role="option" aria-selected="false" onClick={() => openWell(well.id, well.bgd?.depositId ?? 'DEP-SARYTAU')}><Mountain size={16} /><span><strong>{well.code}</strong><small>{well.type} · {well.site}</small></span></button>)}
@@ -105,8 +105,8 @@ export function AppShell({ children }: PropsWithChildren) {
         </div>}
       </div>
       <div className="topbar__actions">
-        <button type="button" aria-label="Фоновые процессы" aria-disabled="true"><BriefcaseBusiness size={19} /><span className="activity-pulse" /></button>
-        <button type="button" aria-label="Уведомления" aria-disabled="true"><Bell size={19} /></button>
+        <button type="button" aria-label="Фоновые процессы" aria-disabled="true" disabled title="Фоновые процессы: раздел пока не проработан"><BriefcaseBusiness size={19} /></button>
+        <button type="button" aria-label="Уведомления" aria-disabled="true" disabled title="Уведомления: раздел пока не проработан"><Bell size={19} /></button>
       </div>
       <LanguageSwitcher />
       <div className="topbar-profile" ref={profileRef} onKeyDown={event => { if (event.key === 'Escape') { setProfileOpen(false); profileRef.current?.querySelector<HTMLButtonElement>('.topbar-profile__trigger')?.focus() } }}>
@@ -127,7 +127,7 @@ export function AppShell({ children }: PropsWithChildren) {
 
     <div className={`app-workspace${isBgd ? ' app-workspace--bgd' : ''}`}>
       {isBgd && <GeologyNavigator mobileOpen={geologyNavOpen} collapsed={geologyNavCollapsed} onToggle={() => setGeologyNavCollapsed((value) => !value)} onClose={closeGeologyNavigation} />}
-      <main id="main-content" className="app-workspace__content content" tabIndex={-1} inert={isBgd && geologyNavOpen}>{children}</main>
+      <main id="main-content" className="app-workspace__content content" tabIndex={-1} inert={isBgd && geologyNavOpen}>{isGeology && <div className="geology-context"><strong>Рабочие данные геологии</strong><Link to="/geology/bgd">Выбрать месторождение и участок в БГД</Link><Link to="/geology/data">Обмен и подготовка данных</Link><span>Демонстрационные наборы рабочих областей независимы</span></div>}{children}</main>
     </div>
 
 

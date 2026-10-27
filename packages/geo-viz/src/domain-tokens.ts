@@ -14,18 +14,18 @@
  *
  * NOTE: all lithology fills and well symbol colours are PLACEHOLDERS chosen to
  * be readable and mutually distinguishable on a geology map. They must be
- * replaced with the official legend symbols of СТ НАК 16-2014 once the customer
+ * replaced with the official legend symbols of СТ НАК 16-2026 once the customer
  * provides the standard (colours, hatch patterns and symbol shapes).
  */
 
 /** Well log curve colours, keyed by log type (see docs/architecture/overview.md). */
 const curves = {
   /** ГК — gamma ray. */
-  GR: '#2e7d32',
+  GR: '#c62828',
   /** КС — resistivity. */
-  RS: '#c62828',
+  RS: '#1565c0',
   /** ПС — spontaneous potential. */
-  SP: '#1565c0',
+  SP: '#2e7d32',
   /** ИК — induction. */
   IL: '#6a1b9a',
   /** ТК — current log. */

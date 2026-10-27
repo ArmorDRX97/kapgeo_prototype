@@ -10,7 +10,7 @@ export function createOreInterval(id: string, draft: OreIntervalDraft, different
   const thickness = oreThickness(draft)
   const content = draft.basis === 'content' ? draft.value : thickness > 0 ? draft.value / thickness : 0
   const meterPercent = draft.basis === 'meterPercent' ? draft.value : draft.value * thickness
-  return { id, source: draft.source, element: draft.element, from: draft.from, to: draft.to, content: rounded(content), meterPercent: rounded(meterPercent), permeability: draft.permeability, differentialIds }
+  return { id, source: draft.source, element: draft.element, from: draft.from, to: draft.to, content: rounded(content), meterPercent: rounded(meterPercent), permeability: draft.permeability, ...(draft.kf !== undefined ? { kf: draft.kf } : {}), ...(draft.krr !== undefined ? { krr: draft.krr } : {}), ...(draft.lft !== undefined ? { lft: draft.lft } : {}), differentialIds }
 }
 
 export function validateOreInterval(interval: OreInterval, workspace: WellOreWorkspace, ignoreId?: string) {
@@ -21,6 +21,7 @@ export function validateOreInterval(interval: OreInterval, workspace: WellOreWor
   const overlap = workspace.oreIntervals.find((item) => item.id !== ignoreId && item.source === interval.source && item.element === interval.element && interval.from < item.to && interval.to > item.from)
   if (overlap) errors.push(`Интервал пересекается с ${overlap.from}–${overlap.to} м в том же источнике.`)
   if (interval.content < 0 || interval.meterPercent < 0) errors.push('Содержание и метропроцент не могут быть отрицательными.')
+  if (interval.kf !== undefined && (!Number.isFinite(interval.kf) || interval.kf < 0) || interval.krr !== undefined && (!Number.isFinite(interval.krr) || interval.krr <= 0) || interval.lft !== undefined && (!Number.isInteger(interval.lft) || interval.lft < 0)) errors.push('Проверьте Кф ≥ 0, Крр > 0 и целый ЛФТ ≥ 0.')
   return errors
 }
 

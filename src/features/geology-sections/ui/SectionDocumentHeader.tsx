@@ -1,3 +1,4 @@
+import { MapInfoExport } from './MapInfoExport'
 import { useState, type ReactNode } from 'react'
 import { Info } from 'lucide-react'
 import type { GeologySection } from '../../../entities/geology-section/model/types'
@@ -14,7 +15,7 @@ export function SectionDocumentHeader({ section, status, actions, secondaryActio
         <span className="section-document-status" data-state={status} role="status">{statusLabels[status]}</span>
         <SectionToolButton variant="quiet" icon={Info} label="Сведения о разрезе" aria-haspopup="dialog" onClick={() => setInfoOpen(true)} />
       </div><div className="section-document-global" role="group" aria-label="Действия со всем разрезом">
-        {message && <span className="section-document-message" role="status" title={message}>{message}</span>}{actions}
+        <MapInfoExport section={section} />{message && <span className="section-document-message" role="status" title={message}>{message}</span>}{actions}
       </div>
     </header>
     {infoOpen && <WorkspaceDialog title="Сведения о разрезе" size="compact" onClose={() => setInfoOpen(false)} footer={secondaryActions}><dl className="graphic-info section-document-info">

@@ -1,3 +1,5 @@
+import { DataWorkbench } from '../features/geology-data/DataWorkbench'
+import { ScenarioWorkbench } from '../features/geology-data/ScenarioWorkbench'
 import { mapRepository } from '../repository/demo/mapRepository'
 import { createBrowserHistory, createHashHistory, createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
 import { RootLayout } from './layout/RootLayout'
@@ -67,6 +69,8 @@ const plansRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geolog
   try { first = (await mapRepository.list())[0]?.id } catch { /* The page owns storage recovery. */ }
   if (first) throw redirect({ to: '/geology/plans/$projectId', params: { projectId: first }, search: {}, replace: true })
 }, component: PlansPage })
+const geologyDataRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/data', component: DataWorkbench })
+const reservesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/reserves', component: () => <ScenarioWorkbench kind="reserves" /> })
 const passportsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/passports', validateSearch: validatePassportSearch, component: WellPassportsPage })
 const planRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/plans/$projectId', validateSearch: validatePlanSearch, component: PlansPage })
 const geoBaseRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd', component: GeoBasePage })
@@ -95,6 +99,8 @@ const routeTree = rootRoute.addChildren([
   sectionRoute,
   plansRoute,
   passportsRoute,
+  geologyDataRoute,
+  reservesRoute,
   planRoute,
   geoBaseRoute,
   geoBaseDepositRoute,

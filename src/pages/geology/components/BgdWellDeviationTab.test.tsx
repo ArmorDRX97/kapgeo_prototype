@@ -19,14 +19,14 @@ describe('BgdWellDeviationTab', () => {
     fireEvent.click(screen.getByRole('button', { name: /Рассчитать/ }))
     expect(await screen.findByText(/рассчитан методом среднего угла/)).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Открыть импорт' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Импорт инклинометрии' }))
     expect(screen.getByRole('dialog', { name: 'Импорт инклинометрии по скважине' })).toBeInTheDocument()
-    const importButton = screen.getByRole('button', { name: 'Импортировать' })
+    const importButton = screen.getByRole('button', { name: 'Добавить пример' })
     expect(importButton).toBeDisabled()
-    fireEvent.click(screen.getByRole('button', { name: 'Выбрать файл' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Показать пример' }))
     expect(importButton).toBeEnabled()
     fireEvent.click(importButton)
-    expect(await screen.findByText(/распознан и импортирован/)).toBeInTheDocument()
+    expect(await screen.findByText(/Добавлен подготовленный LAS-пример из 5 точек/)).toBeInTheDocument()
   })
 
   it('allows an editor without administrative permission to choose the primary survey', async () => {
@@ -47,5 +47,15 @@ describe('BgdWellDeviationTab', () => {
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining('по скважине не останется основного набора данных инклинометрии'))
     expect(await screen.findByText(/Основной промер, его описание и результаты измерений удалены/)).toBeInTheDocument()
     expect(screen.getByText('Не выбран')).toBeInTheDocument()
+  })
+
+  it('shows the import entry and preview to a geologist without permitting an import', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={queryClient}><BgdWellDeviationTab well={primaryWell} canEdit canAdminister={false} defaults={{ trueCorrection: 10, magneticCorrection: 5, minZenithAngle: 4 }} /></QueryClientProvider>)
+    fireEvent.click(await screen.findByRole('button', { name: 'Импорт инклинометрии' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('геофизика-интерпретатора или администратора системы')
+    fireEvent.click(screen.getByRole('button', { name: 'Показать пример' }))
+    expect(screen.getByRole('table', { name: 'Промеры примера' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Добавить пример' })).toBeDisabled()
   })
 })

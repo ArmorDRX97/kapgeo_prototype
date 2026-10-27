@@ -79,6 +79,14 @@
 .bgd-well-workbench > .bgd-well-page { display: flex; min-width: 0; flex: 1; height: 100%; flex-direction: column; gap: var(--space-4); padding: var(--space-6); overflow: auto; container-type: inline-size; scrollbar-gutter: stable; }
 .bgd-well-page > * { flex-shrink: 0; }
 .bgd-well-page .panel { min-width: 0; }
+.bgd-well-page .panel__header { flex-wrap: wrap; }
+.bgd-well-page .panel__header > div:first-child { flex: 1 1 180px; }
+.bgd-lithology-editor { scroll-margin-top: 16px; }
+.bgd-ore-workspace .bgd-ore-layout:not(.bgd-ore-layout--merged) { grid-template-columns: minmax(0, 1fr); }
+.bgd-ore-summary { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 12px 0; }
+.bgd-ore-summary span { display: grid; gap: 4px; color: var(--text-secondary); font-size: var(--font-size-sm); }
+.bgd-ore-summary strong { color: var(--text-primary); font-size: 18px; }
+.bgd-ore-table--numeric .bgd-ore-table__head, .bgd-ore-table--numeric > button { min-width: 1040px; grid-template-columns: minmax(185px, 1.5fr) minmax(125px, 1fr) repeat(5, minmax(75px, .6fr)) minmax(55px, .4fr) minmax(120px, 1fr); }
 .bgd-well-page .bgd-well-language-grid { margin-top: 0; }
 .bgd-well-page .bgd-log-registry, .bgd-well-page .bgd-core-registry { position: static; }
 @container (max-width: 880px) {
@@ -195,3 +203,5 @@
   .bgd-well-page :is(.form-grid, .bgd-well-language-grid, .bgd-lithology-form, .bgd-ore-form, .bgd-ore-context),
   .bgd-well-geometry-fields { grid-template-columns: minmax(0, 1fr); }
 }
+.bgd-deviation-heading .panel__header { margin-bottom:0; }
+.bgd-deviation-import-dialog > .form-alert { margin:0; }

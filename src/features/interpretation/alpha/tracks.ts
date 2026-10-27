@@ -19,7 +19,7 @@ export function alphaTracks(well: InterpretationWell, doc: AlphaDocument, page: 
   const records = allAlphaRecords(well, doc), get = (id: string) => records.find(r => r.id === id), tracks: TrackSpec[] = []
   const addCurve = (id: string, width = 210) => { const r = get(id); if (r) tracks.push({ id, title: r.name, subtitle: `${r.date} · ${r.instrument}`, width, curves: [curveSpec(r)] }) }
   const column = (id: string, title: string, rows: IntervalSpec[], width = 110) => tracks.push({ id, title, width, curves: [], intervals: rows, editable: true })
-  const lithology = () => column('electro', 'Литология', doc.electro.rows.map(r => ({ ...r, label: rockNames[r.rock], fill: domainTokens.lithology[r.rock], pattern: r.rock === 'sand' ? 'dots' : r.rock === 'clay' ? 'lines' : undefined, selected: r.id === selected })))
+  const lithology = () => column('electro', 'Литология', doc.electro.rows.map(r => ({ ...r, label: `${r.lithologyCode || ''} ${rockNames[r.rock]}`.trim(), fill: domainTokens.lithology[r.rock], pattern: r.rock === 'sand' ? 'dots' : r.rock === 'clay' ? 'lines' : undefined, selected: r.id === selected })))
   const filter = () => column('current', 'Факт · фильтр', doc.current.rows.map(r => ({ ...r, label: r.id === 'actual-filter' ? 'Фильтр' : 'Отстойник', fill: r.id === 'actual-filter' ? alphaColors.filter : alphaColors.sump, selected: r.id === selected })))
   const gamma = () => column('gamma', 'Руда · U, %', doc.gamma.rows.map(r => ({ ...r, label: `${r.uranium.toFixed(3)}%`, fill: r.category === 'technological' ? alphaColors.technological : page === 'passport' ? r.category === 'balance' ? alphaColors.ore : alphaColors.offbalance : r.category === 'balance' ? alphaColors.editorOre : alphaColors.editorOffbalance, selected: r.id === selected })))
   const kf = () => column('kf', 'Кф · м/сут', doc.electro.rows.map(r => ({ ...r, label: r.rock === 'unknown' ? 'Нет данных' : r.kf.toFixed(2), fill: r.lft === 0 ? alphaColors.offbalance : r.lft === 1 ? alphaColors.lowKf : r.lft === 2 ? alphaColors.middleKf : alphaColors.highKf })), 90)
@@ -29,7 +29,7 @@ export function alphaTracks(well: InterpretationWell, doc: AlphaDocument, page: 
       column('filter-proposal', 'Предложение · фильтр', intervals([{ id: 'proposal-filter', ...doc.filterProposal }], alphaColors.project).map(r => ({ ...r, pattern: 'diagonal' })), 115)
       const zone = zadrSummary(doc, well.depth); if (zone) { column('zadr', 'ЗАДР', intervals([{ id: 'zone-active', from: zone.from, to: zone.to }], alphaColors.zadr), 90); tracks.at(-1)!.editable = false }
     }
-    if (page === 'passport') { addCurve(doc.parameters.electro.recordId, 140); addCurve(doc.parameters.current.recordId, 140); addCurve(doc.parameters.thermal.recordId, 140); column('thermal', 'Цементация', intervals(doc.thermal.rows, alphaColors.cement), 95) }
+    if (page === 'passport') { addCurve('alpha-sp', 140); addCurve(doc.parameters.electro.recordId, 140); addCurve(doc.parameters.current.recordId, 140); addCurve(doc.parameters.thermal.recordId, 140); column('thermal', 'Цементация', intervals(doc.thermal.rows, alphaColors.cement), 95) }
   } else if (page === 'electro') {
     addCurve(doc.parameters.gamma.recordId, 155); addCurve(doc.parameters.electro.recordId, 230)
     const curveTrack = tracks.at(-1), rs = get(doc.parameters.electro.recordId)
@@ -58,5 +58,10 @@ export function alphaTracks(well: InterpretationWell, doc: AlphaDocument, page: 
     if (tracks[0]) tracks[0].intervals = intervals(doc.controls.rows.filter(r => r.mainArea !== null), alphaColors.offbalance)
     if (tracks[1]) tracks[1].intervals = intervals(doc.controls.rows.filter(r => r.controlArea !== null).map(r => ({ id: r.id, from: r.controlFrom, to: r.controlTo })), alphaColors.offbalance)
   } else if (page === 'curves') addCurve(sub || 'alpha-gr', 580)
+  if (['gamma', 'electro', 'passport', 'flow'].includes(page)) {
+  column('permeability', 'Проницаемость', doc.electro.rows.map(r => ({ ...r, label: r.rock === 'unknown' ? 'Нет данных' : r.lft > 0 ? 'Проницаемые' : 'Непроницаемые', fill: r.rock === 'unknown' ? '#eeeeee' : r.lft > 0 ? '#b8dfe4' : '#b8b6c6', pattern: r.lft === 0 ? 'lines' : undefined })), 120)
+  column('geochemistry', 'Геохимия · код', doc.electro.rows.map(r => ({ ...r, label: r.geochemistryCode || 'Не задан', fill: '#f1eee6', pattern: r.geochemistryCode ? 'diagonal' : undefined })), 100)
+    tracks.slice(-2).forEach(t => { t.editable = false })
+  }
   return tracks
 }

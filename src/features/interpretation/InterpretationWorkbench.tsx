@@ -227,7 +227,7 @@ export function InterpretationWorkbench({ well, initial, persona, search, onLoca
 
   return <div className="interpretation-page">
     {viewStorageError && <p role="status" className="interpretation-note">{viewStorageError}</p>}
-    <header className="interpretation-page__header"><div><p className="eyebrow">ГЕОЛОГИЯ / РАБОЧЕЕ МЕСТО</p><h1>Интерпретация</h1><p>Сопоставляйте каротаж, литологию и керн на одном планшете.</p></div></header>
+    <header className="interpretation-page__header"><div><p className="eyebrow">ГЕОЛОГИЯ / КЕРН И ЛИТОЛОГИЯ</p><h1>Интерпретация по керну и литологии</h1><p>Сопоставляйте керновые пробы и каротаж, уточняйте литологические границы и привязку по глубине.</p></div></header>
     <div className={`interpretation-workspace${sidebarOpen ? '' : ' interpretation-workspace--collapsed'}`}>
       {sidebarOpen && <aside className="interpretation-directory" aria-label="Список скважин">
         <div className="interpretation-directory__title"><span className="interpretation-directory__mark"><Layers3 size={21} /></span><div><strong>Песчаный</strong><small>Месторождение</small></div><Button variant="quiet" size="sm" aria-label="Свернуть список скважин" onClick={() => setSidebarOpen(false)}><PanelLeftClose size={17} /></Button></div>

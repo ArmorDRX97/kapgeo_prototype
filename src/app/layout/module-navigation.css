@@ -4,7 +4,7 @@
 .topbar__module-nav .module-trigger.is-active { color: var(--color-brand-800); }
 .module-trigger.is-active::after { position: absolute; inset: auto var(--space-3) 0; height: 3px; content: ''; background: var(--color-accent-500); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
 .module-trigger__copy { display: grid; gap: 2px; text-align: left; white-space: nowrap; }
-.module-trigger__copy small { color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: 400; }
+.module-trigger__copy small { max-width: 180px; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: 400; }
 .module-trigger__chevron { transition: transform var(--duration-fast) var(--ease-standard); }
 .module-trigger[aria-expanded="true"] .module-trigger__chevron { transform: rotate(180deg); }
 .module-dropdown { position: fixed; z-index: 90; display: flex; flex-direction: column; max-height: calc(100dvh - var(--topbar-height) - var(--space-6)); overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-raised); box-shadow: var(--shadow-lg); transform-origin: top left; animation: module-dropdown-enter var(--duration-normal) var(--ease-standard); }
@@ -26,6 +26,11 @@
 .module-dropdown__item.is-pressed { animation: module-item-press var(--duration-normal) var(--ease-standard); }
 .module-dropdown__footer { flex: none; min-height: var(--space-10); padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border-default); background: var(--surface-subtle); color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.4; }
 .topbar__module-nav .module-trigger:focus-visible, .module-dropdown__item:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -3px; }
+@media (min-width: 1121px) and (max-width: 1600px) {
+  .module-trigger__copy small { max-width: 140px; }
+  .topbar__module-nav > a[aria-label="Администрирование"] > span { display: none; }
+  .topbar__module-nav > a[aria-label="Администрирование"] { flex: none; }
+}
 @keyframes module-dropdown-enter { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes module-item-press { 0% { background: var(--color-brand-100); } 100% { background: transparent; } }
 @media (max-width: 1120px) { .topbar__module-nav .module-trigger { padding-inline: var(--space-2); } .module-trigger__copy { display: none; } }

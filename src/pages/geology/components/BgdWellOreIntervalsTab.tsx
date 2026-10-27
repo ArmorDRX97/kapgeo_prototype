@@ -1,9 +1,10 @@
+import '../../../features/geology-data/data-workbench.css'
 import { BgdSaveBar } from '../../../features/geobase/ui/BgdSaveBar'
 import { UnsavedChangesContext } from '../../../shared/lib/unsavedChangesContext'
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Check, Layers3, Link2, Plus, Scissors, Trash2, Unlink2 } from 'lucide-react'
-import { useContext, useMemo, useState } from 'react'
+import { useContext, useMemo, useRef, useState } from 'react'
 import type { DifferentialOreInterval, OreElement, OreInterval, OreIntervalDraft, OreIntervalSource, OrePermeability, OreValueBasis, WellOreWorkspace } from '../../../entities/well-ore/model/types'
 import type { Well } from '../../../entities/well/model/types'
 import { areContinuousDifferentials, canMergeOreGroups, createOreInterval, detachFromOreGroup, mergeOreGroups, mergedSummaries, oreThickness, splitOreGroup, validateOreInterval } from '../../../features/geobase/model/bgdWellOreIntervals'
@@ -19,7 +20,7 @@ type View = 'differential' | 'ore' | 'merged'
 
 const display = (value: number, digits = 4) => value.toLocaleString('ru-RU', { maximumFractionDigits: digits })
 const defaultDraft = (source: OreIntervalSource, element: OreElement, from: number): OreIntervalDraft => ({ source, element, from, to: Number((from + .1).toFixed(2)), basis: 'content', value: .01, permeability: 'Непроницаемый' })
-const oreDraftFor = (item: OreInterval): OreIntervalDraft => ({ source: item.source, element: item.element, from: item.from, to: item.to, basis: 'content', value: item.content, permeability: item.permeability })
+const oreDraftFor = (item: OreInterval): OreIntervalDraft => ({ source: item.source, element: item.element, from: item.from, to: item.to, basis: 'content', value: item.content, permeability: item.permeability, kf: item.kf, krr: item.krr, lft: item.lft })
 const differentialDraftFor = (item?: DifferentialOreInterval) => ({ from: item?.from ?? 0, to: item?.to ?? .1, content: item?.content ?? .01, permeability: item?.permeability ?? 'Непроницаемый' as OrePermeability })
 
 export function BgdWellOreIntervalsTab({ well, canManageAll, canManageGeophysics, onDirtyChange }: { well: Well; canManageAll: boolean; canManageGeophysics: boolean; onDirtyChange?: (dirty: boolean) => void }) {
@@ -31,6 +32,8 @@ export function BgdWellOreIntervalsTab({ well, canManageAll, canManageGeophysics
 
 function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, onDirtyChange }: { well: Well; initial: WellOreWorkspace; canManageAll: boolean; canManageGeophysics: boolean; onDirtyChange?: (dirty: boolean) => void }) {
   const queryClient = useQueryClient()
+  const oreFormRef = useRef<HTMLDivElement>(null)
+  const openOreProperties = () => { oreFormRef.current?.parentElement?.scrollIntoView({ block: 'start', behavior: 'smooth' }); oreFormRef.current?.querySelector<HTMLInputElement>('input:not(:disabled)')?.focus({ preventScroll: true }) }
   const navigationGuard = useContext(UnsavedChangesContext)
   const [draft, setDraft] = useState(initial)
   const [view, setView] = useState<View>('ore')
@@ -94,7 +97,7 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, 
   }
   const editOre = (item: OreInterval) => {
     setSelectedOreId(item.id)
-    resetOreForm({ source: item.source, element: item.element, from: item.from, to: item.to, basis: 'content', value: item.content, permeability: item.permeability })
+    resetOreForm({ source: item.source, element: item.element, from: item.from, to: item.to, basis: 'content', value: item.content, permeability: item.permeability, kf: item.kf, krr: item.krr, lft: item.lft })
     setErrors([])
   }
   const applyOreForm = (workspace: WellOreWorkspace) => {
@@ -162,12 +165,17 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, 
       <button type="button" role="tab" aria-selected={view === 'merged'} className={view === 'merged' ? 'is-active' : ''} onClick={() => { if (view !== 'merged') { if (navigationGuard) navigationGuard.requestTransition(() => setView('merged')); else setView('merged') } }}>Рудные объединения <Badge tone="warning">{visibleGroups.length}</Badge></button>
     </div>
 
+    <Panel title="Сводка по рудным пересечениям" description="Текущий источник и элемент. Продуктивность показана как метропроцент; незаполненные измерения остаются пустыми.">
+      <div className="bgd-ore-summary"><span><strong>{visibleOre.length}</strong> интервалов</span><span><strong>{display(visibleOre.reduce((sum, r) => sum + r.to - r.from, 0), 2)} м</strong> мощность руды</span><span><strong>{display(visibleOre.length ? Math.max(...visibleOre.map(r => r.to)) - Math.min(...visibleOre.map(r => r.from)) - visibleOre.reduce((sum, r) => sum + r.to - r.from, 0) : 0, 2)} м</strong> безрудные промежутки внутри общего охвата</span></div>
+      <p className="bgd-ore-demo-note">ЛФТ: {[...new Set(visibleOre.map(r => r.lft))].map(lft => `${lft ?? 'не задан'} — ${visibleOre.filter(r => r.lft === lft).length} интервалов`).join(' · ') || 'нет данных'}</p>
+    </Panel>
     {view === 'ore' && <div className="bgd-ore-layout">
-      <Panel title="Список рудных интервалов" description={`${draft.selectedSource} · ${draft.selectedElement}`}><OreTable rows={visibleOre} selectedId={selectedOreId} onSelect={editOre} /></Panel>
+      <Panel title="Список рудных интервалов" description={`${draft.selectedSource} · ${draft.selectedElement}`} action={<Button size="sm" variant="secondary" onClick={openOreProperties}>Свойства интервала</Button>}><OreTable rows={visibleOre} selectedId={selectedOreId} onSelect={editOre} /></Panel>
       <Panel title={selectedOre ? 'Изменение интервала' : 'Новый рудный интервал'} description="Обязательные поля отмечены звёздочкой">
-        <div className="bgd-ore-form">
+        <div ref={oreFormRef} className="bgd-ore-form">
           <label className="field"><span className="field__label">Источник выделения <em>*</em></span><select required value={oreForm.source} onChange={(event) => updateContext({ selectedSource: event.target.value as OreIntervalSource })}>{sources.map((item) => <option key={item}>{item}</option>)}</select></label>
           <label className="field"><span className="field__label">Элемент <em>*</em></span><select required value={oreForm.element} onChange={(event) => updateContext({ selectedElement: event.target.value as OreElement })}>{elements.map((item) => <option key={item}>{item}</option>)}</select></label>
+          {(['kf', 'krr', 'lft'] as const).map((field, i) => <label className="field" key={field}><span className="field__label">{['Кф, м/сут', 'Крр', 'ЛФТ'][i]}</span><input type="number" step={field === 'lft' ? 1 : 'any'} disabled={!selectedSourceCanEdit} placeholder="Нет данных" value={oreForm[field] ?? ''} onChange={e => setOreForm({ ...oreForm, [field]: e.target.value === '' ? undefined : e.target.valueAsNumber })} /></label>)}
           <NumberField label="Начальная глубина, м *" value={oreForm.from} disabled={!selectedSourceCanEdit} onChange={(from) => setOreForm({ ...oreForm, from })} />
           <NumberField label="Конечная глубина, м *" value={oreForm.to} disabled={!selectedSourceCanEdit} onChange={(to) => setOreForm({ ...oreForm, to })} />
           <label className="field"><span className="field__label">Мощность, м</span><input disabled value={display(oreForm.to - oreForm.from, 2)} /></label>
@@ -197,7 +205,7 @@ function OreWorkspaceEditor({ well, initial, canManageAll, canManageGeophysics, 
 }
 
 function OreTable({ rows, selectedId, onSelect }: { rows: OreInterval[]; selectedId: string; onSelect: (item: OreInterval) => void }) {
-  return <div className="bgd-ore-table" role="table" aria-label="Рудные интервалы"><div className="bgd-ore-table__head" role="row"><span>Источник / элемент</span><span>Интервал</span><span>Мощн., м</span><span>Сод., %</span><span>м%</span><span>Тип</span></div>{rows.map((item) => <button type="button" role="row" key={item.id} className={selectedId === item.id ? 'is-selected' : ''} onClick={() => onSelect(item)}><span role="cell"><strong>{item.source}</strong><small>{item.element} · {item.id}</small></span><span role="cell">{display(item.from)}–{display(item.to)}</span><span role="cell">{display(oreThickness(item), 2)}</span><span role="cell">{display(item.content)}</span><span role="cell">{display(item.meterPercent)}</span><span role="cell">{item.permeability}</span></button>)}{!rows.length && <div className="geobase-empty"><Layers3 size={18} /><strong>Интервалов нет</strong><span>Добавьте первое выделение для выбранного источника.</span></div>}</div>
+  return <div className="bgd-ore-table bgd-ore-table--numeric" role="table" aria-label="Рудные интервалы"><div className="bgd-ore-table__head" role="row"><span>Источник / элемент</span><span>Интервал</span><span>Мощн., м</span><span>Сод., %</span><span>mc, м·%</span><span>Кф, м/сут</span><span>Крр</span><span>ЛФТ</span><span>Тип</span></div>{rows.map((item) => <button type="button" role="row" key={item.id} className={selectedId === item.id ? 'is-selected' : ''} onClick={() => onSelect(item)}><span role="cell"><strong>{item.source}</strong><small>{item.element} · {item.id}</small></span><span role="cell">{display(item.from)}–{display(item.to)}</span><span role="cell">{display(oreThickness(item), 2)}</span><span role="cell">{display(item.content)}</span><span role="cell">{display(item.meterPercent)}</span><span role="cell">{item.kf ?? '—'}</span><span role="cell">{item.krr ?? '—'}</span><span role="cell">{item.lft ?? '—'}</span><span role="cell">{item.permeability}</span></button>)}{!rows.length && <div className="geobase-empty"><Layers3 size={18} /><strong>Интервалов нет</strong><span>Добавьте первое выделение для выбранного источника.</span></div>}</div>
 }
 
 function NumberField({ label, value, disabled, step = '0.01', onChange }: { label: string; value: number; disabled: boolean; step?: string; onChange: (value: number) => void }) {

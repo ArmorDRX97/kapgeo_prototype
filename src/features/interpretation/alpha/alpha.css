@@ -83,3 +83,12 @@
 }
 
 .alpha-context-text { white-space: pre-line; font-variant-numeric: tabular-nums; }
+.curve-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 340px; align-items: start; gap: 16px; padding: 16px; }
+.curve-workspace--wide { grid-template-columns: minmax(0, 1fr); }
+.curve-workspace .panel { min-width: 0; padding: 20px; }
+.curve-workspace .alpha-group { margin-top: 16px; }
+.curve-workspace .alpha-group > div > svg { display: block; max-width: 800px; height: auto; margin-inline: auto; }
+.curve-workspace .alpha-group > div > p, .curve-operations p { font-size: var(--font-size-sm); line-height: 1.6; color: var(--text-secondary); }
+.curve-workspace .alpha-parameters > .alpha-field { max-width: 520px; }
+.curve-operations .alpha-parameters > .alpha-field { max-width: none; }
+@media (min-width: 1101px) and (max-width: 1500px) { .curve-workspace { grid-template-columns: minmax(0, 1fr) 300px; padding: 12px; gap: 12px; } .curve-workspace--wide { grid-template-columns: minmax(0, 1fr); } }

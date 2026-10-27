@@ -5,7 +5,7 @@ import { SessionContext } from '../../entities/session/model/sessionContext'
 import { defaultPersona, userPersonas } from '../../entities/session/model/personas'
 import { demoDatabase } from '../../repository/demo/demoDatabase'
 import { primaryWell } from '../../repository/data/wells'
-import { fetchWell } from '../../repository/api'
+import { fetchWell, fetchWells } from '../../repository/api'
 import { WellEditorPage } from './NewWellPage'
 import { bgdFieldWells } from '../../features/geobase/model/bgdField'
 
@@ -25,11 +25,12 @@ describe('BGD object → section → workspace', () => {
   it('opens the same prepared data for any field well while showing the selected name', async () => {
     renderWorkbench(false, bgdFieldWells[0]!.id)
     const name = await screen.findByLabelText('Название скважины *')
-    expect(name).toHaveValue(1010)
+    expect(name).toHaveValue(bgdFieldWells[0]!.name)
+    expect(name).toHaveAttribute('readonly')
     expect(screen.getByRole('complementary', { name: 'Разделы выбранной скважины' })).toHaveTextContent(bgdFieldWells[0]!.name)
     cleanup()
     renderWorkbench(false, bgdFieldWells[8000]!.id)
-    expect(await screen.findByLabelText('Название скважины *')).toHaveValue(1010)
+    expect(await screen.findByLabelText('Название скважины *')).toHaveValue(bgdFieldWells[8000]!.name)
     expect(screen.getByRole('complementary', { name: 'Разделы выбранной скважины' })).toHaveTextContent(bgdFieldWells[8000]!.name)
   })
 
@@ -228,9 +229,10 @@ describe('BGD object → section → workspace', () => {
     await screen.findByLabelText('Название скважины *', {}, { timeout: 5_000 })
     fireEvent.click(screen.getByRole('button', { name: 'Проходка и освоение' }))
     expect(screen.getByLabelText('Интервал 1: Диаметр, мм')).toHaveValue(190)
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить изменения' }))
-    await waitFor(() => expect(onSaved).toHaveBeenCalled(), { timeout: 5_000 })
-    expect(onSaved.mock.calls[0]?.[0].bgd.drilling.intervals).toEqual([
+    expect(screen.getByRole('button', { name: 'Сохранить изменения' })).toBeDisabled()
+    expect(onSaved).not.toHaveBeenCalled()
+    const saved = (await fetchWells()).find(well => well.code === '2299')!
+    expect(saved.bgd?.drilling.intervals).toEqual([
       expect.objectContaining({ drillingDiameter: 190, depthFrom: 0, depthTo: 25, drillingTool: 'Алмазная коронка', flushingAgent: 'Техническая вода' }),
     ])
   }, 15_000)

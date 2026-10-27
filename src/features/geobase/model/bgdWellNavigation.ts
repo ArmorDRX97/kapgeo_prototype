@@ -19,6 +19,8 @@ export const bgdWellNavigationGroups = [
   { id: 'geological', label: 'Геологические данные', items: [
     { id: 'geology', label: 'Геологические условия', icon: Gauge },
     { id: 'lithology', label: 'Литология', icon: Layers3 },
+    { id: 'anomalies', label: 'АП и горизонты', icon: Layers3 },
+    { id: 'permeability', label: 'Проницаемость · интервалы', icon: Gauge },
     { id: 'ore-intervals', label: 'Рудные интервалы', icon: Layers3 },
   ] },
 ] as const

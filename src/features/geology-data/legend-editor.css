@@ -1,0 +1,39 @@
+.workspace-dialog__body:has(> .legend-editor) { display:flex; overflow:hidden; }
+.legend-editor { display:flex; flex:1; flex-direction:column; min-width:0; min-height:0; gap:16px; }
+.legend-editor__notice { display:flex; flex:none; align-items:flex-start; gap:10px; padding:12px 14px; color:var(--text-secondary); border:1px solid var(--color-brand-100); border-radius:var(--radius-md); background:var(--color-brand-50); font-size:var(--font-size-sm); line-height:1.6; }
+.legend-editor__notice > svg { flex:none; margin-top:2px; color:var(--color-brand-600); }
+.legend-editor__notice strong { color:var(--color-brand-800); font-weight:650; }
+.legend-editor__notice p { margin:2px 0 0; }
+.legend-editor__toolbar { display:flex; flex:none; align-items:center; justify-content:space-between; gap:16px; }
+.legend-editor__toolbar > div { display:flex; align-items:center; gap:9px; min-width:0; color:var(--color-brand-700); }
+.legend-editor__toolbar h3 { margin:0; color:var(--text-primary); font-size:14px; font-weight:650; }
+.legend-editor__toolbar > button { flex:none; }
+.legend-editor__table-wrap { min-height:120px; max-height:620px; overflow:auto; scrollbar-width:thin; border:1px solid var(--border-default); border-radius:var(--radius-md); }
+.legend-editor__table { width:100%; table-layout:fixed; border-spacing:0; border-collapse:separate; text-align:left; font-size:var(--font-size-sm); }
+.legend-editor__col-preview { width:66px; }
+.legend-editor__col-code { width:150px; }
+.legend-editor__col-color { width:135px; }
+.legend-editor__col-pattern { width:150px; }
+.legend-editor__col-action { width:54px; }
+.legend-editor .legend-editor__table th { position:sticky; top:0; z-index:1; height:40px; padding:0 10px; border-bottom:1px solid var(--border-default); color:var(--text-secondary); background:var(--surface-subtle); font-weight:600; }
+.legend-editor .legend-editor__table td { height:56px; padding:8px 10px; border-bottom:1px solid var(--border-default); background:var(--surface-panel); vertical-align:middle; }
+.legend-editor__table tbody tr:last-child td { border-bottom:0; }
+.legend-editor__table tbody tr:focus-within td { background:var(--color-brand-50); }
+.legend-editor__table td:first-child { padding-left:14px; }
+.legend-editor__input { width:100%; min-width:0; height:36px; padding:0 10px; color:var(--text-primary); border:1px solid var(--border-default); border-radius:var(--radius-sm); background:var(--surface-panel); font:inherit; }
+.legend-editor__input:hover, .legend-editor__color:hover { border-color:var(--border-strong); }
+.legend-editor__input:focus { border-color:var(--color-brand-500); outline:3px solid var(--brand-focus-halo); outline-offset:0; }
+.legend-editor__code { font-variant-numeric:tabular-nums; }
+.legend-editor__color { position:relative; display:flex; height:36px; align-items:center; justify-content:center; gap:7px; padding:0 7px; border:1px solid var(--border-default); border-radius:var(--radius-sm); background:var(--surface-panel); cursor:pointer; }
+.legend-editor__color input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+.legend-editor__color > span { width:20px; height:20px; flex:none; border:1px solid rgb(15 23 42 / .16); border-radius:4px; }
+.legend-editor__color code { color:var(--text-secondary); font-family:ui-monospace,Consolas,monospace; font-size:11px; }
+.legend-editor__color:focus-within { border-color:var(--color-brand-500); outline:3px solid var(--brand-focus-halo); }
+.legend-editor__preview { display:block; width:38px; height:36px; border:1px solid rgb(15 23 42 / .18); border-radius:var(--radius-sm); background-color:var(--legend-color); }
+.legend-editor__preview[data-pattern="dots"] { background-image:radial-gradient(circle at 3px 3px, #4d5360 1px, transparent 1.1px); background-size:8px 8px; }
+.legend-editor__preview[data-pattern="lines"] { background-image:repeating-linear-gradient(0deg, transparent 0 7px, #4d5360 7px 8px); }
+.legend-editor__preview[data-pattern="diagonal"] { background-image:repeating-linear-gradient(135deg, transparent 0 6px, #4d5360 6px 7px); }
+.legend-editor__delete.button { width:32px; min-height:32px; padding:0; color:var(--text-tertiary); border:0; text-decoration:none; }
+.legend-editor__delete.button:hover:not(:disabled) { color:var(--color-red-700); background:var(--color-red-50); }
+.legend-editor__hint { flex:none; margin:0; color:var(--text-tertiary); font-size:11px; line-height:1.5; }
+.legend-editor__error { flex:none; margin:0; padding:10px 12px; border:1px solid var(--color-red-200); border-radius:var(--radius-sm); color:var(--color-red-700); background:var(--color-red-50); font-size:var(--font-size-sm); }

@@ -20,7 +20,7 @@ function basePassportTracks(well: InterpretationWell, doc: AlphaDocument): Track
     const tracks = [alphaTracks(well, doc, 'current', 'result'), alphaTracks(well, doc, 'thermal', 'result'), alphaTracks(well, doc, 'thermal', 'induction'), alphaTracks(well, doc, 'caliper', 'result')].flat()
     return tracks.filter((t, i) => tracks.findIndex(other => other.id === t.id) === i)
   }
-  const order = [doc.parameters.gamma.recordId, doc.parameters.electro.recordId, 'electro', 'kf', 'gamma', 'oxidation', 'current']
+  const order = ['alpha-sp', doc.parameters.gamma.recordId, doc.parameters.electro.recordId, 'electro', 'geochemistry', 'permeability', 'kf', 'gamma', 'oxidation', 'current']
   return alphaTracks(well, doc, 'passport', 'result').filter(t => order.includes(t.id)).sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
 }
 function passportTracks(well: InterpretationWell, doc: AlphaDocument) {

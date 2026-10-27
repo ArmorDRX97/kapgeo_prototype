@@ -1,10 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AnchorHTMLAttributes } from 'react'
 import { primaryWell } from '../../../repository/data/wells'
 import { demoDatabase } from '../../../repository/demo/demoDatabase'
 import { fetchWellLogWorkspace } from '../../../repository/api'
 import { BgdWellLogsTab } from './BgdWellLogsTab'
+
+vi.mock('@tanstack/react-router', () => ({ Link: ({ to, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { to: string }) => <a {...props} href={to} /> }))
 
 function renderLogs(canEdit = true) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
@@ -14,6 +17,21 @@ function renderLogs(canEdit = true) {
 describe('BGD well log tables', () => {
   beforeEach(async () => { await demoDatabase.reset() })
   afterEach(async () => { cleanup(); await demoDatabase.reset() })
+
+  it('explains the LAS example before adding it and allows cancelling without changing data', async () => {
+    renderLogs()
+    await screen.findByRole('table', { name: 'Все каротажи скважины' })
+    fireEvent.click(screen.getByRole('button', { name: 'Загрузить LAS' }))
+    const dialog = screen.getByRole('dialog', { name: 'Импорт каротажа LAS' })
+    expect(within(dialog).getByText(/Исходный LAS-файл не считывается/)).toBeInTheDocument()
+    expect((await fetchWellLogWorkspace(primaryWell.id)).runs).toHaveLength(2)
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Отмена' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Загрузить LAS' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить пример LAS' }))
+    expect(await screen.findByText(/Чтение файла и QC в этом действии смоделированы/, {}, { timeout: 5000 })).toBeInTheDocument()
+    expect((await fetchWellLogWorkspace(primaryWell.id)).runs).toHaveLength(3)
+  })
 
   it('shows all and control logs in separate tables and keeps plotted curves hidden', async () => {
     renderLogs()

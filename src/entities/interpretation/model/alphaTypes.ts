@@ -10,7 +10,7 @@ export type MeasurementRecord = { id: string; kind: MeasurementKind; name: strin
   stage: 'primary' | 'expanded' | 'development' | 'repeat'; role: 'main' | 'control'; revision: number; parentId?: string; operations: string[]; depths: number[]; values: (number | null)[] }
 export type DepthInterval = { id: string; from: number; to: number }
 export type RockCode = 'sand' | 'clay' | 'silt' | 'sandstone' | 'limestone' | 'paleozoic' | 'unknown'
-export type ElectroInterval = DepthInterval & { rock: RockCode; resistivity: number | null; normalized: number | null; kf: number; lft: number; manualKf: boolean }
+export type ElectroInterval = DepthInterval & { rock: RockCode; lithologyCode?: string; geochemistryCode?: string; resistivity: number | null; normalized: number | null; kf: number; lft: number; manualKf: boolean }
 export type OreInterval = DepthInterval & { ra: number; uranium: number; metro: number; category: 'balance' | 'offbalance' | 'technological'; morphology: 'bag' | 'upper' | 'lower' | 'remnant'; krr: number }
 export type MetalMark = { id: string; depth: number; label: string }
 export type FlowBin = DepthInterval & { rate: number; percent: number }

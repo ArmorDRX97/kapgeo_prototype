@@ -1,13 +1,14 @@
 import type { Well } from '../../entities/well/model/types'
+import { domainTokens } from '@kapgeo/geo-viz/tokens'
 import type { LogCurve, LogImportStaging, LogRunV2, WellLogWorkspace } from '../../entities/well-log/model/types'
 import { demoDatabase, type DemoRecord } from './demoDatabase'
 
 const now = () => new Date().toISOString()
 const rec = <T>(id: string, entityType: string, well: Well, data: T, status = 'active'): DemoRecord<T> => ({ id, entityType, objectId: well.id, scopeId: well.site, status, updatedAt: now(), data: structuredClone(data) })
 const curves = (): LogCurve[] => [
-  { id: 'CURVE-GR-01', code: 'GR', label: 'Gamma Ray', unit: 'API', scale: 'linear', color: '#138b7a', },
-  { id: 'CURVE-SP-01', code: 'SP', label: 'Self potential', unit: 'mV', scale: 'linear', color: '#3969c8', },
-  { id: 'CURVE-RES-01', code: 'RES', label: 'Resistivity', unit: 'Ωm', scale: 'log', color: '#aa6a17', },
+  { id: 'CURVE-GR-01', code: 'GR', label: 'Gamma Ray', unit: 'API', scale: 'linear', color: domainTokens.curves.GR, },
+  { id: 'CURVE-SP-01', code: 'SP', label: 'Self potential', unit: 'mV', scale: 'linear', color: domainTokens.curves.SP, },
+  { id: 'CURVE-RES-01', code: 'RES', label: 'Resistivity', unit: 'Ωm', scale: 'log', color: domainTokens.curves.RS, },
 ]
 function seed(well: Well): WellLogWorkspace {
   const run: LogRunV2 = { id: `LOGV2-${well.id}-01`, name: 'Комплекс ГК + ПС + КС', source: 'LAS', from: 0, to: well.depth, step: .2, status: 'qc_issues', curves: curves(), rawArtifactId: `RAW-LOG-${well.id}-01`, parserProfile: 'LAS 2.0', survey: { measuredAt: '2026-04-18', operator: 'Марат Омаров', instrument: 'РКС-3', probe: 'Комплексный', instrumentDiameterCm: 3.8, boreholeDiameterCm: 15.2, zone: 'Ствол скважины', isPrimary: true, isControl: false, comment: 'Основной комплекс геофизических исследований. Требуется проверить разрыв 281,6–283,0 м и всплеск ГК на 418,2 м.' } }

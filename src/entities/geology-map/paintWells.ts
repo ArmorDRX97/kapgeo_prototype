@@ -3,7 +3,7 @@ import type { MapObject } from './model'
 import { wellSymbol, wellTypes } from './wellSymbols'
 
 /** Batch the background symbols by type; selected geometry stays in the SVG interaction layer. */
-export function paintWells(canvas: HTMLCanvasElement, wells: MapObject[], camera: Camera, size: Size, selected: string | undefined, labels: boolean, values: boolean, hoveredId?: string, focusIds?: string[]) {
+export function paintWells(canvas: HTMLCanvasElement, wells: MapObject[], camera: Camera, size: Size, selected: string | undefined, labels: boolean, values: boolean, hoveredId?: string, focusIds?: string[], forceLabels = false) {
   const ratio = Math.min(window.devicePixelRatio || 1, 2), ctx = canvas.getContext('2d')
   if (!ctx) return
   canvas.width = Math.round(size.width * ratio); canvas.height = Math.round(size.height * ratio)
@@ -31,7 +31,7 @@ export function paintWells(canvas: HTMLCanvasElement, wells: MapObject[], camera
       ctx.beginPath(); ctx.moveTo(a.x - r * .6, a.y); ctx.lineTo(a.x + r * .6, a.y); ctx.moveTo(a.x, a.y - r * .6); ctx.lineTo(a.x, a.y + r * .6); ctx.stroke()
     }
     if (active) { ctx.strokeStyle = '#194b94'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(a.x, a.y, 7, 0, Math.PI * 2); ctx.stroke() }
-    if ((!labels || !o.label.visible || camera.scale < 1.6) && !active && !hovered && !(emphasis && labels)) continue
+    if ((!labels || !o.label.visible || camera.scale < 1.6 && wells.length > 100 && !forceLabels) && !active && !hovered && !(emphasis && labels)) continue
     const key = `${Math.floor(a.x / 80)}:${Math.floor(a.y / 18)}`
     if (occupied.has(key) && !active && !hovered && !emphasis) continue
     occupied.add(key); ctx.fillStyle = hovered ? '#194b94' : wellSymbol(o.attributes.type).color

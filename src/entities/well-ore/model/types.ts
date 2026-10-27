@@ -12,6 +12,9 @@ export type OreInterval = {
   content: number
   meterPercent: number
   permeability: OrePermeability
+  kf?: number
+  krr?: number
+  lft?: number
   differentialIds: string[]
 }
 
@@ -45,6 +48,9 @@ export type WellOreWorkspace = {
 export type OreIntervalDraft = Pick<OreInterval, 'source' | 'element' | 'from' | 'to' | 'permeability'> & {
   basis: OreValueBasis
   value: number
+  kf?: number
+  krr?: number
+  lft?: number
 }
 
 export type MergedOreIntervalSummary = {

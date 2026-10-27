@@ -1,22 +1,25 @@
 /** Independent examples for the passport workspace; no BGD or interpretation data is read here. */
 export type TemplateId = 'core' | 'open' | 'hydro'
-export type TrackId = 'stratigraphy' | 'lithology' | 'gamma' | 'resistivity' | 'knd' | 'ore' | 'kf' | 'construction' | 'core' | 'samples' | 'deviation'
+import { domainTokens } from '@kapgeo/geo-viz/tokens'
+export type TrackId = 'stratigraphy' | 'lithology' | 'gamma' | 'resistivity' | 'sp' | 'radium' | 'knd' | 'ore' | 'kf' | 'construction' | 'core' | 'samples' | 'deviation'
 export const templates: { id: TemplateId; name: string; description: string; tracks: TrackId[] }[] = [
-  { id: 'core', name: 'Керновая', description: 'Геология, ГИС, рейсы и опробование', tracks: ['stratigraphy', 'lithology', 'gamma', 'resistivity', 'ore', 'construction', 'core', 'samples'] },
-  { id: 'open', name: 'Бескерновая', description: 'ГИС, рудные интервалы и конструкция', tracks: ['stratigraphy', 'lithology', 'gamma', 'resistivity', 'knd', 'ore', 'kf', 'construction'] },
-  { id: 'hydro', name: 'Гидрогеологическая', description: 'Водоносный горизонт, фильтры и откачка', tracks: ['stratigraphy', 'lithology', 'gamma', 'resistivity', 'kf', 'construction', 'deviation'] },
+  { id: 'core', name: 'Керновая', description: 'Геология, ГИС, рейсы и опробование', tracks: ['stratigraphy', 'lithology', 'gamma', 'resistivity', 'sp', 'ore', 'construction', 'core', 'samples', 'radium'] },
+  { id: 'open', name: 'Бескерновая', description: 'ГИС, рудные интервалы и конструкция', tracks: ['stratigraphy', 'lithology', 'gamma', 'resistivity', 'sp', 'knd', 'ore', 'kf', 'construction'] },
+  { id: 'hydro', name: 'Гидрогеологическая', description: 'Водоносный горизонт, фильтры и откачка', tracks: ['stratigraphy', 'lithology', 'gamma', 'resistivity', 'sp', 'kf', 'construction', 'deviation'] },
 ]
 export const trackDefinitions: { id: TrackId; name: string; detail: string; color: string }[] = [
   { id: 'stratigraphy', name: 'Стратиграфия', detail: 'Возраст и продуктивный горизонт', color: '#8c769c' },
   { id: 'lithology', name: 'Литология', detail: 'Породы и границы интервалов', color: '#b9a46c' },
-  { id: 'gamma', name: 'Гамма-каротаж', detail: 'ГК · мкР/ч', color: '#33916b' },
-  { id: 'resistivity', name: 'Сопротивление', detail: 'КС · Ом·м', color: '#b95a68' },
+  { id: 'gamma', name: 'Гамма-каротаж', detail: 'ГК · мкР/ч', color: domainTokens.curves.GR },
+  { id: 'resistivity', name: 'Сопротивление', detail: 'КС · Ом·м', color: domainTokens.curves.RS },
+  { id: 'sp', name: 'Потенциалы самополяризации', detail: 'ПС · мВ', color: domainTokens.curves.SP },
+  { id: 'radium', name: 'Опробование · Ra', detail: 'Радий · Бк/кг', color: '#8561a7' },
   { id: 'knd', name: 'КНД', detail: 'Содержание урана · %', color: '#8561a7' },
   { id: 'ore', name: 'Рудные интервалы', detail: 'Мощность и содержание', color: '#c38d34' },
   { id: 'kf', name: 'Коэффициент фильтрации', detail: 'Кф · м/сут', color: '#3d83a3' },
   { id: 'construction', name: 'Конструкция', detail: 'Обсадка, фильтр, цемент, отстойник', color: '#7d8da5' },
   { id: 'core', name: 'Рейсы и выход керна', detail: 'Интервалы бурения · %', color: '#a4855c' },
-  { id: 'samples', name: 'Пробы и анализы', detail: 'Химия, грансостав и монолиты', color: '#b67c91' },
+  { id: 'samples', name: 'Опробование · U', detail: 'Химия, грансостав и монолиты', color: '#b67c91' },
   { id: 'deviation', name: 'Инклинометрия', detail: 'Отклонение ствола · м', color: '#6673a5' },
 ]
 export type PassportWell = {
@@ -78,6 +81,8 @@ export function curveValue(id: TrackId, depth: number, well: PassportWell) {
   const peak = Math.exp(-(((d - 450) / 2.8) ** 2)) + 1.4 * Math.exp(-(((d - 472) / 4.1) ** 2))
   if (id === 'gamma') return Math.max(0, 10 + wave * 1.8 + peak * 49)
   if (id === 'resistivity') return Math.max(0, 12 + Math.sin(d * .16) * 6 + wave * .6 + (d > 442 && d < 483 ? 9 : 0))
+  if (id === 'sp') return 45 + Math.sin(d * .12) * 28 + wave * 2
+  if (id === 'radium') return Math.max(0, 28 + peak * 280 + wave * 3)
   if (id === 'knd') return Math.max(0, .005 + peak * .063 + wave * .0006)
   if (id === 'kf') return d > 442 && d < 483 && !(d > 456 && d < 464) ? 8.2 + Math.sin(d * .3) * 2.5 : .6
   return 1.2 + depth / well.depth * 3.4 + Math.sin(depth * .05) * .25

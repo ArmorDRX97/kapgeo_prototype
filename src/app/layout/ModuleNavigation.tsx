@@ -1,6 +1,6 @@
-import { Link, useRouter, useRouterState } from '@tanstack/react-router'
+import { createLink, Link, useRouter, useRouterState } from '@tanstack/react-router'
 import { Activity, Beaker, BookOpenText, Boxes, ChartNoAxesCombined, Check, ChevronDown, Database, Droplets, FileChartColumn, FileText, FlaskConical, Gauge, Layers3, Map, Mountain, Network, ScanLine, Settings2, Sparkles, TrendingUp, Wrench, type LucideIcon } from 'lucide-react'
-import { type KeyboardEvent, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { type AnchorHTMLAttributes, forwardRef, type KeyboardEvent, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { UserPersona } from '../../entities/session/model/types'
 import { useGeologyNavigation } from '../../features/geology-navigation/useGeologyNavigation'
@@ -8,6 +8,11 @@ import { hasPermission, type Permission } from '../../shared/auth/permissions'
 import './module-navigation.css'
 
 type MenuId = 'geology' | 'technology'
+// The workspace determines the current item independently of remembered
+// method, selection and depth parameters in the destination URL.
+const MenuLink = createLink(forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<HTMLAnchorElement> & { current: boolean }>(function MenuAnchor({ current, ...props }, ref) {
+  return <a {...props} ref={ref} aria-current={current ? 'page' : undefined} />
+}))
 const modules: { label: string; to: '/geology/bgd' | '/geology' | '/technology' | '/modeling' | '/analytics' | '/admin'; permission: Permission; icon: LucideIcon; menu?: MenuId }[] = [
   { label: 'БГД', to: '/geology/bgd', permission: 'bgd.view', icon: Database },
   { label: 'Геология', to: '/geology', permission: 'geology.view', icon: Mountain, menu: 'geology' },
@@ -23,6 +28,7 @@ const geologyItems: { id: string; label: string; icon: LucideIcon }[] = [
   { id: 'passport', label: 'Паспорт скважины', icon: FileText },
   { id: 'map', label: 'Интерактивный план месторождения', icon: Map },
   { id: 'sections', label: 'Разрезы и развертки', icon: BookOpenText },
+  { id: 'data', label: 'Обмен и подготовка разведочных данных', icon: Database },
   { id: 'reserves', label: 'Подсчёт запасов', icon: TrendingUp },
 ]
 const technologyItems: { id: string; label: string; icon: LucideIcon }[] = [
@@ -42,8 +48,8 @@ export function ModuleNavigation({ persona }: { persona: UserPersona | null }) {
   const [open, setOpen] = useState<MenuId | null>(null), [position, setPosition] = useState({ left: 12, top: 68, width: 384 }), [notice, setNotice] = useState('Выберите раздел'), [pressed, setPressed] = useState('')
   const menuRef = useRef<HTMLDivElement>(null), triggers = useRef<Partial<Record<MenuId, HTMLButtonElement>>>({}), openFocus = useRef<'current' | 'last'>('current'), menuId = useId()
   const isGeology = location.pathname.startsWith('/geology') && !location.pathname.startsWith('/geology/bgd')
-  const current = location.pathname.startsWith('/geology/interpretation') ? 'interpretation' : location.pathname.startsWith('/geology/sections') ? 'sections' : location.pathname.startsWith('/geology/plans') ? 'map' : location.pathname.startsWith('/geology/passports') ? 'passport' : ''
-  // This menu contains presentation-only buttons; it grants no module access.
+  const current = location.pathname.startsWith('/geology/interpretation/') ? 'interpretation' : location.pathname.startsWith('/geology/sections') ? 'sections' : location.pathname.startsWith('/geology/plans') ? 'map' : location.pathname.startsWith('/geology/passports') ? 'passport' : location.pathname.startsWith('/geology/data') ? 'data' : location.pathname.startsWith('/geology/reserves') ? 'reserves' : ''
+  // Links keep module permissions; unfinished technology areas retain explicit placeholders.
   const shown = open && (open === 'technology' ? !!persona : hasPermission(persona, 'geology.view'))
   const place = useCallback((id: MenuId) => {
     const anchor = triggers.current[id]?.getBoundingClientRect(); if (!anchor) return
@@ -89,13 +95,16 @@ export function ModuleNavigation({ persona }: { persona: UserPersona | null }) {
       <div className="module-dropdown__header"><span className="module-dropdown__heading-icon">{open === 'geology' ? <Mountain size={19} aria-hidden="true" /> : <Network size={19} aria-hidden="true" />}</span><div><strong>{open === 'geology' ? 'Геология' : 'Геотехнология'}</strong><span>Разделы модуля</span></div></div>
       <div role="menu" aria-label={open === 'geology' ? 'Подмодули геологии' : 'Подмодули геотехнологии'} id={menuId} className="module-dropdown__items">
         {(open === 'geology' ? geologyItems : technologyItems).map(item => {
-          const Icon = item.icon, active = open === 'geology' && isGeology && item.id === current
+          const Icon = item.icon, active = open === 'geology' ? isGeology && item.id === current : item.id === 'database' && location.pathname.startsWith('/technology')
           const content = <><span className="module-dropdown__icon"><Icon size={18} aria-hidden="true" /></span><span className="module-dropdown__label">{item.label}</span>{active && <Check size={16} className="module-dropdown__check" aria-hidden="true" />}</>
-          const props = { role: 'menuitem' as const, className: `module-dropdown__item${pressed === item.id ? ' is-pressed' : ''}`, onClick: () => close(), 'aria-current': active ? 'page' as const : undefined }
-          if (open === 'geology' && item.id === 'sections') return context.section ? <Link key={item.id} {...props} to="/geology/sections/$sectionId" params={{ sectionId: context.section.id }} search={context.section.search}>{content}</Link> : <Link key={item.id} {...props} to="/geology/sections">{content}</Link>
-          if (open === 'geology' && item.id === 'interpretation') return context.alpha ? <Link key={item.id} {...props} to="/geology/interpretation/$method" params={{ method: context.alpha.method }} search={context.alpha.search}>{content}</Link> : <Link key={item.id} {...props} to="/geology/interpretation" search={context.legacy}>{content}</Link>
-          if (open === 'geology' && item.id === 'map') return context.plan?.id === 'MAP-FIELD' ? <Link key={item.id} {...props} to="/geology/plans/$projectId" params={{ projectId: context.plan.id }} search={context.plan.search}>{content}</Link> : <Link key={item.id} {...props} to="/geology/plans">{content}</Link>
-          if (open === 'geology' && item.id === 'passport') return <Link key={item.id} {...props} to="/geology/passports" search={context.passport}>{content}</Link>
+          const props = { role: 'menuitem' as const, className: `module-dropdown__item${pressed === item.id ? ' is-pressed' : ''}`, onClick: () => close(), current: active, activeProps: {} }
+          if (open === 'geology' && item.id === 'sections') return context.section ? <MenuLink key={item.id} {...props} to="/geology/sections/$sectionId" params={{ sectionId: context.section.id }} search={context.section.search}>{content}</MenuLink> : <MenuLink key={item.id} {...props} to="/geology/sections">{content}</MenuLink>
+          if (open === 'geology' && item.id === 'interpretation') return <MenuLink key={item.id} {...props} to="/geology/interpretation/$method" params={{ method: context.alpha?.method ?? 'gamma' }} search={context.alpha?.search ?? { well: context.legacy.well, from: context.legacy.from, to: context.legacy.to }}>{content}</MenuLink>
+          if (open === 'geology' && item.id === 'map') return context.plan?.id === 'MAP-FIELD' ? <MenuLink key={item.id} {...props} to="/geology/plans/$projectId" params={{ projectId: context.plan.id }} search={context.plan.search}>{content}</MenuLink> : <MenuLink key={item.id} {...props} to="/geology/plans">{content}</MenuLink>
+          if (open === 'geology' && item.id === 'data') return <MenuLink key={item.id} {...props} to="/geology/data">{content}</MenuLink>
+          if (open === 'geology' && item.id === 'reserves') return <MenuLink key={item.id} {...props} to="/geology/reserves">{content}</MenuLink>
+          if (open === 'technology' && item.id === 'database' && hasPermission(persona, 'technology.view')) return <MenuLink key={item.id} {...props} to="/technology">{content}</MenuLink>
+          if (open === 'geology' && item.id === 'passport') return <MenuLink key={item.id} {...props} to="/geology/passports" search={context.passport}>{content}</MenuLink>
           return <button key={item.id} role="menuitem" type="button" className={props.className} onClick={() => selectStub(item.id, item.label)}>{content}</button>
         })}
       </div>
