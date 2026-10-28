@@ -19,11 +19,11 @@ describe('independent passport settings', () => {
   })
   it('paginates the full range continuously at the physical scale and preserves the last depth', () => {
     const settings = { ...defaultSettings(well), from: 0, to: well.depth, scale: 200 as const }, pages = passportPages(settings)
-    expect(pages).toHaveLength(15)
+    expect(pages).toHaveLength(9)
     expect(pages[0]!.from).toBe(0)
     expect(pages.at(-1)!.to).toBe(well.depth)
     pages.forEach((page, i) => {
-      expect((page.to - page.from) * 1000 / settings.scale).toBeLessThanOrEqual(180)
+      expect((page.to - page.from) * 1000 / settings.scale).toBeLessThanOrEqual(321.43)
       if (i) expect(page.from).toBe(pages[i - 1]!.to)
     })
   })

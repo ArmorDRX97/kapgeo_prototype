@@ -23,7 +23,7 @@ import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react'
 
 export type CanvasHandle = { id: string; label: string; point: XZ; kind?: 'graphic'|'pinch'|'auxiliary'|'boundary'|'extension' }
 export type HandlePhase = 'start' | 'move' | 'end' | 'cancel'
-export type CanvasProps = { showStems?: boolean; referenceLines?: Array<{z:number;label:string}>; wellDecorations?: Record<string,{coreColor?:string;filterFrom?:number;filterTo?:number}>; section: GeologySection; layers?: SectionLayer[]; graphicTypes?: Array<SectionGraphic['type']>; showGraphics?: boolean; showGrid?: boolean; clean?: boolean; width?: number; height?: number; left?: number; right?: number; top?: number; bottom?: number; onPoint?: (point: XZ) => void; onReadPoint?: (point: XZ) => void; onAnchor?: (id: string) => void; onGraphic?: (id: string) => void; graphicSelectionIds?: string[]; selection?: string; draft?: XZ[]; handles?: CanvasHandle[]; onHandleDrag?: (id: string, point: XZ, phase: HandlePhase) => void; headerLayout?: PlotHeaders; surfaceState?: 'inactive' | 'preview' }
+export type CanvasProps = { showStratigraphy?: boolean; showStems?: boolean; referenceLines?: Array<{z:number;label:string}>; wellDecorations?: Record<string,{coreColor?:string;filterFrom?:number;filterTo?:number}>; section: GeologySection; layers?: SectionLayer[]; graphicTypes?: Array<SectionGraphic['type']>; showGraphics?: boolean; showGrid?: boolean; clean?: boolean; width?: number; height?: number; left?: number; right?: number; top?: number; bottom?: number; onPoint?: (point: XZ) => void; onReadPoint?: (point: XZ) => void; onAnchor?: (id: string) => void; onGraphic?: (id: string) => void; graphicSelectionIds?: string[]; selection?: string; draft?: XZ[]; handles?: CanvasHandle[]; onHandleDrag?: (id: string, point: XZ, phase: HandlePhase) => void; headerLayout?: PlotHeaders; surfaceState?: 'inactive' | 'preview' }
 
 /** Stable rounded graduations, with enough space for fixed-size axis labels. */
 function axisTicks(min: number, max: number, pixels: number, spacing: number) {
@@ -52,7 +52,7 @@ function oxidationHatching(points: XZ[], px: (x: number) => number, py: (z: numb
   return marks.join(' ')
 }
 
-export function SectionSvg({ section, layers = ['technology'], graphicTypes, showGraphics = true, showGrid = true, clean = false, width = 1000, height = 500, left = 0, right = profileLength(section.profile), top = section.top, bottom = section.bottom, onPoint, onReadPoint, onAnchor, onGraphic, graphicSelectionIds, selection, draft, handles = [], onHandleDrag, headerLayout, showStems=true, referenceLines=[], wellDecorations }: CanvasProps) {
+export function SectionSvg({ section, layers = ['technology'], graphicTypes, showGraphics = true, showGrid = true, clean = false, width = 1000, height = 500, left = 0, right = profileLength(section.profile), top = section.top, bottom = section.bottom, onPoint, onReadPoint, onAnchor, onGraphic, graphicSelectionIds, selection, draft, handles = [], onHandleDrag, headerLayout, showStems=true, showStratigraphy=false, referenceLines=[], wellDecorations }: CanvasProps) {
   const activeHandle = useRef<{ id: string; point: XZ; svg?: SVGSVGElement | null } | null>(null)
   const headers = headerLayout ?? (clean ? { top: 42, cards: [] } : plotHeaders(section, width, left, right))
   const uid = useId().replace(/:/g, ''), frame = plotFrame(width, height, clean, headers.top), pad = frame.left
@@ -93,6 +93,7 @@ export function SectionSvg({ section, layers = ['technology'], graphicTypes, sho
         const c = section.columnSettings?.[w.id] ?? section.columnSettings?.all ?? defaultColumns
         const center = stationAtDepth(section, w, Math.max(0, Math.min(w.depth, w.collar.z - (clean ? bottom : section.bottom)))).x
         return <g key={w.id}>
+          {showStratigraphy && <g data-stratigraphy={w.id} pointerEvents="none">{[{ from: 0, to: w.depth * .5, label: 'P₂', color: '#f4e5ce' }, { from: w.depth * .5, to: w.depth * .8, label: 'K₂', color: '#dfeacf' }, { from: w.depth * .8, to: w.depth, label: 'K₁', color: '#d9e4f0' }].map(item => { const a=stationAtDepth(section,w,item.from),b=stationAtDepth(section,w,item.to),h=py(b.z)-py(a.z); return <g key={item.label}><path d={`M${px(a.x)-23} ${py(a.z)}h18L${px(b.x)-5} ${py(b.z)}h-18Z`} fill={item.color} stroke="#8b9199" strokeWidth=".7" /><title>Стратиграфия · демонстрационный пример: {item.label}, {item.from.toFixed(1)}–{item.to.toFixed(1)} м</title>{h>18 && <text x={px(a.x)-14} y={py(a.z)+h/2} textAnchor="middle" fontSize="9" fill="#333">{item.label}</text>}</g> })}</g>}
           {showStems && <path {...inspectAttributes({ title: w.name, kind: 'Траектория скважины', rows: [['Глубина', `${w.depth} м`], ['Устье Z', `${w.collar.z.toFixed(2)} м`], ['Источник', 'Локальная скважина разреза']] }, clean)} className="section-canvas__trajectory" d={w.trajectory.map((p, i) => { const q = stationAtDepth(section, w, p.md); return `${i ? 'L' : 'M'}${px(q.x)},${py(q.z)}` }).join(' ')} />}
           {visibleTracks(c, w).map((track, index, tracks) => {
             const offset = c.offset + tracks.slice(0, index).reduce((sum, t) => sum + t.width + 5, 0), trackWidth = track.width
@@ -114,7 +115,7 @@ export function SectionSvg({ section, layers = ['technology'], graphicTypes, sho
           })}
           {clean && <text x={px(center)} y={pad + 14} textAnchor="middle" className="section-canvas__well-label">{w.name}</text>}
         </g>
-      }), [section, layers, selection, clean, onAnchor, uid, px, py, bottom, pad, showStems])
+      }), [section, layers, selection, clean, onAnchor, uid, px, py, bottom, pad, showStems, showStratigraphy])
   const renderGraphic = (g: SectionGraphic) => {
         const points = resolveGraphicPoints(g, section), rings = [points, ...section.graphics.filter(h => h.parentId === g.id).map(h => resolveGraphicPoints(h, section))]
         const d = g.closed ? polygonPath(rings, px, py) : points.map((p, i) => `${i ? 'L' : 'M'}${px(p.x)},${py(p.z)}`).join(' ')

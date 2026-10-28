@@ -41,9 +41,9 @@ export type PassportSettings = {
   lithology: 'summary' | 'core' | 'logging'; oreSource: 'gamma' | 'knd' | 'samples'; grid: boolean; legend: boolean; color: boolean
   author: string; date: string; note: string; gammaMax: number
 }
-export const PASSPORT_STORAGE_PREFIX = 'kapgeo.passport.design.v1.'
+export const PASSPORT_STORAGE_PREFIX = 'kapgeo.passport.design.v2.'
 export function defaultSettings(well: PassportWell): PassportSettings {
-  return { template: well.kind, from: 420 + well.offset, to: 510 + well.offset, scale: 500, tracks: [...templates.find(t => t.id === well.kind)!.tracks], lithology: 'summary', oreSource: 'gamma', grid: true, legend: true, color: true, author: 'И. А. Иванова', date: '2026-10-20', note: '', gammaMax: 100 }
+  return { template: well.kind, from: 420 + well.offset, to: 480 + well.offset, scale: 200, tracks: ['stratigraphy', 'gamma', 'lithology', 'kf', 'resistivity', 'sp', 'construction'], lithology: 'summary', oreSource: 'gamma', grid: true, legend: true, color: true, author: 'И. А. Иванова', date: '2026-10-20', note: '', gammaMax: 100 }
 }
 export function loadSettings(well: PassportWell): PassportSettings {
   const fallback = defaultSettings(well)
@@ -88,9 +88,12 @@ export function curveValue(id: TrackId, depth: number, well: PassportWell) {
   return 1.2 + depth / well.depth * 3.4 + Math.sin(depth * .05) * .25
 }
 export type PageRange = { from: number; to: number }
-/** A3 landscape: 180 mm for depth tracks, matching the selected physical scale. */
+/** The approved portrait sheet: 1500 SVG units of plot at 1960 units / 420 mm. */
 export function passportPages(settings: PassportSettings): PageRange[] {
-  const span = settings.scale * .18, pages: PageRange[] = []
-  for (let from = settings.from; from < settings.to - .00001; from += span) pages.push({ from, to: Math.min(settings.to, Math.round((from + span) * 1000) / 1000) })
+  const span = settings.scale * 1500 * 420 / 1960 / 1000, pages: PageRange[] = []
+  for (let from = settings.from; from < settings.to - .00001;) {
+    const to = Math.min(settings.to, Math.floor((from + span) * 1000) / 1000)
+    pages.push({ from, to }); from = to
+  }
   return pages
 }

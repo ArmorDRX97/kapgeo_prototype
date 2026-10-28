@@ -34,6 +34,21 @@ describe('BGD object → section → workspace', () => {
     expect(screen.getByRole('complementary', { name: 'Разделы выбранной скважины' })).toHaveTextContent(bgdFieldWells[8000]!.name)
   })
 
+  it('opens the coordinate import placeholder without changing well data', async () => {
+    renderWorkbench(false, primaryWell.id)
+    await screen.findByLabelText('Название скважины *')
+    fireEvent.click(screen.getByRole('button', { name: 'Координаты и глубина' }))
+    const coordinates = screen.getAllByLabelText('X')
+    const before = coordinates.map(input => (input as HTMLInputElement).value)
+    fireEvent.click(screen.getByRole('button', { name: 'Импорт' }))
+    const dialog = screen.getByRole('dialog', { name: 'Импорт координат и глубины' })
+    expect(dialog).toHaveTextContent('Формат файла и состав импортируемых данных пока не определены')
+    expect(dialog.querySelector('input[type="file"]')).not.toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole('button', { name: /^Закрыть$/ }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getAllByLabelText('X').map(input => (input as HTMLInputElement).value)).toEqual(before)
+  })
+
   it('edits impermeable intervals in a compact table and persists added and removed rows', async () => {
     const onSaved = renderWorkbench(false, primaryWell.id)
     await screen.findByLabelText('Название скважины *')

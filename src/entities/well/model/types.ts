@@ -202,6 +202,7 @@ export type GeologicalInterval = {
   lithology: Lithology
   stratigraphy: StratigraphyUnit
   lithologyCode?: string
+  grainSize?: string
   geochemistryCode?: string
   mineralization?: string
   color?: string

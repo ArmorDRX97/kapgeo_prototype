@@ -1,0 +1,4 @@
+.bgd-stratigraphy tbody tr { cursor: pointer; }
+.bgd-stratigraphy tbody tr:hover { background: var(--surface-subtle); }
+.bgd-stratigraphy tbody tr.is-selected { background: var(--surface-selected, #edf3fc); }
+.bgd-stratigraphy tbody tr:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }

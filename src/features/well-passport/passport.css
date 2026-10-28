@@ -197,11 +197,11 @@
   .passport-page-range { margin-left: auto; }
 }
 @media print {
-  @page passport { size: A3 landscape; margin: 0; }
+  @page passport { size: A3 portrait; margin: 0; }
   html:has(.passport-print), body:has(.passport-print) { margin: 0; padding: 0; min-height: 0; height: auto; }
   body:has(.passport-print) > *:not(.passport-print) { display: none !important; }
   .passport-print { display: block; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-  .passport-print-page { page: passport; width: 420mm; height: 297mm; break-after: page; overflow: hidden; }
+  .passport-print-page { page: passport; width: 297mm; height: 420mm; break-after: page; overflow: hidden; }
   .passport-print-page:last-child { break-after: auto; }
-  .passport-print .passport-sheet { width: 420mm; height: 297mm; }
+  .passport-print .passport-sheet { width: 270mm; height: 420mm; margin: 0 auto; }
 }

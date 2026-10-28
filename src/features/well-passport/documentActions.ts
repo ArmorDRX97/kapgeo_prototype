@@ -7,7 +7,7 @@ export function download(blob: Blob, filename: string) {
 }
 export function serializeSheet(svg: SVGSVGElement) {
   const clone = svg.cloneNode(true) as SVGSVGElement
-  clone.setAttribute('width', '420mm'); clone.setAttribute('height', '297mm')
+  clone.setAttribute('width', '270mm'); clone.setAttribute('height', '420mm')
   clone.querySelectorAll('[data-track]').forEach(el => { el.removeAttribute('role'); el.removeAttribute('tabindex'); el.removeAttribute('aria-label'); el.removeAttribute('class') })
   return new XMLSerializer().serializeToString(clone)
 }
@@ -16,7 +16,7 @@ export async function rasterSheet(source: string, format: 'png' | 'jpeg'): Promi
   try {
     const image = new Image()
     await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error('Не удалось подготовить изображение. Попробуйте экспорт SVG.')); image.src = url })
-    const canvas = document.createElement('canvas'); canvas.width = 2520; canvas.height = 1782
+    const canvas = document.createElement('canvas'); canvas.width = 2520; canvas.height = 3920
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('Браузер не поддерживает экспорт изображения.')
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
@@ -34,7 +34,7 @@ export function dataRows(id: TrackId, well: PassportWell, s: PassportSettings): 
 const xml = (s: string | number) => String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
 export function excelDocument(well: PassportWell, s: PassportSettings) {
   const rows: (string | number)[][] = [[`Паспорт скважины ${well.name}`], ['Месторождение', 'Инкай · Участок № 2'], ['Интервал, м', s.from, s.to], ['Масштаб', `1:${s.scale}`], ['Координаты устья', well.x, well.y, well.z], []]
-  for (const id of s.tracks) { const data = dataRows(id, well, s); rows.push([trackDefinitions.find(t => t.id === id)!.name], data.columns, ...data.rows, []) }
+  for (const id of ['stratigraphy', 'gamma', 'lithology', 'kf', 'resistivity', 'sp', 'construction'] as TrackId[]) { const data = dataRows(id, well, s); rows.push([trackDefinitions.find(t => t.id === id)!.name], data.columns, ...data.rows, []) }
   const content = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Паспорт"><Table>${rows.map(row => `<Row>${row.map(v => `<Cell><Data ss:Type="${typeof v === 'number' ? 'Number' : 'String'}">${xml(v)}</Data></Cell>`).join('')}</Row>`).join('')}</Table></Worksheet></Workbook>`
   return new Blob([content], { type: 'application/vnd.ms-excel;charset=utf-8' })
 }
