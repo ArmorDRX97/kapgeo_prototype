@@ -61,6 +61,15 @@ describe('selected section setup', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Показать ГС-103 на карте' }))
     expect(onMap).toHaveBeenCalledWith('GTR-W3')
   })
+  it('opens a well from any cell of its row and by keyboard', () => {
+    const onMap = vi.fn()
+    render(<SectionSetup section={referenceSection()} disabled={false} onChange={vi.fn()} onMap={onMap} />)
+    const row = screen.getByText('ГС-103').closest('tr')!
+    fireEvent.click(within(row).getByText('ГС-103'))
+    expect(onMap).toHaveBeenCalledWith('GTR-W3')
+    fireEvent.keyDown(row, { key: 'Enter' })
+    expect(onMap).toHaveBeenCalledTimes(2)
+  })
   it('invalidates corridor results when the profile changes', () => {
     const section = initialSections()[0]!, view = render(<SectionWells section={section} disabled={false} onChange={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: 'Найти скважины рядом' }))

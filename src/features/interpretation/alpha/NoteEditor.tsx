@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import type { AlphaViewPreferences } from './viewPreferences'
 import { Button } from '../../../shared/ui/Button'
@@ -13,5 +14,5 @@ export function NoteEditor({ trackId, depthLimit, notes, onChange }: { trackId: 
     const nextId = id || `note-${index}`
     onChange([...notes.filter(n => n.id !== nextId), { id: nextId, trackId, depth, text: text.trim() }]); setId(nextId); setError('')
   }
-  return <details className="alpha-group"><summary>Подписи на колонке</summary><div><SelectField label="Подпись планшета" value={id} onChange={choose} options={[["", "Новая подпись"], ...notes.filter(n => n.trackId === trackId).map(n => [n.id, `${n.depth} м · ${n.text}`] as const)]} /><NumberField label="Глубина подписи, м" value={depth} onChange={setDepth} /><label className="alpha-field"><span>Текст подписи</span><input maxLength={120} value={text} onChange={e => setText(e.target.value)} /></label><div className="alpha-actions"><Button size="sm" variant="secondary" onClick={apply}>Применить подпись</Button>{id && <Button size="sm" variant="quiet" onClick={() => { onChange(notes.filter(n => n.id !== id)); choose('') }}>Удалить подпись</Button>}</div>{error && <p role="alert">{error}</p>}</div></details>
+  return <details className="alpha-group"><summary>Подписи на колонке</summary><div><SelectField label="Подпись планшета" value={id} onChange={choose} options={[["", "Новая подпись"], ...notes.filter(n => n.trackId === trackId).map(n => [n.id, `${n.depth} м · ${n.text}`] as const)]} /><NumberField label="Глубина подписи, м" value={depth} onChange={setDepth} /><label className="alpha-field"><span>Текст подписи</span><input maxLength={120} value={text} onChange={e => setText(e.target.value)} /></label><div className="alpha-actions"><Button size="sm" variant="secondary" onClick={apply}>Применить подпись</Button>{id && <Button className="action-delete" size="sm" variant="quiet" onClick={() => { onChange(notes.filter(n => n.id !== id)); choose('') }}><Trash2 size={15} />Удалить подпись</Button>}</div>{error && <p role="alert">{error}</p>}</div></details>
 }

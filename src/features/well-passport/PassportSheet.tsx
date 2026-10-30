@@ -51,9 +51,9 @@ export function PassportSheet({ well, settings: s, range, pageNumber, pageCount,
     <rect width={SHEET_WIDTH} height={SHEET_HEIGHT} fill="#fff" />
     <g filter={s.color ? undefined : `url(#${uid}-mono)`}>
       <rect x="1" y="1" width="1258" height="1958" fill="none" stroke="#000" strokeWidth="2" />
-      <g fontSize="16" fontWeight="bold"><text x="10" y="27">Месторождение Инкай · Участок № 2</text><text x="10" y="55">Залежь: демонстрационный пример</text><text x="10" y="82">Блок № {well.block}</text><text x="10" y="109">Ряд: —</text><text x="10" y="136">Тип скважины: {well.purpose}</text></g>
+      <g fontSize="16" fontWeight="bold"><text x="10" y="27">Месторождение Инкай · Участок № 2</text><text x="10" y="55">Залежь: —</text><text x="10" y="82">Блок № {well.block}</text><text x="10" y="109">Ряд: —</text><text x="10" y="136">Тип скважины: {well.purpose}</text></g>
       <text x="630" y="38" textAnchor="middle" fontSize="27">ПАСПОРТ РУДНЫХ ИНТЕРВАЛОВ</text><text x="630" y="65" textAnchor="middle" fontSize="21">по результатам комплексной интерпретации ГИС</text><text x="630" y="102" textAnchor="middle" fontSize="26">Скважина № {well.name}</text><text x="630" y="143" textAnchor="middle" fontSize="17">Масштаб 1:{s.scale}</text>
-      <g textAnchor="end" fontSize="15"><text x="1250" y="28">Геофизическая служба</text><text x="1250" y="55">Демонстрационный пример</text><text x="1250" y="108">Дата каротажа: 16.10.2026</text><text x="1250" y="136">Устье: X {number(well.x)} · Y {number(well.y)} · Z {number(well.z)} м</text></g>
+      <g textAnchor="end" fontSize="15"><text x="1250" y="28">Геофизическая служба</text><text x="1250" y="108">Дата каротажа: 16.10.2026</text><text x="1250" y="136">Устье: X {number(well.x)} · Y {number(well.y)} · Z {number(well.z)} м</text></g>
       <path d="M0 155H1260 M0 350H1260 M0 1850H1260" stroke="#000" strokeWidth="2" />
       {columns.slice(1, -1).map(x => <path key={x} d={`M${x} 155V1850`} stroke="#111" strokeWidth="1.8" />)}
       {vertical(23, 'Стратиграфия')}{vertical(69, 'Глубина, м')}{vertical(368, 'Литология')}{vertical(413, 'Коэф. фильтр., м/сут')}{vertical(768, 'Фильтр (проект.)')}

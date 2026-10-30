@@ -28,6 +28,7 @@ export function BgdWellPage() {
   return <WellEditorPage
     depositId={depositId}
     wellId={wellId}
+    onShowOnMap={() => void navigate({ to: '/geology/bgd/$depositId', params: { depositId }, search: { well: wellId } })}
     activeTab={search.tab ?? 'description'}
     activeView={search.view}
     onViewChange={(view) => void navigate({ search: { ...search, view }, resetScroll: false })}

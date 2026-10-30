@@ -24,7 +24,7 @@ describe('BGD deposit navigation', () => {
 
   it('marks only the selected well and groups actions above the full-width search', async () => {
     mount()
-    await screen.findByRole('button', { name: 'Открыть месторождение Сарытау' })
+    await screen.findByRole('button', { name: 'Главная' })
     fireEvent.change(screen.getByLabelText('Поиск по скважинам'), { target: { value: '1010' } })
     const well = await screen.findByRole('button', { name: /^WELL-1010/ })
     expect(well).toHaveTextContent(/^WELL-1010$/)
@@ -68,7 +68,7 @@ describe('BGD deposit navigation', () => {
 
   it('opens the unified deposit overview directly from the collapse-button row', async () => {
     mount()
-    const trigger = await screen.findByRole('button', { name: 'Открыть месторождение Сарытау' })
+    const trigger = await screen.findByRole('button', { name: 'Главная' })
     const collapse = screen.getByRole('button', { name: 'Свернуть список скважин' })
     expect(trigger.closest('header')).toBe(collapse.closest('header'))
     expect(trigger).not.toHaveAttribute('aria-haspopup')
@@ -80,7 +80,7 @@ describe('BGD deposit navigation', () => {
 
   it('preserves the selected well section and view', async () => {
     mount()
-    await screen.findByRole('button', { name: 'Открыть месторождение Сарытау' })
+    await screen.findByRole('button', { name: 'Главная' })
     fireEvent.change(screen.getByLabelText('Поиск по скважинам'), { target: { value: '1010' } })
     fireEvent.click(await screen.findByRole('button', { name: /^WELL-1010/ }))
     expect(route.navigate).toHaveBeenLastCalledWith({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId: 'DEP-SARYTAU', wellId: primaryWell.id }, search: { tab: 'lithology', view: 'composite' }, resetScroll: false })
@@ -88,14 +88,14 @@ describe('BGD deposit navigation', () => {
 
   it('keeps deposit viewing and search available for a read-only user', async () => {
     mount(true)
-    expect(await screen.findByRole('button', { name: 'Открыть месторождение Сарытау' })).toBeEnabled()
+    expect(await screen.findByRole('button', { name: 'Главная' })).toBeEnabled()
     expect(screen.queryByRole('button', { name: 'Редактировать' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('Поиск по скважинам')).toBeEnabled()
     expect(screen.queryByRole('button', { name: 'Добавить скважину' })).not.toBeInTheDocument()
   })
   it('loads the catalogue in batches of 80 and searches beyond the loaded batch', async () => {
     mount()
-    await screen.findByRole('button', { name: 'Открыть месторождение Сарытау' })
+    await screen.findByRole('button', { name: 'Главная' })
     expect(document.querySelectorAll('.bgd-well-type-dot')).toHaveLength(80)
     fireEvent.click(screen.getByRole('button', { name: 'Показать ещё 80' }))
     expect(document.querySelectorAll('.bgd-well-type-dot')).toHaveLength(160)

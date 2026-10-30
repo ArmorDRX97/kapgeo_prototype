@@ -1,4 +1,4 @@
-import { Info, Plus, Save, SwatchBook, Trash2 } from 'lucide-react'
+import { Plus, Save, SwatchBook, Trash2 } from 'lucide-react'
 import { useState, type CSSProperties } from 'react'
 import { z } from 'zod'
 import { Badge } from '../../shared/ui/Badge'
@@ -25,8 +25,8 @@ export function LegendEditor({ onChange }: { onChange?: () => void }) {
   const update = (index: number, patch: Partial<LegendEntry>) => setRows(current => current.map((row, i) => i === index ? { ...row, ...patch } : row))
   const add = () => {
     let number = rows.length + 1
-    while (rows.some(row => row.code === 'DEMO-' + number)) number++
-    setRows([...rows, { name: 'Новая порода', code: 'DEMO-' + number, color: '#dddddd', pattern: 'dots' }])
+    while (rows.some(row => row.code === 'L-' + number)) number++
+    setRows([...rows, { name: 'Новая порода', code: 'L-' + number, color: '#dddddd', pattern: 'dots' }])
   }
   const save = () => {
     const result = legendSchema.safeParse(rows)
@@ -42,12 +42,11 @@ export function LegendEditor({ onChange }: { onChange?: () => void }) {
   }
   return <>
     <Button size="sm" variant="secondary" onClick={() => { setRows(readLegend()); setError(''); setOpen(true) }}><SwatchBook size={16} />Легенда и коды</Button>
-    {open && <WorkspaceDialog title="Легенда · целевой СТ НАК 16-2026" onClose={() => setOpen(false)} footer={<>
+    {open && <WorkspaceDialog title="Легенда и коды" onClose={() => setOpen(false)} footer={<>
       <Button variant="secondary" onClick={() => setOpen(false)}>Отмена</Button>
       <Button onClick={save}><Save size={16} />Сохранить легенду</Button>
     </>}>
       <div className="legend-editor">
-        <div className="legend-editor__notice"><Info size={18} /><div><strong>Демонстрационные обозначения</strong><p>Коды и крапы нужно сверить с таблицей СТ НАК 16-2026. Настройки применяются к литологии БГД и графическому паспорту при открытии экрана.</p></div></div>
         <div className="legend-editor__toolbar"><div><SwatchBook size={18} /><h3>Условные обозначения</h3><Badge tone="neutral">{rows.length} / 80</Badge></div><Button variant="secondary" size="sm" disabled={rows.length >= 80} onClick={add}><Plus size={16} />Добавить обозначение</Button></div>
         {error && <p className="legend-editor__error" role="alert">{error}</p>}
         <div className="legend-editor__table-wrap">

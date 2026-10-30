@@ -7,7 +7,7 @@
 .geology-navigator__header { display: flex; min-height: 56px; flex: none; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .geology-navigator__header > span { color: var(--text-secondary); font-size: var(--font-size-sm); }
 .app-workspace--bgd .geology-navigator__header { gap: var(--space-2); margin-bottom: var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-default); }
-.geology-navigator__deposit { display: flex; flex: 1; min-width: 0; align-items: center; gap: var(--space-2); padding: var(--space-2); color: var(--text-primary); background: transparent; border: 1px solid transparent; border-radius: var(--radius-md); text-align: left; cursor: pointer; transition: background-color var(--duration-fast), border-color var(--duration-fast); }
+.geology-navigator__deposit { display: flex; flex: 1; min-width: 0; height: 40px; align-items: center; gap: var(--space-2); padding: 0 var(--space-3); color: var(--text-primary); background: transparent; border: 1px solid transparent; border-radius: var(--radius-md); text-align: left; cursor: pointer; transition: background-color var(--duration-fast), border-color var(--duration-fast); }
 .geology-navigator__deposit:hover, .geology-navigator__deposit[aria-current="page"] { background: var(--color-brand-50); border-color: var(--color-brand-200); }
 .geology-navigator__deposit > span:last-child { display: grid; min-width: 0; gap: var(--space-1); }
 .geology-navigator__deposit strong { overflow: hidden; font-size: var(--font-size-base); text-overflow: ellipsis; white-space: nowrap; }
@@ -55,15 +55,17 @@
 .app-workspace--bgd > .app-workspace__content { overflow: auto; }
 .app-workspace--bgd > .app-workspace__content:has(.bgd-well-workbench) { padding: 0; overflow: hidden; }
 .bgd-well-workbench { display: flex; height: 100%; min-width: 0; }
-.bgd-section-navigation { width: var(--bgd-sections-width); min-width: 0; flex: 0 0 var(--bgd-sections-width); height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: var(--space-3); border-right: 1px solid var(--border-default); background: var(--surface-panel); }
-.bgd-section-navigation > header { position: sticky; top: 0; z-index: 2; display: flex; min-height: 56px; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-4); background: var(--surface-panel); }
-.bgd-section-navigation > header > div { display: grid; min-width: 0; gap: var(--space-1); }
+.bgd-section-navigation { width: var(--bgd-sections-width); min-width: 0; flex: 0 0 var(--bgd-sections-width); height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 0 var(--space-3) var(--space-3); border-right: 1px solid var(--border-default); background: var(--surface-panel); }
+.bgd-section-navigation > header { position: sticky; top: 0; z-index: 2; display: flex; min-height: 68px; padding-block: var(--space-3); align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-4); background: var(--surface-panel); }
+.bgd-section-navigation > header > .bgd-section-navigation__identity { display: grid; min-width: 0; gap: var(--space-1); }
+.bgd-section-navigation__actions { display: flex; flex: none; gap: var(--space-2); }
 .bgd-section-navigation > header small { color: var(--text-secondary); font-size: var(--font-size-sm); }
 .bgd-section-navigation > header strong { color: var(--text-primary); overflow-wrap: anywhere; font-size: var(--font-size-base); }
 .bgd-section-navigation > header button { display: grid; width: 40px; height: 40px; flex: none; place-items: center; color: var(--text-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-subtle); cursor: pointer; }
-.bgd-section-navigation.is-collapsed { width: var(--bgd-navigation-rail); flex-basis: var(--bgd-navigation-rail); padding: var(--space-1); }
+.bgd-section-navigation.is-collapsed { width: var(--bgd-navigation-rail); flex-basis: var(--bgd-navigation-rail); padding: 0 var(--space-1) var(--space-1); }
 .bgd-section-navigation.is-collapsed > header { margin-bottom: var(--space-2); }
-.bgd-section-navigation.is-collapsed > header > div { display: none; }
+.bgd-section-navigation.is-collapsed > header > .bgd-section-navigation__identity { display: none; }
+.bgd-section-navigation.is-collapsed .bgd-section-navigation__actions { flex-direction: column; }
 .bgd-section-navigation__rail { display: block; margin: auto; width: max-content; writing-mode: vertical-rl; color: var(--text-secondary); font-size: var(--font-size-sm); }
 .bgd-section-group { padding-block: var(--space-2); border-top: 1px solid var(--border-default); }
 .bgd-section-group > summary { display: flex; min-height: 40px; align-items: center; gap: var(--space-2); color: var(--text-secondary); cursor: pointer; list-style: none; font-size: var(--font-size-sm); font-weight: 700; }
@@ -170,8 +172,22 @@
   min-width: 0; height: 40px; min-height: 40px; padding: 0 10px; border-radius: 7px; font-size: var(--font-size-base);
 }
 .bgd-well-page textarea { min-width: 0; min-height: 96px; padding: 10px; border-radius: 7px; font-size: var(--font-size-base); }
+.bgd-well-page .data-fields { width: 100%; max-width: none; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+.bgd-form-actions { display: flex; justify-content: flex-end; margin-top: var(--space-4); }
+.bgd-well-page .data-scroll tr[tabindex] { cursor: pointer; }
+.bgd-well-page .data-scroll tr[tabindex]:hover { background: var(--color-brand-50); }
+.bgd-well-page .data-scroll tr[tabindex]:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+/* Destructive actions share a clear but restrained treatment throughout BGD. */
+.app-frame--bgd button:is(:has(.lucide-trash-2), [aria-label^="Удалить"], .button--danger),
+body:has(.app-frame--bgd) .row-actions-menu button.is-danger { color: #a61919; background: color-mix(in srgb, var(--color-red-600) 10%, white); border-color: color-mix(in srgb, var(--color-red-600) 24%, white); border-radius: var(--radius-sm); }
+.app-frame--bgd button:is(:has(.lucide-trash-2), [aria-label^="Удалить"], .button--danger):hover:not(:disabled),
+body:has(.app-frame--bgd) .row-actions-menu button.is-danger:hover:not(:disabled) { color: white; background: var(--color-red-600); border-color: var(--color-red-600); }
+.app-frame--bgd button:is(:has(.lucide-trash-2), [aria-label^="Удалить"], .button--danger):focus-visible,
+body:has(.app-frame--bgd) .row-actions-menu button.is-danger:focus-visible { outline: 2px solid var(--color-red-600); outline-offset: 2px; }
+.app-frame--bgd :is(td, .bgd-core-edit-table, .bgd-deviation-point-editor) button:is(:has(.lucide-trash-2), [aria-label^="Удалить"]) { color: #b42323; background: transparent; border-color: transparent; }
+.app-frame--bgd :is(td, .bgd-core-edit-table, .bgd-deviation-point-editor) button:is(:has(.lucide-trash-2), [aria-label^="Удалить"]):hover:not(:disabled) { color: #a61919; background: color-mix(in srgb, var(--color-red-600) 9%, white); border-color: transparent; }
 .bgd-well-page :is(.form-grid, .bgd-well-language-grid, .bgd-lithology-form, .bgd-ore-form, .bgd-ore-context) {
-  display: grid; max-width: 74rem; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: var(--space-4);
+  display: grid; width: 100%; max-width: none; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: var(--space-4);
 }
 .bgd-well-page :is(.form-grid, .bgd-well-language-grid, .bgd-lithology-form, .bgd-ore-form, .bgd-ore-context) > .field { margin: 0; grid-column: auto; }
 .bgd-well-page .form-grid > .field:first-child { grid-column: auto; }
@@ -180,7 +196,7 @@
 .bgd-well-page .bgd-well-construction__layout { grid-template-columns: minmax(0, 1fr); }
 .bgd-well-page .bgd-well-construction__editor .form-grid { margin-top: 0; }
 .bgd-well-page .bgd-well-construction__editor .field { display: flex; }
-.bgd-well-page .bgd-well-geometry-layout { display: grid; max-width: 74rem; grid-template-columns: minmax(420px, 1.15fr) minmax(240px, 1fr); align-items: start; gap: var(--space-5); }
+.bgd-well-page .bgd-well-geometry-layout { display: grid; width: 100%; grid-template-columns: minmax(420px, 1.15fr) minmax(240px, 1fr); align-items: start; gap: var(--space-5); }
 .bgd-well-page .bgd-well-coordinate-grid { margin: 0; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
 .bgd-well-page .bgd-well-coordinate-grid section > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .bgd-well-page .bgd-well-coordinate-grid .field,

@@ -5,11 +5,13 @@ const bgdDepositRoute = getRouteApi('/geology/bgd/$depositId')
 
 export function GeoBaseDepositPage() {
   const { depositId } = bgdDepositRoute.useParams()
+  const { well } = bgdDepositRoute.useSearch()
   const navigate = useNavigate({ from: '/geology/bgd/$depositId' })
 
   return <GeologyDatabaseDeposit
     onOpenWell={wellId => void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId }, search: {} })}
     depositId={depositId}
+    focusWellId={well}
     key={depositId}
     onOpenDeposit={(nextDepositId) => void navigate({ to: '/geology/bgd/$depositId', params: { depositId: nextDepositId }, search: {} })}
     onOpenConditions={(nextDepositId) => void navigate({ to: '/geology/bgd/$depositId/conditions', params: { depositId: nextDepositId } })}

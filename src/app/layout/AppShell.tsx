@@ -127,7 +127,7 @@ export function AppShell({ children }: PropsWithChildren) {
 
     <div className={`app-workspace${isBgd ? ' app-workspace--bgd' : ''}`}>
       {isBgd && <GeologyNavigator mobileOpen={geologyNavOpen} collapsed={geologyNavCollapsed} onToggle={() => setGeologyNavCollapsed((value) => !value)} onClose={closeGeologyNavigation} />}
-      <main id="main-content" className="app-workspace__content content" tabIndex={-1} inert={isBgd && geologyNavOpen}>{isGeology && <div className="geology-context"><strong>Рабочие данные геологии</strong><Link to="/geology/bgd">Выбрать месторождение и участок в БГД</Link><Link to="/geology/data">Обмен и подготовка данных</Link><span>Демонстрационные наборы рабочих областей независимы</span></div>}{children}</main>
+      <main id="main-content" className="app-workspace__content content" tabIndex={-1} inert={isBgd && geologyNavOpen}>{children}</main>
     </div>
 
 

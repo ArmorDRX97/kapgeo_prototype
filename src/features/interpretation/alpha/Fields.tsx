@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { MeasurementRecord } from '../../../entities/interpretation/model/alphaTypes'
+import { Switch } from '../../../shared/ui/Switch'
 export function NumberField({ label, value, onChange, step = 'any', disabled = false }: { label: string; value: number; onChange: (value: number) => void; step?: string | number; disabled?: boolean }) {
   return <label className="alpha-field"><span>{label}</span><input type="number" value={Number.isFinite(value) ? value : ''} step={step} disabled={disabled} onChange={e => onChange(e.target.value === '' ? NaN : Number(e.target.value))} /></label>
 }
@@ -10,7 +11,7 @@ export function RecordField({ label = 'Запись ГИС', value, records, onC
   return <SelectField label={label} value={value} onChange={onChange} options={records.map(r => [r.id, `${r.name} · ${r.date}${r.parentId ? ' · корректировка' : ''}`])} />
 }
 export function CheckField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) {
-  return <label className="alpha-check"><input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />{label}</label>
+  return <Switch label={label} checked={checked} onChange={onChange} />
 }
 export function Group({ title, children, open = false }: { title: string; children: ReactNode; open?: boolean }) {
   return <details className="alpha-group" open={open}><summary>{title}</summary><div>{children}</div></details>

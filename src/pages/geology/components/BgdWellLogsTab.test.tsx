@@ -18,19 +18,12 @@ describe('BGD well log tables', () => {
   beforeEach(async () => { await demoDatabase.reset() })
   afterEach(async () => { cleanup(); await demoDatabase.reset() })
 
-  it('explains the LAS example before adding it and allows cancelling without changing data', async () => {
+  it('keeps the LAS import button inactive without changing data', async () => {
     renderLogs()
     await screen.findByRole('table', { name: 'Все каротажи скважины' })
     fireEvent.click(screen.getByRole('button', { name: 'Загрузить LAS' }))
-    const dialog = screen.getByRole('dialog', { name: 'Импорт каротажа LAS' })
-    expect(within(dialog).getByText(/Исходный LAS-файл не считывается/)).toBeInTheDocument()
     expect((await fetchWellLogWorkspace(primaryWell.id)).runs).toHaveLength(2)
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Отмена' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Загрузить LAS' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Добавить пример LAS' }))
-    expect(await screen.findByText(/Чтение файла и QC в этом действии смоделированы/, {}, { timeout: 5000 })).toBeInTheDocument()
-    expect((await fetchWellLogWorkspace(primaryWell.id)).runs).toHaveLength(3)
   })
 
   it('shows all and control logs in separate tables and keeps plotted curves hidden', async () => {
@@ -43,7 +36,6 @@ describe('BGD well log tables', () => {
     expect(within(allTable).queryByText('Канал')).not.toBeInTheDocument()
     const measurementsTable = screen.getByRole('table', { name: 'Измерения каротажа Комплекс ГК + ПС + КС' })
     expect(within(measurementsTable).getAllByRole('row')).toHaveLength(9)
-    expect(screen.getByText('Графическое отображение кривых временно скрыто.')).toBeInTheDocument()
     expect(screen.queryByRole('img', { name: /крив/ })).not.toBeInTheDocument()
 
     fireEvent.change(within(measurementsTable).getByLabelText('GR, строка 1'), { target: { value: '99.4' } })

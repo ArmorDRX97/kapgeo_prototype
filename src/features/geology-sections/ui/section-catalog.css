@@ -106,3 +106,6 @@
   .section-document-setup .section-catalog__workspace { grid-template-columns: 220px minmax(0, 1fr); }
   .section-document-setup__parameters > .section-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.section-catalog__table-scroll tbody tr[tabindex] { cursor: pointer; }
+.section-catalog__table-scroll tbody tr[tabindex]:hover { background: var(--color-brand-50); }
+.section-catalog__table-scroll tbody tr[tabindex]:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }

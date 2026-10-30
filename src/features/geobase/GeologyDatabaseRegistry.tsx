@@ -12,7 +12,9 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useModalFocus } from '../../shared/lib/useModalFocus'
+import { Switch } from '../../shared/ui/Switch'
 import {
   getDepositDescription,
   getDepositName,
@@ -235,7 +237,7 @@ export function DepositEditor({ deposit, canEdit, canDelete, pending, onSave, on
   </div>
 }
 
-function DepositForm({ form, onChange, disabled, immutable = false }: { form: DepositFormState; onChange: (next: DepositFormState) => void; disabled: boolean; immutable?: boolean }) {
+function DepositForm({ form, onChange, disabled, immutable = false, creation = false }: { form: DepositFormState; onChange: (next: DepositFormState) => void; disabled: boolean; immutable?: boolean; creation?: boolean }) {
   const set = <K extends keyof DepositFormState>(key: K, value: DepositFormState[K]) => onChange({ ...form, [key]: value })
   return <div className="geobase-form">
     <div className="geobase-form__identity">
@@ -253,7 +255,7 @@ function DepositForm({ form, onChange, disabled, immutable = false }: { form: De
       <div><label className="field"><span className="field__label">Название ({locale}) <em>*</em></span><input disabled={disabled} value={form[name]} onChange={(event) => set(name, event.target.value)} /></label>
         <label className="field"><span className="field__label">Описание ({locale})</span><textarea disabled={disabled} rows={2} value={form[description]} onChange={(event) => set(description, event.target.value)} /></label></div>
     </fieldset>)}
-    <label className="geobase-visibility"><input disabled={disabled} type="checkbox" checked={!form.isHidden} onChange={(event) => set('isHidden', !event.target.checked)} /><span><strong>Использовать месторождение</strong><small>Если выключить, объект исчезнет из обычных списков выбора, но сохранит данные и историю.</small></span></label>
+    {creation ? <Switch label="Использовать месторождение" description="Объект будет доступен в списках выбора." checked={!form.isHidden} disabled={disabled} onChange={(checked) => set('isHidden', !checked)} /> : <label className="geobase-visibility"><input disabled={disabled} type="checkbox" checked={!form.isHidden} onChange={(event) => set('isHidden', !event.target.checked)} /><span><strong>Использовать месторождение</strong><small>Если выключить, объект исчезнет из обычных списков выбора, но сохранит данные и историю.</small></span></label>}
   </div>
 }
 
@@ -266,17 +268,13 @@ export function CreateDepositDialog({ nextCode, existingCodes, pending, error, o
   onSubmit: (input: CreateDepositInput) => void
 }) {
   const [form, setForm] = useState(() => createForm(nextCode))
-  useEffect(() => {
-    const close = (event: KeyboardEvent) => { if (event.key === 'Escape' && !pending) onClose() }
-    document.addEventListener('keydown', close)
-    return () => document.removeEventListener('keydown', close)
-  }, [onClose, pending])
+  const dialogRef = useModalFocus(onClose, pending)
   const duplicateCode = existingCodes.includes(Number(form.code))
 
   return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
-    <section className="geobase-dialog" role="dialog" aria-modal="true" aria-labelledby="create-deposit-title">
+    <section ref={dialogRef} className="geobase-dialog" role="dialog" aria-modal="true" aria-labelledby="create-deposit-title">
       <header><div><span><Database size={20} /></span><div><h2 id="create-deposit-title">Новое месторождение</h2><p>Создайте корневой объект БГД. Код будет зафиксирован, а названия сохранятся на трёх языках.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть форму"><X size={19} /></button></header>
-      <div className="geobase-dialog__body"><DepositForm form={form} onChange={setForm} disabled={pending} />{duplicateCode && <span className="field__error">Такой код уже используется.</span>}{error && <div className="form-alert form-alert--error" role="alert">{error}</div>}</div>
+      <div className="geobase-dialog__body"><DepositForm form={form} onChange={setForm} disabled={pending} creation />{duplicateCode && <span className="field__error">Такой код уже используется.</span>}{error && <div className="form-alert form-alert--error" role="alert">{error}</div>}</div>
       <footer><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={pending || !formValid(form) || duplicateCode} onClick={() => onSubmit(toCreateInput(form))}><Database size={15} /> Создать месторождение</Button></footer>
     </section>
   </div>

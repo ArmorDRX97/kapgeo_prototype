@@ -437,7 +437,7 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 .admin-stat-grid > article > div { display: grid; }
 .admin-stat-grid strong { font-size: 21px; line-height: 1.1; }
 .admin-stat-grid small { color: var(--text-tertiary); font-size: 11px; }
-.admin-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(310px, .8fr); align-items: start; gap: 14px; }
+.admin-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 14px; }
 .admin-deposit-list { display: grid; gap: 5px; }
 .admin-deposit-list > button { display: flex; width: 100%; min-height: 52px; cursor: pointer; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--surface-panel); text-align: left; }
 .admin-deposit-list > button:hover { border-color: var(--color-brand-300); background: var(--color-brand-50); }
@@ -449,8 +449,8 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 .admin-role-list > article { display: flex; align-items: center; gap: 9px; padding: 7px; border-radius: 7px; background: var(--surface-subtle); }
 .admin-role-list > article > span:nth-child(2) { display: grid; min-width: 0; }
 .admin-role-list strong, .admin-role-list small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.admin-role-list strong { font-size: 11px; }
-.admin-role-list small { color: var(--text-tertiary); font-size: 9px; }
+.admin-role-list strong { font-size: 12px; }
+.admin-role-list small { color: var(--text-tertiary); font-size: 11px; }
 .profile-grid--roles { grid-template-columns: minmax(290px, .7fr) minmax(430px, 1.3fr); align-items: start; }
 .profile-module-access { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-default); }
 .profile-module-access > small { display: block; margin-bottom: 8px; color: var(--text-tertiary); font-size: 10px; font-weight: 700; text-transform: uppercase; }
@@ -505,3 +505,11 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
   .admin-stat-grid, .profile-persona-list { grid-template-columns: 1fr; }
   .module-placeholder__hero { min-height: 330px; padding: 32px 20px; }
 }
+
+/* Удаление: спокойное состояние и явное предупреждение при наведении. */
+.button.action-delete { width: auto; color: #bd2424; background: #fceaea; border-color: #f5c7c7; }
+.button.action-delete:not(:disabled):hover { color: #fff; background: #c62828; border-color: #c62828; }
+.button.action-delete--icon { color: #c62828; background: transparent; border-color: transparent; }
+.button.action-delete--icon:not(:disabled):hover { color: #c62828; background: #fceaea; border-color: transparent; }
+.data-workbench .legend-editor__delete, .passport-workspace .legend-editor__delete { color: #c62828; background: transparent; border-color: transparent; }
+.data-workbench .legend-editor__delete:not(:disabled):hover, .passport-workspace .legend-editor__delete:not(:disabled):hover { color: #c62828; background: #fceaea; }

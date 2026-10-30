@@ -9,7 +9,7 @@ describe('BgdWellDeviationTab', () => {
   beforeEach(async () => { await demoDatabase.reset() })
   afterEach(async () => { cleanup(); vi.restoreAllMocks(); await demoDatabase.reset() })
 
-  it('shows surveys, calculates the selected survey and applies the demo import', async () => {
+  it('shows surveys, calculates the selected survey and keeps import inactive', async () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
     render(<QueryClientProvider client={queryClient}><BgdWellDeviationTab well={primaryWell} canEdit canAdminister defaults={{ trueCorrection: 10, magneticCorrection: 5, minZenithAngle: 4 }} /></QueryClientProvider>)
 
@@ -20,13 +20,7 @@ describe('BgdWellDeviationTab', () => {
     expect(await screen.findByText(/рассчитан методом среднего угла/)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Импорт инклинометрии' }))
-    expect(screen.getByRole('dialog', { name: 'Импорт инклинометрии по скважине' })).toBeInTheDocument()
-    const importButton = screen.getByRole('button', { name: 'Добавить пример' })
-    expect(importButton).toBeDisabled()
-    fireEvent.click(screen.getByRole('button', { name: 'Показать пример' }))
-    expect(importButton).toBeEnabled()
-    fireEvent.click(importButton)
-    expect(await screen.findByText(/Добавлен подготовленный LAS-пример из 5 точек/)).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('allows an editor without administrative permission to choose the primary survey', async () => {
@@ -49,13 +43,10 @@ describe('BgdWellDeviationTab', () => {
     expect(screen.getByText('Не выбран')).toBeInTheDocument()
   })
 
-  it('shows the import entry and preview to a geologist without permitting an import', async () => {
+  it('keeps the import entry available to a geologist', async () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={queryClient}><BgdWellDeviationTab well={primaryWell} canEdit canAdminister={false} defaults={{ trueCorrection: 10, magneticCorrection: 5, minZenithAngle: 4 }} /></QueryClientProvider>)
     fireEvent.click(await screen.findByRole('button', { name: 'Импорт инклинометрии' }))
-    expect(screen.getByRole('dialog')).toHaveTextContent('геофизика-интерпретатора или администратора системы')
-    fireEvent.click(screen.getByRole('button', { name: 'Показать пример' }))
-    expect(screen.getByRole('table', { name: 'Промеры примера' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Добавить пример' })).toBeDisabled()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

@@ -29,7 +29,6 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, on
   const [selectedId, setSelectedId] = useState('')
   const [editorSurvey, setEditorSurvey] = useState<DeviationSurvey | 'new' | null>(null)
   useReportUnsavedChanges(Boolean(editorSurvey), onDirtyChange)
-  const [importOpen, setImportOpen] = useState(false)
   const [notice, setNotice] = useState('')
 
   const save = useMutation({
@@ -122,31 +121,11 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, on
     })
   }
 
-  const importFixture = () => {
-    if (!canAdminister) return
-    const surveyId = `DEVIATION-${well.id}-IMPORT-${crypto.randomUUID()}`
-    const maxDepth = Math.max(50, well.depth)
-    const draft: DeviationSurveyDraft = {
-      surveyDate: '2026-07-05T08:00', azimuthKind: 'magnetic', correctionAngle: defaults.magneticCorrection,
-      isPrimary: false, operatorId: 'Аскар Аскаров', device: 'ИЭМ-36 №15', minZenithAngle: defaults.minZenithAngle,
-      comment: 'Импорт цифровой каротажной станции.',
-      points: [0, .25, .5, .75, 1].map((ratio, index) => ({ id: `${surveyId}-POINT-${index + 1}`, depth: Number((maxDepth * ratio).toFixed(1)), azimuth: [181, 205, 238, 262, 279][index]!, zenithAngle: [.2, .8, 1.3, 1.1, .7][index]! })),
-    }
-    const calculation = calculateDeviationSurvey(draft)
-    const nextSurvey: DeviationSurvey = { ...draft, ...calculation, id: surveyId, wellId: well.id, calculatedAt: new Date().toISOString(), }
-    save.mutate({ current: workspace, next: { ...workspace, surveys: [...workspace.surveys, nextSurvey] }, eventType: 'deviation.import.applied' }, {
-      onSuccess: () => {
-        setImportOpen(false)
-        setSelectedId(surveyId)
-        setNotice('Добавлен подготовленный LAS-пример из 5 точек. Чтение файла смоделировано.')
-      },
-    })
-  }
 
   const newDraft = createDeviationSurveyDraft({ correctionAngle: defaults.trueCorrection, minZenithAngle: defaults.minZenithAngle })
 
   return <div className="bgd-well-stack bgd-deviation-workspace">
-    <Panel className="bgd-deviation-heading" title="Инклинометрия скважины" description={`${well.code} · промеры, координаты точек и ход ствола.`} action={<Button variant="secondary" size="sm" disabled={save.isPending} onClick={() => setImportOpen(true)}><FileUp size={16} />Импорт инклинометрии</Button>} />
+    <Panel className="bgd-deviation-heading" title="Инклинометрия скважины" description={`${well.code} · промеры, координаты точек и ход ствола.`} action={<Button variant="secondary" size="sm" disabled={save.isPending}><FileUp size={16} />Импорт инклинометрии</Button>} />
     {error && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span><strong>Не удалось обновить инклинометрию</strong>{String(error.message ?? error).split('\n').map((line) => <small key={line}>{line}</small>)}</span></div>}
     {notice && <div className="success-message" role="status"><CheckCircle2 size={17} /><span><strong>Инклинометрия обновлена</strong>{notice}</span></div>}
 
@@ -180,7 +159,6 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, on
       onClose={() => setEditorSurvey(null)}
       onSave={(draft) => persistSurvey(draft, editorSurvey)}
     />}
-    {importOpen && <DeviationImportDialog well={well} canImport={canAdminister} pending={save.isPending} onClose={() => setImportOpen(false)} onImport={importFixture} />}
   </div>
 }
 
@@ -206,7 +184,7 @@ function DeviationInspector({ well, survey, canEdit, pending, onCalculate, onEdi
       <article><Gauge size={18} /><span><small>UK · угол устье—забой</small><strong>{metric(survey.zenithTopBottom, '°')}</strong></span></article>
       <article><Compass size={18} /><span><small>AK · направление устье—забой</small><strong>{metric(survey.bearingTopBottom, '°')}</strong></span></article>
     </section>
-    <div className="data-workbench"><div className="data-scroll"><table><caption>Координаты точек ствола · {well.crs} · демонстрационный расчёт</caption><thead><tr><th>MD, м</th><th>Азимут + поправка, °</th><th>X, м</th><th>Y, м</th><th>Z, м</th></tr></thead><tbody>{survey.points.map((p,i) => { const known=survey.points.slice(0,i+1).every(v=>v.dx!==null && v.dy!==null && v.dz!==null); const sum=(key:'dx'|'dy'|'dz')=>survey.points.slice(0,i+1).reduce((s,v)=>s+(v[key]??0),0); const z=well.bgd?.geometry.headZ; return <tr key={p.id}><td>{p.depth}</td><td>{((p.azimuth+survey.correctionAngle+360)%360).toFixed(3)}</td><td>{known ? (well.coordinates.x+sum('dx')).toFixed(3) : '—'}</td><td>{known ? (well.coordinates.y+sum('dy')).toFixed(3) : '—'}</td><td>{known && z!=null ? (z-sum('dz')).toFixed(3) : '—'}</td></tr> })}</tbody></table></div><p className="data-note">dX/dY/dZ — приращения между точками. X/Y/Z накапливаются от устья. Для официального дирекционного угла требуется подтверждённая поправка к координатной сетке.</p></div>
+    <div className="data-workbench"><div className="data-scroll"><table><caption>Координаты точек ствола · {well.crs}</caption><thead><tr><th>MD, м</th><th>Азимут + поправка, °</th><th>X, м</th><th>Y, м</th><th>Z, м</th></tr></thead><tbody>{survey.points.map((p,i) => { const known=survey.points.slice(0,i+1).every(v=>v.dx!==null && v.dy!==null && v.dz!==null); const sum=(key:'dx'|'dy'|'dz')=>survey.points.slice(0,i+1).reduce((s,v)=>s+(v[key]??0),0); const z=well.bgd?.geometry.headZ; return <tr key={p.id}><td>{p.depth}</td><td>{((p.azimuth+survey.correctionAngle+360)%360).toFixed(3)}</td><td>{known ? (well.coordinates.x+sum('dx')).toFixed(3) : '—'}</td><td>{known ? (well.coordinates.y+sum('dy')).toFixed(3) : '—'}</td><td>{known && z!=null ? (z-sum('dz')).toFixed(3) : '—'}</td></tr> })}</tbody></table></div><p className="data-note">dX/dY/dZ — приращения между точками. X/Y/Z накапливаются от устья. Для официального дирекционного угла требуется подтверждённая поправка к координатной сетке.</p></div>
     <div className="bgd-deviation-toolbar">
       {canEdit && <Button size="sm" disabled={pending} onClick={onCalculate}><Calculator size={15} /> Рассчитать</Button>}
       {canEdit && <Button size="sm" variant="secondary" disabled={pending} onClick={onEdit}><Pencil size={15} /> Изменить</Button>}
@@ -268,29 +246,6 @@ function DeviationSurveyDialog({ initial, title, wellDepth, defaults, allowPrima
         </section>
       </div>
       <footer><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={pending} onClick={submit}>Сохранить промер</Button></footer>
-    </section>
-  </div>
-}
-
-function DeviationImportDialog({ well, canImport, pending, onClose, onImport }: { well: Well; canImport: boolean; pending: boolean; onClose: () => void; onImport: () => void }) {
-  const [fileSelected, setFileSelected] = useState(false)
-  const dialogRef = useModalFocus(onClose, pending)
-  return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
-    <section ref={dialogRef} className="geobase-dialog geobase-dialog--deviation-import" role="dialog" aria-modal="true" aria-labelledby="deviation-import-title">
-      <header><div><span><FileUp size={20} /></span><div><h2 id="deviation-import-title">Импорт инклинометрии по скважине</h2><p>Предпросмотр подготовленного LAS-примера. Исходный файл не считывается.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть импорт"><X size={19} /></button></header>
-      <div className="geobase-dialog__body bgd-deviation-import-dialog">
-        {!canImport && <p className="form-alert" role="note">Доступен просмотр примера. Чтобы добавить промер, выберите в «Профиль и роли» геофизика-интерпретатора или администратора системы.</p>}
-        <div className="form-grid bgd-well-form-grid">
-          <label className="field"><span className="field__label">Тип внешних данных</span><select disabled={pending}><option>LAS / цифровая станция</option></select></label>
-          <label className="field"><span className="field__label">Кодировка</span><select disabled={pending}><option>DOS (CP866)</option><option>Windows-1251</option><option>UTF-8</option></select></label>
-        </div>
-        <div className="bgd-deviation-import-file">
-          <span><FileUp size={22} /><span><strong>{fileSelected ? `${well.code}_INCL_2026-07.LAS` : 'Пример не выбран'}</strong><small>{fileSelected ? 'Подготовленный набор · 5 точек' : 'Откройте пример промеров'}</small></span></span>
-          <Button size="sm" variant="secondary" disabled={pending || fileSelected} onClick={() => setFileSelected(true)}>{fileSelected ? 'Пример выбран' : 'Показать пример'}</Button>
-        </div>
-        {fileSelected && <div className="bgd-deviation-import-preview" role="table" aria-label="Промеры примера"><div role="row"><span>Пример</span><span>Скважина</span><span>Дата</span><span>Прибор</span><span>Описание</span></div><div role="row"><span>{well.code}_INCL_2026-07.LAS</span><span>{well.code}</span><span>05.07.2026</span><span>ИЭМ-36 №15</span><span>5 точек, магнитный азимут</span></div></div>}
-      </div>
-      <footer><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={pending || !fileSelected || !canImport} onClick={onImport}><FileUp size={15} /> {pending ? 'Добавляем…' : 'Добавить пример'}</Button></footer>
     </section>
   </div>
 }

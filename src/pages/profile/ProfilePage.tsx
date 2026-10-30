@@ -53,7 +53,7 @@ export function ProfilePage() {
         <div className="profile-module-access"><small>Доступные модули</small><div>{visibleModules.map((module) => <Badge key={module} tone="info">{module}</Badge>)}</div></div>
         {persona && <Link to={persona.homeRoute} className="button button--primary button--md profile-workspace-link">Перейти в рабочую область <ArrowRight size={16} /></Link>}
       </Panel>
-      <Panel title="Сменить роль" description="Все роли из полной версии доступны для проверки сценариев и прав.">
+      <Panel title="Сменить роль" description="Выберите профиль для работы.">
         <div className="profile-notice"><ShieldCheck size={17} /><span>Интерфейс показывает только те модули и действия, которые разрешены выбранному профилю.</span></div>
         <label className="field profile-role-select"><span className="field__label">Работать как</span><select value={persona?.id ?? ''} onChange={(event) => switchPersona(event.target.value)}>{userPersonas.map((item) => <option key={item.id} value={item.id}>{item.roles.join(', ')} · {item.position} · {item.name}</option>)}</select></label>
         <div className="profile-persona-list" aria-label="Доступные роли">{userPersonas.map((item) => <button key={item.id} type="button" className={item.id === persona?.id ? 'is-active' : ''} onClick={() => switchPersona(item.id)}><span className="avatar avatar--sm">{item.initials}</span><span><strong>{item.position}</strong><small>{item.name} · {item.scope}</small></span>{item.id === persona?.id ? <Check size={17} /> : <UsersRound size={16} />}</button>)}</div>

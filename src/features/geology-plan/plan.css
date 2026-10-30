@@ -314,3 +314,19 @@
 .map-layer-color { width: 4px; height: 18px; flex: none; border-radius: 3px; }
 
 .map-workbench .map-layer-row > button { font-size: 11px; white-space: normal; }
+
+/* Quick display settings use the same compact controls as the BGD map. */
+.map-workbench .map-toolbar { position: relative; z-index: 4; min-height: 50px; padding: 6px 12px; gap: 10px; }
+.map-workbench .map-toolbar > .map-actions:last-child { margin-left: auto; }
+.plan-quick-display { position: relative; }
+.plan-quick-display__panel { position: absolute; top: calc(100% + 8px); right: 0; z-index: 10; width: 300px; padding: 14px 16px 6px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-panel); box-shadow: var(--shadow-lg); }
+.plan-quick-display__panel > strong { display: block; padding-bottom: 4px; font-size: 13px; }
+.map-display-checks { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
+.map-display-checks .ui-switch-row { border-bottom: 0; }
+.map-workbench button:is(:has(.lucide-trash-2), [aria-label^="Удалить"], .button--danger) { color: #a61919; background: color-mix(in srgb, var(--color-red-600) 10%, white); border-color: color-mix(in srgb, var(--color-red-600) 24%, white); }
+.map-workbench button:is(:has(.lucide-trash-2), [aria-label^="Удалить"], .button--danger):hover:not(:disabled) { color: white; background: var(--color-red-600); border-color: var(--color-red-600); }
+.map-workbench button:is(:has(.lucide-trash-2), [aria-label^="Удалить"], .button--danger):focus-visible { outline-color: var(--color-red-600); }
+.map-coordinates tbody tr { cursor: pointer; }
+.map-coordinates tbody input:disabled { pointer-events: none; }
+.map-coordinates tbody tr:hover:not(.is-selected) { background: var(--surface-subtle); }
+.map-coordinates tbody tr:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }

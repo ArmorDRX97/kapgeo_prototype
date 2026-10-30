@@ -92,3 +92,6 @@
 .curve-workspace .alpha-parameters > .alpha-field { max-width: 520px; }
 .curve-operations .alpha-parameters > .alpha-field { max-width: none; }
 @media (min-width: 1101px) and (max-width: 1500px) { .curve-workspace { grid-template-columns: minmax(0, 1fr) 300px; padding: 12px; gap: 12px; } .curve-workspace--wide { grid-template-columns: minmax(0, 1fr); } }
+
+.alpha-plotbar .button[aria-pressed="true"] { color: var(--color-brand-700); background: var(--surface-selected, #eaf2ff); }
+.alpha-plotbar .button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }

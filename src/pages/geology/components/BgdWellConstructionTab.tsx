@@ -7,7 +7,6 @@ import type { ConstructionInterval, Well } from '../../../entities/well/model/ty
 import { saveWellConstruction } from '../../../repository/api'
 import { Button } from '../../../shared/ui/Button'
 import { Panel } from '../../../shared/ui/Panel'
-import { WorkspaceDialog } from '../../../shared/ui/WorkspaceDialog'
 
 const kinds: ConstructionInterval['element'][] = ['Направление', 'Кондуктор', 'Обсадная колонна', 'Цементировочное кольцо', 'Цементировочный узел', 'Фильтр', 'Отстойник', 'Гравийная обсыпка', 'Бентогильза']
 const empty = (): ConstructionInterval => ({ id: crypto.randomUUID(), from: 0, to: 1, diameter: 160, innerDiameter: 124, element: 'Обсадная колонна', material: 'Сталь', note: '' })
@@ -19,7 +18,6 @@ export function BgdWellConstructionTab({ well, canEdit, onDirtyChange }: { well:
   const [selectedId, setSelectedId] = useState(saved[0]?.id ?? '')
   const [draft, setDraft] = useState<ConstructionInterval>(saved[0] ? { ...saved[0] } : empty())
   const [notice, setNotice] = useState('')
-  const [importOpen, setImportOpen] = useState(false)
   const exportTable = () => {
     const rows = [['Скважина', 'От, м', 'До, м', 'Длина, м', 'Тип', 'Внешний диаметр, мм', 'Внутренний диаметр, мм', 'Материал', 'Примечание'], ...items.map(item => [well.code, item.from, item.to, Number((item.to - item.from).toPrecision(12)), item.element, item.diameter, item.innerDiameter ?? '', item.material, item.note ?? ''])]
     const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(';')).join('\r\n')
@@ -39,7 +37,7 @@ export function BgdWellConstructionTab({ well, canEdit, onDirtyChange }: { well:
   return <div className="bgd-well-construction">
     <Panel title="Конструкция скважины" description="Конструктивные элементы задаются интервалами глубины.">
       <div className="bgd-well-construction__toolbar"><span>{items.length} элементов конструкции</span>{canEdit && <div>
-        <Button size="sm" variant="secondary" className="bgd-construction-import" aria-label="Импорт Excel" disabled={mutation.isPending} onClick={() => setImportOpen(true)}><FileSpreadsheet size={16} /><span>Импорт</span><span className="bgd-construction-import__format">Excel</span></Button>
+        <Button size="sm" variant="secondary" className="bgd-construction-import" aria-label="Импорт Excel" disabled={mutation.isPending}><FileSpreadsheet size={16} /><span>Импорт</span><span className="bgd-construction-import__format">Excel</span></Button>
         <Button size="sm" variant="secondary" disabled={mutation.isPending || !items.length} onClick={exportTable}><Download size={16} />Экспорт CSV</Button>
         <Button size="sm" variant="secondary" disabled={mutation.isPending} onClick={add}><Plus size={15} /> Добавить</Button>
         <Button size="sm" variant="quiet" disabled={!items.length || mutation.isPending} onClick={() => { setItems([]); setSelectedId(''); setDraft(empty()) }}><Trash2 size={15} /> Удалить все</Button>
@@ -92,9 +90,5 @@ export function BgdWellConstructionTab({ well, canEdit, onDirtyChange }: { well:
         </svg> : <p>Схема появится после добавления конструктивных элементов.</p>}
       </section>
     </Panel>
-    {importOpen && <WorkspaceDialog title="Импорт конструкции из Excel" size="compact" onClose={() => setImportOpen(false)} footer={<Button variant="secondary" onClick={() => setImportOpen(false)}>Закрыть</Button>}>
-      <p>Чтение Excel-файлов конструкции пока не реализовано в прототипе. Данные можно добавить или исправить в таблице через «Добавить» и «Параметры элемента», затем сохранить конструкцию.</p>
-      <p>«Экспорт CSV» выгружает текущую таблицу с глубинами, типами элементов, диаметрами и примечаниями. Файл можно открыть в Excel.</p>
-    </WorkspaceDialog>}
   </div>
 }

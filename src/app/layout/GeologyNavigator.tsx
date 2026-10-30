@@ -1,11 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
-import { Mountain, PanelLeftClose, PanelLeftOpen, Plus, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Map, PanelLeftClose, PanelLeftOpen, Plus, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { bgdFieldWell, bgdFieldWells, filterBgdWells, useBgdFieldFilters } from '../../features/geobase/model/bgdField'
 import { wellTypes } from '../../entities/geology-map/wellSymbols'
-import { useUiLocale } from '../../shared/lib/useUiLocale'
-import { getDepositName } from '../../entities/geology-master/model/types'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { fetchGeologicalMasterData, fetchPlatformPreferences, fetchWells } from '../../repository/api'
 import { hasPermission } from '../../shared/auth/permissions'
@@ -19,7 +17,6 @@ export function GeologyNavigator({ mobileOpen, onClose, collapsed = false, onTog
   const { persona } = useSession()
   const navigate = useNavigate()
   const location = useRouterState({ select: (state) => state.location })
-  const locale = useUiLocale()
   const [windowSize, setWindowSize] = useState({ key: '', count: 80 })
   const [filtersOpen, setFiltersOpen] = useState(false)
   const filterTrigger = useRef<HTMLButtonElement>(null)
@@ -96,10 +93,10 @@ export function GeologyNavigator({ mobileOpen, onClose, collapsed = false, onTog
       <button className="geology-navigator__close" type="button" onClick={() => { closeFilters(); onClose() }} aria-label="Закрыть навигацию"><X size={19} /></button>
       <header className="geology-navigator__header">
         <button className="geology-navigator__deposit" type="button" disabled={!currentDeposit} onClick={openDeposit}
-          aria-label={currentDeposit ? `Открыть месторождение ${getDepositName(currentDeposit, locale)}` : 'Месторождение не выбрано'}
+          aria-label={currentDeposit ? 'Главная' : 'Месторождение не выбрано'}
           aria-current={location.pathname === `/geology/bgd/${currentDeposit?.id}` ? 'page' : undefined}>
-          <span className="deposit-context-card__icon"><Mountain size={20} /></span>
-          <span><strong>{currentDeposit ? getDepositName(currentDeposit, locale) : 'Месторождение не выбрано'}</strong></span>
+          <Map size={18} aria-hidden="true" />
+          <span><strong>Главная</strong></span>
         </button>
         {onToggle && <button className="geology-navigator__collapse" type="button" onClick={() => { closeFilters(); onToggle() }} aria-expanded={!collapsed} aria-controls="bgd-well-context" aria-label={collapsed ? 'Развернуть список скважин' : 'Свернуть список скважин'} title={collapsed ? 'Развернуть список скважин' : 'Свернуть список скважин'}>{collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</button>}
       </header>

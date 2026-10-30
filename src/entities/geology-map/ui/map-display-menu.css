@@ -1,0 +1,4 @@
+.map-display-menu { position: relative; flex: none; }
+.map-display-menu .map-display-menu__button { width: 32px; min-width: 32px; height: 32px; padding: 0; justify-content: center; }
+.map-display-menu__panel { position: absolute; top: calc(100% + 8px); left: 0; z-index: 30; width: 300px; padding: 14px 16px 6px; color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-panel); box-shadow: var(--shadow-lg); }
+.map-display-menu__panel > strong { display: block; padding-bottom: 4px; font-size: 13px; }

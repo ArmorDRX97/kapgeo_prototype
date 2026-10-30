@@ -17,7 +17,7 @@ export const fullWellBgdData: WellBgdData = {
   descriptionRu: 'Разведочная скважина профиля PR-07, полностью документированная по результатам бурения, каротажа, освоения и геологического описания.',
   descriptionKk: 'PR-07 профиліндегі барлау ұңғымасы. Бұрғылау, каротаж, игеру және геологиялық сипаттама нәтижелері толық құжатталған.',
   descriptionEn: 'Exploration well on profile PR-07, fully documented with drilling, logging, development and geological results.',
-  note: 'Эталонная полностью заполненная карточка для проверки всех разделов БГД.',
+  note: '',
   geometry: {
     headX: 468146.8,
     headY: 4812856.4,

@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import type { AlphaDocument, GammaProfile, KrrPoint, OreInterval } from '../../../entities/interpretation/model/alphaTypes'
 import type { InterpretationWell } from '../../../entities/interpretation/model/types'
@@ -49,6 +50,6 @@ function KrrTable({ title, points, xUnit, onChange }: { title: string; points: K
   const patch = (index: number, values: Partial<KrrPoint>) => onChange(points.map((p, i) => i === index ? { ...p, ...values } : p))
   return <details className="alpha-group"><summary>{title} · {points.length} точек X/Y</summary><div>{points.map((point, index) => <div key={index}>
     <div className="alpha-pair"><NumberField label={`${title}: X${index + 1}, ${xUnit}`} value={point.x} onChange={x => patch(index, { x })} /><NumberField label={`${title}: Y${index + 1}, Крр`} value={point.y} onChange={y => patch(index, { y })} /></div>
-    <Button size="sm" variant="quiet" disabled={points.length <= 2} onClick={() => onChange(points.filter((_, i) => i !== index))}>Удалить точку {index + 1}</Button>
+    <Button className="action-delete" size="sm" variant="quiet" disabled={points.length <= 2} onClick={() => onChange(points.filter((_, i) => i !== index))}><Trash2 size={15} />Удалить точку {index + 1}</Button>
   </div>)}<Button size="sm" variant="secondary" disabled={points.length >= 100} onClick={() => onChange([...points, { x: (points.at(-1)?.x ?? 0) + (xUnit === 'м' ? 1 : 0.01), y: points.at(-1)?.y ?? 1 }])}>Добавить точку X/Y</Button></div></details>
 }

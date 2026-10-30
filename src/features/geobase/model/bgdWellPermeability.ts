@@ -28,7 +28,7 @@ export function createPermeabilityExample(depth: number): PermeabilityInterval[]
     { kind: 'unknown', rock: 'Не определена', kf: null, lft: null },
   ]
   return properties.map((p, i): PermeabilityInterval => ({ id: `PERM-${i + 1}`, from: boundaries[i]!, to: boundaries[i + 1]!, ...p,
-    source: p.kind === 'unknown' ? 'Не указан' : 'По каротажу', note: p.kind === 'unknown' ? 'Проницаемость не определена в демонстрационном примере.' : 'Подготовленный пример интервала пород.' }))
+    source: p.kind === 'unknown' ? 'Не указан' : 'По каротажу', note: '' }))
     .filter(r => r.to > r.from)
 }
 
@@ -45,7 +45,7 @@ export function validatePermeabilityIntervals(rows: PermeabilityInterval[], dept
 export function loadPermeabilityIntervals(wellId: string, depth: number): PermeabilityInterval[] {
   try {
     const rows = z.array(intervalSchema).max(1000).parse(JSON.parse(localStorage.getItem(permeabilityStorageKey(wellId)) ?? 'null'))
-    if (!validatePermeabilityIntervals(rows, depth)) return rows
+    if (!validatePermeabilityIntervals(rows, depth)) return rows.map(row => ({ ...row, note: ['Проницаемость не определена в демонстрационном примере.', 'Подготовленный пример интервала пород.'].includes(row.note) ? '' : row.note }))
   } catch { /* Missing or invalid local examples fall back to the permeability dataset. Old AP keys are left untouched. */ }
   return createPermeabilityExample(depth)
 }

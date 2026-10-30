@@ -11,4 +11,7 @@ describe('validateDepositSectionSearch', () => {
   it('falls back to the overview for an unknown section', () => {
     expect(validateDepositSectionSearch({ section: 'unknown' })).toEqual({ section: undefined })
   })
+  it('preserves a selected well in the map link', () => {
+    expect(validateDepositSectionSearch({ well: 'BGD-field-well-1' })).toEqual({ section: undefined, well: 'BGD-field-well-1' })
+  })
 })

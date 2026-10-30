@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react'
 import type { ControlParameters, ControlRange } from '../../../entities/interpretation/model/alphaTypes'
 import { Button } from '../../../shared/ui/Button'
 import { NumberField, SelectField } from './Fields'
@@ -15,7 +16,7 @@ export function ControlRanges({ value, onChange }: { value: ControlParameters; o
       {value.pairs.map((row, index) => <fieldset key={row.id} className="alpha-parameters"><legend>Пара {index + 1}</legend>
         <div className="alpha-pair"><NumberField label={`Пара ${index + 1}: основное от, м`} value={row.from} onChange={from => patch(index, { from })} /><NumberField label={`Пара ${index + 1}: основное до, м`} value={row.to} onChange={to => patch(index, { to })} /></div>
         <div className="alpha-pair"><NumberField label={`Пара ${index + 1}: контроль от, м`} value={row.controlFrom} onChange={controlFrom => patch(index, { controlFrom })} /><NumberField label={`Пара ${index + 1}: контроль до, м`} value={row.controlTo} onChange={controlTo => patch(index, { controlTo })} /></div>
-        <Button size="sm" variant="quiet" onClick={() => onChange({ pairs: value.pairs.filter(r => r.id !== row.id) })}>Удалить пару {index + 1}</Button>
+        <Button className="action-delete" size="sm" variant="quiet" onClick={() => onChange({ pairs: value.pairs.filter(r => r.id !== row.id) })}><Trash2 size={15} />Удалить пару {index + 1}</Button>
       </fieldset>)}
       <Button size="sm" variant="secondary" onClick={add} disabled={value.pairs.length >= 100}>Добавить пару диапазонов</Button>
       {!value.pairs.length && <p>Пока сравнивается одна пара из основных диапазонов выше.</p>}

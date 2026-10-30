@@ -1,6 +1,6 @@
 import { ScenarioWorkbench } from '../../features/geology-data/ScenarioWorkbench'
 import { Link } from '@tanstack/react-router'
-import { BarChart3, Construction, Mountain, Network, ShieldX } from 'lucide-react'
+import { BarChart3, Mountain, Network, ShieldX } from 'lucide-react'
 import { useSession } from '../../entities/session/model/sessionContext'
 import { Button } from '../../shared/ui/Button'
 import { PageHeader } from '../../shared/ui/PageHeader'
@@ -18,7 +18,7 @@ function ModulePlaceholder({ eyebrow, title, description, icon: Icon, accent }: 
     <PageHeader eyebrow={eyebrow} title={title} description={description} />
     <section className="module-placeholder__hero" style={{ '--module-accent': accent } as React.CSSProperties}>
       <span className="module-placeholder__icon"><Icon size={34} /></span>
-      <div><span className="module-placeholder__status"><Construction size={15} /> Каркас модуля</span><h2>Рабочая область готова к развитию</h2><p>Навигация и разграничение доступа уже подключены. Содержательные процессы будут добавляться отдельными вертикальными сценариями без перестройки общего интерфейса.</p></div>
+      <div><h2>Нет данных для отображения</h2><p>Здесь будут отображаться данные выбранного раздела.</p></div>
     </section>
   </div>
 }

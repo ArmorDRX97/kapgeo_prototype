@@ -15,4 +15,12 @@ describe('AP interval workflow', () => {
     render(<IntervalReview wellId="test-ap" depth={500} canEdit />)
     expect(screen.getByLabelText('Горизонт')).toHaveValue('K₂ новый')
   })
+  it('selects an interval from any cell in its row and from the keyboard', () => {
+    render(<IntervalReview wellId="select-ap" depth={500} canEdit />)
+    const rows = screen.getAllByRole('row')
+    fireEvent.click(rows[2]!.querySelectorAll('td')[2]!)
+    expect(rows[2]).toHaveAttribute('aria-current', 'true')
+    fireEvent.keyDown(rows[3]!, { key: 'Enter' })
+    expect(rows[3]).toHaveAttribute('aria-current', 'true')
+  })
 })

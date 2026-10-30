@@ -24,7 +24,7 @@
 .permeability-kind::before { content:''; width:9px; height:9px; border-radius:50%; background:#9eabb8; }
 .permeability-kind[data-kind=permeable]::before { background:#368d9a; }
 .permeability-kind[data-kind=impermeable]::before { background:#827594; }
-.permeability-fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:12px; padding:0; margin:14px 0; border:0; }
+.permeability-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; padding:0; margin:14px 0; border:0; }
 .permeability-fields label { display:grid; gap:6px; font-size:12px; }
 .permeability-fields input,.permeability-fields select,.permeability-fields textarea,.permeability-toolbar select { width:100%; padding:8px; min-height:36px; color:var(--text-primary); border:1px solid var(--border-default); border-radius:var(--radius-sm); background:var(--surface-panel); }
 .permeability-note-field { grid-column:1/-1; }

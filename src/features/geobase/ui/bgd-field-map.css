@@ -5,12 +5,18 @@
 .bgd-deposit-map-header h1 { margin: 0; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bgd-deposit-map-header .bgd-deposit-info { width: 28px; height: 28px; padding: 0; }
 .bgd-field-map { flex: 1; display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--surface-subtle); position: relative; }
-.bgd-field-toolbar { display: flex; flex: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; min-height: 42px; padding: 4px 8px; border-bottom: 1px solid var(--border-default); background: var(--surface-panel); }
-.bgd-field-toolbar > div { display: flex; align-items: center; gap: 8px; }
+.bgd-field-toolbar { display: flex; flex: none; align-items: center; gap: 10px; min-height: 50px; padding: 6px 12px; border-bottom: 1px solid var(--border-default); background: var(--surface-panel); }
+.bgd-field-toolbar__site { flex: none; min-height: 32px; padding: 0 28px 0 10px; color: var(--text-primary); border: 1px solid var(--border-default); border-radius: 6px; background: var(--surface-panel); font: inherit; font-size: 12px; }
+.bgd-field-toolbar__separator { flex: none; width: 1px; height: 24px; background: var(--border-default); }
+.bgd-field-toolbar .well-type-filters { flex: 1 1 auto; min-width: 0; padding: 0; border: 0; }
+.bgd-field-toolbar .well-type-filters__chips { flex-wrap: nowrap; }
+.bgd-field-toolbar .well-type-filters__chips button { white-space: nowrap; }
+.bgd-field-toolbar .well-type-filters__summary, .bgd-field-toolbar .well-type-filters > p { display: none; }
+.bgd-field-toolbar__controls { display: flex; flex: none; align-items: center; gap: 4px; margin-left: auto; }
 .bgd-field-toolbar .bgd-map-icon { justify-content: center; padding: 0; width: 32px; height: 32px; min-width: 32px; }
-.bgd-field-toolbar span { color: var(--text-secondary); font-size: 11px; font-variant-numeric: tabular-nums; }
-.bgd-field-toolbar label { display: flex; gap: 5px; align-items: center; color: var(--text-secondary); font-size: 12px; cursor: pointer; }
-.bgd-field-map > .well-type-filters { padding: 5px 8px; }
+.bgd-map-display { position: relative; }
+.bgd-map-display__panel { position: absolute; top: calc(100% + 8px); right: 0; z-index: 10; width: 300px; padding: 14px 16px 6px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-panel); box-shadow: var(--shadow-lg); }
+.bgd-map-display__panel > strong { display: block; padding-bottom: 4px; font-size: 13px; }
 .bgd-field-map > .map-canvas-area { padding: 6px 8px 0; }
 .bgd-field-map .map-canvas-status { min-height: 22px; padding: 4px 0; font-size: 10px; }
 .bgd-map-empty { position: absolute; top: 95px; left: 80px; right: 30px; z-index: 2; padding: 12px; background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: 6px; font-size: 12px; color: var(--text-secondary); }

@@ -1,6 +1,5 @@
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useModalFocus } from '../../../shared/lib/useModalFocus'
-import { Link } from '@tanstack/react-router'
 import { domainTokens } from '@kapgeo/geo-viz/tokens'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, CheckCircle2, FileUp, Pencil, Plus, RadioTower, Save, Star, Trash2, X } from 'lucide-react'
@@ -8,11 +7,10 @@ import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { LogCurve, LogCurveCode, LogMeasurementPoint, LogRunV2, WellLogWorkspace } from '../../../entities/well-log/model/types'
 import type { Well } from '../../../entities/well/model/types'
 import { getLogSurveyMetadata, validateBgdWellLogDraft, type BgdWellLogDraft } from '../../../features/geobase/model/bgdWellLog'
-import { applyWellLogImport, beginWellLogImport, fetchWellLogWorkspace, saveWellLogWorkspace } from '../../../repository/api'
+import { fetchWellLogWorkspace, saveWellLogWorkspace } from '../../../repository/api'
 import { Badge } from '../../../shared/ui/Badge'
 import { Button } from '../../../shared/ui/Button'
 import { Panel } from '../../../shared/ui/Panel'
-import { WorkspaceDialog } from '../../../shared/ui/WorkspaceDialog'
 
 const statusPresentation: Record<LogRunV2['status'], { label: string; tone: 'neutral' | 'warning' | 'info' | 'success' }> = {
   draft: { label: 'Черновик', tone: 'neutral' },
@@ -119,7 +117,6 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
   const query = useQuery({ queryKey: ['well-log-v2', well.id], queryFn: () => fetchWellLogWorkspace(well.id) })
   const [selectedId, setSelectedId] = useState('')
   const [editorRun, setEditorRun] = useState<LogRunV2 | 'new' | null>(null)
-  const [importOpen, setImportOpen] = useState(false)
   useReportUnsavedChanges(Boolean(editorRun), onDirtyChange)
   const [activeList, setActiveList] = useState<'control' | 'all'>('all')
   const controlTabRef = useRef<HTMLButtonElement>(null)
@@ -130,25 +127,13 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
     mutationFn: ({ current, next, eventType }: { current: WellLogWorkspace; next: WellLogWorkspace; eventType: string }) => saveWellLogWorkspace(well.id, current, next, eventType),
     onSuccess: (next) => client.setQueryData(['well-log-v2', well.id], next),
   })
-  const importDemo = useMutation({
-    mutationFn: async (current: WellLogWorkspace) => {
-      const parsed = await beginWellLogImport(well.id, current, 'bundled fixture')
-      const reviewed = await saveWellLogWorkspace(well.id, parsed, { ...parsed, staging: parsed.staging ? { ...parsed.staging, state: 'qc_ready' } : undefined }, 'log.qc.confirmed')
-      return applyWellLogImport(well.id, reviewed)
-    },
-    onSuccess: (next) => {
-      client.setQueryData(['well-log-v2', well.id], next)
-      setSelectedId(next.runs.at(-1)?.id ?? '')
-      setImportOpen(false)
-      setNotice('Добавлен подготовленный пример LAS-каротажа. Чтение файла и QC в этом действии смоделированы.')
-    },
-  })
+
 
   const workspace = query.data
   const controlRuns = useMemo(() => workspace?.runs.filter((run) => getLogSurveyMetadata(run).isControl) ?? [], [workspace?.runs])
   const visibleRuns = activeList === 'control' ? controlRuns : workspace?.runs ?? []
   const selected = visibleRuns.find((run) => run.id === selectedId) ?? visibleRuns[0]
-  const error = query.error ?? save.error ?? importDemo.error
+  const error = query.error ?? save.error
   const measurementSource = useMemo(() => selected ? (selected.measurements ?? demoMeasurements(selected.id, selected.from, selected.to, selected.step, selected.curves)) : [], [selected])
   const [measurementDraftState, setMeasurementDraftState] = useState<{ runId: string; points: LogMeasurementPoint[] } | null>(null)
   const measurementDraft = measurementDraftState && measurementDraftState.runId === selected?.id ? measurementDraftState.points : measurementSource
@@ -217,7 +202,7 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
       </div>
       <div className="bgd-log-toolbar__actions">
         <Button size="sm" disabled={!canEdit || save.isPending || measurementDirty} onClick={() => setEditorRun('new')}><Plus size={15} /> Добавить</Button>
-        <Button size="sm" variant="secondary" disabled={!canEdit || importDemo.isPending || measurementDirty} onClick={() => setImportOpen(true)}>{importDemo.isPending ? 'Обрабатываем…' : <><FileUp size={15} /> Загрузить LAS</>}</Button>
+        <Button size="sm" variant="secondary" disabled={!canEdit || measurementDirty}><FileUp size={15} /> Загрузить LAS</Button>
       </div>
     </header>
 
@@ -243,17 +228,11 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
           </tr>
         })}</tbody>
       </table>
-      {!visibleRuns.length && <div className="geobase-empty bgd-log-table-empty"><RadioTower size={22} /><strong>{activeList === 'control' ? 'Контрольных каротажей пока нет' : 'Каротажей пока нет'}</strong><span>{activeList === 'control' ? 'Отметьте набор как контрольный при добавлении или редактировании.' : 'Добавьте первый набор вручную или откройте пример импорта LAS.'}</span></div>}
+      {!visibleRuns.length && <div className="geobase-empty bgd-log-table-empty"><RadioTower size={22} /><strong>{activeList === 'control' ? 'Контрольных каротажей пока нет' : 'Каротажей пока нет'}</strong><span>{activeList === 'control' ? 'Отметьте набор как контрольный при добавлении или редактировании.' : 'Добавьте первый набор каротажа.'}</span></div>}
     </div>
 
     {selected ? <LogInspector run={selected} measurements={measurementDraft} onMeasurementsChange={(points) => setMeasurementDraftState({ runId: selected.id, points })} onSaveMeasurements={() => { void saveMeasurementDraft() }} onDiscardMeasurements={discardMeasurementDraft} canEdit={canEdit} pending={save.isPending} dirty={measurementDirty} onEdit={() => setEditorRun(selected)} onPrimary={() => setPrimary(selected)} onDelete={() => deleteRun(selected)} /> : <Panel className="bgd-log-inspector" title="Данные измерений" description="Выберите каротаж или добавьте новый."><p className="bgd-log-empty-hint">Результаты измерений появятся здесь в табличном виде.</p></Panel>}
 
-    {importOpen && <WorkspaceDialog title="Импорт каротажа LAS" size="compact" pending={importDemo.isPending} onClose={() => setImportOpen(false)} footer={<><Button variant="secondary" disabled={importDemo.isPending} onClick={() => setImportOpen(false)}>Отмена</Button><Button disabled={!canEdit || importDemo.isPending} onClick={() => importDemo.mutate(workspace)}>{importDemo.isPending ? 'Добавляем пример…' : 'Добавить пример LAS'}</Button></>}>
-      <p>В прототипе можно добавить подготовленный пример комплексного каротажа: ГК, ПС и КС. Исходный LAS-файл не считывается, этап QC смоделирован.</p>
-      <p>Для проверки собственного набора используйте CSV-шаблон в разделе обмена данными.</p>
-      <Link className="button button--secondary button--sm" to="/geology/data">Открыть обмен данными</Link>
-      {importDemo.error && <p role="alert">{importDemo.error.message}</p>}
-    </WorkspaceDialog>}
     {editorRun && <LogSurveyDialog
       key={editorRun === 'new' ? 'new' : editorRun.id}
       initial={editorRun === 'new' ? emptyLogDraft(well) : logDraft(editorRun)}
@@ -295,7 +274,6 @@ function LogInspector({ run, measurements, onMeasurementsChange, onSaveMeasureme
         </tr>) : <tr><td className="bgd-log-empty-cell" colSpan={run.curves.length + (canEdit ? 2 : 1)}>Измерения не добавлены. Добавьте строку, чтобы внести первое значение.</td></tr>}</tbody>
       </table>
     </div>
-    <p className="bgd-log-hidden-curves-note">Графическое отображение кривых временно скрыто.</p>
   </Panel>
 }
 
@@ -333,7 +311,7 @@ function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }
           <label className="field"><span className="field__label">Коэффициент</span><input type="number" step="any" disabled={pending} value={draft.coefficient ?? ''} onChange={(event) => update('coefficient', event.target.value === '' ? null : Number(event.target.value))} /></label>
         </div>
         <fieldset className="bgd-log-curve-picker"><legend>Измеряемые кривые <em>*</em></legend>{editableCurveCodes.map((code) => <label key={code}><input type="checkbox" checked={draft.curveCodes.includes(code)} disabled={pending} onChange={(event) => update('curveCodes', event.target.checked ? [...draft.curveCodes, code] : draft.curveCodes.filter((item) => item !== code))} /><span><i style={{ background: curveCatalog[code].color }} /><strong>{code}</strong><small>{curveCatalog[code].label}</small></span></label>)}</fieldset>
-        <div className="form-grid bgd-well-form-grid"><label className="field"><span className="field__label">Комментарий</span><textarea rows={3} disabled={pending} value={draft.comment} onChange={(event) => update('comment', event.target.value)} placeholder="Уточнения по прибору, качеству или условиям измерения" /></label></div>
+        <label className="field"><span className="field__label">Комментарий</span><textarea rows={3} disabled={pending} value={draft.comment} onChange={(event) => update('comment', event.target.value)} placeholder="Уточнения по прибору, качеству или условиям измерения" /></label>
         <label className="bgd-log-primary-check"><input type="checkbox" checked={draft.isPrimary} disabled={pending} onChange={(event) => update('isPrimary', event.target.checked)} /><Star size={16} /><span><strong>Основной каротаж</strong><small>Использовать как приоритетный набор скважины</small></span></label>
         <label className="bgd-log-primary-check"><input type="checkbox" checked={draft.isControl} disabled={pending} onChange={(event) => update('isControl', event.target.checked)} /><span><strong>Контрольный каротаж</strong><small>Показывать набор во вкладке контрольных каротажей</small></span></label>
       </div>
