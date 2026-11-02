@@ -78,7 +78,8 @@
 .bgd-section-group button:hover { background: var(--surface-subtle); color: var(--text-primary); }
 .bgd-section-group button[aria-current="page"] { color: var(--color-brand-800); background: var(--color-brand-50); border-color: var(--color-brand-200); font-weight: 700; }
 .bgd-section-navigation__selected { width: 6px; height: 6px; flex: none; border-radius: 50%; background: currentColor; }
-.bgd-well-workbench > .bgd-well-page { display: flex; min-width: 0; flex: 1; height: 100%; flex-direction: column; gap: var(--space-4); padding: var(--space-6); overflow: auto; container-type: inline-size; scrollbar-gutter: stable; }
+/* Keep absolutely positioned accessible labels inside the workspace's scroll area. */
+.bgd-well-workbench > .bgd-well-page { position: relative; display: flex; min-width: 0; flex: 1; height: 100%; flex-direction: column; gap: var(--space-4); padding: var(--space-6); overflow: auto; container-type: inline-size; scrollbar-gutter: stable; }
 .bgd-well-page > * { flex-shrink: 0; }
 .bgd-well-page .panel { min-width: 0; }
 .bgd-well-page .panel__header { flex-wrap: wrap; }
