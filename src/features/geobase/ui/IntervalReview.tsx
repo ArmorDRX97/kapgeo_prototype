@@ -1,34 +1,111 @@
+import { useState, type KeyboardEvent } from 'react'
+import { Download, Pencil, Plus, Save, Trash2, Undo2 } from 'lucide-react'
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
-import { useState } from 'react'
-import { z } from 'zod'
 import { Button } from '../../../shared/ui/Button'
-import { Trash2 } from 'lucide-react'
 import { Panel } from '../../../shared/ui/Panel'
-import '../../geology-data/data-workbench.css'
+import { WorkspaceDialog } from '../../../shared/ui/WorkspaceDialog'
+import { apParameterFields, createAnomalyRows, createProductiveHorizon, horizonParameterFields, loadAnomalyRows, validateAnomalyRows, type ProductiveHorizon, type ReviewInterval } from '../model/bgdAnomalies'
+import { AnomalyLogChart } from './AnomalyLogChart'
+import './anomalies.css'
 
-const rowSchema = z.object({ id: z.string(), from: z.number().finite().nonnegative(), to: z.number().finite(), horizon: z.string().min(1), source: z.string(), permeable: z.boolean(), kf: z.number().finite().nonnegative(), lft: z.number().int().nonnegative(), krr: z.number().finite().positive(), uranium: z.number().finite().nonnegative() })
-export type ReviewInterval = z.infer<typeof rowSchema>
-function validateReviewIntervals(rows: ReviewInterval[], depth: number) {
-  const sorted = [...rows].sort((a, b) => a.from - b.from)
-  return rows.some(r => !rowSchema.safeParse(r).success || r.to <= r.from || r.to > depth) ? 'Проверьте глубины, горизонт и численные характеристики.' : sorted.some((r, i) => i > 0 && r.from < sorted[i - 1]!.to) ? 'Интервалы перекрываются. Уточните границы.' : ''
-}
-const demoRows = (depth: number): ReviewInterval[] => [0.67, 0.78, 0.88].map((ratio, i) => ({ id: `AP-${i + 1}`, from: +(depth * ratio).toFixed(2), to: +(depth * (ratio + .045)).toFixed(2), horizon: i < 2 ? 'K₂ · мынкудукский' : 'K₁ · нижний', source: 'Гамма-каротаж', permeable: i !== 1, kf: i === 1 ? .03 : 8.2, lft: i === 1 ? 0 : i + 1, krr: 1.05, uranium: .03 + i * .02 }))
+export type { ReviewInterval } from '../model/bgdAnomalies'
+const fmt = (value: number | null) => value === null ? '—' : value.toLocaleString('ru-RU', { maximumFractionDigits: 5 })
+type Editor = { kind: 'ap'; row: ReviewInterval } | { kind: 'horizon'; parentId: string; row: ProductiveHorizon }
 
-/** Independent local examples: no inferred business rules or cross-module propagation. */
+/** AP data is local to the selected well; instrument calculations and GIK parsing are outside this screen. */
 export function IntervalReview({ wellId, depth, canEdit, onDirtyChange }: { wellId: string; depth: number; canEdit: boolean; onDirtyChange?: (dirty: boolean) => void }) {
   const key = `kapgeo.interval-review.v1.anomalies.${wellId}`
-  const [rows, setRows] = useState<ReviewInterval[]>(() => { try { const p = z.array(rowSchema).max(200).parse(JSON.parse(localStorage.getItem(key) ?? 'null')); return validateReviewIntervals(p, depth) ? demoRows(depth) : p } catch { return demoRows(depth) } })
-  const [selected, setSelected] = useState(rows[0]?.id ?? ''), [baseline, setBaseline] = useState(rows), [notice, setNotice] = useState('')
-  const row = rows.find(r => r.id === selected), error = validateReviewIntervals(rows, depth), dirty = JSON.stringify(rows) !== JSON.stringify(baseline)
-  useReportUnsavedChanges(dirty, onDirtyChange, { discard: () => setRows(baseline), save: async () => { if (error) return false; try { localStorage.setItem(key, JSON.stringify(rows)); setBaseline(rows); return true } catch { setNotice('Не удалось сохранить интервалы'); return false } } })
-  const patch = (value: Partial<ReviewInterval>) => { setNotice(''); setRows(rows.map(r => r.id === selected ? { ...r, ...value } : r)) }
-  return <div className="data-workbench">
-    <Panel title="АП · Аномальные пересечения" description="Выберите интервал и назначьте ему горизонт.">
-      <div className="data-actions"><Button disabled={!canEdit || dirty} onClick={() => { const from = Math.max(0, ...rows.map(r => r.to)); if (from >= depth) return; const r = { ...demoRows(depth)[0]!, id: crypto.randomUUID(), from, to: Math.min(depth, from + 1) }; setRows([...rows, r]); setSelected(r.id) }}>Добавить интервал</Button><Button variant="secondary" disabled={!dirty} onClick={() => { setRows(baseline); setNotice('Изменения отменены') }}>Отменить</Button><Button disabled={!canEdit || !dirty || !!error} onClick={() => { try { localStorage.setItem(key, JSON.stringify(rows)); setBaseline(rows); setNotice('Интервалы сохранены') } catch { setNotice('Не удалось сохранить интервалы') } }}>Сохранить интервалы</Button></div>
-      {notice && <p role="status">{notice}</p>}{error && <p role="alert">{error}</p>}
-      <div className="data-split"><svg className="data-depth-chart" viewBox="0 0 220 440" role="img" aria-label="Интервалы по глубине: выбор открывает свойства">{[0, .25, .5, .75, 1].map(v => <g key={v}><text x="2" y={20 + v * 400}>{(depth * v).toFixed(1)}</text><path d={`M50 ${16 + v * 400}H215`} stroke="#d3dce4" /></g>)}{rows.map(r => <g key={r.id} role="button" tabIndex={0} aria-label={`Выбрать интервал ${r.from}–${r.to}`} onClick={() => setSelected(r.id)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(r.id) } }}><rect x="65" y={16 + r.from / depth * 400} width="140" height={Math.max(4, (r.to - r.from) / depth * 400)} fill={r.permeable ? '#b8dfe4' : '#b8b6c6'} stroke={r.id === selected ? '#194b94' : '#67778a'} strokeWidth={r.id === selected ? 3 : 1} /><title>{r.horizon} · {r.from}–{r.to} м</title></g>)}</svg>
-      <div className="data-scroll"><table><caption>{rows.length} интервалов · выберите строку</caption><thead><tr>{['Интервал, м', 'Горизонт', 'Породы', 'm, м', 'Кф, м/сут', 'ЛФТ', 'Крр', 'U, %', 'mc, м·%'].map(c => <th key={c}>{c}</th>)}</tr></thead><tbody>{rows.map(r => <tr key={r.id} className={r.id === selected ? 'is-selected' : ''} tabIndex={0} aria-current={r.id === selected ? 'true' : undefined} onClick={() => setSelected(r.id)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(r.id) } }}><td>{r.from}–{r.to}</td><td>{r.horizon}</td><td>{r.permeable ? 'Проницаемые' : 'Непроницаемые'}</td><td>{(r.to - r.from).toFixed(2)}</td><td>{r.kf}</td><td>{r.lft}</td><td>{r.krr}</td><td>{r.uranium}</td><td>{((r.to - r.from) * r.uranium).toFixed(4)}</td></tr>)}</tbody></table>{!rows.length && <p>Интервалов нет. Добавьте первый интервал.</p>}</div></div>
+  const [rows, setRows] = useState(() => loadAnomalyRows(key, depth))
+  const [selected, setSelected] = useState(rows[0]?.id ?? '')
+  const [selectedHorizon, setSelectedHorizon] = useState(rows[0]?.horizons[0]?.id ?? '')
+  const [baseline, setBaseline] = useState(rows), [notice, setNotice] = useState('')
+  const [editor, setEditor] = useState<Editor | null>(null), [editorError, setEditorError] = useState('')
+  const row = rows.find(r => r.id === selected), horizon = row?.horizons.find(h => h.id === selectedHorizon)
+  const dirty = JSON.stringify(rows) !== JSON.stringify(baseline)
+  const error = validateAnomalyRows(rows, depth)
+  const save = async () => {
+    if (error) return false
+    try { localStorage.setItem(key, JSON.stringify(rows)); setBaseline(rows); setNotice('Пересечения и горизонты сохранены'); return true }
+    catch { setNotice('Не удалось сохранить пересечения'); return false }
+  }
+  useReportUnsavedChanges(dirty, onDirtyChange, { discard: () => setRows(baseline), save })
+  function select(id: string) { setSelected(id); setSelectedHorizon(rows.find(r => r.id === id)?.horizons[0]?.id ?? '') }
+  function edit(value: Editor) { setEditor(structuredClone(value)); setEditorError('') }
+  function patchEditor(value: Partial<Pick<ReviewInterval, 'from' | 'to' | 'horizon'>>) {
+    if (!editor) return
+    setEditor(editor.kind === 'ap' ? { ...editor, row: { ...editor.row, ...value } } : { ...editor, row: { ...editor.row, ...value } })
+    setEditorError('')
+  }
+  function applyEditor() {
+    if (!editor) return
+    const draft = editor.kind === 'ap'
+      ? rows.some(r => r.id === editor.row.id) ? rows.map(r => r.id === editor.row.id ? editor.row : r) : [...rows, editor.row]
+      : rows.map(r => r.id !== editor.parentId ? r : { ...r, horizons: r.horizons.some(h => h.id === editor.row.id) ? r.horizons.map(h => h.id === editor.row.id ? editor.row : h) : [...r.horizons, editor.row] })
+    const problem = validateAnomalyRows(draft, depth)
+    if (problem) { setEditorError(problem); return }
+    setRows(draft); setNotice('')
+    if (editor.kind === 'ap') { setSelected(editor.row.id); setSelectedHorizon(editor.row.horizons[0]?.id ?? '') }
+    else setSelectedHorizon(editor.row.id)
+    setEditor(null)
+  }
+  const keyboardSelect = (event: KeyboardEvent, action: () => void) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); action() } }
+  function removeSelection() {
+    const remaining = rows.filter(r => r.id !== selected)
+    setRows(remaining); setSelected(remaining[0]?.id ?? ''); setSelectedHorizon(remaining[0]?.horizons[0]?.id ?? ''); setNotice('')
+  }
+  const nextFrom = Math.max(0, ...rows.map(r => r.to))
+  return <div className="bgd-ap-workspace">
+    <Panel className="bgd-ap-panel" title="АП · Аномальные пересечения" description="Параметры пересечений и привязка к горизонтам" action={<div className="bgd-ap-actions">
+      <Button size="sm" variant="secondary" disabled={!canEdit}><Download size={15} />Импорт GIK</Button>
+      <Button size="sm" variant="secondary" disabled={!dirty} onClick={() => { setRows(baseline); setSelected(baseline[0]?.id ?? ''); setSelectedHorizon(baseline[0]?.horizons[0]?.id ?? ''); setNotice('Изменения отменены') }}><Undo2 size={15} />Отменить</Button>
+      <Button size="sm" disabled={!canEdit || !dirty || !!error} onClick={() => { void save() }}><Save size={15} />Сохранить интервалы</Button>
+    </div>}>
+      <div className="bgd-ap-table-heading"><div><h3>Аномальные пересечения</h3><span>{rows.length} · глубина скважины {fmt(depth)} м</span></div><div className="bgd-ap-actions">
+        <Button size="sm" variant="secondary" disabled={!canEdit || nextFrom >= depth} onClick={() => { const draft = { ...createAnomalyRows(depth)[0]!, id: crypto.randomUUID(), from: nextFrom, to: Math.min(depth, nextFrom + 1) }; draft.horizons = []; edit({ kind: 'ap', row: draft }) }}><Plus size={15} />Добавить пересечение</Button>
+        <Button size="sm" variant="secondary" disabled={!row} onClick={() => { if (row) edit({ kind: 'ap', row }) }}><Pencil size={14} />Параметры</Button>
+        <Button size="sm" variant="quiet" className="bgd-ap-delete-icon" title="Удалить пересечение" aria-label="Удалить пересечение" disabled={!canEdit || !row} onClick={removeSelection}><Trash2 size={16} /></Button>
+      </div></div>
+      <div className="bgd-ap-table-scroll" tabIndex={0} role="region" aria-label="Таблица аномальных пересечений · прокрутка по горизонтали">
+        <table className="bgd-ap-table" aria-label="Аномальные пересечения"><thead><tr><th>Глубина от, м</th><th>Глубина до, м</th><th>Горизонт</th>{apParameterFields.map(([key, label]) => <th key={key}>{label}</th>)}</tr></thead><tbody>
+          {rows.map(r => <tr key={r.id} tabIndex={0} aria-current={r.id === selected ? 'true' : undefined} className={r.id === selected ? 'is-selected' : ''} onClick={() => select(r.id)} onDoubleClick={() => edit({ kind: 'ap', row: r })} onKeyDown={e => keyboardSelect(e, () => select(r.id))}>
+            <td>{fmt(r.from)}</td><td>{fmt(r.to)}</td><td>{r.horizon}</td>{apParameterFields.map(([key]) => <td key={key}>{fmt(r.parameters[key])}</td>)}
+          </tr>)}
+        </tbody></table>
+        {!rows.length && <p className="bgd-ap-empty">Пересечений нет. Добавьте первое пересечение.</p>}
+      </div>
     </Panel>
-    {row && <Panel title="Свойства выбранного интервала"><fieldset disabled={!canEdit} className="data-fields">{(['from', 'to', 'kf', 'lft', 'krr', 'uranium'] as const).map((name, i) => <label key={name}>{['От, м', 'До, м', 'Кф, м/сут', 'ЛФТ', 'Крр', 'U, %'][i]}<input type="number" step={name === 'lft' ? 1 : 'any'} value={Number.isFinite(row[name]) ? row[name] : ''} onChange={e => patch({ [name]: e.target.valueAsNumber })} /></label>)}<label>Горизонт<input value={row.horizon} maxLength={80} onChange={e => patch({ horizon: e.target.value })} /></label><label>Проницаемость<select value={String(row.permeable)} onChange={e => patch({ permeable: e.target.value === 'true' })}><option value="true">Проницаемые</option><option value="false">Непроницаемые</option></select></label></fieldset><div className="bgd-form-actions"><Button size="sm" variant="quiet" disabled={!canEdit} onClick={() => { setRows(rows.filter(r => r.id !== selected)); setSelected('') }}><Trash2 size={15} />Удалить интервал</Button></div></Panel>}
+    <Panel className="bgd-ap-panel" title="Продуктивный горизонт" description={row ? `Пересечение ${fmt(row.from)}–${fmt(row.to)} м · горизонтов: ${row.horizons.length}` : 'Выберите аномальное пересечение'} action={<div className="bgd-ap-actions">
+      <Button size="sm" variant="secondary" disabled={!canEdit || !row} onClick={() => { if (row) edit({ kind: 'horizon', parentId: row.id, row: createProductiveHorizon(row) }) }}><Plus size={15} />Добавить горизонт</Button>
+      <Button size="sm" variant="secondary" disabled={!horizon} onClick={() => { if (row && horizon) edit({ kind: 'horizon', parentId: row.id, row: horizon }) }}><Pencil size={14} />Свойства</Button>
+      <Button size="sm" variant="quiet" className="bgd-ap-delete-icon" title="Удалить горизонт" aria-label="Удалить горизонт" disabled={!canEdit || !horizon} onClick={() => { if (!row) return; const horizons = row.horizons.filter(h => h.id !== selectedHorizon); setRows(rows.map(r => r.id === row.id ? { ...r, horizons } : r)); setSelectedHorizon(horizons[0]?.id ?? ''); setNotice('') }}><Trash2 size={16} /></Button>
+    </div>}>
+      <div className="bgd-ap-table-scroll" tabIndex={0} role="region" aria-label="Таблица продуктивных горизонтов · прокрутка по горизонтали">
+        <table className="bgd-ap-table bgd-ap-table--horizons" aria-label="Продуктивные горизонты"><thead><tr><th>Глубина от, м</th><th>Глубина до, м</th><th>Горизонт</th><th>Мощность горизонта, м</th>{horizonParameterFields.map(([key, label]) => <th key={key}>{label}</th>)}</tr></thead><tbody>
+          {row?.horizons.map(h => <tr key={h.id} tabIndex={0} aria-current={h.id === selectedHorizon ? 'true' : undefined} className={h.id === selectedHorizon ? 'is-selected' : ''} onClick={() => setSelectedHorizon(h.id)} onDoubleClick={() => edit({ kind: 'horizon', parentId: row.id, row: h })} onKeyDown={e => keyboardSelect(e, () => setSelectedHorizon(h.id))}>
+            <td>{fmt(h.from)}</td><td>{fmt(h.to)}</td><td>{h.horizon}</td><td>{fmt(h.to - h.from)}</td>{horizonParameterFields.map(([key]) => <td key={key}>{fmt(h.values[key])}</td>)}
+          </tr>)}
+        </tbody></table>
+        {!row?.horizons.length && <p className="bgd-ap-empty">{row ? 'Горизонтов нет. Добавьте горизонт выбранного пересечения.' : 'Выберите пересечение в таблице выше.'}</p>}
+      </div>
+    </Panel>
+    {(notice || error) && <p className={`bgd-ap-notice${error ? ' is-error' : ''}`} role={error ? 'alert' : 'status'}>{error || notice}</p>}
+    <Panel className="bgd-ap-panel bgd-ap-panel--chart"><AnomalyLogChart depth={depth} rows={rows} selected={selected} onSelect={select} /></Panel>
+    {editor && <WorkspaceDialog title={editor.kind === 'ap' ? 'Параметры аномального пересечения' : 'Свойства продуктивного горизонта'} onClose={() => setEditor(null)} footer={<>{editorError && <p className="bgd-ap-editor__error" role="alert">{editorError}</p>}<Button variant="secondary" onClick={() => setEditor(null)}>Отмена</Button>{canEdit && <Button onClick={applyEditor}><Save size={16} />Применить</Button>}</>}>
+      <div className="bgd-ap-editor">
+        <p className="bgd-ap-editor__context">{editor.kind === 'ap' ? `Скважина · глубина ${fmt(depth)} м` : `Пересечение ${fmt(row?.from ?? 0)}–${fmt(row?.to ?? 0)} м`}</p>
+        <fieldset disabled={!canEdit}>
+          <legend>Границы и горизонт</legend>
+          <div className="bgd-ap-fields">
+            {(['from', 'to'] as const).map((name, i) => <label key={name}>{i ? 'До, м' : 'От, м'}<input type="number" step="any" min="0" max={depth} value={Number.isFinite(editor.row[name]) ? editor.row[name] : ''} onChange={e => patchEditor({ [name]: e.target.valueAsNumber })} /></label>)}
+            <label>Горизонт<input maxLength={80} value={editor.row.horizon} onChange={e => patchEditor({ horizon: e.target.value })} /></label>
+          </div>
+        </fieldset>
+        {editor.kind === 'ap' && editor.row.horizons.length > 0 && <fieldset disabled={!canEdit}><legend>Горизонты пересечения</legend><div className="bgd-ap-fields">{editor.row.horizons.map(h => <div key={h.id} className="bgd-ap-horizon-bounds"><strong>{h.horizon}</strong>{(['from', 'to'] as const).map((name, i) => <label key={name}>{`${i ? 'До' : 'От'} горизонта, м`}<input type="number" step="any" value={Number.isFinite(h[name]) ? h[name] : ''} onChange={e => setEditor({ ...editor, row: { ...editor.row, horizons: editor.row.horizons.map(item => item.id === h.id ? { ...item, [name]: e.target.valueAsNumber } : item) } })} /></label>)}</div>)}</div></fieldset>}
+        <fieldset disabled={!canEdit}><legend>{editor.kind === 'ap' ? 'Параметры измерения и обработки' : 'Характеристики продуктивного горизонта'}</legend><div className="bgd-ap-fields">
+          {editor.kind === 'ap' ? apParameterFields.map(([name, label]) => <label key={name}>{label}<input type="number" step="any" value={editor.row.parameters[name] ?? ''} onChange={e => setEditor({ ...editor, row: { ...editor.row, parameters: { ...editor.row.parameters, [name]: e.target.value === '' ? null : e.target.valueAsNumber } } })} /></label>)
+            : horizonParameterFields.map(([name, label]) => <label key={name}>{label}<input type="number" step="any" value={editor.row.values[name] ?? ''} onChange={e => setEditor({ ...editor, row: { ...editor.row, values: { ...editor.row.values, [name]: e.target.value === '' ? null : e.target.valueAsNumber } } })} /></label>)}
+        </div></fieldset>
+      </div>
+    </WorkspaceDialog>}
   </div>
 }
