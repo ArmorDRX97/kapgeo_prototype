@@ -32,7 +32,8 @@ describe('BGD well log tables', () => {
     expect(within(allTable).getAllByRole('row')).toHaveLength(3)
     expect(within(allTable).getByText('Комплекс ГК + ПС + КС')).toBeInTheDocument()
     expect(within(allTable).getByText('Контрольный гамма-каротаж')).toBeInTheDocument()
-    expect(within(allTable).getByText('Комплексный')).toBeInTheDocument()
+    expect(within(allTable).getByLabelText('Зонд Комплекс ГК + ПС + КС')).toHaveValue('Комплексный')
+    expect(within(allTable).getAllByRole('columnheader').map(x => x.textContent)).toEqual(['Каротаж','Дата','Оператор','Прибор','Зонд','Основной','Данные','Глубина, м'])
     expect(within(allTable).queryByText('Канал')).not.toBeInTheDocument()
     const measurementsTable = screen.getByRole('table', { name: 'Измерения каротажа Комплекс ГК + ПС + КС' })
     expect(within(measurementsTable).getAllByRole('row')).toHaveLength(9)
@@ -82,8 +83,8 @@ describe('BGD well log tables', () => {
       expect(created?.measurements?.length).toBeGreaterThan(0)
     })
     fireEvent.click(screen.getByRole('tab', { name: /Контрольные каротажи/ }))
-    const row = within(screen.getByRole('table', { name: 'Контрольные каротажи скважины' })).getByText('Гамма-каротаж').closest('tr')!
-    for (const value of ['1,25', '0,87', 'QA реквизиты каротажа']) expect(within(row).getByText(value)).toBeInTheDocument()
+    const row = within(screen.getByRole('table', { name: 'Контрольные каротажи скважины' })).getByLabelText('Вид каротажа Гамма-каротаж').closest('tr')!
+    expect(within(row).getByLabelText('Зонд Гамма-каротаж')).toHaveValue('ГК-38')
     fireEvent.click(screen.getByRole('button', { name: 'Изменить' }))
     const editDialog = await screen.findByRole('dialog', { name: 'Редактировать каротаж' })
     expect(within(editDialog).getByLabelText('Множитель значения')).toHaveValue(1.25)
@@ -94,9 +95,37 @@ describe('BGD well log tables', () => {
     view.unmount()
     renderLogs()
     const savedTable = await screen.findByRole('table', { name: 'Все каротажи скважины' })
-    const savedRow = within(savedTable).getByText('Гамма-каротаж').closest('tr')!
-    expect(within(savedRow).getByText('2,5')).toBeInTheDocument()
-    expect(within(savedRow).getByText('0')).toBeInTheDocument()
+    const savedRow = within(savedTable).getByLabelText('Вид каротажа Гамма-каротаж').closest('tr')!
+    fireEvent.click(within(savedRow).getByRole('button', { name: 'Реквизиты каротажа Гамма-каротаж' }))
+    const restored = await screen.findByRole('dialog', { name: 'Редактировать каротаж' })
+    expect(within(restored).getByLabelText('Множитель значения')).toHaveValue(2.5)
+    expect(within(restored).getByLabelText('Коэффициент')).toHaveValue(0)
+  })
+
+  it('offers the reference methods with units and preserves the existing measurements when a type change is cancelled', async () => {
+    renderLogs()
+    const registry = await screen.findByRole('table', { name: 'Все каротажи скважины' })
+    const method = within(registry).getByLabelText('Вид каротажа Комплекс ГК + ПС + КС')
+    for (const label of ['ГК в обсадке, мкР/ч', 'ГК содержание Ra, %', 'Гамма-каротаж, мкР/ч', 'Индукционный каротаж, мСм/м', 'КС-каротаж, Ом·м', 'Кавернометрия, мм', 'ПС-каротаж, мВ', 'Термометрия, °C', 'Токовый каротаж, мА']) expect(within(method).getByRole('option', { name: label })).toBeInTheDocument()
+    const before = await fetchWellLogWorkspace(primaryWell.id)
+    fireEvent.change(method, { target: { value: 'TEMP' } })
+    const editor = await screen.findByRole('dialog', { name: 'Редактировать каротаж' })
+    expect(within(editor).getByLabelText('Вид каротажа')).toHaveValue('TEMP')
+    fireEvent.click(within(editor).getByRole('button', { name: 'Отмена' }))
+    expect((await fetchWellLogWorkspace(primaryWell.id)).runs).toEqual(before.runs)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить' }))
+    const add = await screen.findByRole('dialog', { name: 'Добавить каротаж' })
+    fireEvent.change(within(add).getByLabelText('Вид каротажа'), { target: { value: 'TEMP' } })
+    fireEvent.change(within(add).getByLabelText('Оператор *'), { target: { value: 'Азамат Сейтов' } })
+    fireEvent.change(within(add).getByLabelText('Прибор *'), { target: { value: 'Термозонд' } })
+    fireEvent.click(within(add).getByRole('button', { name: /Сохранить/ }))
+    await waitFor(async () => {
+      const created = (await fetchWellLogWorkspace(primaryWell.id)).runs.find(run => run.name === 'Термометрия')
+      expect(created?.curves[0]).toMatchObject({ code: 'TEMP', unit: '°C' })
+      expect(created?.measurements?.[0]?.values[created.curves[0]!.id]).toBe(22)
+    })
+    expect(screen.getByRole('table', { name: 'Измерения каротажа Термометрия' })).toBeInTheDocument()
   })
 
   it('keeps the table read-only when the caller denies edit access', async () => {

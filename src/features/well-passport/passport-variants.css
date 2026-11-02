@@ -1,0 +1,38 @@
+.passport-variants { height:100%; min-height:0; display:flex; flex-direction:column; }
+.passport-document-sidebar { flex:0 0 256px; overflow:auto; background:var(--surface-panel); border-right:1px solid var(--border-default); }
+.passport-document-menu { flex:none; padding:16px 12px; border-bottom:1px solid var(--border-default); }
+.passport-document-menu h2 { margin:0 8px 12px; color:var(--text-secondary); font-size:12px; font-weight:600; }
+.passport-document-menu button { display:flex; align-items:center; gap:10px; width:100%; min-height:42px; padding:10px; margin:3px 0; border:1px solid transparent; border-radius:var(--radius-sm); background:transparent; color:var(--text-secondary); font:inherit; font-size:13px; line-height:1.4; text-align:left; cursor:pointer; }
+.passport-document-menu button > svg { flex:none; }
+.passport-document-menu button > span { flex:1; min-width:0; }
+.passport-document-menu button:hover { background:var(--surface-subtle); color:var(--text-primary); }
+.passport-document-menu button[aria-current=page] { border-color:var(--color-brand-200); background:var(--color-brand-50); color:var(--color-brand-800); font-weight:600; }
+.passport-document-menu button i { flex:none; width:5px; height:5px; border-radius:50%; background:currentColor; }
+.passport-document-menu button:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+.passport-reference-workbench .passport-document-sidebar { width:256px; }
+.reference-document-image { display:block; width:100%; height:auto; background:white; }
+.passport-reference-context { padding:18px; display:grid; gap:6px; color:var(--text-secondary); font-size:12px; }
+.reference-column-list { display:grid; gap:8px; }
+.reference-column-list > div { display:flex; align-items:center; gap:4px; padding:8px 6px; border:1px solid var(--border-default); border-radius:6px; }
+.reference-column-list > div > div { display:flex; align-items:center; flex:none; gap:0; }
+.reference-column-name { flex:1; min-width:0; border:0; background:none; font:inherit; font-size:12px; text-align:left; color:var(--text-primary); line-height:1.45; cursor:pointer; }
+.reference-column-list .passport-icon-button { width:24px; min-width:24px; padding:0; }
+.reference-column-delete.button { color:var(--color-red-600); padding:0; width:24px; min-width:24px; background:transparent; }
+.reference-column-delete.button:hover { color:var(--color-red-700); background:var(--color-red-50); }
+.reference-add-columns { display:grid; gap:10px; }
+.reference-add-columns .button { justify-content:flex-start; }
+.reference-column-preview { background:var(--surface-subtle); padding:20px; }
+.passport-variants .passport-workbench { flex:1; min-height:0; height:auto; }
+.reference-passport-print { display:none; }
+@media print {
+  @page reference-column { size:638mm 1530mm; margin:0; }
+  body:has(.reference-passport-print) > *:not(.reference-passport-print) { display:none !important; }
+  .reference-passport-print { display:block; page:reference-column; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+  .reference-passport-print img { display:block; width:638mm; height:1530mm; }
+}
+
+@media print {
+ @page passport-sampling { size:330mm 420mm; margin:0; }
+ .passport-print--sampling .passport-print-page { page:passport-sampling; width:330mm; }
+ .passport-print--sampling .passport-sheet { width:323.57mm; height:420mm; }
+}

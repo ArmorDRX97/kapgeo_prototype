@@ -19,18 +19,23 @@ const statusPresentation: Record<LogRunV2['status'], { label: string; tone: 'neu
   review: { label: 'На проверке', tone: 'info' },
 }
 
-const curveCatalog: Record<'GR' | 'SP' | 'RES' | 'CALI', { label: string; unit: string; range: string; color: string; scale: LogCurve['scale'] }> = {
-  GR: { label: 'Гамма-каротаж', unit: 'API', range: '0–150', color: domainTokens.curves.GR, scale: 'linear' },
-  SP: { label: 'Потенциал собственной поляризации', unit: 'мВ', range: '−80–40', color: domainTokens.curves.SP, scale: 'linear' },
-  RES: { label: 'Кажущееся сопротивление', unit: 'Ом·м', range: '0–120', color: domainTokens.curves.RS, scale: 'log' },
+type EditableCurveCode = Exclude<LogCurveCode, 'GR_DERIVED' | 'GR_MERGED'>
+const curveCatalog: Record<EditableCurveCode, { label: string; unit: string; range: string; color: string; scale: LogCurve['scale'] }> = {
+  GR: { label: 'Гамма-каротаж', unit: 'мкР/ч', range: '0–150', color: domainTokens.curves.GR, scale: 'linear' },
+  GR_CASED: { label: 'ГК в обсадке', unit: 'мкР/ч', range: '0–150', color: domainTokens.curves.GR, scale: 'linear' },
+  GR_RA: { label: 'ГК содержание Ra', unit: '%', range: '0–0,1', color: '#ad467f', scale: 'linear' },
+  IND: { label: 'Индукционный каротаж', unit: 'мСм/м', range: '0–490', color: '#c13b91', scale: 'linear' },
+  RES: { label: 'КС-каротаж', unit: 'Ом·м', range: '0–120', color: domainTokens.curves.RS, scale: 'log' },
   CALI: { label: 'Кавернометрия', unit: 'мм', range: '80–260', color: '#7c3aed', scale: 'linear' },
+  SP: { label: 'ПС-каротаж', unit: 'мВ', range: '−80–40', color: domainTokens.curves.SP, scale: 'linear' },
+  TEMP: { label: 'Термометрия', unit: '°C', range: '0–50', color: '#a34530', scale: 'linear' },
+  CURRENT: { label: 'Токовый каротаж', unit: 'мА', range: '0–180', color: '#238a83', scale: 'linear' },
 }
 
-const editableCurveCodes: Array<keyof typeof curveCatalog> = ['GR', 'SP', 'RES', 'CALI']
+const editableCurveCodes: EditableCurveCode[] = ['GR_CASED', 'GR_RA', 'GR', 'IND', 'RES', 'CALI', 'SP', 'TEMP', 'CURRENT']
+const curveOption = (code: EditableCurveCode) => `${curveCatalog[code].label}, ${curveCatalog[code].unit}`
+const presetCode = (name: string, codes: readonly LogCurveCode[]) => codes.length === 1 && editableCurveCodes.includes(codes[0] as EditableCurveCode) && name === curveCatalog[codes[0] as EditableCurveCode].label ? codes[0] : ''
 
-function formatDate(value: string) {
-  return new Date(`${value}T00:00:00`).toLocaleDateString('ru-RU')
-}
 
 function logDraft(run: LogRunV2): BgdWellLogDraft {
   const survey = getLogSurveyMetadata(run)
@@ -91,8 +96,12 @@ function demoMeasurements(runId: string, from: number, to: number, step: number,
       const value = curve.code === 'SP' ? -24 + index * 2.3
         : curve.code === 'RES' ? 8.4 + index * 1.75
           : curve.code === 'CALI' ? 142 + ((index * 7) % 23)
+            : curve.code === 'IND' ? 36 + index * 4.2
+              : curve.code === 'TEMP' ? 22 + index * .1
+                : curve.code === 'CURRENT' ? 12 + index * 1.5
+                  : curve.code === 'GR_RA' ? .003 + index * .0002
             : 34 + ((index * 13) % 47)
-      return [curve.id, Number(value.toFixed(2))]
+      return [curve.id, Number(value.toFixed(curve.code === 'GR_RA' ? 6 : 2))]
     }))
     return { id: `${runId}-POINT-${index + 1}`, depth: Number((from + index * step).toFixed(2)), values }
   })
@@ -181,6 +190,16 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
     save.mutate({ current: workspace, next: { ...workspace, runs }, eventType: 'log.primary.selected' }, { onSuccess: () => setNotice(`«${run.name}» назначен основным каротажом.`) })
   }
 
+  const updateRegistry = (run: LogRunV2, patch: Partial<LogRunV2['survey']>) => {
+    const survey = { ...getLogSurveyMetadata(run), ...patch }
+    const runs = workspace.runs.map(item => item.id === run.id ? { ...item, survey } : item)
+    save.mutate({ current: workspace, next: { ...workspace, runs }, eventType: 'log.registry.updated' })
+  }
+  const showMeasurements = (run: LogRunV2) => {
+    setSelectedId(run.id)
+    requestAnimationFrame(() => document.querySelector('.bgd-log-inspector')?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+  }
+
   const deleteRun = (run: LogRunV2) => {
     if (!window.confirm(`Удалить каротаж «${run.name}»?`)) return
     save.mutate({ current: workspace, next: { ...workspace, runs: workspace.runs.filter((item) => item.id !== run.id) }, eventType: 'log.run.deleted' }, {
@@ -208,23 +227,18 @@ export function BgdWellLogsTab({ well, canEdit, onDirtyChange }: { well: Well; c
 
     <div className="bgd-log-table-scroll" id="bgd-logs-table-panel" role="tabpanel" aria-labelledby={activeList === 'control' ? 'bgd-logs-control-tab' : 'bgd-logs-all-tab'}>
       <table className="bgd-log-table" aria-label={activeList === 'control' ? 'Контрольные каротажи скважины' : 'Все каротажи скважины'}>
-        <thead><tr><th scope="col">Тип каротажа</th><th scope="col">Дата</th><th scope="col">Оператор</th><th scope="col">Прибор</th><th scope="col">Зонд</th><th scope="col">Основной</th><th scope="col">Глубина, м</th><th scope="col">Шаг, м</th><th scope="col">Множитель значения</th><th scope="col">Коэффициент</th><th scope="col">Комментарий</th><th scope="col">Состояние</th></tr></thead>
+        <thead><tr>{['Каротаж', 'Дата', 'Оператор', 'Прибор', 'Зонд', 'Основной', 'Данные', 'Глубина, м'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead>
         <tbody>{visibleRuns.map((run) => {
-          const survey = getLogSurveyMetadata(run)
-          const status = statusPresentation[run.status]
-          return <tr key={run.id} className={`${run.id === selected?.id ? 'is-selected' : ''} ${measurementDirty && run.id !== selected?.id ? 'is-disabled' : ''}`} aria-selected={run.id === selected?.id} tabIndex={measurementDirty && run.id !== selected?.id ? -1 : 0} onClick={() => { if (!measurementDirty || run.id === selected?.id) setSelectedId(run.id) }} onKeyDown={(event) => { if ((event.key === 'Enter' || event.key === ' ') && (!measurementDirty || run.id === selected?.id)) { event.preventDefault(); setSelectedId(run.id) } }}>
-            <th scope="row"><span className="bgd-log-table__select">{run.name}</span><small>{run.id}</small></th>
-            <td>{survey.measuredAt ? formatDate(survey.measuredAt) : '—'}</td>
-            <td>{survey.operator || '—'}</td>
-            <td>{survey.instrument || '—'}</td>
-            <td>{survey.probe || '—'}</td>
-            <td>{survey.isPrimary ? <span className="bgd-log-main-flag"><Star size={14} /> Да</span> : '—'}</td>
+          const survey = getLogSurveyMetadata(run), locked = !canEdit || save.isPending || measurementDirty
+          return <tr key={run.id} className={run.id === selected?.id ? 'is-selected' : ''} aria-selected={run.id === selected?.id} tabIndex={measurementDirty && run.id !== selected?.id ? -1 : 0} onClick={() => { if (!measurementDirty) setSelectedId(run.id) }} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ') && !measurementDirty) { event.preventDefault(); setSelectedId(run.id) } }}>
+            <th scope="row"><div className="bgd-log-registry-kind"><select aria-label={`Вид каротажа ${run.name}`} disabled={locked} value={presetCode(run.name, run.curves.map(curve => curve.code))} onChange={event => { const code = event.target.value as EditableCurveCode; setEditorRun({ ...run, name: curveCatalog[code].label, curves: buildCurves([code], run.id, run.curves) }) }}>{!presetCode(run.name, run.curves.map(curve => curve.code)) && <option value="">{run.name}</option>}{editableCurveCodes.map(code => <option value={code} key={code}>{curveOption(code)}</option>)}</select><button type="button" className="bgd-log-registry-name" aria-label={`Реквизиты каротажа ${run.name}`} disabled={locked} onClick={event => { event.stopPropagation(); setEditorRun(run) }}><Pencil size={14} /></button></div></th>
+            <td><input aria-label={`Дата каротажа ${run.name}`} type="date" disabled={locked} value={survey.measuredAt} onChange={event => updateRegistry(run, { measuredAt: event.target.value })} /></td>
+            <td><input key={`${run.id}-operator-${survey.operator}`} aria-label={`Оператор ${run.name}`} disabled={locked} defaultValue={survey.operator} onBlur={event => { if (event.target.value !== survey.operator) updateRegistry(run, { operator: event.target.value }) }} /></td>
+            <td><input key={`${run.id}-instrument-${survey.instrument}`} aria-label={`Прибор ${run.name}`} disabled={locked} defaultValue={survey.instrument} onBlur={event => { if (event.target.value !== survey.instrument) updateRegistry(run, { instrument: event.target.value }) }} /></td>
+            <td><input key={`${run.id}-probe-${survey.probe}`} aria-label={`Зонд ${run.name}`} disabled={locked} defaultValue={survey.probe} onBlur={event => { if (event.target.value !== survey.probe) updateRegistry(run, { probe: event.target.value }) }} /></td>
+            <td><select aria-label={`Основной ${run.name}`} disabled={locked} value={survey.isPrimary ? 'yes' : 'no'} onChange={event => event.target.value === 'yes' ? setPrimary(run) : updateRegistry(run, { isPrimary: false })}><option value="yes">Да</option><option value="no">Нет</option></select></td>
+            <td><Button size="sm" variant="quiet" disabled={measurementDirty && selected?.id !== run.id} onClick={event => { event.stopPropagation(); showMeasurements(run) }}>Измерение</Button></td>
             <td className="is-numeric">{formatNumber(run.to)}</td>
-            <td className="is-numeric">{formatNumber(run.step)}</td>
-            <td className="is-numeric">{formatNumber(survey.valueMultiplier, 6)}</td>
-            <td className="is-numeric">{formatNumber(survey.coefficient, 6)}</td>
-            <td><span className="bgd-log-table__comment" title={survey.comment}>{survey.comment || '—'}</span></td>
-            <td><Badge tone={status.tone}>{status.label}</Badge></td>
           </tr>
         })}</tbody>
       </table>
@@ -297,6 +311,7 @@ function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }
       <div className="geobase-dialog__body bgd-log-form">
         {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}
         <div className="form-grid bgd-well-form-grid">
+          <label className="field bgd-well-form-wide"><span className="field__label">Вид каротажа</span><select aria-label="Вид каротажа" disabled={pending} value={presetCode(draft.name, draft.curveCodes)} onChange={event => { const code = event.target.value as EditableCurveCode; setDraft(current => ({ ...current, name: curveCatalog[code].label, curveCodes: [code] })) }}>{!presetCode(draft.name, draft.curveCodes) && <option value="">По составу измеряемых кривых</option>}{editableCurveCodes.map(code => <option value={code} key={code}>{curveOption(code)}</option>)}</select></label>
           <label className="field bgd-well-form-wide"><span className="field__label">Название каротажа <em>*</em></span><input autoFocus disabled={pending} value={draft.name} onChange={(event) => update('name', event.target.value)} placeholder="Например, Комплекс ГК + ПС" /></label>
           <label className="field"><span className="field__label">Дата <em>*</em></span><input type="date" disabled={pending} value={draft.measuredAt} onChange={(event) => update('measuredAt', event.target.value)} /></label>
           <label className="field"><span className="field__label">Оператор <em>*</em></span><input disabled={pending} value={draft.operator} onChange={(event) => update('operator', event.target.value)} placeholder="ФИО специалиста" /></label>
@@ -310,7 +325,7 @@ function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }
           <label className="field"><span className="field__label">Множитель значения</span><input type="number" step="any" disabled={pending} value={draft.valueMultiplier ?? ''} onChange={(event) => update('valueMultiplier', event.target.value === '' ? null : Number(event.target.value))} /></label>
           <label className="field"><span className="field__label">Коэффициент</span><input type="number" step="any" disabled={pending} value={draft.coefficient ?? ''} onChange={(event) => update('coefficient', event.target.value === '' ? null : Number(event.target.value))} /></label>
         </div>
-        <fieldset className="bgd-log-curve-picker"><legend>Измеряемые кривые <em>*</em></legend>{editableCurveCodes.map((code) => <label key={code}><input type="checkbox" checked={draft.curveCodes.includes(code)} disabled={pending} onChange={(event) => update('curveCodes', event.target.checked ? [...draft.curveCodes, code] : draft.curveCodes.filter((item) => item !== code))} /><span><i style={{ background: curveCatalog[code].color }} /><strong>{code}</strong><small>{curveCatalog[code].label}</small></span></label>)}</fieldset>
+        <fieldset className="bgd-log-curve-picker"><legend>Измеряемые кривые <em>*</em></legend>{editableCurveCodes.map((code) => <label key={code}><input type="checkbox" checked={draft.curveCodes.includes(code)} disabled={pending} onChange={(event) => update('curveCodes', event.target.checked ? [...draft.curveCodes, code] : draft.curveCodes.filter((item) => item !== code))} /><span><i style={{ background: curveCatalog[code].color }} /><strong>{code}</strong><small>{curveCatalog[code].label} · {curveCatalog[code].unit}</small></span></label>)}</fieldset>
         <label className="field"><span className="field__label">Комментарий</span><textarea rows={3} disabled={pending} value={draft.comment} onChange={(event) => update('comment', event.target.value)} placeholder="Уточнения по прибору, качеству или условиям измерения" /></label>
         <label className="bgd-log-primary-check"><input type="checkbox" checked={draft.isPrimary} disabled={pending} onChange={(event) => update('isPrimary', event.target.checked)} /><Star size={16} /><span><strong>Основной каротаж</strong><small>Использовать как приоритетный набор скважины</small></span></label>
         <label className="bgd-log-primary-check"><input type="checkbox" checked={draft.isControl} disabled={pending} onChange={(event) => update('isControl', event.target.checked)} /><span><strong>Контрольный каротаж</strong><small>Показывать набор во вкладке контрольных каротажей</small></span></label>

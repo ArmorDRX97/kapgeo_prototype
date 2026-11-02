@@ -7,7 +7,7 @@ import { AlertTriangle, Check, Copy, GitCompareArrows, Layers3, Merge, Plus, Red
 import { useMemo, useRef, useState } from 'react'
 import type { GeologicalInterval, Lithology, Well } from '../../../entities/well/model/types'
 import type { WellGeologyWorkspace } from '../../../entities/well-geology/model/types'
-import { bgdLithologyKinds, findFirstLithologyGap, prepareBgdLithologySave, type BgdLithologyKind } from '../../../features/geobase/model/bgdWellLithology'
+import { bgdLithologyKinds, lithologyPermeability, lithologyPermeabilityLabels, findFirstLithologyGap, prepareBgdLithologySave, type BgdLithologyKind } from '../../../features/geobase/model/bgdWellLithology'
 import { fetchWellGeologyWorkspace, saveWellGeologyWorkspace } from '../../../repository/api'
 import { diffIntervals, validateIntervals } from '../../../shared/scientific/intervals/engine'
 import type { IntervalPolicy } from '../../../shared/scientific/intervals/types'
@@ -138,7 +138,7 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
   }
   const copyAbove = () => {
     if (!selected || !previous) return
-    updateSelected({ lithology: previous.lithology, stratigraphy: previous.stratigraphy, mineralization: previous.mineralization, color: previous.color, colorDescription: previous.colorDescription, description: previous.description })
+    updateSelected({ permeability: previous.permeability, lithology: previous.lithology, stratigraphy: previous.stratigraphy, mineralization: previous.mineralization, color: previous.color, colorDescription: previous.colorDescription, description: previous.description })
   }
   const removeInterval = () => {
     if (!selected) return
@@ -158,8 +158,8 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
       <div className="bgd-lithology-main">
         <Panel title="Интервалы" description={`${bgdLithologyKinds.find((item) => item.id === kind)?.label} · ${track.source}`} action={canEdit ? <div className="bgd-lithology-toolbar"><Button size="sm" variant="quiet" disabled={!undo.length} onClick={undoChange} aria-label="Отменить изменение"><Undo2 size={14} /> Отменить</Button><Button size="sm" variant="quiet" disabled={!redo.length} onClick={redoChange} aria-label="Повторить изменение"><Redo2 size={14} /> Повторить</Button><Button size="sm" variant="secondary" disabled={!availableGap} onClick={addInterval}><Plus size={14} /> Добавить интервал</Button></div> : undefined}>
           <div className="bgd-lithology-table" role="table" aria-label="Интервалы литологии">
-            <div className="bgd-lithology-table__head" role="row"><span>Интервал</span><span>Мощность</span><span>Порода</span><span>Минерализация</span><span>Цвет</span></div>
-            {sorted.map((item) => <button type="button" role="row" key={item.id} className={selected?.id === item.id ? 'is-selected' : ''} onClick={() => setSelectedId(item.id)}><span role="cell"><strong>{formatDepth(item.from)}–{formatDepth(item.to)} м</strong><small>{item.source}</small></span><span role="cell">{formatDepth(item.to - item.from)} м</span><span role="cell">{item.lithology}</span><span role="cell">{item.mineralization ?? '—'}</span><span role="cell">{item.color ?? '—'}</span></button>)}
+            <div className="bgd-lithology-table__head" role="row"><span>Интервал</span><span>Мощность</span><span>Порода</span><span>Проницаемость</span><span>Минерализация</span><span>Цвет</span></div>
+            {sorted.map((item) => <button type="button" role="row" key={item.id} className={selected?.id === item.id ? 'is-selected' : ''} onClick={() => setSelectedId(item.id)}><span role="cell"><strong>{formatDepth(item.from)}–{formatDepth(item.to)} м</strong><small>{item.source}</small></span><span role="cell">{formatDepth(item.to - item.from)} м</span><span role="cell">{item.lithology}</span><span role="cell">{lithologyPermeabilityLabels[lithologyPermeability(item)]}</span><span role="cell">{item.mineralization ?? '—'}</span><span role="cell">{item.color ?? '—'}</span></button>)}
             {!sorted.length && <div className="bgd-core-empty geobase-empty"><Layers3 size={19} /><strong>Интервалов пока нет</strong><span>{canEdit ? 'Добавьте первый интервал.' : 'Данные для этого вида ещё не внесены.'}</span></div>}
           </div>
 
@@ -170,6 +170,7 @@ function BgdLithologyEditor({ well, canEdit, initialWorkspace, activeKind, onKin
               <label className="field"><span className="field__label">Конечная глубина, м</span><input aria-label="Конечная глубина" type="number" step="0.1" disabled={!canEdit} value={selected.to} onChange={(event) => updateSelected({ to: Number(event.target.value) })} /></label>
               <label className="field"><span className="field__label">Мощность, м</span><input disabled value={formatDepth(selected.to - selected.from)} /></label>
               <label className="field"><span className="field__label">Порода</span><select aria-label="Порода" disabled={!canEdit} value={selected.lithology} onChange={(event) => updateSelected({ lithology: event.target.value as Lithology, lithologyCode: readLegend().find(r => r.name === event.target.value)?.code })}>{lithologyOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
+              <label className="field"><span className="field__label">Проницаемость</span><select aria-label="Проницаемость" disabled={!canEdit} value={lithologyPermeability(selected)} onChange={e => updateSelected({ permeability: e.target.value as GeologicalInterval['permeability'] })}>{Object.entries(lithologyPermeabilityLabels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
               <label className="field"><span className="field__label">Зернистость</span><select aria-label="Зернистость" disabled={!canEdit} value={selected.grainSize ?? ''} onChange={event => updateSelected({ grainSize: event.target.value })}><option value="">Не указана</option><option>Мелкозернистая</option><option>Среднезернистая</option><option>Крупнозернистая</option><option>Разнозернистая</option></select></label>
               <label className="field"><span className="field__label">Литологический код</span><input disabled={!canEdit} value={selected.lithologyCode ?? readLegend().find(r => r.name === selected.lithology)?.code ?? ""} onChange={e => updateSelected({ lithologyCode: e.target.value })} /></label><label className="field"><span className="field__label">Геохимический код</span><input disabled={!canEdit} placeholder="Код по таблице заказчика" value={selected.geochemistryCode ?? ""} onChange={e => updateSelected({ geochemistryCode: e.target.value })} /></label><label className="field"><span className="field__label">Минерализация</span><select disabled={!canEdit} value={selected.mineralization ?? 'Отсутствует'} onChange={(event) => updateSelected({ mineralization: event.target.value })}>{mineralizationOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
               <label className="field"><span className="field__label">Цвет</span><select disabled={!canEdit} value={selected.color ?? 'Серый'} onChange={(event) => updateSelected({ color: event.target.value })}>{colorOptions.map((item) => <option key={item}>{item}</option>)}</select></label>

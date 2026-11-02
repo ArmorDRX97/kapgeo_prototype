@@ -45,10 +45,10 @@ export const PASSPORT_STORAGE_PREFIX = 'kapgeo.passport.design.v2.'
 export function defaultSettings(well: PassportWell): PassportSettings {
   return { template: well.kind, from: 420 + well.offset, to: 480 + well.offset, scale: 200, tracks: ['stratigraphy', 'gamma', 'lithology', 'kf', 'resistivity', 'sp', 'construction'], lithology: 'summary', oreSource: 'gamma', grid: true, legend: true, color: true, author: 'И. А. Иванова', date: '2026-10-20', note: '', gammaMax: 100 }
 }
-export function loadSettings(well: PassportWell): PassportSettings {
-  const fallback = defaultSettings(well)
+export function loadSettings(well: PassportWell, sampling = false): PassportSettings {
+  const fallback = { ...defaultSettings(well), ...(sampling ? { oreSource: 'samples' as const } : {}) }
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(PASSPORT_STORAGE_PREFIX + well.id) ?? 'null')
+    const value: unknown = JSON.parse(localStorage.getItem(PASSPORT_STORAGE_PREFIX + well.id + (sampling ? '.sampling' : '')) ?? 'null')
     if (!value || typeof value !== 'object') return fallback
     const v = value as Partial<PassportSettings>
     if (!templates.some(t => t.id === v.template) || ![200, 500, 1000].includes(v.scale ?? 0) || !Number.isFinite(v.from) || !Number.isFinite(v.to) || v.from! < 0 || v.to! > well.depth || v.to! <= v.from!) return fallback
@@ -56,8 +56,10 @@ export function loadSettings(well: PassportWell): PassportSettings {
     return { ...fallback, ...v, tracks: [...v.tracks], lithology: ['summary', 'core', 'logging'].includes(v.lithology ?? '') ? v.lithology! : fallback.lithology, oreSource: ['gamma', 'knd', 'samples'].includes(v.oreSource ?? '') ? v.oreSource! : fallback.oreSource, gammaMax: [50, 100, 200].includes(v.gammaMax ?? 0) ? v.gammaMax! : 100, grid: typeof v.grid === 'boolean' ? v.grid : true, legend: typeof v.legend === 'boolean' ? v.legend : true, color: typeof v.color === 'boolean' ? v.color : true, author: typeof v.author === 'string' ? v.author.slice(0, 60) : fallback.author, date: typeof v.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v.date) ? v.date : fallback.date, note: typeof v.note === 'string' ? v.note.slice(0, 160) : '' }
   } catch { return fallback }
 }
-export function validatePassportSearch(search: Record<string, unknown>): { well?: string } {
-  return { well: typeof search.well === 'string' ? search.well : undefined }
+export type PassportVariantId = 'intervals' | 'sampling' | '127-2-2' | '127-2-3-1'
+export function validatePassportSearch(search: Record<string, unknown>): { well?: string; variant?: PassportVariantId } {
+  const variant = ['sampling', '127-2-2', '127-2-3-1'].includes(String(search.variant)) ? search.variant as PassportVariantId : undefined
+  return { well: typeof search.well === 'string' ? search.well : undefined, ...(variant ? { variant } : {}) }
 }
 export const number = (n: number, digits = 1) => n.toLocaleString('ru-RU', { maximumFractionDigits: digits })
 export type Interval = { from: number; to: number; label: string; color: string; value?: number }

@@ -36,7 +36,7 @@ function hydrateBgdLithology(well: Well, current: WellGeologyWorkspace) {
         intervals: track.intervals.map((interval) => {
           const templateInterval = templateTrack.intervals.find((item) => item.id === interval.id)
           if (!templateInterval) return interval
-          return { ...interval, mineralization: interval.mineralization ?? templateInterval.mineralization, color: interval.color ?? templateInterval.color }
+          return { ...interval, permeability: interval.permeability ?? templateInterval.permeability, mineralization: interval.mineralization ?? templateInterval.mineralization, color: interval.color ?? templateInterval.color }
         }),
       }
     }),

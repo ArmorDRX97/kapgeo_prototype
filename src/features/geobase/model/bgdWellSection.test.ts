@@ -3,6 +3,7 @@ import { validateBgdWellSectionSearch } from './bgdWellSection'
 
 describe('validateBgdWellSectionSearch', () => {
   it('accepts the logging section and other well sections', () => {
+    expect(validateBgdWellSectionSearch({ tab: 'permeability' })).toEqual({ tab: 'lithology' })
     expect(validateBgdWellSectionSearch({ tab: 'logs' })).toEqual({ tab: 'logs' })
     expect(validateBgdWellSectionSearch({ tab: 'drilling' })).toEqual({ tab: 'drilling' })
     expect(validateBgdWellSectionSearch({ tab: 'deviation' })).toEqual({ tab: 'deviation' })

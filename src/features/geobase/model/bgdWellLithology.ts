@@ -29,3 +29,8 @@ export function prepareBgdLithologySave(current: WellGeologyWorkspace, draft: We
     }),
   }
 }
+
+export const lithologyPermeabilityLabels = { permeable: 'Проницаемые', impermeable: 'Непроницаемые', unknown: 'Не определено' } as const
+export function lithologyPermeability(interval: GeologicalInterval) {
+  return interval.permeability ?? 'unknown'
+}

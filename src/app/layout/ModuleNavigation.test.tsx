@@ -36,9 +36,9 @@ describe('module dropdown navigation', () => {
     const trigger = screen.getByRole('button', { name: 'Геология' })
     expect(trigger).toHaveAttribute('aria-expanded', 'false'); fireEvent.click(trigger)
     const menu = screen.getByRole('menu', { name: 'Подмодули геологии' }), items = within(menu).getAllByRole('menuitem')
-    expect(items.map(item => item.textContent)).toEqual(['Интерпретация', 'Интерпретация по керну и литологии', 'Планшет ГИС', 'Паспорт скважины', 'Интерактивный план месторождения', 'Разрезы и развертки', 'Обмен и подготовка разведочных данных', 'Подсчёт запасов'])
-    expect(items.filter(item => item.tagName === 'A')).toHaveLength(6)
-    for (const name of ['Интерпретация по керну и литологии', 'Планшет ГИС']) {
+    expect(items.map(item => item.textContent)).toEqual(['Интерпретация', 'Интерпретация по керну и литологии', 'Планшет ГИС', 'Паспорт скважины', 'Интерактивный план месторождения', 'Разрезы и развертки', 'Подсчёт запасов'])
+    expect(items.filter(item => item.tagName === 'A')).toHaveLength(4)
+    for (const name of ['Интерпретация по керну и литологии', 'Планшет ГИС', 'Подсчёт запасов']) {
       const item = within(menu).getByRole('menuitem', { name })
       expect(item.tagName).toBe('BUTTON')
       expect(item).not.toHaveAttribute('href')

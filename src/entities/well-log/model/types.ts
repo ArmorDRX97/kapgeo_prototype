@@ -1,4 +1,4 @@
-export type LogCurveCode = 'GR' | 'SP' | 'RES' | 'CALI' | 'GR_DERIVED' | 'GR_MERGED'
+export type LogCurveCode = 'GR' | 'GR_CASED' | 'GR_RA' | 'SP' | 'RES' | 'CALI' | 'IND' | 'TEMP' | 'CURRENT' | 'GR_DERIVED' | 'GR_MERGED'
 export type LogCurve = { id: string; code: LogCurveCode; label: string; unit: string; scale: 'linear' | 'log'; color: string; sourceCurveIds?: string[]; formula?: string }
 export type LogSurveyMetadata = { measuredAt: string; operator: string; instrument: string; zone: string; isPrimary: boolean; comment: string; isControl?: boolean; probe?: string; instrumentDiameterCm?: number | null; boreholeDiameterCm?: number | null; detectorLengthCm?: number | null; ecProbeLengthM?: number | null; measurementPointCount?: number | null; drillingFluidDensity?: string; casingStringType?: string; valueMultiplier?: number | null; coefficient?: number | null }
 export type LogMeasurementPoint = { id: string; depth: number; values: Record<string, number | null> }

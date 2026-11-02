@@ -21,6 +21,7 @@ describe('BgdWellLithologyTab', () => {
     expect(screen.getByText(/По каротажу · ГИС/)).toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText('Порода'), { target: { value: 'Глина' } })
+    fireEvent.change(screen.getByLabelText('Проницаемость'), { target: { value: 'permeable' } })
     fireEvent.change(screen.getByLabelText('Описание цвета'), { target: { value: 'Серый с бурыми вкраплениями' } })
     expect(screen.getByText('Изменено интервалов: 1')).toBeInTheDocument()
     const save = screen.getByRole('button', { name: /Сохранить изменения/ })
@@ -28,6 +29,7 @@ describe('BgdWellLithologyTab', () => {
     fireEvent.click(save)
     expect(await screen.findByText('Литология сохранена')).toBeInTheDocument()
     const persisted = await fetchWellGeologyWorkspace(primaryWell.id)
+    expect(persisted.tracks.find((track) => track.kind === 'log')?.intervals[0]?.permeability).toBe('permeable')
     expect(persisted.tracks.find((track) => track.kind === 'log')?.intervals[0]?.colorDescription).toBe('Серый с бурыми вкраплениями')
     expect(screen.getByLabelText('Описание цвета')).toHaveValue('Серый с бурыми вкраплениями')
     expect(screen.getByRole('tab', { name: /По каротажу/ })).toHaveAttribute('aria-selected', 'true')

@@ -1,4 +1,4 @@
-export const bgdWellSectionIds = ['description', 'geometry', 'drilling', 'development', 'construction', 'passport', 'documentation', 'geology', 'deviation', 'logs', 'core-runs', 'core-samples', 'lithology', 'stratigraphy', 'ore-intervals', 'anomalies', 'permeability'] as const
+export const bgdWellSectionIds = ['description', 'geometry', 'drilling', 'development', 'construction', 'passport', 'documentation', 'geology', 'deviation', 'logs', 'core-runs', 'core-samples', 'lithology', 'stratigraphy', 'ore-intervals', 'anomalies'] as const
 
 export type BgdWellSection = typeof bgdWellSectionIds[number]
 
@@ -21,8 +21,9 @@ export function normalizeBgdWellView(tab: BgdWellSection, view: unknown): string
 }
 
 export function validateBgdWellSectionSearch(search: Record<string, unknown>): BgdWellSectionSearch {
-  const tab = bgdWellSectionIds.includes(search.tab as BgdWellSection)
-    ? search.tab as BgdWellSection
+  const requestedTab = search.tab === 'permeability' ? 'lithology' : search.tab
+  const tab = bgdWellSectionIds.includes(requestedTab as BgdWellSection)
+    ? requestedTab as BgdWellSection
     : undefined
 
   const view = normalizeBgdWellView(tab ?? 'description', search.view)

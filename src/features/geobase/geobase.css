@@ -418,7 +418,7 @@
 .bgd-lithology-main { display: grid; min-width: 0; gap: 14px; }
 .bgd-lithology-toolbar { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
 .bgd-lithology-table { min-width: 0; overflow-x: auto; border: 1px solid var(--border-default); border-radius: 9px; }
-.bgd-lithology-table__head, .bgd-lithology-table > button { display: grid; min-width: 790px; grid-template-columns: 1fr .62fr 1.2fr 1fr .9fr; align-items: center; gap: 9px; }
+.bgd-lithology-table__head, .bgd-lithology-table > button { display: grid; min-width: 790px; grid-template-columns: 1fr .62fr 1.2fr 1.1fr 1fr .9fr; align-items: center; gap: 9px; }
 .bgd-lithology-table__head { min-height: 38px; padding: 0 10px; color: var(--text-tertiary); background: var(--surface-subtle); font-size: var(--font-size-xs); font-weight: 750; text-transform: uppercase; }
 .bgd-lithology-table > button { width: 100%; min-height: 58px; padding: 8px 10px; cursor: pointer; color: var(--text-secondary); border: 0; border-top: 1px solid var(--border-default); background: var(--surface-panel); text-align: left; font: inherit; font-size: var(--font-size-sm); }
 .bgd-lithology-table > button:hover, .bgd-lithology-table > button:focus-visible { background: var(--surface-subtle); }
@@ -642,3 +642,12 @@
   .geobase-limits-table { overflow-x: auto; }
   .geobase-limits-table__head, .geobase-limits-table__row { min-width: 560px; }
 }
+
+.bgd-log-registry-kind { display:flex; align-items:center; gap:4px; }
+.bgd-log-registry-kind select { flex:1; width:100%; min-width:0; height:34px; padding:5px 8px; border:1px solid var(--border-default); border-radius:var(--radius-sm); color:var(--text-primary); background:var(--surface-panel); font:inherit; font-weight:400; }
+.bgd-log-registry-name { display:grid; place-items:center; flex:none; width:26px; height:30px; padding:0; border:0; border-radius:5px; background:transparent; color:var(--text-secondary); cursor:pointer; }
+.bgd-log-registry-name:hover { background:var(--color-brand-50); color:var(--text-primary); }
+.bgd-log-table td input, .bgd-log-table td select { width:100%; min-width:100px; height:34px; padding:5px 8px; border:1px solid var(--border-default); border-radius:var(--radius-sm); color:var(--text-primary); background:var(--surface-panel); font:inherit; }
+.bgd-log-table td input[type=date] { min-width:135px; }
+.bgd-log-table td select { min-width:65px; }
+.bgd-log-table tbody th { min-width:210px; }

@@ -30,17 +30,17 @@ export type ExportFormat = 'pdf' | 'svg' | 'png' | 'jpeg' | 'xls'
 const formats = [
   { id: 'pdf', name: 'PDF / печать', detail: 'Все листы · через окно печати', icon: FileText },
   { id: 'svg', name: 'SVG', detail: 'Векторный чертёж · текущий лист', icon: FileText },
-  { id: 'png', name: 'PNG', detail: '2520 × 1782 px · текущий лист', icon: FileImage },
-  { id: 'jpeg', name: 'JPEG', detail: '2520 × 1782 px · текущий лист', icon: FileImage },
+  { id: 'png', name: 'PNG', detail: 'Растровый чертёж · текущий лист', icon: FileImage },
+  { id: 'jpeg', name: 'JPEG', detail: 'Растровый чертёж · текущий лист', icon: FileImage },
   { id: 'xls', name: 'Excel', detail: 'Таблицы выбранных дорожек · весь интервал', icon: FileSpreadsheet },
 ] as const
-export function ExportDialog({ well, page, count, onExport, onClose }: { well: PassportWell; page: number; count: number; onExport: (format: ExportFormat) => Promise<void>; onClose: () => void }) {
+export function ExportDialog({ well, page, count, onExport, onClose, sampling = false, sheetLabel, excelDetail }: { sheetLabel?: string; excelDetail?: string; sampling?: boolean; well: Pick<PassportWell,'name'>; page: number; count: number; onExport: (format: ExportFormat) => Promise<void>; onClose: () => void }) {
   const [format, setFormat] = useState<ExportFormat>('pdf'), [busy, setBusy] = useState(false), [error, setError] = useState('')
   const run = async () => { setBusy(true); setError(''); try { await onExport(format); onClose() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Не удалось подготовить документ.'); setBusy(false) } }
   return <WorkspaceDialog title="Экспорт паспорта" size="compact" pending={busy} onClose={onClose} footer={<><Button variant="secondary" disabled={busy} onClick={onClose}>Отмена</Button><Button disabled={busy} onClick={() => void run()}><Download size={16} />{busy ? 'Подготовка…' : format === 'pdf' ? 'Открыть печать' : 'Скачать файл'}</Button></>}>
-    <div className="passport-export-summary"><FileText size={25} /><div><strong>{well.name} · Паспорт скважины</strong><span>A3, книжный · Лист {page} из {count}</span></div></div>
-    <div className="passport-format-list" role="group" aria-label="Формат экспорта">{formats.map(f => <button key={f.id} type="button" disabled={busy} aria-pressed={format === f.id} onClick={() => setFormat(f.id)}><f.icon size={19} /><span><strong>{f.name}</strong><small>{f.detail}</small></span>{format === f.id && <Check size={17} />}</button>)}</div>
-    {format === 'pdf' && <p className="passport-muted">В окне печати выберите «Сохранить как PDF». Формат A3, книжная ориентация, масштаб 100%, без колонтитулов браузера.</p>}
+    <div className="passport-export-summary"><FileText size={25} /><div><strong>{well.name} · Паспорт скважины</strong><span>{sheetLabel ?? (sampling ? 'Расширенный лист с опробованием' : 'A3, книжный')} · Лист {page} из {count}</span></div></div>
+    <div className="passport-format-list" role="group" aria-label="Формат экспорта">{formats.map(f => <button key={f.id} type="button" disabled={busy} aria-pressed={format === f.id} onClick={() => setFormat(f.id)}><f.icon size={19} /><span><strong>{f.name}</strong><small>{f.id === 'xls' && excelDetail ? excelDetail : f.detail}</small></span>{format === f.id && <Check size={17} />}</button>)}</div>
+    {format === 'pdf' && <p className="passport-muted">В окне печати выберите «Сохранить как PDF». Выберите формат листа по выбранному варианту паспорта, масштаб 100%, без колонтитулов браузера.</p>}
     {error && <p className="passport-error" role="alert">{error}</p>}
   </WorkspaceDialog>
 }

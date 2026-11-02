@@ -203,6 +203,7 @@ export type GeologicalInterval = {
   stratigraphy: StratigraphyUnit
   lithologyCode?: string
   grainSize?: string
+  permeability?: 'permeable' | 'impermeable' | 'unknown'
   geochemistryCode?: string
   mineralization?: string
   color?: string
