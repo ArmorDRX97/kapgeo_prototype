@@ -1,3 +1,4 @@
+import { useDialogDismissGuard } from '../../shared/lib/useDialogDismissGuard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowRight,
@@ -269,15 +270,16 @@ export function CreateDepositDialog({ nextCode, existingCodes, pending, error, o
 }) {
   const [form, setForm] = useState(() => createForm(nextCode))
   const dialogRef = useModalFocus(onClose, pending)
+  const dismiss = useDialogDismissGuard(dialogRef, { onClose, pending })
   const duplicateCode = existingCodes.includes(Number(form.code))
 
-  return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
+  return <><div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
     <section ref={dialogRef} className="geobase-dialog" role="dialog" aria-modal="true" aria-labelledby="create-deposit-title">
       <header><div><span><Database size={20} /></span><div><h2 id="create-deposit-title">Новое месторождение</h2><p>Создайте корневой объект БГД. Код будет зафиксирован, а названия сохранятся на трёх языках.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть форму"><X size={19} /></button></header>
       <div className="geobase-dialog__body"><DepositForm form={form} onChange={setForm} disabled={pending} creation />{duplicateCode && <span className="field__error">Такой код уже используется.</span>}{error && <div className="form-alert form-alert--error" role="alert">{error}</div>}</div>
       <footer><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={pending || !formValid(form) || duplicateCode} onClick={() => onSubmit(toCreateInput(form))}><Database size={15} /> Создать месторождение</Button></footer>
     </section>
-  </div>
+  </div>{dismiss.confirmation}</>
 }
 
 export function DeleteDepositDialog({ deposit, dependencies, pending, error, onClose, onConfirm }: {

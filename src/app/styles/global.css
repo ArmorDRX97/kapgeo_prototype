@@ -68,7 +68,7 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 .global-search span { overflow: hidden; flex: 1; text-overflow: ellipsis; white-space: nowrap; }
 .global-search:disabled { cursor: default; opacity: 0.62; }
 .global-search kbd { padding: 3px 6px; color: #6b7d86; border: 1px solid #d8e0e4; border-radius: 4px; background: white; font: var(--font-size-sm)/1.2 inherit; }
-.topbar__actions { display: flex; align-items: center; gap: 4px; }
+.topbar__actions { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .topbar__actions > button, .topbar__actions > a { position: relative; display: grid; width: 36px; height: 36px; cursor: pointer; place-items: center; color: #60727b; border: 0; border-radius: 8px; background: transparent; }
 .topbar__actions > button:hover, .topbar__actions > a:hover { color: var(--text-primary); background: var(--surface-subtle); }
 .topbar__actions > a em, .topbar__actions > button em { position: absolute; top: 0; right: -1px; display: grid; width: 18px; height: 18px; place-items: center; color: white; border: 2px solid white; border-radius: 50%; background: var(--color-red-600); font-size: var(--font-size-sm); font-style: normal; font-weight: 750; line-height: 1; }

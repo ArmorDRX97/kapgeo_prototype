@@ -20,7 +20,7 @@ const legendSchema = z.array(z.object({
   pattern: z.enum(['dots', 'lines', 'diagonal', 'none']),
 })).min(1).max(80)
 
-export function LegendEditor({ onChange }: { onChange?: () => void }) {
+export function LegendEditor({ onChange, disabled = false }: { onChange?: () => void; disabled?: boolean }) {
   const [open, setOpen] = useState(false), [rows, setRows] = useState(readLegend), [error, setError] = useState('')
   const update = (index: number, patch: Partial<LegendEntry>) => setRows(current => current.map((row, i) => i === index ? { ...row, ...patch } : row))
   const add = () => {
@@ -41,7 +41,7 @@ export function LegendEditor({ onChange }: { onChange?: () => void }) {
     } catch { setError('Не удалось сохранить легенду в браузере') }
   }
   return <>
-    <Button size="sm" variant="secondary" onClick={() => { setRows(readLegend()); setError(''); setOpen(true) }}><SwatchBook size={16} />Легенда и коды</Button>
+    <Button size="sm" variant="secondary" disabled={disabled} onClick={() => { setRows(readLegend()); setError(''); setOpen(true) }}><SwatchBook size={16} />Легенда и коды</Button>
     {open && <WorkspaceDialog title="Легенда и коды" onClose={() => setOpen(false)} footer={<>
       <Button variant="secondary" onClick={() => setOpen(false)}>Отмена</Button>
       <Button onClick={save}><Save size={16} />Сохранить легенду</Button>

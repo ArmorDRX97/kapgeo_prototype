@@ -7,8 +7,10 @@ export function useReportUnsavedChanges(dirty: boolean, onDirtyChange?: (dirty: 
   const editor = useRef<UnsavedEditor>({ dirty, save: async () => false, discard: () => undefined })
   useLayoutEffect(() => { editor.current = { dirty, save: actions?.save ?? (async () => false), discard: actions?.discard ?? (() => undefined) } }, [dirty, actions])
   const register = context?.register
+  const onEditorChange = context?.onEditorChange
   const hasActions = Boolean(actions)
   useEffect(() => hasActions ? register?.(editor) : undefined, [register, hasActions])
+  useEffect(() => { onEditorChange?.() }, [dirty, onEditorChange])
   useEffect(() => {
     onDirtyChange?.(dirty)
     return () => onDirtyChange?.(false)

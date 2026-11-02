@@ -1,0 +1,2 @@
+.map-is-fullscreen { position: fixed !important; inset: 0 !important; z-index: 1100; width: 100vw !important; height: 100dvh !important; max-width: none !important; max-height: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; overflow: hidden; background: var(--surface-app); }
+.map-is-fullscreen::backdrop { background: var(--surface-app); }

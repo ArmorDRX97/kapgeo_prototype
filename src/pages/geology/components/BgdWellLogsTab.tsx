@@ -1,3 +1,4 @@
+import { useDialogDismissGuard } from '../../../shared/lib/useDialogDismissGuard'
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useModalFocus } from '../../../shared/lib/useModalFocus'
 import { domainTokens } from '@kapgeo/geo-viz/tokens'
@@ -304,8 +305,9 @@ function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }
   useReportUnsavedChanges(JSON.stringify(draft) !== JSON.stringify(initial), undefined, { save: saveDraft, discard: onClose })
   const submit = () => { void saveDraft().catch(() => undefined) }
   const dialogRef = useModalFocus(onClose, pending)
+  const dismiss = useDialogDismissGuard(dialogRef, { onClose, pending })
 
-  return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
+  return <><div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
     <section ref={dialogRef} className="geobase-dialog geobase-dialog--log" role="dialog" aria-modal="true" aria-labelledby="log-editor-title">
       <header><div><span><RadioTower size={20} /></span><div><h2 id="log-editor-title">{title}</h2><p>Реквизиты набора и параметры замера.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть форму каротажа"><X size={19} /></button></header>
       <div className="geobase-dialog__body bgd-log-form">
@@ -332,5 +334,5 @@ function LogSurveyDialog({ initial, title, wellDepth, pending, onClose, onSave }
       </div>
       <footer><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={pending} onClick={submit}><Save size={15} /> Сохранить</Button></footer>
     </section>
-  </div>
+  </div>{dismiss.confirmation}</>
 }

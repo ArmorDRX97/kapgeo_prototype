@@ -1,3 +1,4 @@
+import { useDialogDismissGuard } from '../../shared/lib/useDialogDismissGuard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { ArrowLeft, BookOpen, Check, ChevronRight, Download, History, Plus, Save, Search, Trash2, X } from 'lucide-react'
@@ -130,12 +131,13 @@ export function ReferenceDataPage() {
 
 function ReferenceDialog({ title, children, pending, onClose }: { title: string; children: ReactNode; pending: boolean; onClose: () => void }) {
   const ref = useRef<HTMLElement>(null)
+  const dismiss = useDialogDismissGuard(ref, { onClose, pending })
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
     ref.current?.focus()
     return () => previous?.focus()
   }, [])
-  return <div className="reference-dialog-backdrop" onMouseDown={event => { if (!pending && event.target === event.currentTarget) onClose() }}><section ref={ref} className="reference-dialog" role="dialog" aria-modal="true" aria-labelledby="reference-dialog-title" tabIndex={-1} onKeyDown={event => {
+  return <><div className="reference-dialog-backdrop" onMouseDown={event => { if (!pending && event.target === event.currentTarget) onClose() }}><section ref={ref} className="reference-dialog" role="dialog" aria-modal="true" aria-labelledby="reference-dialog-title" tabIndex={-1} onKeyDown={event => {
     if (event.key === 'Escape' && !pending) { event.stopPropagation(); onClose() }
     if (event.key === 'Tab') {
       const elements = [...(ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled)') ?? [])]
@@ -143,7 +145,7 @@ function ReferenceDialog({ title, children, pending, onClose }: { title: string;
       if (event.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { event.preventDefault(); last?.focus() }
       else if (!event.shiftKey && (document.activeElement === last || document.activeElement === ref.current)) { event.preventDefault(); first?.focus() }
     }
-  }}><header><h2 id="reference-dialog-title">{title}</h2><Button variant="quiet" disabled={pending} onClick={onClose} aria-label="Закрыть форму"><X size={20} /></Button></header>{children}</section></div>
+  }}><header><h2 id="reference-dialog-title">{title}</h2><Button variant="quiet" disabled={pending} onClick={onClose} aria-label="Закрыть форму"><X size={20} /></Button></header>{children}</section></div>{dismiss.confirmation}</>
 }
 
 function ReferenceSwitch({ id, label, description, checked, disabled, errorId, onChange }: { id: string; label: string; description?: string; checked: boolean; disabled: boolean; errorId?: string; onChange: (checked: boolean) => void }) {

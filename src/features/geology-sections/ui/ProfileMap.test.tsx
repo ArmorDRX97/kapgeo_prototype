@@ -225,6 +225,8 @@ describe('profile map gestures', () => {
     expect(screen.getByRole('button', { name: 'Применить профиль' })).toBeDisabled()
     expect(screen.getByRole('alert')).toHaveTextContent('Нулевой сегмент')
     fireEvent.click(screen.getByRole('button', { name: 'Отмена' }))
+    expect(screen.getByRole('dialog', { name: 'Есть несохранённые изменения' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить изменения и закрыть' }))
     expect(change).not.toHaveBeenCalled()
     expect(pending).toHaveBeenLastCalledWith(false)
   })

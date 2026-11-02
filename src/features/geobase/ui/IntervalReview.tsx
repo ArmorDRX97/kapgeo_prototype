@@ -62,7 +62,7 @@ export function IntervalReview({ wellId, depth, canEdit, onDirtyChange }: { well
     </div>}>
       <div className="bgd-ap-table-heading"><div><h3>Аномальные пересечения</h3><span>{rows.length} · глубина скважины {fmt(depth)} м</span></div><div className="bgd-ap-actions">
         <Button size="sm" variant="secondary" disabled={!canEdit || nextFrom >= depth} onClick={() => { const draft = { ...createAnomalyRows(depth)[0]!, id: crypto.randomUUID(), from: nextFrom, to: Math.min(depth, nextFrom + 1) }; draft.horizons = []; edit({ kind: 'ap', row: draft }) }}><Plus size={15} />Добавить пересечение</Button>
-        <Button size="sm" variant="secondary" disabled={!row} onClick={() => { if (row) edit({ kind: 'ap', row }) }}><Pencil size={14} />Параметры</Button>
+        <Button size="sm" variant="secondary" disabled={!canEdit || !row} onClick={() => { if (row) edit({ kind: 'ap', row }) }}><Pencil size={14} />Параметры</Button>
         <Button size="sm" variant="quiet" className="bgd-ap-delete-icon" title="Удалить пересечение" aria-label="Удалить пересечение" disabled={!canEdit || !row} onClick={removeSelection}><Trash2 size={16} /></Button>
       </div></div>
       <div className="bgd-ap-table-scroll" tabIndex={0} role="region" aria-label="Таблица аномальных пересечений · прокрутка по горизонтали">
@@ -76,7 +76,7 @@ export function IntervalReview({ wellId, depth, canEdit, onDirtyChange }: { well
     </Panel>
     <Panel className="bgd-ap-panel" title="Продуктивный горизонт" description={row ? `Пересечение ${fmt(row.from)}–${fmt(row.to)} м · горизонтов: ${row.horizons.length}` : 'Выберите аномальное пересечение'} action={<div className="bgd-ap-actions">
       <Button size="sm" variant="secondary" disabled={!canEdit || !row} onClick={() => { if (row) edit({ kind: 'horizon', parentId: row.id, row: createProductiveHorizon(row) }) }}><Plus size={15} />Добавить горизонт</Button>
-      <Button size="sm" variant="secondary" disabled={!horizon} onClick={() => { if (row && horizon) edit({ kind: 'horizon', parentId: row.id, row: horizon }) }}><Pencil size={14} />Свойства</Button>
+      <Button size="sm" variant="secondary" disabled={!canEdit || !horizon} onClick={() => { if (row && horizon) edit({ kind: 'horizon', parentId: row.id, row: horizon }) }}><Pencil size={14} />Свойства</Button>
       <Button size="sm" variant="quiet" className="bgd-ap-delete-icon" title="Удалить горизонт" aria-label="Удалить горизонт" disabled={!canEdit || !horizon} onClick={() => { if (!row) return; const horizons = row.horizons.filter(h => h.id !== selectedHorizon); setRows(rows.map(r => r.id === row.id ? { ...r, horizons } : r)); setSelectedHorizon(horizons[0]?.id ?? ''); setNotice('') }}><Trash2 size={16} /></Button>
     </div>}>
       <div className="bgd-ap-table-scroll" tabIndex={0} role="region" aria-label="Таблица продуктивных горизонтов · прокрутка по горизонтали">

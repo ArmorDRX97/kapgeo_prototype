@@ -1,3 +1,4 @@
+import { useDialogDismissGuard } from '../../shared/lib/useDialogDismissGuard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRightLeft, Check, CircleAlert, Database, History, Info, Mountain, PencilLine, ShieldCheck, SlidersHorizontal, FileText } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -205,6 +206,7 @@ function ConditionLimitsDialog({ input, depositName, canEdit, onClose, onSave, p
 }) {
   const [condition, setCondition] = useState(input)
   const dialogRef = useRef<HTMLFormElement>(null)
+  const dismiss = useDialogDismissGuard(dialogRef, { onClose, pending })
 
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null
@@ -212,7 +214,7 @@ function ConditionLimitsDialog({ input, depositName, canEdit, onClose, onSave, p
     return () => previousFocus?.focus({ preventScroll: true })
   }, [])
 
-  return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
+  return <><div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
     <form ref={dialogRef} className="geobase-dialog geobase-dialog--limits" role="dialog" aria-modal="true" aria-labelledby="condition-limits-title"
       onSubmit={(event) => { event.preventDefault(); if (canEdit && !pending) onSave(condition) }}
       onKeyDown={(event) => {
@@ -244,5 +246,5 @@ function ConditionLimitsDialog({ input, depositName, canEdit, onClose, onSave, p
         <Button disabled={pending} variant="secondary" onClick={onClose}>Отменить</Button>
       </footer>
     </form>
-  </div>
+  </div>{dismiss.confirmation}</>
 }

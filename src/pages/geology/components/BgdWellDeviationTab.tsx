@@ -1,3 +1,4 @@
+import { useDialogDismissGuard } from '../../../shared/lib/useDialogDismissGuard'
 import '../../../features/geology-data/data-workbench.css'
 import { useReportUnsavedChanges } from '../../../shared/lib/useReportUnsavedChanges'
 import { useModalFocus } from '../../../shared/lib/useModalFocus'
@@ -125,7 +126,7 @@ export function BgdWellDeviationTab({ well, canEdit, canAdminister, defaults, on
   const newDraft = createDeviationSurveyDraft({ correctionAngle: defaults.trueCorrection, minZenithAngle: defaults.minZenithAngle })
 
   return <div className="bgd-well-stack bgd-deviation-workspace">
-    <Panel className="bgd-deviation-heading" title="Инклинометрия скважины" description={`${well.code} · промеры, координаты точек и ход ствола.`} action={<Button variant="secondary" size="sm" disabled={save.isPending}><FileUp size={16} />Импорт инклинометрии</Button>} />
+    <Panel className="bgd-deviation-heading" title="Инклинометрия скважины" description={`${well.code} · промеры, координаты точек и ход ствола.`} action={<Button variant="secondary" size="sm" disabled={!canEdit || !canAdminister || save.isPending}><FileUp size={16} />Импорт инклинометрии</Button>} />
     {error && <div className="form-alert form-alert--error" role="alert"><AlertTriangle size={17} /><span><strong>Не удалось обновить инклинометрию</strong>{String(error.message ?? error).split('\n').map((line) => <small key={line}>{line}</small>)}</span></div>}
     {notice && <div className="success-message" role="status"><CheckCircle2 size={17} /><span><strong>Инклинометрия обновлена</strong>{notice}</span></div>}
 
@@ -217,8 +218,9 @@ function DeviationSurveyDialog({ initial, title, wellDepth, defaults, allowPrima
   useReportUnsavedChanges(JSON.stringify(draft) !== JSON.stringify(initial), undefined, { save: saveDraft, discard: onClose })
   const submit = () => { void saveDraft().catch(() => undefined) }
   const dialogRef = useModalFocus(onClose, pending)
+  const dismiss = useDialogDismissGuard(dialogRef, { onClose, pending })
 
-  return <div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
+  return <><div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
     <section ref={dialogRef} className="geobase-dialog geobase-dialog--deviation" role="dialog" aria-modal="true" aria-labelledby="deviation-editor-title">
       <header><div><span><Compass size={20} /></span><div><h2 id="deviation-editor-title">{title}</h2><p>Описание промера и результаты измерений по глубине.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть форму промера"><X size={19} /></button></header>
       <div className="geobase-dialog__body bgd-deviation-form">
@@ -247,5 +249,5 @@ function DeviationSurveyDialog({ initial, title, wellDepth, defaults, allowPrima
       </div>
       <footer><Button variant="secondary" disabled={pending} onClick={onClose}>Отмена</Button><Button disabled={pending} onClick={submit}>Сохранить промер</Button></footer>
     </section>
-  </div>
+  </div>{dismiss.confirmation}</>
 }

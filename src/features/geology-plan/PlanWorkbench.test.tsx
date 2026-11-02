@@ -5,7 +5,7 @@ import { emptyMap, initialMaps } from '../../entities/geology-map/fixtures'
 import { userPersonas } from '../../entities/session/model/personas'
 import { MAP_STORAGE_KEY } from '../../repository/demo/mapRepository'
 const route = vi.hoisted(() => ({ shouldBlockFn: null as null | ((args: { current: { pathname: string; search: Record<string, unknown> }; next: { pathname: string; search: Record<string, unknown> } }) => boolean) }))
-vi.mock('@tanstack/react-router', () => ({ useBlocker: (options: { shouldBlockFn: typeof route.shouldBlockFn }) => { route.shouldBlockFn = options.shouldBlockFn; return { status: 'idle', proceed: vi.fn(), reset: vi.fn() } } }))
+vi.mock('@tanstack/react-router', () => ({ useNavigate: () => vi.fn(), useBlocker: (options: { shouldBlockFn: typeof route.shouldBlockFn }) => { route.shouldBlockFn = options.shouldBlockFn; return { status: 'idle', proceed: vi.fn(), reset: vi.fn() } } }))
 describe('map workbench operation boundaries', () => {
   beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} }); vi.stubGlobal('requestAnimationFrame', (f: FrameRequestCallback) => { f(0); return 0 }) })
   afterEach(() => { cleanup(); vi.unstubAllGlobals() })

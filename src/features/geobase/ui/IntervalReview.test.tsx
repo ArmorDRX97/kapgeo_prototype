@@ -62,8 +62,8 @@ describe('AP interval workflow', () => {
     render(<IntervalReview wellId="readonly-ap" depth={500} canEdit={false} />)
     expect(screen.getByRole('button', { name: 'Импорт GIK' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Добавить пересечение' })).toBeDisabled()
-    fireEvent.click(screen.getByRole('button', { name: 'Параметры' }))
-    expect(screen.getByLabelText('Горизонт')).toBeDisabled()
-    expect(screen.queryByRole('button', { name: 'Применить' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Параметры' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Свойства' })).toBeDisabled()
+
   })
 })

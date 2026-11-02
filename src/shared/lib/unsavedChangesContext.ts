@@ -4,4 +4,5 @@ export type UnsavedEditor = { dirty: boolean; save: () => Promise<boolean>; disc
 export const UnsavedChangesContext = createContext<{
   register: (editor: { current: UnsavedEditor }) => () => void
   requestTransition: (transition: () => void) => void
+  onEditorChange?: () => void
 } | null>(null)

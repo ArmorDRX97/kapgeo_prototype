@@ -47,7 +47,7 @@ export const fullWellBgdData: WellBgdData = {
     drillingType: 'Колонковое',
     foreman: 'Садык Нурланов',
     rigType: 'ЗИФ-1200',
-    rigNumber: 6,
+    rigNumber: null,
     company: 'АО «Волковгеология»',
     brigade: 'Бригада 2',
     designDepth: 610,

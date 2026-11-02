@@ -9,17 +9,13 @@ import {
   Eye,
   LogOut,
   Menu,
-  Mountain,
-  Search,
-  X,
 } from 'lucide-react'
-import { type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react'
 import { useSession } from '../../entities/session/model/sessionContext'
-import { fetchPlatformPreferences, fetchWells } from '../../repository/api'
+import { fetchPlatformPreferences } from '../../repository/api'
 import { GeologyNavigator } from './GeologyNavigator'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { ModuleNavigation } from './ModuleNavigation'
-import { bgdFieldWells } from '../../features/geobase/model/bgdField'
 import { useUiLocale } from '../../shared/lib/useUiLocale'
 import { BrandMark } from '../../shared/ui/BrandMark'
 
@@ -30,14 +26,10 @@ export function AppShell({ children }: PropsWithChildren) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const currentHref = useRouterState({ select: (state) => state.location.href })
   const preferencesQuery = useQuery({ queryKey: ['platform-preferences'], queryFn: fetchPlatformPreferences })
-  const wellsQuery = useQuery({ queryKey: ['wells'], queryFn: fetchWells })
   const [profileOpen, setProfileOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   const [geologyNavOpen, setGeologyNavOpen] = useState(false)
   const [geologyNavCollapsed, setGeologyNavCollapsed] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
-  const searchRef = useRef<HTMLDivElement>(null)
   const isBgd = pathname.startsWith('/geology/bgd')
   const isGeology = pathname.startsWith('/geology') && !isBgd
   const closeGeologyNavigation = useCallback(() => setGeologyNavOpen(false), [])
@@ -53,7 +45,6 @@ export function AppShell({ children }: PropsWithChildren) {
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node
       if (!profileRef.current?.contains(target)) setProfileOpen(false)
-      if (!searchRef.current?.contains(target)) setSearchOpen(false)
     }
     document.addEventListener('pointerdown', onPointerDown)
     return () => document.removeEventListener('pointerdown', onPointerDown)
@@ -67,20 +58,6 @@ export function AppShell({ children }: PropsWithChildren) {
     document.documentElement.dataset.contrast = preferences.contrast ? 'high' : 'normal'
     document.documentElement.dataset.motion = preferences.reducedMotion ? 'reduced' : 'normal'
   }, [preferencesQuery.data, locale])
-
-  const searchResults = useMemo(() => {
-    const query = searchQuery.trim().toLocaleLowerCase('ru')
-    if (query.length < 2) return []
-    const fieldResults = isBgd ? bgdFieldWells.filter(w => `${w.name} ${w.attributes.type} ${w.site}`.toLocaleLowerCase('ru').includes(query)).slice(0, 7).map(w => ({ id: w.id, code: w.name, type: w.attributes.type, site: w.site, bgd: { depositId: pathname.match(/^\/geology\/bgd\/([^/]+)/)?.[1] ?? preferencesQuery.data?.currentDepositId ?? 'DEP-SARYTAU' } })) : []
-    const existing = (wellsQuery.data ?? []).filter((well) => `${well.code} ${well.type} ${well.site} ${well.profile}`.toLocaleLowerCase('ru').includes(query)).slice(0, 7)
-    return [...fieldResults, ...existing].slice(0, 7)
-  }, [searchQuery, wellsQuery.data, isBgd, pathname, preferencesQuery.data?.currentDepositId])
-
-  const openWell = (wellId: string, depositId: string) => {
-    setSearchOpen(false)
-    setSearchQuery('')
-    void navigate({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId, wellId } })
-  }
 
   const logOut = () => {
     signOut()
@@ -97,13 +74,6 @@ export function AppShell({ children }: PropsWithChildren) {
       <span className="topbar__divider" aria-hidden="true" />
       <ModuleNavigation persona={persona} />
       {isBgd && <button className="topbar__geology-toggle" type="button" onClick={() => setGeologyNavOpen((value) => !value)} aria-expanded={geologyNavOpen} aria-label={geologyNavOpen ? 'Закрыть скважины' : 'Открыть скважины'}><Menu size={20} /><span>Скважины</span></button>}
-      <div className="global-search-wrap" ref={searchRef} onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); searchRef.current?.querySelector('input')?.focus(); setSearchOpen(false) } }}>
-        <label className="global-search global-search--input"><Search size={17} /><input value={searchQuery} onFocus={() => setSearchOpen(true)} onChange={(event) => { setSearchQuery(event.target.value); setSearchOpen(true) }} placeholder="Поиск скважины" aria-label="Глобальный поиск скважины" />{searchQuery && <button type="button" onClick={() => setSearchQuery('')} aria-label="Очистить поиск"><X size={15} /></button>}</label>
-        {searchOpen && searchQuery.trim().length >= 2 && <div className="global-search-results" role="listbox" aria-label="Результаты поиска">
-          {searchResults.map((well) => <button key={well.id} type="button" role="option" aria-selected="false" onClick={() => openWell(well.id, well.bgd?.depositId ?? 'DEP-SARYTAU')}><Mountain size={16} /><span><strong>{well.code}</strong><small>{well.type} · {well.site}</small></span></button>)}
-          {!wellsQuery.isLoading && !searchResults.length && <p>Скважины не найдены</p>}
-        </div>}
-      </div>
       <div className="topbar__actions">
         <button type="button" aria-label="Фоновые процессы" aria-disabled="true" disabled title="Фоновые процессы: раздел пока не проработан"><BriefcaseBusiness size={19} /></button>
         <button type="button" aria-label="Уведомления" aria-disabled="true" disabled title="Уведомления: раздел пока не проработан"><Bell size={19} /></button>

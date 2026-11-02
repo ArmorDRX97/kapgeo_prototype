@@ -221,3 +221,9 @@ body:has(.app-frame--bgd) .row-actions-menu button.is-danger:focus-visible { out
 }
 .bgd-deviation-heading .panel__header { margin-bottom:0; }
 .bgd-deviation-import-dialog > .form-alert { margin:0; }
+.bgd-drilling-hierarchy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.bgd-drilling-hierarchy > section { min-width: 0; display: grid; align-content: start; gap: 14px; padding: 16px; border: 1px solid var(--border-default); border-radius: 10px; background: var(--surface-subtle); }
+.bgd-drilling-hierarchy h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; font-weight: 600; }
+.bgd-drilling-hierarchy h3 > span { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 6px; color: var(--color-brand-600); background: var(--color-brand-100); font-size: 11px; }
+.bgd-drilling-hierarchy small { color: var(--text-secondary); font-size: 11px; }
+.bgd-drilling-hierarchy__rig { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 12px; }

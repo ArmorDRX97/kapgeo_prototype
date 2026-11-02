@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Maximize2, MoreHorizontal, ZoomIn, ZoomOut, type LucideIcon } from 'lucide-react'
+import { Expand, Maximize2, Minimize2, MoreHorizontal, ZoomIn, ZoomOut, type LucideIcon } from 'lucide-react'
+import { useMapFullscreen } from '../../../shared/lib/useMapFullscreen'
+import { MapObjectPopup, type MapContextPoint } from '../../../entities/geology-map/ui/MapObjectPopup'
 import { MapCanvas } from '../../../entities/geology-map/ui/MapCanvas'
 import { WellTypeFilters } from '../../../entities/geology-map/ui/WellTypeFilters'
 import { type Camera } from '../../../entities/geology-map/geometry'
@@ -23,6 +25,9 @@ function rememberedView(depositId: string) {
   } catch { return { camera: null, topography: true, grid: true, forceLabels: false } }
 }
 export function BgdFieldMap({ depositId, onOpenWell, focusWellId }: { depositId: string; onOpenWell?: (id: string) => void; focusWellId?: string }) {
+  const fullscreen = useMapFullscreen()
+  const [context, setContext] = useState<{ id: string; at: MapContextPoint } | null>(null)
+  const closeContext = useCallback(() => setContext(null), [])
   const { filters, setFilters, reset } = useBgdFieldFilters(depositId)
   const catalogueWell = bgdFieldWell(focusWellId)
   const focusQuery = useQuery({ queryKey: ['well', focusWellId], queryFn: () => fetchWell(focusWellId!), enabled: !!focusWellId && !catalogueWell, retry: false })
@@ -59,18 +64,20 @@ export function BgdFieldMap({ depositId, onOpenWell, focusWellId }: { depositId:
   useEffect(() => { try { sessionStorage.setItem(`kapgeo.bgd.map-view.${depositId}`, JSON.stringify({ camera, topography, grid, forceLabels })) } catch { /* Optional view state. */ } }, [depositId, camera, topography, grid, forceLabels])
   const { scene, typeScope } = useMemo(() => { const objects = filterBgdWells(filters); if (focusWell && !catalogueWell) objects.push(focusWell); return { scene: bgdOnlyWells(objects), typeScope: filterBgdWells({ ...filters, hiddenTypes: [] }) } }, [filters, focusWell, catalogueWell])
   const visible = scene.objects
-  return <section className="bgd-field-map" aria-label="Карта скважин месторождения">
+  return <section className={`bgd-field-map${fullscreen.active ? ' map-is-fullscreen' : ''}`} aria-label="Карта скважин месторождения">
     <div className="bgd-field-toolbar" data-tooltip-group>
       <select className="bgd-field-toolbar__site" aria-label="Участок" value={filters.site} onChange={e => setFilters({ site: e.target.value })}><option value="all">Все участки</option><option>Северный</option><option>Южный</option></select>
       <span className="bgd-field-toolbar__separator" aria-hidden="true" />
       <WellTypeFilters compact objects={typeScope} hidden={filters.hiddenTypes} onChange={hiddenTypes => setFilters({ hiddenTypes })} />
       <div className="bgd-field-toolbar__controls"><MapControl icon={ZoomIn} label="Приблизить карту скважин" onClick={() => camera && setCamera({ ...camera, scale: Math.min(80, camera.scale * 1.5) })} /><MapControl icon={ZoomOut} label="Отдалить карту скважин" onClick={() => camera && setCamera({ ...camera, scale: Math.max(.01, camera.scale / 1.5) })} /><MapControl icon={Maximize2} label="Всё месторождение" onClick={() => setCamera(null)} />
+        <MapControl icon={fullscreen.active ? Minimize2 : Expand} label={fullscreen.active ? 'Выйти из полноэкранного режима' : 'На весь экран'} onClick={() => { setContext(null); void fullscreen.toggle() }} />
         <div className="bgd-map-display" ref={displayRef}><Tooltip content="Настройки отображения"><Button ref={displayButton} size="sm" variant="quiet" className="bgd-map-icon" aria-label="Настройки отображения карты" aria-expanded={displayOpen} aria-controls="bgd-map-display-settings" onClick={() => setDisplayOpen(open => !open)}><MoreHorizontal size={19} /></Button></Tooltip>
           {displayOpen && <div id="bgd-map-display-settings" className="bgd-map-display__panel" role="group" aria-label="Настройки отображения карты"><strong>Отображение карты</strong><Switch label="Номера на текущем масштабе" checked={forceLabels} onChange={setForceLabels} /><Switch label="Отображать карту" checked={topography} onChange={setTopography} /><Switch label="Отображать сетку" checked={grid} onChange={setGrid} /></div>}
         </div>
       </div>
     </div>
     {visible.length === 0 && <div className="bgd-map-empty" role="status">По выбранным условиям скважины не найдены. <button type="button" onClick={reset}>Сбросить фильтры</button></div>}
-    <MapCanvas selected={focusWell?.id} hideDemoLabel forceWellLabels={forceLabels} highlightWellsOnHover project={scene} camera={camera} onCamera={setCamera} tool="select" editable={false} draft={null} topography={topography} snap={p => p} onSelect={ids => { if (ids[0]) onOpenWell?.(ids[0]) }} onDraft={noop} onPoint={noop} onNode={noop} onCancel={noop} grid={grid} labels values={false} measure={[]} />
+    <MapCanvas selected={context?.id ?? focusWell?.id} hideDemoLabel forceWellLabels={forceLabels} highlightWellsOnHover project={scene} camera={camera} onCamera={setCamera} tool="select" editable={false} draft={null} topography={topography} snap={p => p} onSelect={ids => { setContext(null); if (ids[0]) onOpenWell?.(ids[0]) }} onContextSelect={(ids, at) => setContext(ids[0] ? { id: ids[0], at } : null)} onDraft={noop} onPoint={noop} onNode={noop} onCancel={closeContext} grid={grid} labels values={false} measure={[]} />
+    {context && <MapObjectPopup objects={visible.filter(w => w.id === context.id)} at={context.at} onClose={closeContext} getStatus={object => bgdFieldWell(object.id)?.status ?? focusQuery.data?.status ?? 'Работает'} onOpenWell={id => { setContext(null); onOpenWell?.(id) }} />}
   </section>
 }

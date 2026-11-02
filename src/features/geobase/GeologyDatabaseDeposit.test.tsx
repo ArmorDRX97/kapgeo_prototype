@@ -50,11 +50,13 @@ describe('Deposit condition limits', () => {
     expect((await api.fetchGeologicalMasterData()).conditionSets.filter((item) => item.depositId === 'DEP-SARYTAU')).toHaveLength(1)
   })
 
-  it('cancels edits without a confirmation and restores stored values on reopening', async () => {
+  it('asks before discarding edits and restores stored values on reopening', async () => {
     mount('DEP-SARYTAU', false, false, 'conditions')
     fireEvent.click(await screen.findByRole('button', { name: 'Изменить' }))
     fireEvent.change(screen.getByLabelText('Бортовое содержание урана'), { target: { value: 'discard me' } })
     fireEvent.click(screen.getByRole('button', { name: 'Отменить' }))
+    expect(screen.getByRole('dialog', { name: 'Есть несохранённые изменения' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить изменения и закрыть' }))
     fireEvent.click(screen.getByRole('button', { name: 'Изменить' }))
     expect(screen.getByLabelText('Бортовое содержание урана')).toHaveValue('0.012')
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })

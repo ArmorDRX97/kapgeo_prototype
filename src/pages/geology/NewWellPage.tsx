@@ -49,6 +49,8 @@ function formFromWell(well: Well, depositId: string): CreateWellInput {
     ? { ...well.bgd, passport: { ...fallback.passport, ...well.bgd.passport } }
     : { ...fallback, name, depositId, profileId: well.profile === '—' ? '' : well.profile, geoBlockId: well.block === '—' ? '' : well.block, geometry: { ...fallback.geometry, headX: well.coordinates.x || null, headY: well.coordinates.y || null, acceptedDepth: well.depth || null }, drilling: { ...fallback.drilling, designDepth: well.depth || null, loggingDepth: well.depth || null }, statusHistory: [{ status: well.status, changedAt: fallback.statusChangedAt }] }
   const formBgd = structuredClone(bgd)
+  // Update only the untouched prepared card; entered aggregate numbers survive subsequent saves.
+  if (well.id === BGD_TEMPLATE_WELL_ID && well.updatedAt === 'Сегодня, 10:15' && formBgd.drilling.rigNumber === 6) formBgd.drilling.rigNumber = null
   if (formBgd.note === 'Эталонная полностью заполненная карточка для проверки всех разделов БГД.') formBgd.note = ''
   return { code: String(bgd.name), type: well.type, status: well.status, block: well.block, cell: well.cell, purpose: well.purpose, site: well.site, profile: well.profile, coordinates: well.coordinates, crs: well.crs, depth: well.depth, casingDiameter: well.casingDiameter, depositId: bgd.depositId, lensId: bgd.lensId, siteId: '', projectCode: '', bgd: formBgd }
 }
@@ -77,24 +79,31 @@ export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: 
   const [internalView, setInternalView] = useState('')
   const [baseline, setBaseline] = useState('')
   const [dataDirty, setDataDirty] = useState(false)
+  const [registeredDirty, setRegisteredDirty] = useState(false)
+  const [editScope, setEditScope] = useState({ scope: '', enabled: false })
   const [pendingTransition, setPendingTransition] = useState<(() => void) | null>(null)
   const [transitionError, setTransitionError] = useState('')
   const [transitionSaving, setTransitionSaving] = useState(false)
   const editors = useRef(new Set<{ current: UnsavedEditor }>())
   const bypassNavigation = useRef(false)
   const savingForNavigation = useRef(false)
-  const register = useCallback((editor: { current: UnsavedEditor }) => { editors.current.add(editor); return () => { editors.current.delete(editor) } }, [])
+  const onEditorChange = useCallback(() => setRegisteredDirty([...editors.current].some(editor => editor.current.dirty)), [])
+  const register = useCallback((editor: { current: UnsavedEditor }) => { editors.current.add(editor); onEditorChange(); return () => { editors.current.delete(editor); onEditorChange() } }, [onEditorChange])
   const editing = Boolean(wellId)
   const activeTab = controlledActiveTab ?? internalActiveTab
   const view = normalizeBgdWellView(activeTab, controlledView ?? internalView)
+  const currentScope = `${requestedWellId ?? wellId}:${activeTab}:${view ?? ''}`
+  // A different workspace starts in view mode, including a return through browser history.
+  if (editScope.scope !== currentScope) setEditScope({ scope: currentScope, enabled: false })
+  const editMode = !editing || editScope.scope === currentScope && editScope.enabled
   const workspaceRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => { if (workspaceRef.current) workspaceRef.current.scrollTop = 0 }, [activeTab, view])
   const dirty = Boolean(baseline) && JSON.stringify(form) !== baseline
   const requestTransition = useCallback((transition: () => void) => {
-    if (dirty || dataDirty || [...editors.current].some((editor) => editor.current.dirty)) { setTransitionError(''); setPendingTransition(() => transition) }
+    if (dirty || dataDirty || registeredDirty || [...editors.current].some((editor) => editor.current.dirty)) { setTransitionError(''); setPendingTransition(() => transition) }
     else transition()
-  }, [dirty, dataDirty])
-  const guardContext = useMemo(() => ({ register, requestTransition }), [register, requestTransition])
+  }, [dirty, dataDirty, registeredDirty])
+  const guardContext = useMemo(() => ({ register, requestTransition, onEditorChange }), [register, requestTransition, onEditorChange])
   useEffect(() => { bypassNavigation.current = false }, [activeTab, view, wellId])
   const setView = (next: string) => { if (next !== view) requestTransition(() => { if (onViewChange) { bypassNavigation.current = dirty || dataDirty; onViewChange(next) } else setInternalView(next) }) }
   const setActiveTab = (tab: BgdWellSection) => { if (tab !== activeTab) requestTransition(() => { if (onTabChange) { bypassNavigation.current = dirty || dataDirty; onTabChange(tab) } else { setInternalActiveTab(tab); setInternalView('') } }) }
@@ -122,7 +131,7 @@ export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: 
   const canManageCoreMeasurements = hasPermission(persona, 'geology.bgd.well.manage-core-measurements')
   const canManageOreIntervals = hasPermission(persona, 'geology.bgd.well.manage-ore-intervals')
   const canManageGeophysicalOreIntervals = hasPermission(persona, 'geology.bgd.well.manage-geophysical-ore-intervals')
-  const canSave = editing ? canEditAll || canEditTechnology || canEditLoggingDepth : canCreate
+  const canSave = editing ? canEditAll || canEditTechnology || canEditLoggingDepth || canManageLogs || canManageDeviation || canManageCore || canManageCoreMeasurements || canManageOreIntervals || canManageGeophysicalOreIntervals : canCreate
   const pending = masterQuery.isLoading || wellsQuery.isLoading || wellQuery.isLoading
   const mutation = useMutation({
     mutationFn: async () => {
@@ -139,7 +148,7 @@ export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: 
     onError: (error) => setErrors(error.message.split('\n')),
   })
 
-  const routeBlocker = useBlocker({ withResolver: true, disabled: !(dirty || dataDirty), enableBeforeUnload: dirty || dataDirty, shouldBlockFn: ({ current, next }) => {
+  const routeBlocker = useBlocker({ withResolver: true, disabled: !(dirty || dataDirty || registeredDirty), enableBeforeUnload: dirty || dataDirty || registeredDirty, shouldBlockFn: ({ current, next }) => {
     if (bypassNavigation.current) { bypassNavigation.current = false; return false }
     return current.pathname !== next.pathname || JSON.stringify(current.search) !== JSON.stringify(next.search)
   } })
@@ -150,6 +159,7 @@ export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: 
     else pendingTransition?.()
   }
   const discardAndContinue = () => {
+    setErrors([])
     if (baseline) setForm(JSON.parse(baseline) as CreateWellInput)
     for (const editor of editors.current) if (editor.current.dirty) editor.current.discard()
     setDataDirty(false)
@@ -171,6 +181,20 @@ export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: 
     finally { savingForNavigation.current = false; setTransitionSaving(false) }
   }
 
+  const saveWorkspace = async () => {
+    setErrors([])
+    setTransitionSaving(true)
+    try {
+      for (const editor of editors.current) if (editor.current.dirty && !await editor.current.save()) {
+        setErrors(['Проверьте поля текущего раздела. Изменения не сохранены.'])
+        return
+      }
+      if (dirty || !editing) await mutation.mutateAsync()
+      setEditScope({ scope: currentScope, enabled: false })
+    } catch { /* Mutation reports the validation error next to the form. */ }
+    finally { setTransitionSaving(false) }
+  }
+
 
   const master = masterQuery.data
   const bgd = form.bgd!
@@ -186,14 +210,14 @@ export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: 
     magneticCorrection: conditionValue('magnetic-azimuth-correction'),
     minZenithAngle: conditionValue('min-zenith-angle'),
   }
-  const generalDisabled = mutation.isPending || (editing ? !canEditAll : !canCreate)
-  const technologyDisabled = mutation.isPending || (editing ? !(canEditAll || canEditTechnology) : !canCreate)
-  const loggingDisabled = mutation.isPending || (editing ? !(canEditAll || canEditLoggingDepth) : !canCreate)
+  const generalDisabled = !editMode || mutation.isPending || (editing ? !canEditAll : !canCreate)
+  const technologyDisabled = !editMode || mutation.isPending || (editing ? !(canEditAll || canEditTechnology) : !canCreate)
+  const loggingDisabled = !editMode || mutation.isPending || (editing ? !(canEditAll || canEditLoggingDepth) : !canCreate)
   const setBgd = <Key extends keyof WellBgdData>(key: Key, value: WellBgdData[Key]) => setForm((current) => ({ ...current, bgd: { ...current.bgd!, [key]: value } }))
   const setFormField = <Key extends keyof CreateWellInput>(key: Key, value: CreateWellInput[Key]) => setForm((current) => ({ ...current, [key]: value }))
   const setGeometry = (key: keyof WellBgdData['geometry'], value: number | null) => setBgd('geometry', { ...bgd.geometry, [key]: value })
   const setPassport = (key: keyof WellBgdData['passport'], value: string) => setBgd('passport', { ...bgd.passport, [key]: value })
-  const setDrilling = <Key extends keyof WellBgdData['drilling']>(key: Key, value: WellBgdData['drilling'][Key]) => setBgd('drilling', { ...bgd.drilling, [key]: value })
+  const setDrilling = <Key extends keyof WellBgdData['drilling']>(key: Key, value: WellBgdData['drilling'][Key]) => setForm(current => ({ ...current, bgd: { ...current.bgd!, drilling: { ...current.bgd!.drilling, [key]: value } } }))
   const setDevelopment = <Key extends keyof WellBgdData['development']>(key: Key, value: WellBgdData['development'][Key]) => setBgd('development', { ...bgd.development, [key]: value })
   const setGeology = <Key extends keyof WellBgdData['geology']>(key: Key, value: WellBgdData['geology'][Key]) => setBgd('geology', { ...bgd.geology, [key]: value })
   const calculateBottom = () => {
@@ -219,16 +243,16 @@ export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: 
     {(['description', 'geometry', 'passport', 'documentation'] as BgdWellSection[]).includes(activeTab) && <DescriptionTab selectedWellName={fieldWell?.name} section={activeTab} view={view} form={form} master={master} currentDeposit={currentDeposit} disabled={generalDisabled} technologyDisabled={technologyDisabled} setFormField={setFormField} setBgd={setBgd} setGeometry={setGeometry} setPassport={setPassport} calculateBottom={calculateBottom} />}
     {activeTab === 'drilling' && <DrillingTab bgd={bgd} disabled={generalDisabled} loggingDisabled={loggingDisabled} setDrilling={setDrilling} />}
     {activeTab === 'development' && <DevelopmentTab bgd={bgd} disabled={technologyDisabled} setDevelopment={setDevelopment} />}
-    {activeTab === 'construction' && (wellQuery.data ? <BgdWellConstructionTab key={wellId} well={displayWell!} canEdit={canEditAll} onDirtyChange={setDataDirty} /> : <Panel title="Конструкция скважины" description="Конструктивные элементы сохраняются в карточке скважины."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь можно будет добавлять интервалы конструкции.</span></div></Panel>)}
+    {activeTab === 'construction' && (wellQuery.data ? <BgdWellConstructionTab key={wellId} well={displayWell!} canEdit={editMode && (canEditAll)} onDirtyChange={setDataDirty} /> : <Panel title="Конструкция скважины" description="Конструктивные элементы сохраняются в карточке скважины."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь можно будет добавлять интервалы конструкции.</span></div></Panel>)}
     {activeTab === 'geology' && <GeologyTab view={view} bgd={bgd} disabled={generalDisabled} setGeology={setGeology} />}
-    {activeTab === 'stratigraphy' && (wellQuery.data ? <BgdStratigraphyTab key={`${requestedWellId ?? wellId}-stratigraphy`} wellId={requestedWellId ?? wellId!} depth={wellQuery.data.depth} canEdit={canEditAll} onDirtyChange={setDataDirty} /> : <CoreRequiresSavedWell title="Стратиграфия" />)}
-    {activeTab === 'deviation' && (wellQuery.data ? <BgdWellDeviationTab key={wellId} onDirtyChange={setDataDirty} well={displayWell!} canEdit={canEditAll || canManageDeviation} canAdminister={canAdministerDeviation} defaults={deviationDefaults} /> : <Panel title="Инклинометрия" description="Промеры связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся промеры, точки измерения и расчёт хода ствола.</span></div></Panel>)}
-    {activeTab === 'logs' && (wellQuery.data ? <BgdWellLogsTab key={wellId} onDirtyChange={setDataDirty} well={displayWell!} canEdit={canEditAll || canManageLogs} /> : <Panel title="Каротажи" description="Каротажные исследования связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся добавление, импорт и просмотр каротажей.</span></div></Panel>)}
-    {activeTab === 'core-runs' && (wellQuery.data ? <BgdWellCoreRunsTab key={wellId} onDirtyChange={setDataDirty} view={view === 'measurements' ? 'measurements' : 'runs'} well={displayWell!} canEditRuns={canEditAll || canManageCore} canEditMeasurements={canEditAll || canManageCoreMeasurements} /> : <CoreRequiresSavedWell title="Керновые рейсы" />)}
-    {activeTab === 'core-samples' && (wellQuery.data ? <BgdWellCoreSamplesTab key={wellId} onDirtyChange={setDataDirty} well={displayWell!} canEdit={canEditAll || canManageCore} /> : <CoreRequiresSavedWell title="Керновые пробы" />)}
-    {activeTab === 'lithology' && (wellQuery.data ? <BgdWellLithologyTab key={wellId} onDirtyChange={setDataDirty} activeKind={view} onKindChange={setView} well={displayWell!} canEdit={canEditAll} /> : <Panel title="Литология" description="Литологические интервалы связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся интервалы по керну, каротажу и сводные.</span></div></Panel>)}
-    {activeTab === 'anomalies' && (wellQuery.data ? <IntervalReview onDirtyChange={setDataDirty} key={`${requestedWellId ?? wellId}-anomalies`} wellId={requestedWellId ?? wellId!} depth={wellQuery.data.depth} canEdit={canEditAll} /> : <CoreRequiresSavedWell title="АП и горизонты" />)}
-    {activeTab === 'ore-intervals' && (wellQuery.data ? <BgdWellOreIntervalsTab key={wellId} onDirtyChange={setDataDirty} well={displayWell!} canManageAll={canManageOreIntervals || canEditAll} canManageGeophysics={canManageGeophysicalOreIntervals} /> : <Panel title="Рудные интервалы" description="Интервалы связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся рудные интервалы и объединения.</span></div></Panel>)}
+    {activeTab === 'stratigraphy' && (wellQuery.data ? <BgdStratigraphyTab key={`${requestedWellId ?? wellId}-stratigraphy`} wellId={requestedWellId ?? wellId!} depth={wellQuery.data.depth} canEdit={editMode && (canEditAll)} onDirtyChange={setDataDirty} /> : <CoreRequiresSavedWell title="Стратиграфия" />)}
+    {activeTab === 'deviation' && (wellQuery.data ? <BgdWellDeviationTab key={wellId} onDirtyChange={setDataDirty} well={displayWell!} canEdit={editMode && (canEditAll || canManageDeviation)} canAdminister={editMode && (canAdministerDeviation)} defaults={deviationDefaults} /> : <Panel title="Инклинометрия" description="Промеры связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся промеры, точки измерения и расчёт хода ствола.</span></div></Panel>)}
+    {activeTab === 'logs' && (wellQuery.data ? <BgdWellLogsTab key={wellId} onDirtyChange={setDataDirty} well={displayWell!} canEdit={editMode && (canEditAll || canManageLogs)} /> : <Panel title="Каротажи" description="Каротажные исследования связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся добавление, импорт и просмотр каротажей.</span></div></Panel>)}
+    {activeTab === 'core-runs' && (wellQuery.data ? <BgdWellCoreRunsTab key={wellId} onDirtyChange={setDataDirty} view={view === 'measurements' ? 'measurements' : 'runs'} well={displayWell!} canEditRuns={editMode && (canEditAll || canManageCore)} canEditMeasurements={editMode && (canEditAll || canManageCoreMeasurements)} /> : <CoreRequiresSavedWell title="Керновые рейсы" />)}
+    {activeTab === 'core-samples' && (wellQuery.data ? <BgdWellCoreSamplesTab key={wellId} onDirtyChange={setDataDirty} well={displayWell!} canEdit={editMode && (canEditAll || canManageCore)} /> : <CoreRequiresSavedWell title="Керновые пробы" />)}
+    {activeTab === 'lithology' && (wellQuery.data ? <BgdWellLithologyTab showSaveBar={false} key={wellId} onDirtyChange={setDataDirty} activeKind={view} onKindChange={setView} well={displayWell!} canEdit={editMode && (canEditAll)} /> : <Panel title="Литология" description="Литологические интервалы связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся интервалы по керну, каротажу и сводные.</span></div></Panel>)}
+    {activeTab === 'anomalies' && (wellQuery.data ? <IntervalReview onDirtyChange={setDataDirty} key={`${requestedWellId ?? wellId}-anomalies`} wellId={requestedWellId ?? wellId!} depth={wellQuery.data.depth} canEdit={editMode && (canEditAll)} /> : <CoreRequiresSavedWell title="АП и горизонты" />)}
+    {activeTab === 'ore-intervals' && (wellQuery.data ? <BgdWellOreIntervalsTab showSaveBar={false} key={wellId} onDirtyChange={setDataDirty} well={displayWell!} canManageAll={editMode && (canManageOreIntervals || canEditAll)} canManageGeophysics={editMode && (canManageGeophysicalOreIntervals)} /> : <Panel title="Рудные интервалы" description="Интервалы связываются с сохранённой скважиной."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь появятся рудные интервалы и объединения.</span></div></Panel>)}
 
   </>
 
@@ -237,7 +261,7 @@ export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: 
     {editing && !canEditAll && canSave && <div className="form-alert"><ShieldCheck size={17} /><span>{activeTab === 'lithology' ? 'Литология доступна для просмотра. Изменение интервалов требует права полного редактирования скважины.' : activeTab === 'ore-intervals' && canManageGeophysicalOreIntervals ? 'Доступно управление выделениями по гамма-каротажу и КНД. Керн и паспортные источники — только чтение.' : activeTab === 'deviation' && canManageDeviation ? canAdministerDeviation ? 'Доступны промеры, расчёт, удаление, выбор основного промера и импорт инклинометрии.' : 'Доступны ввод, редактирование, расчёт, удаление и выбор основного промера. Импорт требует расширенного права.' : canEditTechnology ? 'Доступно изменение типа, состояния и показателей освоения. Остальные поля — только чтение.' : activeTab === 'logs' && canManageLogs ? 'Доступно управление каротажами этой скважины. Паспортные и геологические поля — только чтение.' : activeTab === 'core-runs' && canManageCoreMeasurements ? 'Доступно управление промером внутри выбранного рейса. Сами рейсы и пробы — только чтение.' : 'Доступно изменение глубины по каротажу. Остальные поля — только чтение.'}</span></div>}
     {errors.length > 0 && <div className="form-alert form-alert--error" role="alert"><CircleAlert size={17} /><span><strong>Проверьте форму</strong>{errors.map((error) => <small key={error}>{error}</small>)}</span></div>}
     {workTabs.length ? <WorkspaceTabs tabs={workTabs} value={tabValue} label={getBgdSectionLabel(activeTab)} onChange={(id) => { if (activeTab === 'drilling' || activeTab === 'development') setActiveTab(id as BgdWellSection); else setView(id) }}>{content}</WorkspaceTabs> : <div className="workspace-tab-panel">{content}</div>}
-    {(dirty || !editing || !['construction', 'deviation', 'logs', 'core-runs', 'core-samples', 'lithology', 'stratigraphy', 'ore-intervals', 'anomalies'].includes(activeTab)) && <BgdSaveBar ready={dirty && canSave} status={mutation.isPending ? 'Сохраняем изменения…' : errors.length ? 'Проверьте поля формы' : dirty ? 'Изменения готовы к сохранению' : editing ? 'Нет несохранённых изменений' : 'Заполните данные новой скважины'} pending={mutation.isPending} disabled={!canSave} onSave={() => { setErrors([]); mutation.mutate() }} label={editing ? 'Сохранить изменения' : 'Создать скважину'} />}
+    <BgdSaveBar onCancel={editing && editMode ? () => requestTransition(() => setEditScope({ scope: currentScope, enabled: false })) : undefined} mode={editMode ? 'save' : 'edit'} ready={!editMode || !editing || dirty || dataDirty} status={!editMode ? 'Для редактирования нажмите «Изменить»' : mutation.isPending || transitionSaving ? 'Сохраняем изменения…' : errors.length ? 'Проверьте поля формы' : dirty || dataDirty ? 'Изменения готовы к сохранению' : editing ? 'Нет несохранённых изменений' : 'Заполните данные новой скважины'} pending={mutation.isPending || transitionSaving} disabled={!canSave} onSave={() => { if (!editMode) setEditScope({ scope: currentScope, enabled: true }); else void saveWorkspace() }} label={!editMode ? 'Изменить' : editing ? 'Сохранить изменения' : 'Создать скважину'} />
     <datalist id="bgd-well-people">{people.map((person) => <option key={person} value={person} />)}</datalist>
     {(routeBlocker?.status === 'blocked' || pendingTransition) && <DiscardChangesDialog pending={transitionSaving} error={transitionError} onSave={() => void saveAndContinue()} onStay={() => { routeBlocker?.reset?.(); setPendingTransition(null); setTransitionError('') }} onDiscard={discardAndContinue} />}
   </div></div></UnsavedChangesContext.Provider>
@@ -255,7 +279,7 @@ function DescriptionTab({ selectedWellName, section, view, form, master, current
   const selectedOccurrenceId = currentDeposit?.occurrences.find((item) => item.id === bgd.lensId || item.legacyIds?.includes(bgd.lensId))?.id ?? bgd.lensId
   return <div className="bgd-well-stack">
     {section === 'description' && <Panel title={view === 'notes' ? 'Описание и примечание' : 'Общие сведения'} description="Название скважины уникально в пределах выбранного месторождения.">{view !== 'notes' && <div className="form-grid bgd-well-form-grid">
-      <>{selectedWellName ? <div className="field"><label className="field__label" htmlFor="bgd-selected-well-name">Название скважины <em>*</em></label><input id="bgd-selected-well-name" readOnly value={selectedWellName} /></div> : <NumericField label="Название скважины" required value={bgd.name} disabled={disabled} onChange={(value) => { setBgd('name', value ?? 0); setFormField('code', String(value ?? '')) }} />}</>
+      <>{selectedWellName ? <div className="field"><label className="field__label" htmlFor="bgd-selected-well-name">Название скважины <em>*</em></label><input id="bgd-selected-well-name" disabled={disabled} readOnly value={selectedWellName} /></div> : <NumericField label="Название скважины" required value={bgd.name} disabled={disabled} onChange={(value) => { setBgd('name', value ?? 0); setFormField('code', String(value ?? '')) }} />}</>
       <label className="field"><span className="field__label">Месторождение <em>*</em></span><select disabled={disabled} value={bgd.depositId} onChange={(event) => { const next = master?.deposits.find((item) => item.id === event.target.value); setBgd('depositId', event.target.value); setBgd('lensId', ''); setFormField('depositId', event.target.value); if (next?.coordinateSystem) setFormField('crs', next.coordinateSystem) }}><option value="">Выберите</option>{master?.deposits.filter((item) => !item.isHidden && item.status === 'active').map((item) => <option key={item.id} value={item.id}>{item.nameRu}</option>)}</select></label>
       <label className="field"><span className="field__label">Залежь</span><select disabled={disabled} value={selectedOccurrenceId} onChange={(event) => setBgd('lensId', event.target.value)}><option value="">Не выбрана</option>{currentDeposit?.occurrences.filter((item) => item.status !== 'archived' || item.id === selectedOccurrenceId).map((item) => <option key={item.id} value={item.id}>{item.nameRu}</option>)}</select></label>
       <SelectField label="Профиль" value={bgd.profileId} disabled={disabled} options={['PR-07', 'PR-06', 'CN-02']} onChange={(value) => { setBgd('profileId', value); setFormField('profile', value || 'Не назначен') }} />
@@ -265,7 +289,7 @@ function DescriptionTab({ selectedWellName, section, view, form, master, current
       <label className="field"><span className="field__label">Состояние <em>*</em></span><select disabled={technologyDisabled} value={form.status} onChange={(event) => { setFormField('status', event.target.value as Well['status']); setBgd('statusChangedAt', new Date().toISOString().slice(0, 16)) }}>{statuses.map((item) => <option key={item}>{item}</option>)}</select></label>
       <label className="field"><span className="field__label">Дата изменения состояния <em>*</em></span><input type="datetime-local" disabled value={bgd.statusChangedAt} /></label>
     </div>}{view === 'notes' && <><div className="bgd-well-language-grid"><TextArea label="Описание на русском языке" value={bgd.descriptionRu} disabled={disabled} onChange={(value) => setBgd('descriptionRu', value)} /><TextArea label="Описание на казахском языке" value={bgd.descriptionKk} disabled={disabled} onChange={(value) => setBgd('descriptionKk', value)} /><TextArea label="Описание на английском языке" value={bgd.descriptionEn} disabled={disabled} onChange={(value) => setBgd('descriptionEn', value)} /></div><div className="form-grid bgd-well-form-grid"><TextArea label="Примечание" value={bgd.note} disabled={disabled} onChange={(value) => setBgd('note', value)} /></div></>}</Panel>}
-    {section === 'geometry' && <Panel title="Геометрия" description="Координаты устья заполняются парой. Координаты забоя можно ввести или рассчитать." action={<Button size="sm" variant="secondary"><Upload size={16} /> Импорт</Button>}>
+    {section === 'geometry' && <Panel title="Геометрия" description="Координаты устья заполняются парой. Координаты забоя можно ввести или рассчитать." action={<Button size="sm" variant="secondary" disabled={disabled}><Upload size={16} /> Импорт</Button>}>
       <div className="bgd-well-geometry-layout">
         <div className="bgd-well-coordinate-grid">
           <CoordinateGroup title="Устье" values={[['X', bgd.geometry.headX, 'headX'], ['Y', bgd.geometry.headY, 'headY'], ['Z', bgd.geometry.headZ, 'headZ']]} disabled={disabled} onChange={setGeometry} />
@@ -288,7 +312,25 @@ function DescriptionTab({ selectedWellName, section, view, form, master, current
 }
 
 function DrillingTab({ bgd, disabled, loggingDisabled, setDrilling }: { bgd: WellBgdData; disabled: boolean; loggingDisabled: boolean; setDrilling: <Key extends keyof WellBgdData['drilling']>(key: Key, value: WellBgdData['drilling'][Key]) => void }) {
-  return <div className="bgd-well-stack"><Panel title="Проходка" description="Общие сведения бурения и контрольные глубины."><div className="form-grid bgd-well-form-grid"><DateField label="Дата начала проходки" value={bgd.drilling.startedAt} disabled={disabled} onChange={(value) => setDrilling('startedAt', value)} /><DateField label="Дата окончания проходки" value={bgd.drilling.completedAt} disabled={disabled} onChange={(value) => setDrilling('completedAt', value)} /><SelectField label="Вид бурения" value={bgd.drilling.drillingType} disabled={disabled} options={['Колонковое', 'Роторное', 'Шнековое']} onChange={(value) => setDrilling('drillingType', value)} /><PersonField label="Буровой мастер" value={bgd.drilling.foreman} disabled={disabled} onChange={(value) => setDrilling('foreman', value)} /><SelectField label="Тип бурильного станка" value={bgd.drilling.rigType} disabled={disabled} options={['ЗИФ-1200', 'УРБ-2А2', 'LF-90']} onChange={(value) => setDrilling('rigType', value)} /><NumericField label="Номер бурового агрегата" value={bgd.drilling.rigNumber} disabled={disabled} onChange={(value) => setDrilling('rigNumber', value)} /><SelectField label="Буровая компания" value={bgd.drilling.company} disabled={disabled} options={['АО «Волковгеология»', 'ТОО «KAZ Drilling»']} onChange={(value) => setDrilling('company', value)} /><SelectField label="Бригада" value={bgd.drilling.brigade} disabled={disabled} options={['Бригада 1', 'Бригада 2', 'Бригада 3']} onChange={(value) => setDrilling('brigade', value)} /><NumericField label="Глубина по проекту, м" value={bgd.drilling.designDepth} disabled={disabled} onChange={(value) => setDrilling('designDepth', value)} /><NumericField label="Глубина по журналу бурения, м" value={bgd.drilling.drillLogDepth} disabled={disabled} onChange={(value) => setDrilling('drillLogDepth', value)} /><NumericField label="Глубина по каротажу, м" value={bgd.drilling.loggingDepth} disabled={loggingDisabled} onChange={(value) => setDrilling('loggingDepth', value)} /></div></Panel><BgdDrillingIntervals intervals={bgd.drilling.intervals} disabled={disabled} onChange={(rows) => setDrilling('intervals', rows)} /></div>
+  const drilling = bgd.drilling
+  const companyReady = Boolean(drilling.company.trim())
+  const brigadeReady = companyReady && Boolean(drilling.brigade.trim())
+  const masterReady = brigadeReady && Boolean(drilling.foreman.trim())
+  return <div className="bgd-well-stack">
+    <Panel title="Проходка" description="Период бурения и способ проходки."><div className="form-grid bgd-well-form-grid">
+      <DateField label="Дата начала проходки" value={drilling.startedAt} disabled={disabled} onChange={value => setDrilling('startedAt', value)} />
+      <DateField label="Дата окончания проходки" value={drilling.completedAt} disabled={disabled} onChange={value => setDrilling('completedAt', value)} />
+      <SelectField label="Вид бурения" value={drilling.drillingType} disabled={disabled} options={['Колонковое', 'Роторное', 'Шнековое']} onChange={value => setDrilling('drillingType', value)} />
+    </div></Panel>
+    <Panel title="Организация бурения" description="Компания → бригада → мастер → буровой агрегат."><div className="bgd-drilling-hierarchy">
+      <section><h3><span>1</span>Буровая компания</h3><SelectField label="Буровая компания" value={drilling.company} disabled={disabled} options={['АО «Волковгеология»', 'ТОО «KAZ Drilling»']} onChange={value => { setDrilling('company', value); setDrilling('brigade', ''); setDrilling('foreman', ''); setDrilling('rigType', ''); setDrilling('rigNumber', null) }} /></section>
+      <section><h3><span>2</span>Бригада</h3><SelectField label="Бригада" value={drilling.brigade} disabled={disabled || !companyReady} options={['Бригада 1', 'Бригада 2', 'Бригада 3']} onChange={value => { setDrilling('brigade', value); setDrilling('foreman', ''); setDrilling('rigType', ''); setDrilling('rigNumber', null) }} />{!companyReady && <small>Сначала выберите буровую компанию</small>}</section>
+      <section><h3><span>3</span>Буровой мастер</h3><PersonField label="Буровой мастер" value={drilling.foreman} disabled={disabled || !brigadeReady} onChange={value => { setDrilling('foreman', value); setDrilling('rigType', ''); setDrilling('rigNumber', null) }} />{!brigadeReady && <small>Сначала выберите бригаду</small>}</section>
+      <section><h3><span>4</span>Буровой агрегат</h3><div className="bgd-drilling-hierarchy__rig"><SelectField label="Тип бурильного станка" value={drilling.rigType} disabled={disabled || !masterReady} options={['ЗИФ-1200', 'УРБ-2А2', 'LF-90']} onChange={value => setDrilling('rigType', value)} /><NumericField label="Номер бурового агрегата" value={drilling.rigNumber} disabled={disabled || !masterReady} onChange={value => setDrilling('rigNumber', value)} /></div>{!masterReady && <small>Сначала укажите бурового мастера</small>}</section>
+    </div></Panel>
+    <Panel title="Контрольные глубины"><div className="form-grid bgd-well-form-grid"><NumericField label="Глубина по проекту, м" value={drilling.designDepth} disabled={disabled} onChange={value => setDrilling('designDepth', value)} /><NumericField label="Глубина по журналу бурения, м" value={drilling.drillLogDepth} disabled={disabled} onChange={value => setDrilling('drillLogDepth', value)} /><NumericField label="Глубина по каротажу, м" value={drilling.loggingDepth} disabled={loggingDisabled} onChange={value => setDrilling('loggingDepth', value)} /></div></Panel>
+    <BgdDrillingIntervals intervals={drilling.intervals} disabled={disabled} onChange={rows => setDrilling('intervals', rows)} />
+  </div>
 }
 
 function DevelopmentTab({ bgd, disabled, setDevelopment }: { bgd: WellBgdData; disabled: boolean; setDevelopment: <Key extends keyof WellBgdData['development']>(key: Key, value: WellBgdData['development'][Key]) => void }) {
