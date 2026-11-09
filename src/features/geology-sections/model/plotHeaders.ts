@@ -1,4 +1,5 @@
 import type { GeologySection } from '../../../entities/geology-section/model/types'
+import { inkaiDeposit } from '../../../entities/geology-section/model/inkai/sources'
 import { sectionSources, stationAtDepth } from '../../../entities/geology-section/lib/correlation'
 import { visibleTracks } from '../../../entities/geology-section/lib/columnTracks'
 import { defaultColumns } from './presentation'
@@ -9,7 +10,7 @@ export type PlotHeaders = { top: number; cards: PlotHeader[] }
 /** Pack well names only; leaders preserve the exact column association. */
 export function plotHeaders(section: GeologySection, width: number, left: number, right: number): PlotHeaders {
   const start = 42, end = width - 42, available = end - start, gap = 8
-  const cardWidth = Math.min(92, available)
+  const cardWidth = Math.min(section.depositId === inkaiDeposit.id ? 54 : 92, available)
   const project = (x: number) => start + (x - left) / (right - left) * available
   const cards = sectionSources(section).filter(w => section.wellIds.includes(w.id)).flatMap(well => {
     const column = section.columnSettings?.[well.id] ?? section.columnSettings?.all ?? defaultColumns

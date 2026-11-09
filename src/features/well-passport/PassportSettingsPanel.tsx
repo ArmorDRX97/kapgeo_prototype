@@ -1,12 +1,14 @@
 import { Check } from 'lucide-react'
 import { useState } from 'react'
-import { LegendEditor } from '../geology-data/LegendEditor'
 import { Button } from '../../shared/ui/Button'
 import { Switch } from '../../shared/ui/Switch'
+import { WorkspaceDialog } from '../../shared/ui/WorkspaceDialog'
+import { gisPassportSymbols, passportOreColors, geologyHatchStyle } from '../../shared/scientific/geology/standard16'
 import { defaultSettings, number, type PassportSettings, type PassportWell, type TrackId } from './model'
 
 export function PassportSettingsPanel({ well, settings: s, onChange, onTrack }: { well: PassportWell; settings: PassportSettings; onChange: (patch: Partial<PassportSettings>) => void; onTrack: (id: TrackId) => void }) {
   const [from, setFrom] = useState(String(s.from)), [to, setTo] = useState(String(s.to))
+  const [legendOpen, setLegendOpen] = useState(false)
   const valid = from.trim() !== '' && to.trim() !== '' && Number.isFinite(Number(from)) && Number.isFinite(Number(to)) && Number(from) >= 0 && Number(to) <= well.depth && Number(to) > Number(from)
   const changed = Number(from) !== s.from || Number(to) !== s.to
   return <>
@@ -15,8 +17,20 @@ export function PassportSettingsPanel({ well, settings: s, onChange, onTrack }: 
       <div className="passport-settings-section"><form className="passport-range" onSubmit={e => { e.preventDefault(); if (valid) onChange({ from: Number(from), to: Number(to) }) }}><div className="passport-setting-heading"><h3>Интервал глубин</h3><span>м</span></div><div className="passport-range-fields"><label><span>От</span><input type="number" step="0.1" aria-label="Паспорт: от, м" value={from} onChange={e => setFrom(e.target.value)} aria-invalid={!valid} /></label><span>—</span><label><span>До</span><input type="number" step="0.1" aria-label="Паспорт: до, м" value={to} onChange={e => setTo(e.target.value)} aria-invalid={!valid} /></label></div>{!valid && <p className="passport-error" role="alert">Задайте интервал от 0 до {number(well.depth)} м. Конец должен быть глубже начала.</p>}{changed && <Button size="sm" type="submit" disabled={!valid}>Применить интервал</Button>}<div className="passport-range-presets"><button type="button" onClick={() => { const d=defaultSettings(well); setFrom(String(d.from)); setTo(String(d.to)); onChange({ from:d.from,to:d.to }) }}>Продуктивный горизонт</button><button type="button" onClick={() => { setFrom('0'); setTo(String(well.depth)); onChange({ from:0,to:well.depth }) }}>Весь ствол</button></div></form><div className="passport-setting-heading"><h3>Масштаб документа</h3></div><div className="passport-segmented" role="group" aria-label="Масштаб документа">{([200,500,1000] as const).map(scale=><button key={scale} type="button" aria-pressed={s.scale===scale} onClick={()=>onChange({scale})}>1:{scale}</button>)}</div></div>
       <div className="passport-settings-section"><div className="passport-setting-heading"><h3>Рудные интервалы</h3></div><div className="passport-segmented" role="group" aria-label="Источник рудных интервалов">{(['gamma','knd','samples'] as const).map(source=><button type="button" key={source} aria-pressed={s.oreSource===source} onClick={()=>onChange({oreSource:source})}>{{gamma:'По ГК',knd:'По КНД',samples:'По пробам'}[source]}</button>)}</div></div>
       <div className="passport-settings-section"><div className="passport-setting-heading"><h3>Данные опробования</h3></div><div className="data-actions"><Button size="sm" variant="secondary" onClick={()=>onTrack('samples')}>Опробование · U</Button><Button size="sm" variant="secondary" onClick={()=>onTrack('radium')}>Опробование · Ra</Button></div></div>
-      <div className="passport-settings-section"><LegendEditor onChange={() => onChange({ legend:true })} /><label className="passport-field"><span>Шкала ГК, мкР/ч</span><select value={s.gammaMax} onChange={e=>onChange({gammaMax:Number(e.target.value)})}>{[50,100,200].map(v=><option key={v} value={v}>0–{v}</option>)}</select></label><Switch label="Сетка глубин и значений" checked={s.grid} onChange={grid=>onChange({grid})} /><div className="passport-segmented" role="group" aria-label="Цвет паспорта"><button type="button" aria-pressed={s.color} onClick={()=>onChange({color:true})}>Цветной</button><button type="button" aria-pressed={!s.color} onClick={()=>onChange({color:false})}>Чёрно-белый</button></div></div>
+      <div className="passport-settings-section"><Button size="sm" variant="secondary" onClick={() => setLegendOpen(true)}>Легенда и коды</Button><label className="passport-field"><span>Шкала ГК, мкР/ч</span><select value={s.gammaMax} onChange={e=>onChange({gammaMax:Number(e.target.value)})}>{[50,100,200].map(v=><option key={v} value={v}>0–{v}</option>)}</select></label><Switch label="Сетка глубин и значений" checked={s.grid} onChange={grid=>onChange({grid})} /><div className="passport-segmented" role="group" aria-label="Цвет паспорта"><button type="button" aria-pressed={s.color} onClick={()=>onChange({color:true})}>Цветной</button><button type="button" aria-pressed={!s.color} onClick={()=>onChange({color:false})}>Чёрно-белый</button></div></div>
       <div className="passport-settings-section"><div className="passport-setting-heading"><h3>Реквизиты документа</h3></div><label className="passport-field"><span>Интерпретировал</span><input value={s.author} maxLength={60} onChange={e=>onChange({author:e.target.value})} /></label><label className="passport-field"><span>Дата</span><input type="date" value={s.date} onChange={e=>onChange({date:e.target.value})} /></label></div>
     </div><div className="passport-settings-footer"><Check size={14} /><span>Настройки сохраняются автоматически</span></div>
+    {legendOpen && <WorkspaceDialog title="Обозначения паспорта ГИС" size="compact" onClose={() => setLegendOpen(false)}
+      footer={<Button variant="secondary" onClick={() => setLegendOpen(false)}>Закрыть</Button>}>
+      <p>СТ НАК 16-2026 · паспорт ГИС 1:200 · таблицы 3 и 9</p>
+      <ul className="passport-standard-legend">
+        {Object.entries(gisPassportSymbols).map(([name, symbol]) =>
+          <li key={name}><i aria-hidden="true" style={geologyHatchStyle(symbol.pattern, '#ffffff')} />{name} · {symbol.code}</li>,
+        )}
+        {Object.entries(passportOreColors).map(([code, color]) =>
+          <li key={code}><i aria-hidden="true" style={{ background: color }} />{code} · мынкудукский горизонт</li>,
+        )}
+      </ul>
+    </WorkspaceDialog>}
   </>
 }

@@ -2,11 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createSection, initialSections } from '../../entities/geology-section/model/fixtures'
 import { previousReferenceTrace } from '../../entities/geology-section/model/referenceTrace'
 import { referenceSection } from '../../entities/geology-section/model/referenceSection'
+import { layerPolygons, sectionSources } from '../../entities/geology-section/lib/correlation'
 import { sectionRepository } from './sectionRepository'
-import { SECTION_STORAGE_KEY, SECTION_DEMO_BACKUP_KEY, SECTION_PROFILE_BACKUP_KEY, SECTION_BENT_PROFILE_BACKUP_KEY } from './sectionStorageKeys'
+import { SECTION_STORAGE_KEY, SECTION_DEMO_BACKUP_KEY, SECTION_PROFILE_BACKUP_KEY, SECTION_BENT_PROFILE_BACKUP_KEY, SECTION_INKAI_SEED_KEY } from './sectionStorageKeys'
 import { userPersonas } from '../../entities/session/model/personas'
 
-afterEach(() => { localStorage.removeItem(SECTION_STORAGE_KEY); localStorage.removeItem(SECTION_DEMO_BACKUP_KEY); localStorage.removeItem(SECTION_PROFILE_BACKUP_KEY); localStorage.removeItem(SECTION_BENT_PROFILE_BACKUP_KEY); vi.restoreAllMocks() })
+afterEach(() => { localStorage.removeItem(SECTION_STORAGE_KEY); localStorage.removeItem(SECTION_DEMO_BACKUP_KEY); localStorage.removeItem(SECTION_PROFILE_BACKUP_KEY); localStorage.removeItem(SECTION_BENT_PROFILE_BACKUP_KEY); localStorage.removeItem(SECTION_INKAI_SEED_KEY); vi.restoreAllMocks() })
 
 function legacyReference() {
   return { ...referenceSection(), demoPreset: 'video-reference-v4' as const, profile: previousReferenceTrace, segmentWells: { 'GTR-01-v1:GTR-01-v2': ['GTR-W1', 'GTR-W2', 'GTR-W3', 'GTR-W4'], 'GTR-01-v2:GTR-01-v3': ['GTR-W5', 'GTR-W6', 'GTR-W7'] } }
@@ -35,12 +36,27 @@ describe('shared reference demonstration bootstrap', () => {
     expect((await sectionRepository.demoList())[0]).toEqual(saved)
     expect(JSON.parse(localStorage.getItem(SECTION_DEMO_BACKUP_KEY)!)).toEqual(original[0])
   })
-  it('seeds one new common document, and never recreates a removed one', async () => {
+  it('seeds the independent editable Inkai profile once and retains unrelated saved documents', async () => {
     const docs = await sectionRepository.demoList()
-    expect(docs).toHaveLength(2)
+    expect(docs).toHaveLength(3)
     expect(docs[0]?.demoPreset).toBe('video-reference-v5')
     expect(docs[0]?.revision).toBe(0)
     expect(localStorage.getItem(SECTION_DEMO_BACKUP_KEY)).toBeNull()
+    const inkai = docs.find(doc => doc.id === 'GTR-118')!
+    expect(sectionSources(inkai).map(well => well.id)).toEqual(inkai.wellIds)
+    expect(inkai.wellIds).toHaveLength(16)
+    expect(inkai.wellIds.every(id => !docs[0]!.wellIds.includes(id))).toBe(true)
+    expect(inkai.graphics.some(graphic => graphic.type === 'oxidation' && graphic.points.length > 80)).toBe(true)
+    expect(inkai.graphics.some(graphic => graphic.sandGrain === 'fine')).toBe(true)
+    for (const layer of ['technology', 'ore', 'uncorrected', 'offbalance'] as const) {
+      expect(inkai.links[layer].length).toBeGreaterThan(0)
+      expect(layerPolygons(inkai, layer).length).toBeGreaterThan(0)
+    }
+    const editor = userPersonas.find(persona => persona.id === 'geo.ivanova')!
+    const saved = sectionRepository.save({ ...inkai, description: 'Локальная правка Инкая' }, inkai.revision, editor)
+    const reopened = await sectionRepository.demoList()
+    expect(reopened.find(doc => doc.id === 'GTR-118')).toEqual(saved)
+    expect(reopened[0]).toEqual(docs[0])
     localStorage.setItem(SECTION_STORAGE_KEY, JSON.stringify([docs[1]]))
     expect(await sectionRepository.demoList()).toEqual([docs[1]])
   })

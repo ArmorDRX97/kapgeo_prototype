@@ -80,7 +80,7 @@ export function AnomalyLogChart({ depth, rows, selected, onSelect }: { depth: nu
         {Array.from({ length: 9 }, (_, i) => <g key={`y${i}`}><path d={`M${left},${top + i / 8 * (bottom - top)}H${right}`} className="bgd-ap-chart__grid" /><text x={left - 9} y={top + i / 8 * (bottom - top) + 4} textAnchor="end">{160 - i * 20}</text><text x={right + 8} y={top + i / 8 * (bottom - top) + 4}>{format(9000 - i / 8 * 9000)}</text></g>)}
         {Array.from({ length: 13 }, (_, i) => <g key={`x${i}`}><path d={`M${left + i / 12 * (right - left)},${top}V${bottom}`} className="bgd-ap-chart__grid" /><text x={left + i / 12 * (right - left)} y={bottom + 20} textAnchor="middle">{format(range.from + span * i / 12)}</text></g>)}
         <g clipPath={`url(#${clipId})`}>
-          {rows.map(row => <rect key={row.id} x={x(row.from)} y={top} width={Math.max(1, x(row.to) - x(row.from))} height={bottom - top} fill={row.id === selected ? 'rgba(40,100,174,.09)' : 'rgba(40,100,174,.025)'} stroke={row.id === selected ? '#5f91ce' : '#ccd7e5'} strokeDasharray="4 4" />)}
+          {rows.map(row => <rect key={row.id} x={x(row.from)} y={top} width={Math.max(1, x(row.to) - x(row.from))} height={bottom - top} fill={row.id === selected ? 'rgba(36,61,124,.09)' : 'rgba(36,61,124,.025)'} stroke={row.id === selected ? 'var(--color-brand-400)' : '#ccd7e5'} strokeDasharray="4 4" />)}
           {paths.filter(curve => visible.includes(curve.id)).map(curve => <path key={curve.id} d={curve.path} fill="none" stroke={curve.color} strokeWidth="1.35" />)}
           {safeCursor !== null && <path d={`M${x(safeCursor)},${top}V${bottom}`} stroke="var(--text-primary)" strokeDasharray="3 3" />}
         </g>

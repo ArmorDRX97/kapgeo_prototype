@@ -1,6 +1,7 @@
 /** Independent examples for the passport workspace; no BGD or interpretation data is read here. */
 export type TemplateId = 'core' | 'open' | 'hydro'
 import { domainTokens } from '@kapgeo/geo-viz/tokens'
+import { passportOreColors } from '../../shared/scientific/geology/standard16'
 export type TrackId = 'stratigraphy' | 'lithology' | 'gamma' | 'resistivity' | 'sp' | 'radium' | 'knd' | 'ore' | 'kf' | 'construction' | 'core' | 'samples' | 'deviation'
 export const templates: { id: TemplateId; name: string; description: string; tracks: TrackId[] }[] = [
   { id: 'core', name: 'Керновая', description: 'Геология, ГИС, рейсы и опробование', tracks: ['stratigraphy', 'lithology', 'gamma', 'resistivity', 'sp', 'ore', 'construction', 'core', 'samples', 'radium'] },
@@ -73,9 +74,12 @@ export function lithologyIntervals(well: PassportWell): Interval[] {
     { from: 500 + o, to: well.depth, label: 'Глина', color: '#b6c5b6' },
   ]
 }
-export function oreIntervals(well: PassportWell, source: PassportSettings['oreSource'] = 'gamma'): Interval[] {
+export function oreIntervals(well: PassportWell, source: PassportSettings['oreSource'] = 'gamma'): Array<Interval & { standardMark: keyof typeof passportOreColors }> {
   const shift = source === 'knd' ? 0.4 : source === 'samples' ? -0.2 : 0
-  return [{ from: 447.4 + well.offset + shift, to: 452.8 + well.offset + shift, label: '0,064 %', value: .064, color: '#d7a25c' }, { from: 468.2 + well.offset + shift, to: 475.6 + well.offset + shift, label: '0,091 %', value: .091, color: '#d7a25c' }]
+  return [
+    { from: 447.4 + well.offset + shift, to: 452.8 + well.offset + shift, label: '0,064 %', value: .064, standardMark: 'mk1', color: passportOreColors.mk1 },
+    { from: 468.2 + well.offset + shift, to: 475.6 + well.offset + shift, label: '0,091 %', value: .091, standardMark: 'mk2', color: passportOreColors.mk2 },
+  ]
 }
 export function curveValue(id: TrackId, depth: number, well: PassportWell) {
   const d = depth - well.offset

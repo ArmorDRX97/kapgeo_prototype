@@ -12,7 +12,7 @@ export function RootLayout() {
   if (!isAuthRoute && status !== 'authenticated') return <div className="page-loading"><span /><p>Открываем вход в систему…</p></div>
   if (isAuthRoute) return <Outlet />
   // Internal tools have their own visual shell and never mount product navigation.
-  if (pathname === '/team/knowledge-map') return <Outlet />
+  if (pathname === '/team/knowledge-map' || pathname === '/team/ui-kit') return <Outlet />
 
   const guardedModules: Array<{ prefix: string; permission: Permission; name: string }> = [
     { prefix: '/admin/references', permission: 'administration.references.view', name: 'Справочники' },

@@ -1,5 +1,5 @@
 import { mapRepository } from '../repository/demo/mapRepository'
-import { createBrowserHistory, createHashHistory, createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
+import { createBrowserHistory, createHashHistory, createRootRoute, createRoute, createRouter, lazyRouteComponent, redirect } from '@tanstack/react-router'
 import { RootLayout } from './layout/RootLayout'
 import { SignInPage } from '../pages/auth/SignInPage'
 import { BgdNewWellPage, BgdWellPage } from '../pages/geology/BgdWellPage'
@@ -26,6 +26,7 @@ import { validateBgdWellSectionSearch } from '../features/geobase/model/bgdWellS
 import { validateDepositSectionSearch } from '../features/geobase/model/depositSection'
 import { KnowledgeMapPage } from '../pages/team/KnowledgeMapPage'
 import { validateKnowledgeSearch } from '../internal/knowledge-map/integration/protocol'
+import { validateKitSearch } from '../features/ui-kit/model'
 
 const SESSION_PERSONA_KEY = 'kapgeo.persona'
 
@@ -80,6 +81,7 @@ const bgdNewWellRoute = createRoute({ getParentRoute: () => rootRoute, path: '/g
 const bgdWellRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/bgd/$depositId/wells/$wellId', validateSearch: validateBgdWellSectionSearch, component: BgdWellPage })
 const profileRoute = createRoute({ getParentRoute: () => rootRoute, path: '/profile', component: ProfilePage })
 const knowledgeMapRoute = createRoute({ getParentRoute: () => rootRoute, path: '/team/knowledge-map', validateSearch: validateKnowledgeSearch, component: KnowledgeMapPage })
+const uiKitRoute = createRoute({ getParentRoute: () => rootRoute, path: '/team/ui-kit', validateSearch: validateKitSearch, component: lazyRouteComponent(() => import('../pages/team/UiKitPage'), 'UiKitPage') })
 const technologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/technology', component: TechnologyModulePage })
 const modelingRoute = createRoute({ getParentRoute: () => rootRoute, path: '/modeling', component: ModelingModulePage })
 const analyticsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/analytics', component: AnalyticsModulePage })
@@ -107,6 +109,7 @@ const routeTree = rootRoute.addChildren([
   bgdWellRoute,
   profileRoute,
   knowledgeMapRoute,
+  uiKitRoute,
   technologyRoute,
   modelingRoute,
   analyticsRoute,

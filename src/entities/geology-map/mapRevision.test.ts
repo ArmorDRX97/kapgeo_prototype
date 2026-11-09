@@ -41,15 +41,18 @@ describe('video audit map contracts',()=>{
     expect(snapToWell(p,bottom,1,'bottom').anchor).toEqual({wellId:well.id,target:'bottom'})
     expect(snapToWell({...p,layers:p.layers.map(l=>({...l,visible:l.id!=='wells'}))},bottom,1,'bottom').anchor).toBeUndefined()
   })
-  it('keeps the cross inside the collar in the common screen/print symbol and explicit type colors',()=>{
+  it('exports distinct collar signs for well types and keeps trajectory geometry separate',()=>{
     expect(wellSymbolPath({x:10,y:20},{x:50,y:70},5)).toEqual({direction:'M10,20L50,70',cross:'M7,20h6M10,17v6'})
     expect(wellSymbol('Неизвестная').color).toBe('#697781')
     const p=initialMaps()[0]!,svg=planSvg(p,{x:60600,y:94900,scale:2}),doc=new DOMParser().parseFromString(svg,'image/svg+xml')
-    expect(doc.querySelectorAll('[data-well-cross]')).toHaveLength(180)
+    expect(doc.querySelectorAll('[data-well-direction]')).toHaveLength(180)
+    expect(new Set([...doc.querySelectorAll('[data-well-symbol]')].map(node => node.getAttribute('data-well-symbol')))).toEqual(new Set(['dot', 'cross', 'ring', 'solid']))
     expect(doc.querySelector('[data-well-direction]')?.getAttribute('d')).not.toMatch(/[hv]/)
-    expect(svg).toContain('предварительная палитра');expect(svg).toContain('Откачная')
+    expect(svg).toContain('Знаки скважин · таблица 4');expect(svg).toContain('Откачная')
     const unknown={...p,objects:p.objects.map(o=>o.kind==='well'?{...o,attributes:{...o.attributes,type:'Неизвестная'}}:o)}
-    expect(planSvg(unknown,{x:60600,y:94900,scale:2})).toContain('Неизвестная')
+    const unknownSvg = planSvg(unknown,{x:60600,y:94900,scale:2})
+    expect(unknownSvg).toContain('Неизвестная')
+    expect(unknownSvg).toContain('data-well-symbol="unclassified"')
   })
   it('offsets exact grid graduations and bounds dense drawing work',()=>{
     expect(mapGridTicks(0,100,20,{...defaultMapGrid,step:25,dx:5},'x')).toEqual([5,30,55,80])

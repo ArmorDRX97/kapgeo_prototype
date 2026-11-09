@@ -3,6 +3,7 @@ import polygonClipping from 'polygon-clipping'
 import type { GeologySection, SectionLayer, SectionAnchor, XZ, SectionWellSource } from '../model/types'
 import { sectionWellSources } from '../model/fixtures'
 import { referenceWellSources, bentReferenceWellSources } from '../model/referenceSources'
+import { inkaiDeposit, inkaiWells } from '../model/inkai/sources'
 import { pointAtDepth, profileLength } from './profile'
 import { heightOnArc, sampleArc } from './curves'
 import { editContourArc, ringKey, polygonIssues, ringsIntersect, insideRing, openRing } from './contourArc'
@@ -14,6 +15,7 @@ export const sourceFor = (section: GeologySection, well: SectionWellSource): Sec
   return { ...source, ...section.sourceOverrides?.[well.id] }
 }
 export function sectionSources(section: GeologySection): SectionWellSource[] {
+  if (section.depositId === inkaiDeposit.id) return inkaiWells.map(well => ({ ...well, ...section.sourceOverrides?.[well.id] }))
   const base = section.demoPreset?.startsWith('video-reference-')
     ? section.demoPreset === 'video-reference-v5' ? bentReferenceWellSources : referenceWellSources
     : sectionWellSources

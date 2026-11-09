@@ -29,7 +29,7 @@ export function drawIntervals(ctx: CanvasRenderingContext2D, intervals: Interval
       ctx.fillStyle = colors.crosshair; ctx.fillRect(x + w / 2 - 4, y - 3, 8, 6); ctx.fillRect(x + w / 2 - 4, bottom - 3, 8, 6);
     }
     if (h > 26) {
-      ctx.font = '12px Inter, Segoe UI, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '12px "Segoe UI", Roboto, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       const text = row.label.length > 17 ? row.label.slice(0, 15) + '…' : row.label;
       const tw = Math.min(w - 6, ctx.measureText(text).width + 8);
       ctx.fillStyle = colors.background; ctx.globalAlpha = 0.88; ctx.fillRect(x + (w - tw) / 2, y + h / 2 - 10, tw, 20);

@@ -30,7 +30,7 @@ export function SignInPage() {
         </div>
         <div className="auth-visual__content">
           <p className="auth-visual__eyebrow">Данные недр. Точные решения.</p>
-          <h1>База геологических данных</h1>
+          <h1><strong>AI KAPGEO</strong> — Информационная система геологических и технологических данных</h1>
           <p>Единое пространство для месторождений, участков, залежей, скважин и истории изменений.</p>
           <ul className="auth-benefits">
             <li><CheckCircle2 size={17} /> Единый реестр</li>

@@ -113,6 +113,9 @@ describe('reference section rendering', () => {
     expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 1600 800')
     expect(container.querySelector('.section-canvas__grid path')!.getAttribute('d')).toContain(' 42V758')
     expect(container.querySelector('[data-inspect], [tabindex], .section-canvas__headers, .section-canvas__source-contact, .section-canvas__inspect-line')).toBeNull()
-    expect(container.querySelector('pattern[id$="-clay"] path')!.getAttribute('d')).toBe('M0 2h3M4 6h3')
+    const clay = container.querySelector('pattern[id$="-clay"]')!
+    const silt = container.querySelector('pattern[id$="-silt"]')!
+    expect(clay.querySelector('path')!.getAttribute('d')).toBe(silt.querySelector('path')!.getAttribute('d'))
+    expect(clay.querySelector('rect')!.getAttribute('fill')).toBe('#eafbe2')
   })
 })

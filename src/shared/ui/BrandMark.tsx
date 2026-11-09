@@ -1,6 +1,6 @@
-import companyMark from '../../assets/kazatomprom-mark.png'
+import companyMaster from '../../assets/kazatomprom-master.png'
 
-/** Decorative beside the product name; retain the supplied company's original artwork. */
+/** Original supplied master artwork; the viewBox displays its symbol without distortion. */
 export function BrandMark() {
-  return <img className="brand__mark" src={companyMark} alt="" width={34} height={34} />
+  return <svg className="brand__mark" viewBox="280 0 378 334" width={34} height={34} aria-hidden="true"><image href={companyMaster} width={938} height={562} /></svg>
 }

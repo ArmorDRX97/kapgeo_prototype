@@ -29,7 +29,7 @@
 .bgd-type-choices legend { color: var(--text-secondary); font-size: 12px; }
 .bgd-type-choices label { display: flex; flex-direction: row; align-items: center; gap: 7px; font-size: 12px; }
 .bgd-type-choices input { width: auto; }
-.bgd-type-choices i, .bgd-well-type-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.bgd-type-choices i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex: none; }
 .well-navigator__open > span:first-child { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .well-navigator__open small { font-size: 10px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .geobase-well-preview { display: flex; flex-wrap: wrap; gap: 6px; }

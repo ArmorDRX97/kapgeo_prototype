@@ -22,7 +22,7 @@ describe('SignInPage', () => {
   it('opens BGD without requiring demo credentials or an MFA step', () => {
     render(<SignInPage />)
 
-    expect(screen.getByRole('heading', { name: 'База геологических данных' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'AI KAPGEO — Информационная система геологических и технологических данных' })).toBeInTheDocument()
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
     expect(screen.queryByText(/MFA|второй фактор|SSO/i)).not.toBeInTheDocument()
     expect(screen.getByPlaceholderText('name.surname@company.kz')).toBeInTheDocument()

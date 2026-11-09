@@ -234,15 +234,12 @@
 .section-canvas__grid text, .section-canvas__label { font: 12px sans-serif; fill: var(--text-secondary); }
 .section-canvas__body { stroke-width: 1; opacity: .45; }
 .section-canvas__body--technology { fill: var(--color-blue-200); stroke: var(--color-blue-600); }
-.section-canvas__body--ore { fill: var(--color-red-200); stroke: var(--color-red-700); }
+.section-canvas__body--ore { fill: #ffb3b3; stroke: #ff0000; opacity: 1; }
 .section-canvas__body--uncorrected { fill: var(--color-brand-200); stroke: var(--color-brand-700); stroke-dasharray: 5 2; }
 .section-canvas__body--offbalance { fill: var(--color-amber-200); stroke: var(--color-amber-700); stroke-dasharray: 2 2; }
 .section-canvas__graphic { fill: none; stroke: var(--text-primary); stroke-width: 1.5; }
 .section-canvas__graphic--lithology { opacity: .55; }
-.section-canvas__rock--sand { fill: var(--geo-rock-sand); }
-.section-canvas__rock--clay { fill: var(--geo-rock-clay); }
-.section-canvas__rock--silt { fill: var(--geo-rock-silt); }
-.section-canvas__graphic--oxidation, .section-canvas__oxidation-tick { stroke: var(--color-red-700); stroke-width: 1.5; fill: none; }
+.section-canvas__graphic--oxidation, .section-canvas__oxidation-tick { stroke: #953715; stroke-width: 1.5; fill: none; }
 
 .section-canvas__boundary-source { stroke: var(--color-brand-800); stroke-width: 1.5; fill: none; }
 .section-canvas__graphic--foundation { stroke: var(--text-primary); stroke-width: 3; }
@@ -252,7 +249,7 @@
 .section-canvas__curve { fill: none; stroke: var(--geo-curve-rs); stroke-width: .8; }
 .section-canvas__curve--gr { stroke: var(--geo-curve-gr); stroke-dasharray: 3 1; }
 .section-canvas__interval { stroke-width: 1; stroke: var(--color-blue-600); fill: var(--color-blue-200); }
-.section-canvas__interval--ore { stroke: var(--color-red-700); fill: var(--color-red-200); }
+.section-canvas__interval--ore { stroke: #ff0000; fill: #ffb3b3; }
 .section-canvas__interval--uncorrected { stroke: var(--color-brand-700); fill: var(--color-brand-200); stroke-dasharray: 3 1; }
 .section-canvas__interval--offbalance { stroke: var(--color-amber-700); fill: var(--color-amber-200); stroke-dasharray: 1 1; }
 .section-canvas .is-selected, .section-canvas g:focus-visible .section-canvas__interval { stroke: var(--color-brand-600); stroke-width: 6; }
@@ -261,33 +258,26 @@
 .section-canvas__bottom-leader { fill: none; stroke: var(--text-tertiary); stroke-width: .7; }
 .section-canvas__handle { fill: var(--color-brand-600); stroke: var(--surface-panel); }
 .section-canvas__draft { fill: none; stroke: var(--color-brand-600); stroke-width: 2; stroke-dasharray: 4 2; }
-.section-canvas__hatch { fill: none; stroke: var(--text-secondary); stroke-width: .5; }
 .section-canvas--reference { --geo-rock-sand: var(--geo-reference-sand); --geo-rock-clay: var(--geo-reference-clay); --geo-rock-silt: var(--geo-reference-silt); }
 .section-canvas--reference .section-canvas__body { opacity: .92; stroke-width: 1.2; }
 .section-canvas--reference .section-canvas__body--technology, .section-canvas--reference .section-canvas__interval--technology { fill: var(--geo-reference-technology); stroke: var(--geo-reference-boundary); }
-.section-canvas--reference .section-canvas__body--ore, .section-canvas--reference .section-canvas__interval--ore { fill: var(--geo-reference-ore); stroke: var(--geo-reference-ore-boundary); }
+.section-canvas--reference .section-canvas__body--ore, .section-canvas--reference .section-canvas__interval--ore { fill: #ffb3b3; stroke: #ff0000; }
 .section-canvas--reference .section-canvas__body--uncorrected, .section-canvas--reference .section-canvas__interval--uncorrected { fill: var(--geo-reference-uncorrected); fill-opacity: .45; stroke: var(--geo-reference-uncorrected-boundary); stroke-dasharray: 5 3; }
 .section-canvas--reference .section-canvas__body--offbalance, .section-canvas--reference .section-canvas__interval--offbalance { fill: var(--geo-reference-offbalance); stroke: var(--geo-reference-offbalance-boundary); stroke-dasharray: none; }
 .section-canvas--reference .section-canvas__graphic--lithology { opacity: 1; stroke: var(--geo-reference-boundary); stroke-width: 1; }
-.section-canvas--reference .section-canvas__graphic--oxidation, .section-canvas--reference .section-canvas__oxidation-tick { stroke: var(--geo-reference-oxidation); stroke-width: 1.5; }
 .section-canvas--reference .section-canvas__trajectory { stroke: var(--geo-reference-well); stroke-width: 1.5; }
 .section-canvas--reference .section-canvas__curve { stroke: var(--geo-reference-curve-rs); }
 .section-canvas--reference .section-canvas__curve--gr { stroke: var(--geo-reference-curve-gr); }
 .section-canvas--reference .section-canvas__column { stroke: var(--geo-reference-boundary); stroke-width: .7; }
 .section-canvas--reference .section-canvas__source-contact { stroke: var(--geo-reference-contact); }
-.section-canvas--reference .section-canvas__hatch { stroke: var(--geo-reference-boundary); stroke-width: .5; }
 .section-canvas-legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
 .section-canvas-legend__swatch { display: inline-block; width: 16px; height: 10px; border: 1px solid var(--text-tertiary); }
-.section-canvas-legend__swatch--sand { background: var(--geo-rock-sand); }
-.section-canvas-legend__swatch--clay { background: var(--geo-rock-clay); }
-.section-canvas-legend__swatch--silt { background: var(--geo-rock-silt); }
 .section-canvas-legend__swatch--technology { background: var(--color-blue-200); border-color: var(--color-blue-600); }
-.section-canvas-legend__swatch--ore { background: var(--color-red-200); border-color: var(--color-red-700); }
+.section-canvas-legend__swatch--ore { background: #ffb3b3; border-color: #ff0000; }
 .section-canvas-legend__swatch--uncorrected { background: var(--color-brand-200); border-color: var(--color-brand-700); border-style: dashed; }
 .section-canvas-legend__swatch--offbalance { background: var(--color-amber-200); border-color: var(--color-amber-700); }
 .section-canvas-legend--reference { --geo-rock-sand: var(--geo-reference-sand); --geo-rock-clay: var(--geo-reference-clay); --geo-rock-silt: var(--geo-reference-silt); }
 .section-canvas-legend--reference .section-canvas-legend__swatch--technology { background: var(--geo-reference-technology); border-color: var(--geo-reference-boundary); }
-.section-canvas-legend--reference .section-canvas-legend__swatch--ore { background: var(--geo-reference-ore); border-color: var(--geo-reference-ore-boundary); }
 .section-canvas-legend--reference .section-canvas-legend__swatch--uncorrected { background: var(--geo-reference-uncorrected); border-color: var(--geo-reference-uncorrected-boundary); }
 .section-canvas-legend--reference .section-canvas-legend__swatch--offbalance { background: var(--geo-reference-offbalance); border-color: var(--geo-reference-offbalance-boundary); }
 .section-legend { display: flex; flex-wrap: wrap; gap: var(--space-3); font-size: var(--font-size-sm); color: var(--text-secondary); }
@@ -540,6 +530,9 @@
 .section-field-context small { margin-left: auto; color: var(--text-tertiary); }
 .section-field-map { flex: 1; min-height: 320px; display: flex; min-width: 0; }
 .section-field-map .map-canvas-area { padding: 0; }
+.section-field-map :is([data-field-profile], [data-map-profile]) > path { stroke-width: 1.25; }
+.section-field-map [data-map-profile].is-selected { filter: none; }
+.section-field-map [data-profile-vertex] circle { r: 3.5px; stroke-width: 1.2; }
 .section-field-map .map-canvas-wrap { min-height: 280px; }
 .section-field-members { margin: 18px 0; padding-top: 14px; border-top: 1px solid var(--border-default); font-size: 12px; }
 .section-field-members ul { list-style: none; padding: 0; max-height: 200px; overflow: auto; }
@@ -591,3 +584,16 @@
 .section-map-assignment-hint > svg { flex-shrink: 0; }
 .section-map-feedback { margin: 0 0 8px; padding: 8px 12px; border-left: 3px solid var(--color-brand-500); background: var(--surface-panel); font-size: 13px; color: var(--text-primary); }
 .section-field-selection .button { margin-top: 6px; }
+
+.section-plot-surface > .graphic-inspection:has(.section-canvas--inkai) { min-height: 300px; }
+.section-plot-surface .section-canvas-viewport:has(> .section-canvas--inkai) { min-height: 0; }
+.section-canvas--inkai .section-canvas__graphic--lithology { opacity: 1; stroke: #78837a; stroke-width: .65; }
+.section-canvas--inkai .section-canvas__graphic[data-filled-oxidation] { fill: #fff1a0; fill-opacity: .44; stroke-width: 1; stroke-dasharray: 6 4 2 4; }
+.section-canvas--inkai .section-canvas__oxidation-tick { stroke-width: .7; pointer-events: none; }
+.section-canvas--inkai .section-canvas__graphic--foundation { stroke-width: 1; }
+.section-canvas__curve--kf { stroke: #525a5f; }
+.section-canvas__curve--gl { stroke: #2b7e31; }
+.section-canvas__curve--co2 { stroke: #3e56b9; }
+.section-canvas-legend__filtration i { font-style: normal; border-top: 2px solid #525a5f; }
+.section-canvas-legend__filtration i:nth-child(2) { border-color: #2b7e31; }
+.section-canvas-legend__filtration i:nth-child(3) { border-color: #3e56b9; }

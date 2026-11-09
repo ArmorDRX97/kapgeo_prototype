@@ -1,3 +1,11 @@
+@font-face {
+  font-family: Roboto;
+  src: url('../../shared/assets/fonts/RobotoVariable.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
   --geo-rock-sand: #f2dc9b;
   --geo-rock-clay: #8d9db6;
@@ -21,7 +29,7 @@
   --geo-reference-curve-rs: #9e5161;
   --geo-reference-curve-gr: #ba6b83;
   color-scheme: light;
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 
@@ -29,33 +37,34 @@
   --font-size-sm: 12px;
   --font-size-base: 14px;
 
-  /* Corporate blue from the supplied reference; orange is a supporting accent. */
-  --color-brand-50: #f0f5fc;
-  --color-brand-100: #e0ebfa;
-  --color-brand-200: #bdd2f0;
-  --color-brand-300: #91b3e1;
-  --color-brand-400: #5f91ce;
-  --color-brand-500: #2864ae;
-  --color-brand-600: #194b94;
-  --color-brand-700: #0e3479;
-  --color-brand-800: #0b285e;
-  --color-accent-50: #fff7e9;
-  --color-accent-100: #ffebc5;
-  --color-accent-200: #f7d297;
-  --color-accent-500: #e79b24;
-  --color-accent-700: #94530b;
+  /* KAP brandbook, pp. 22/28: RGB 36/61/124 and 247/167/0.
+     Supporting tints and hover shades derive from these two brand accents. */
+  --color-brand-50: #f6f7fa;
+  --color-brand-100: #edeff5;
+  --color-brand-200: #d3d8e5;
+  --color-brand-300: #b2bbd1;
+  --color-brand-400: #7c8baf;
+  --color-brand-500: #455a90;
+  --color-brand-600: #243d7c;
+  --color-brand-700: #1f3469;
+  --color-brand-800: #192b57;
+  --color-accent-50: #fff9e9;
+  --color-accent-100: #fff0cc;
+  --color-accent-200: #ffe1a6;
+  --color-accent-500: #f7a700;
+  --color-accent-700: #9c6900;
   --brand-focus-halo: color-mix(in srgb, var(--color-brand-500) 18%, transparent);
   --brand-shadow: color-mix(in srgb, var(--color-brand-700) 20%, transparent);
 
-  --color-blue-50: #eff6ff;
-  --color-blue-200: #bfdbfe;
-  --color-blue-500: #3b82f6;
-  --color-blue-600: #2563eb;
+  --color-blue-50: var(--color-brand-50);
+  --color-blue-200: var(--color-brand-200);
+  --color-blue-500: var(--color-brand-500);
+  --color-blue-600: var(--color-brand-600);
   --color-violet-50: #f5f3ff;
   --color-violet-600: #7c3aed;
   --color-amber-50: #fffbeb;
   --color-amber-200: #fde68a;
-  --color-amber-500: #f59e0b;
+  --color-amber-500: var(--color-accent-500);
   --color-amber-700: #b45309;
   --color-red-50: #fef2f2;
   --color-red-200: #fecaca;
@@ -69,6 +78,7 @@
   --surface-app: #f3f6fa;
   --surface-panel: #ffffff;
   --surface-subtle: #f7f9fb;
+  --surface-selected: var(--color-brand-50);
   --surface-raised: #ffffff;
   --surface-dark: #0b1730;
   --surface-dark-2: #112544;
@@ -80,7 +90,7 @@
   --text-inverse: #f7faff;
   --border-default: #dce3ee;
   --border-strong: #c1cde0;
-  --focus-ring: #2864ae;
+  --focus-ring: #243d7c;
 
   --sidebar-width: 252px;
   --sidebar-collapsed: 76px;

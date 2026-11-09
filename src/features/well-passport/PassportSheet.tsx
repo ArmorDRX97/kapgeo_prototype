@@ -1,6 +1,7 @@
 import { useId, useState, type PointerEvent } from 'react'
 import { dataRows } from './documentActions'
-import { readLegend } from '../geology-data/legend'
+import { gisPassportSymbols } from '../../shared/scientific/geology/standard16'
+import { GeologyHatch } from '../../shared/ui/GeologyHatch'
 import { curveValue, lithologyIntervals, number, oreIntervals, type PageRange, type PassportSettings, type PassportWell, type TrackId } from './model'
 
 // The supplied approved sheet is portrait. In A3 portrait it occupies 270 × 420 mm;
@@ -15,7 +16,7 @@ type Hover = { x: number; y: number; depth: number; lines: string[] }
 export function PassportSheet({ well, settings: s, range, pageNumber, pageCount, onTrack, sampling = false }: {
   sampling?: boolean; well: PassportWell; settings: PassportSettings; range: PageRange; pageNumber: number; pageCount: number; onTrack?: (id: TrackId) => void
 }) {
-  const legend = readLegend(), uid = useId().replace(/[^a-zA-Z0-9]/g, '')
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, '')
   const [hover, setHover] = useState<Hover | null>(null)
   const y = (depth: number) => TOP + (depth - range.from) * PX_PER_MM * 1000 / s.scale
   const ticks = Array.from({ length: Math.ceil((range.to - range.from) / 2) + 1 }, (_, i) => Math.ceil(range.from / 2) * 2 + i * 2).filter(d => d <= range.to)
@@ -42,8 +43,7 @@ export function PassportSheet({ well, settings: s, range, pageNumber, pageCount,
   const date = s.date.split('-').reverse().join('.')
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${SHEET_WIDTH + (sampling ? 250 : 0)} ${SHEET_HEIGHT}`} width={SHEET_WIDTH + (sampling ? 250 : 0)} height={SHEET_HEIGHT} className="passport-sheet" role="group" aria-label={`Паспорт ${well.name}, лист ${pageNumber} из ${pageCount}`} fontFamily="Times New Roman, serif" fontSize="16" fill="#111">
     <defs>
-      <pattern id={`${uid}-dots`} width="11" height="13" patternUnits="userSpaceOnUse"><circle cx="3" cy="4" r="1.4" fill="#222" /><circle cx="8" cy="10" r="1" fill="#222" /></pattern>
-      <pattern id={`${uid}-lines`} width="12" height="10" patternUnits="userSpaceOnUse"><path d="M0 5h12" stroke="#444" strokeWidth=".7" /></pattern>
+      {Object.values(gisPassportSymbols).map(symbol => <GeologyHatch key={symbol.code} id={`${uid}-rock-${symbol.code}`} hatch={symbol.pattern} background="#ffffff" scale={1.4} />)}
       <pattern id={`${uid}-diagonal`} width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8L8 0" stroke="#777" strokeWidth=".6" /></pattern>
       <pattern id={`${uid}-filter`} width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 2h8M0 6h8" stroke="#176f78" strokeWidth="1" /></pattern>
       <clipPath id={`${uid}-plot`}><rect x="0" y={TOP} width={SHEET_WIDTH + (sampling ? 250 : 0)} height={BOTTOM - TOP} /></clipPath>
@@ -70,13 +70,31 @@ export function PassportSheet({ well, settings: s, range, pageNumber, pageCount,
         {s.grid && <g stroke="#b7b9cf" strokeWidth=".8">{ticks.map(d => <path key={d} d={`M46 ${y(d)}H${sampling ? 1510 : 1260}`} />)}{[134,176,218,260,302,488,540,592,644,696,832,874,916,958,1052,1104,1156,1208].map(x => <path key={x} d={`M${x} ${TOP}V${BOTTOM}`} />)}</g>}
         {ticks.map(d => <text key={d} x="80" y={y(d) + 5} fontSize="13" textAnchor="end">{number(d)}</text>)}
         {[{ from: 0, to: 426 + well.offset, label: 'P₂' }, { from: 426 + well.offset, to: 500 + well.offset, label: 'K₂' }, { from: 500 + well.offset, to: well.depth, label: 'K₁' }].filter(v => v.to > range.from && v.from < range.to).map(v => <text key={v.label} x="23" y={y((Math.max(v.from, range.from) + Math.min(v.to, range.to)) / 2)} textAnchor="middle" fontSize="14">{v.label}</text>)}
-        {visibleLithology.map(l => { const start=Math.max(l.from,range.from), end=Math.min(l.to,range.to), h=y(end)-y(start), entry=legend.find(e=>e.name===l.label), pattern=entry?.pattern ?? (l.label==='Глина'?'lines':'dots'); const kf=curveValue('kf',(start+end)/2,well); return <g key={l.from}><rect x="345" y={y(start)} width="45" height={h} fill={entry?.color ?? l.color} stroke="#111" /><rect x="345" y={y(start)} width="45" height={h} fill={pattern==='none'?'none':`url(#${uid}-${pattern === 'diagonal' ? 'diagonal' : pattern === 'lines' ? 'lines' : 'dots'})`} /><rect x="390" y={y(start)} width="46" height={h} fill={kf>2?'#d9d6f8':'#f7d6d7'} stroke="#111" />{h>21 && <text x="413" y={y(start)+h/2+4} textAnchor="middle" fontSize="13">{number(kf,1)}</text>}</g> })}
+        {visibleLithology.map(interval => {
+          const start = Math.max(interval.from, range.from), end = Math.min(interval.to, range.to)
+          const height = y(end) - y(start), symbol = gisPassportSymbols[interval.label]
+          const kf = curveValue('kf', (start + end) / 2, well)
+          return <g key={interval.from} data-lithology-code={symbol?.code}>
+            <rect x="345" y={y(start)} width="45" height={height} fill={symbol ? `url(#${uid}-rock-${symbol.code})` : '#ffffff'} stroke="#111" />
+            {height > 25 && <text x="367.5" y={y(start) + height / 2 + 4} textAnchor="middle" fontSize="12" stroke="white" strokeWidth="3" paintOrder="stroke">{symbol?.code ?? '—'}</text>}
+            <rect x="390" y={y(start)} width="46" height={height} fill={kf > 2 ? '#d9d6f8' : '#f7d6d7'} stroke="#111" />
+            {height > 21 && <text x="413" y={y(start) + height / 2 + 4} textAnchor="middle" fontSize="13">{number(kf, 1)}</text>}
+          </g>
+        })}
         <g data-track="gamma" className={onTrack?'passport-track':undefined} aria-label={onTrack?'Посмотреть данные: Гамма-каротаж':undefined} {...clickable('gamma')} onPointerMove={e=>showValues(e,'gamma')} onPointerLeave={()=>setHover(null)}><rect x="92" y={TOP} width="253" height={BOTTOM-TOP} fill="transparent" /><path d={curvePath('gamma',92,345,s.gammaMax)} fill="none" stroke={colors.gamma} strokeWidth="1.4" /></g>
         <g data-track="resistivity" className={onTrack?'passport-track':undefined} aria-label={onTrack?'Посмотреть данные: Сопротивление':undefined} {...clickable('resistivity')} onPointerMove={e=>showValues(e,'electro')} onPointerLeave={()=>setHover(null)}><rect x="436" y={TOP} width="309" height={BOTTOM-TOP} fill="transparent" /><path d={curvePath('resistivity',436,745,50)} fill="none" stroke={colors.resistivity} strokeWidth="1.3" /><path d={curvePath('sp',436,745,100)} fill="none" stroke={colors.sp} strokeWidth="1.3" /><path d={curvePath('deviation',436,745,20)} fill="none" stroke={colors.induction} strokeWidth="1" /></g>
         <path d={curvePath('deviation',790,1000,8)} fill="none" stroke={colors.km} strokeWidth="1.3" /><path d="M920 350V1850" stroke="#d55050" strokeWidth="1" />
         <path d={curvePath('deviation',1000,1260,40)} fill="none" stroke={colors.tm} strokeWidth="1.2" />
         {sampling && (['samples', 'radium'] as const).map((id, index) => <g key={id}>{dataRows(id, well, s).rows.map((row, i) => { const start = Math.max(Number(row[1]), range.from), end = Math.min(Number(row[2]), range.to); if (end <= start) return null; const left = 1260 + index * 125, value = Number(row[4]); return <g key={i}><rect x={left} y={y(start)} width="125" height={y(end)-y(start)} fill={i%2 ? '#f6f7fb' : '#fff'} stroke="#b7b9cf" strokeWidth=".6" /><rect x={left+2} y={y(start)+2} width={Math.min(75, value / (index ? 500 : .1) * 75)} height={Math.max(1,y(end)-y(start)-4)} fill={index ? '#c6b3db' : '#e9b8cf'} /><text x={left+120} y={(y(start)+y(end))/2+4} fontSize="11" textAnchor="end">{number(value,index?1:3)}</text></g> })}</g>)}
-        {ores.map(o => {const a=Math.max(o.from,range.from),b=Math.min(o.to,range.to);return <g key={o.from}><rect x="92" y={y(a)} width="253" height={y(b)-y(a)} fill="#e688d4" fillOpacity=".45" stroke="#ad488f" /><text x="100" y={y(a)+14} fontSize="12">{number(o.from,2)}–{number(o.to,2)} · {o.label}</text></g>})}
+        {ores.map(interval => {
+          const a = Math.max(interval.from, range.from), b = Math.min(interval.to, range.to)
+          const height = y(b) - y(a)
+          return <g key={interval.from} data-ore-horizon={interval.standardMark}>
+            <rect x="92" y={y(a)} width="253" height={height} fill={interval.color} fillOpacity=".16" stroke={interval.color} />
+            <rect x="92" y={y(a)} width="5" height={height} fill={interval.color} />
+            {height > 17 && <text x="102" y={y(a) + 14} fontSize="12" stroke="white" strokeWidth="3" paintOrder="stroke">{interval.standardMark} · {number(interval.from, 2)}–{number(interval.to, 2)} · {interval.label}</text>}
+          </g>
+        })}
         {(() => {const a=Math.max(442+well.offset,range.from),b=Math.min(483+well.offset,range.to);return b>a?<g><rect x="790" y={y(a)} width="210" height={y(b)-y(a)} fill={`url(#${uid}-diagonal)`} stroke="#777" /><rect x="1000" y={y(a)} width="45" height={y(b)-y(a)} fill="#9ee2e2" stroke="#111" /><rect x="1000" y={y(a)} width="45" height={y(b)-y(a)} fill={`url(#${uid}-filter)`} /><path d={curvePath('deviation',1000,1260,8)} fill="none" stroke={colors.current} strokeWidth="1" /></g>:null})()}
       </g>
       {sampling && <path d="M1260 155V1850 M1385 235V1850 M1509 155V1850" fill="none" stroke="#111" strokeWidth="1.8" />}

@@ -92,7 +92,8 @@ describe('section exploration', () => {
     render(<SectionCanvas section={section} onAnchor={select} />)
     const point = screen.getByRole('button', { name: `Верхний контакт ${anchor.id}: сведения` })
     fireEvent.pointerOver(point, { clientX: 150, clientY: 200 })
-    expect(screen.getByRole('tooltip').textContent).toContain('Опорная точка')
+    fireEvent.focus(point)
+    expect(screen.queryByRole('tooltip')).toBeNull()
     fireEvent.contextMenu(point, { clientX: 150, clientY: 200 })
     expect(screen.getByRole('menu')).toBeTruthy()
     // Focusing a large SVG object can scroll its viewport programmatically.

@@ -1,5 +1,6 @@
 import { geoBlocks, techBlocks } from '../model/blockOptions'
 import type { GeologySection } from '../../../entities/geology-section/model/types'
+import { inkaiDeposit } from '../../../entities/geology-section/model/inkai/sources'
 import { sectionStageValues, stageNames, type SectionStage } from '../../../entities/geology-section/model/stages'
 
 export function SectionOverview({ section, disabled, onChange }: { section: GeologySection; disabled: boolean; onChange: (next: GeologySection) => void }) {
@@ -7,7 +8,7 @@ export function SectionOverview({ section, disabled, onChange }: { section: Geol
   const metadata = (key: 'geoBlock' | 'techBlock' | 'depositBody' | 'createdOn' | 'compiledBy' | 'checkedBy', value: string) => change('metadata', { depositBody: '', createdOn: '', compiledBy: '', checkedBy: '', ...section.metadata, [key]: value })
   return <section className="section-form" aria-label="Сведения разреза"><h2>Параметры разреза</h2>
     <label className="section-form__wide">Название<input value={section.title} maxLength={120} disabled={disabled} onChange={e => change('title', e.target.value)} /></label>
-    <label className="section-form__wide">Месторождение<select value={section.depositId} disabled={disabled} onChange={() => onChange({ ...section, depositId: 'GTR-LOCAL-NORTH', depositName: 'Полигон Северный' })}><option value="GTR-LOCAL-NORTH">Полигон Северный</option></select></label>
+    <label className="section-form__wide">Месторождение{section.depositId === inkaiDeposit.id ? <input value={section.depositName} readOnly /> : <select value={section.depositId} disabled={disabled} onChange={() => onChange({ ...section, depositId: 'GTR-LOCAL-NORTH', depositName: 'Полигон Северный' })}><option value="GTR-LOCAL-NORTH">Полигон Северный</option></select>}</label>
     <label>Этап изучения<select value={section.stage} disabled={disabled} onChange={e => change('stage', e.target.value as SectionStage)}>{sectionStageValues.map(stage => <option key={stage} value={stage}>{stageNames[stage]}</option>)}</select></label>
     <div className="section-choice-field"><span>Тип разреза</span><div className="section-choice" role="group" aria-label="Тип разреза">{(['main', 'auxiliary'] as const).map((kind, index) => <button key={kind} type="button" aria-pressed={section.kind === kind} disabled={disabled} onClick={() => change('kind', kind)}>{['Основной', 'Вспомогательный'][index]}</button>)}</div></div>
     <label>Год<input type="number" min={1900} max={2100} value={Number.isFinite(section.year) ? section.year : ''} disabled={disabled} onChange={e => change('year', e.target.valueAsNumber)} /></label>

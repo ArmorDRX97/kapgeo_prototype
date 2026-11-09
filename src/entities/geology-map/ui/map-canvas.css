@@ -33,6 +33,6 @@
 
 .map-canvas-wrap.is-well-hovered:not(.is-panning) { cursor: pointer; }
 
-.map-segment-label { fill: #194b94; font: 600 12px "Segoe UI", sans-serif; paint-order: stroke; stroke: white; stroke-width: 5px; stroke-linejoin: round; }
+.map-segment-label { fill: #243d7c; font: 600 12px "Segoe UI", sans-serif; paint-order: stroke; stroke: white; stroke-width: 5px; stroke-linejoin: round; }
 [data-segment-label]:focus-visible { outline: none; }
 [data-segment-label]:focus-visible text { fill: #103a7c; stroke: #dae8ff; stroke-width: 7px; }

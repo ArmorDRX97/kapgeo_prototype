@@ -8,7 +8,7 @@ export type SectionWellSource = {
   id: string; name: string; collar: XY & { z: number }; depth: number; revision: number
   trajectory: Array<{ md: number; x: number; y: number; z: number }>
   technology: SectionInterval[]; ore: SectionInterval[]; uncorrected: SectionInterval[]; offbalance: SectionInterval[]
-  lithology: Array<{ id: string; from: number; to: number; rock: 'sand' | 'clay' | 'silt' }>
+  lithology: Array<{ id: string; from: number; to: number; rock: 'sand' | 'clay' | 'silt'; sandGrain?: 'fine' }>
   curves: Array<{ id: string; name: string; unit: string; min: number; max: number; samples: Array<{ md: number; value: number | null }> }>
 }
 export type CorrelationLink = { id: string; a: string; b: string }
@@ -23,12 +23,12 @@ export type ColumnSettings = { width: number; offset: number; lithology: boolean
 export type SectionGraphic = {
   id: string; type: 'lithology' | 'oxidation' | 'foundation' | 'fault'
   name: string; points: XZ[]; closed: boolean; reversed: boolean; smooth: boolean
-  rock?: 'sand' | 'clay' | 'silt'; parentId?: string; contourLinks?: string[]
+  rock?: 'sand' | 'clay' | 'silt'; sandGrain?: 'fine'; parentId?: string; contourLinks?: string[]
   contourSnapshot?: XZ[]; detachedFromContour?: boolean
 }
 export type SectionDrawing = { id: string; name: string; horizontalScale: number; verticalScale: number; top: number; bottom: number; left: number; right: number; planHeight: number; paper: 'A4' | 'A3'; landscape: boolean; margin: number; layers: string[]; description: string; overlap?: number; center?: boolean; pageOrder?: 'rows' | 'columns'; profileOffset?: number; separator?: number; bottomField?: number; appendix?: string; firstSheet?: number; legendSize?: number; wellIds?: string[]; lithologyColumns?: boolean; stems?: boolean; logColumns?: boolean; intervalColumns?: boolean; oreParameters?: boolean; legend?: boolean; staticLevel?: number; frozenBoundary?: number; columnSettings?: Record<string,ColumnSettings>; wellDecorations?: Record<string, { coreColor?: string; filterFrom?: number; filterTo?: number }> }
 export type GeologySection = {
-  demoPreset?: 'video-reference-v1' | 'video-reference-v2' | 'video-reference-v3' | 'video-reference-v4' | 'video-reference-v5'
+  demoPreset?: 'video-reference-v1' | 'video-reference-v2' | 'video-reference-v3' | 'video-reference-v4' | 'video-reference-v5' | 'inkai-2364'
   schemaVersion: 1; id: string; revision: number; synthetic: true; scope: 'geology-section-prototype'
   title: string; depositId: string; depositName: string; stage: SectionStage; kind: 'main' | 'auxiliary'
   year: number; description: string; top: number; bottom: number; status: 'draft' | 'locked'

@@ -9,6 +9,7 @@ import {
   Eye,
   LogOut,
   Menu,
+  PanelsTopLeft,
 } from 'lucide-react'
 import { type PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react'
 import { useSession } from '../../entities/session/model/sessionContext'
@@ -88,6 +89,7 @@ export function AppShell({ children }: PropsWithChildren) {
           <Link to="/profile" role="menuitem" onClick={() => setProfileOpen(false)}><CircleUserRound size={17} />Профиль и роли</Link>
           <div className="topbar-profile__separator" />
           <Link to="/team/knowledge-map" search={{ from: currentHref }} role="menuitem" className="topbar-profile__team-tool" onClick={() => setProfileOpen(false)}><CodeXml size={19} aria-hidden="true" /><span><strong>Карта взаимосвязей</strong><small>Для команды · разработка</small></span></Link>
+          <Link to="/team/ui-kit" role="menuitem" className="topbar-profile__kit-tool" onClick={() => setProfileOpen(false)}><PanelsTopLeft size={19} aria-hidden="true" /><span><strong>UI Kit</strong><small>Компоненты и рабочие области</small></span></Link>
           <div className="topbar-profile__separator" />
           {pathname.startsWith('/geology/plans/') && <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); window.dispatchEvent(new Event('kapgeo:open-plan-display')) }}><Eye size={17} />Отображение плана</button>}
           <button type="button" role="menuitem" onClick={logOut}><LogOut size={17} />Выйти</button>

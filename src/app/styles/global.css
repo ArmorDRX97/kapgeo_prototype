@@ -228,7 +228,7 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 .auth-visual > * { position: relative; z-index: 2; }
 .auth-visual__content { max-width: 690px; margin-block: auto; }
 .auth-visual__eyebrow { margin-bottom: 16px; color: var(--color-accent-200) !important; font-size: var(--font-size-sm) !important; font-weight: 750; letter-spacing: 0.13em; text-transform: uppercase; }
-.auth-visual h1 { max-width: 650px; margin-bottom: 20px; font-size: clamp(2.6rem, 4.6vw, 4.75rem); line-height: 0.98; letter-spacing: -0.058em; text-wrap: balance; }
+.auth-visual h1 { max-width: 690px; margin-bottom: 20px; font-size: clamp(2rem, 3vw, 3.4rem); line-height: 1.08; letter-spacing: -0.04em; text-wrap: balance; }
 .auth-visual__content > p { max-width: 570px; color: var(--color-brand-100); font-size: 15px; line-height: 1.7; }
 .auth-benefits { display: flex; margin: 32px 0 0; padding: 0; flex-wrap: wrap; gap: 14px 24px; list-style: none; color: var(--text-inverse); font-size: var(--font-size-sm); }
 .auth-benefits li { display: flex; align-items: center; gap: 7px; }
@@ -372,6 +372,10 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 .topbar-profile__menu > .topbar-profile__team-tool:hover { background: var(--color-violet-50); color: var(--color-violet-600); border-style: solid; }
 .topbar-profile__team-tool strong, .topbar-profile__team-tool small { display: block; }
 .topbar-profile__team-tool small { margin-top: 3px; font-size: 11px; font-weight: 400; }
+.topbar-profile__menu > .topbar-profile__kit-tool { min-height: 58px; gap: 10px; color: var(--color-brand-700); background: var(--color-brand-50); }
+.topbar-profile__menu > .topbar-profile__kit-tool:hover { background: var(--color-brand-100); }
+.topbar-profile__kit-tool strong, .topbar-profile__kit-tool small { display: block; }
+.topbar-profile__kit-tool small { margin-top: 3px; color: var(--text-secondary); font-size: 11px; font-weight: 400; }
 
 .app-workspace { display: flex; min-height: calc(100vh - 68px); }
 .app-workspace__content.content { width: auto; max-width: none; min-width: 0; flex: 1; margin: 0; padding: 26px clamp(20px, 2.5vw, 40px) 72px; }

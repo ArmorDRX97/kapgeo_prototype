@@ -1,24 +1,13 @@
 import { Plus, Save, SwatchBook, Trash2 } from 'lucide-react'
-import { useState, type CSSProperties } from 'react'
-import { z } from 'zod'
+import { useState } from 'react'
 import { Badge } from '../../shared/ui/Badge'
 import { Button } from '../../shared/ui/Button'
 import { WorkspaceDialog } from '../../shared/ui/WorkspaceDialog'
-import { readLegend, type LegendEntry } from './legend'
+import { legendSchema, readLegend, type LegendEntry } from './legend'
+import { geologyHatches, geologyHatchStyle } from '../../shared/scientific/geology/standard16'
 import './legend-editor.css'
 
-const patterns: { value: LegendEntry['pattern']; label: string }[] = [
-  { value: 'dots', label: 'Точки' },
-  { value: 'lines', label: 'Линии' },
-  { value: 'diagonal', label: 'Штриховка' },
-  { value: 'none', label: 'Без крапа' },
-]
-const legendSchema = z.array(z.object({
-  name: z.string().min(1).max(60),
-  code: z.string().min(1).max(30),
-  color: z.string().regex(/^#[0-9a-f]{6}$/i),
-  pattern: z.enum(['dots', 'lines', 'diagonal', 'none']),
-})).min(1).max(80)
+const patterns = Object.entries(geologyHatches)
 
 export function LegendEditor({ onChange, disabled = false }: { onChange?: () => void; disabled?: boolean }) {
   const [open, setOpen] = useState(false), [rows, setRows] = useState(readLegend), [error, setError] = useState('')
@@ -54,16 +43,16 @@ export function LegendEditor({ onChange, disabled = false }: { onChange?: () => 
             <colgroup><col className="legend-editor__col-preview" /><col /><col className="legend-editor__col-code" /><col className="legend-editor__col-color" /><col className="legend-editor__col-pattern" /><col className="legend-editor__col-action" /></colgroup>
             <thead><tr><th scope="col"><span className="sr-only">Образец</span></th><th scope="col">Порода</th><th scope="col">Код</th><th scope="col">Цвет</th><th scope="col">Крап</th><th scope="col"><span className="sr-only">Действие</span></th></tr></thead>
             <tbody>{rows.map((row, i) => <tr key={i}>
-              <td><span className="legend-editor__preview" role="img" aria-label={'Образец: ' + row.name + ', ' + patterns.find(pattern => pattern.value === row.pattern)?.label} data-pattern={row.pattern} style={{ '--legend-color': row.color } as CSSProperties} /></td>
+              <td><span className="legend-editor__preview" role="img" aria-label={'Образец: ' + row.name + ', ' + geologyHatches[row.pattern].title} style={geologyHatchStyle(row.pattern, row.color)} /></td>
               <td><input className="legend-editor__input" aria-label={'Порода ' + (i + 1)} value={row.name} maxLength={60} onChange={event => update(i, { name: event.target.value })} /></td>
               <td><input className="legend-editor__input legend-editor__code" aria-label={'Код ' + (i + 1)} value={row.code} maxLength={30} onChange={event => update(i, { code: event.target.value })} /></td>
               <td><label className="legend-editor__color" title="Выбрать цвет"><input aria-label={'Цвет ' + (i + 1)} type="color" value={row.color} onChange={event => update(i, { color: event.target.value })} /><span style={{ backgroundColor: row.color }} /><code aria-hidden="true">{row.color.toUpperCase()}</code></label></td>
-              <td><select className="legend-editor__input" aria-label={'Крап ' + (i + 1)} value={row.pattern} onChange={event => update(i, { pattern: event.target.value as LegendEntry['pattern'] })}>{patterns.map(pattern => <option key={pattern.value} value={pattern.value}>{pattern.label}</option>)}</select></td>
+              <td><select className="legend-editor__input" aria-label={'Крап ' + (i + 1)} value={row.pattern} onChange={event => update(i, { pattern: event.target.value as LegendEntry['pattern'] })}>{patterns.map(([value, hatch]) => <option key={value} value={value}>{hatch.title}</option>)}</select></td>
               <td><Button className="legend-editor__delete" variant="quiet" size="sm" disabled={rows.length === 1} aria-label={'Удалить обозначение ' + (row.name || i + 1)} title={rows.length === 1 ? 'В легенде должно остаться хотя бы одно обозначение' : 'Удалить обозначение'} onClick={() => setRows(rows.filter((_, index) => index !== i))}><Trash2 size={16} /></Button></td>
             </tr>)}</tbody>
           </table>
         </div>
-        <p className="legend-editor__hint">Образец слева показывает выбранные цвет и крап. Изменения применятся после сохранения легенды.</p>
+        <p className="legend-editor__hint">Основа легенды — СТ НАК 16-2026, таблица 1, графа 5 (колонка 1:200). Коды L относятся к локальным обозначениям. Изменения сохраняются в рабочей легенде браузера.</p>
       </div>
     </WorkspaceDialog>}
   </>

@@ -262,8 +262,8 @@
 .bgd-well-construction__toolbar { display:flex; flex-wrap:wrap; gap:var(--space-3); justify-content:space-between; align-items:center; margin-bottom:var(--space-3); color:var(--text-secondary); font-size:var(--font-size-sm); }
 .bgd-well-construction__layout { display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:var(--space-4); align-items:start; }
 .bgd-well-construction__table-wrap { overflow:auto; border:1px solid var(--border-default); border-radius:var(--radius-md); }
-.bgd-well-construction__table { width:100%; min-width:900px; border-collapse:collapse; font-size:var(--font-size-sm); }
-.bgd-well-construction__table th,.bgd-well-construction__table td { padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--border-default); text-align:left; }
+.bgd-well-construction__table { width:100%; min-width:680px; border-collapse:collapse; font-size:13px; line-height:1.35; }
+.bgd-well-construction__table th,.bgd-well-construction__table td { padding:4px var(--space-2); border-bottom:1px solid var(--border-default); text-align:left; }
 .bgd-well-construction__table th { background:var(--surface-subtle); color:var(--text-secondary); white-space:nowrap; }
 .bgd-well-construction__table tbody tr { cursor:pointer; }
 .bgd-well-construction__table tbody tr:hover,.bgd-well-construction__table tbody tr.is-selected { background:var(--color-brand-50); }

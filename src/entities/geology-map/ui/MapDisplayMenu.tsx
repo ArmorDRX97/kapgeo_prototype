@@ -5,7 +5,7 @@ import { Switch } from '../../../shared/ui/Switch'
 import { Tooltip } from '../../../shared/ui/Tooltip'
 import './map-display-menu.css'
 
-export function MapDisplayMenu({ topography, grid, onTopography, onGrid }: { topography: boolean; grid: boolean; onTopography: (value: boolean) => void; onGrid: (value: boolean) => void }) {
+export function MapDisplayMenu({ topography, grid, onTopography, onGrid, topographyAvailable = true }: { topographyAvailable?: boolean; topography: boolean; grid: boolean; onTopography: (value: boolean) => void; onGrid: (value: boolean) => void }) {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null), id = useId()
   useEffect(() => {
@@ -18,6 +18,6 @@ export function MapDisplayMenu({ topography, grid, onTopography, onGrid }: { top
   }, [open])
   return <div className="map-display-menu" ref={root}>
     <Tooltip content="Настройки отображения"><Button ref={trigger} className="map-display-menu__button" variant="quiet" size="sm" aria-label="Настройки отображения карты" aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => setOpen(value => !value)}><MoreHorizontal size={19} /></Button></Tooltip>
-    {open && <div className="map-display-menu__panel" id={id} role="group" aria-label="Настройки отображения карты"><strong>Отображение карты</strong><Switch label="Отображать карту" checked={topography} onChange={onTopography} /><Switch label="Отображать сетку" checked={grid} onChange={onGrid} /></div>}
+    {open && <div className="map-display-menu__panel" id={id} role="group" aria-label="Настройки отображения карты"><strong>Отображение карты</strong>{topographyAvailable && <Switch label="Отображать карту" checked={topography} onChange={onTopography} />}<Switch label="Отображать сетку" checked={grid} onChange={onGrid} /></div>}
   </div>
 }

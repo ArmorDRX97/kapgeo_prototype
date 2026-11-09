@@ -73,7 +73,7 @@ export function SectionGraphicWorkspace({ title, view, children }: { title: stri
     </div>
     {helpOpen && <WorkspaceDialog title="Управление графикой" size="compact" onClose={() => setHelpOpen(false)}><div className="section-graph-help">
       <p>Выберите нужный инструмент справа. Заголовки блоков всегда доступны; открытый блок можно свернуть повторным нажатием.</p>
-      <p>Сведения об объектах на разрезе и карте: наведение — подсказка, ПКМ или Shift+F10 — меню, Enter на выбранном объекте — карточка сведений.</p>
+      {view !== 'map' && <p>На разрезе откройте меню объекта правой кнопкой мыши или сочетанием Shift+F10. Нажмите Enter на объекте в фокусе, чтобы сразу открыть сведения.</p>}
       <div ref={setHelp} />
     </div></WorkspaceDialog>}
   </ToolContext.Provider></PlotSurfaceContext.Provider></PlotToolbarContext.Provider>

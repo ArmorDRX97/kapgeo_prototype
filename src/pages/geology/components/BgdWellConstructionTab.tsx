@@ -45,7 +45,10 @@ export function BgdWellConstructionTab({ well, canEdit, onDirtyChange }: { well:
       <div className="bgd-well-construction__layout">
         <div className="bgd-well-construction__table-wrap">
           <table className="bgd-well-construction__table">
-            <thead><tr><th>Начальная глубина, м</th><th>Конечная глубина, м</th><th>Длина, м</th><th>Тип</th><th>Внешний диаметр, мм</th><th>Внутренний диаметр, мм</th><th>Примечание</th>{canEdit ? <th>Действия</th> : null}</tr></thead>
+            <thead><tr>
+              <th title="Начальная глубина, м">От, м</th><th title="Конечная глубина, м">До, м</th><th>Длина, м</th><th>Тип</th>
+              <th title="Внешний диаметр, мм">Внеш. Ø, мм</th><th title="Внутренний диаметр, мм">Внутр. Ø, мм</th><th>Примечание</th>{canEdit && <th>Действия</th>}
+            </tr></thead>
             <tbody>
               {items.map((item) => (
                 <tr key={item.id} className={selectedId === item.id ? 'is-selected' : ''} tabIndex={0} onClick={() => select(item)} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); select(item) } }}>

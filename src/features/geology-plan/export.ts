@@ -2,10 +2,14 @@ import { objectPath, type Camera } from '../../entities/geology-map/geometry'
 import { defaultMapGrid, layerVisible, orderedLayers, type MapProject } from '../../entities/geology-map/model'
 
 import { gridLabel, gridLabelTicks, mapGridTicks } from '../../entities/geology-map/grid'
-import { wellSymbol, wellSymbolPath, wellTypes } from '../../entities/geology-map/wellSymbols'
+import { wellMarkGeometry, wellSymbol, wellSymbolPath, wellTypes } from '../../entities/geology-map/wellSymbols'
 
 const papers = { A4: [210, 297], A3: [297, 420], A2: [420, 594], A1: [594, 841], A0: [841, 1189] } as const
 const escape = (s: string) => s.replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[c]!)
+function collarSvg(type: string, x: number, y: number, radius: number) {
+  const mark = wellMarkGeometry(type, x, y, radius)
+  return `<g data-well-symbol="${mark.kind}" stroke="${mark.color}" stroke-width=".18"><path d="${mark.outline}" fill="${mark.kind === 'solid' ? mark.color : '#ffffff'}"/>${mark.cross ? `<path d="${mark.cross}" fill="none"/>` : ''}${mark.kind === 'dot' ? `<circle cx="${x}" cy="${y}" r="${radius * .32}" fill="${mark.color}" stroke="none"/>` : ''}</g>`
+}
 export function planSvg(project: MapProject, camera: Camera, grid = true, raster?: string): string {
   const sheet = papers[project.print.paper], w = project.print.landscape ? sheet[1] : sheet[0], h = project.print.landscape ? sheet[0] : sheet[1], k = 1000 / project.print.scale
   const frame = { left: 15, top: 22, right: w - 12, bottom: h - 22 }, cx = (frame.left + frame.right) / 2, cy = (frame.top + frame.bottom) / 2
@@ -24,8 +28,9 @@ export function planSvg(project: MapProject, camera: Camera, grid = true, raster
   for (const layer of orderedLayers(project)) for (const o of project.objects.filter(o => o.layerId === layer.id && layerVisible(project, layer.id))) {
     if (o.kind === 'well') {
       const a = to(o.parts[0]!.nodes[0]!), b = to(o.parts[0]!.nodes[1]!)
-      const symbol=wellSymbol(o.attributes.type), paths=wellSymbolPath(a,b,.8)
-      items.push(`<path data-well-direction="${escape(o.id)}" d="${paths.direction}" stroke="${symbol.color}" stroke-width=".18" fill="none"/><circle cx="${a.x}" cy="${a.y}" r=".8" stroke="${symbol.color}" stroke-width=".18" fill="white"/><path data-well-cross="${escape(o.id)}" d="${paths.cross}" stroke="${symbol.color}" stroke-width=".18"/>`)
+      const symbol = wellMarkGeometry(o.attributes.type, a.x, a.y, .8)
+      const paths = wellSymbolPath(a, b, .8)
+      items.push(`<path data-well-direction="${escape(o.id)}" d="${paths.direction}" stroke="${symbol.color}" stroke-width=".18" fill="none"/>${collarSvg(o.attributes.type, a.x, a.y, .8)}`)
       if (o.label.visible) items.push(text(a.x + o.label.dx * .2, a.y + o.label.dy * .2, o.name, 2.2, '#775c82'))
     } else {
       items.push(`<path d="${objectPath(o, to)}" fill="${o.closed ? o.style.fill : 'none'}" fill-opacity="${o.style.opacity}" fill-rule="evenodd" stroke="${o.style.stroke}" stroke-width="${o.style.paperWidth}"${o.kind==='profile'?' marker-end="url(#profile-arrow)"':''}${o.style.dash !== 'solid' ? ` stroke-dasharray="${o.style.dash === 'dash' ? '2 1' : '.3 .8'}"` : ''}/>`)
@@ -34,7 +39,7 @@ export function planSvg(project: MapProject, camera: Camera, grid = true, raster
   }
   const legendLayers = orderedLayers(project).filter(l => layerVisible(project, l.id) && project.objects.some(o => o.layerId === l.id)).slice(0, 12)
   const visibleWells=project.objects.filter(o=>o.kind==='well'&&layerVisible(project,o.layerId)),types=[...wellTypes.filter(t=>visibleWells.some(o=>o.attributes.type===t.name)),...Array.from(new Set(visibleWells.map(o=>o.attributes.type).filter(type=>!wellTypes.some(t=>t.name===type)))).map(wellSymbol)]
-  const legend = `<g><rect x="${frame.right-65}" y="${frame.top+2}" width="63" height="${(legendLayers.length+types.length)*4+13}" fill="white" fill-opacity=".94" stroke="#dbe3e8" stroke-width=".2"/>${text(frame.right-62,frame.top+7,'Легенда · предварительная палитра',2.3)}${legendLayers.map((l,i)=>{const o=project.objects.find(o=>o.layerId===l.id)!;const y=frame.top+12+i*4;return `<path d="M${frame.right-62},${y-.8}h5" stroke="${o.style.stroke}" stroke-width=".4"/>${text(frame.right-55,y,l.name.slice(0,29),2.3)}`}).join('')}${types.map((t,i)=>{const y=frame.top+14+(legendLayers.length+i)*4;return `<circle cx="${frame.right-60}" cy="${y-1}" r=".8" fill="none" stroke="${t.color}" stroke-width=".2"/><path d="M${frame.right-60.5},${y-1}h1M${frame.right-60},${y-1.5}v1" stroke="${t.color}" stroke-width=".2"/>${text(frame.right-55,y,t.name,2.3)}`}).join('')}</g>`
+  const legend = `<g><rect x="${frame.right-65}" y="${frame.top+2}" width="63" height="${(legendLayers.length+types.length)*4+13}" fill="white" fill-opacity=".94" stroke="#dbe3e8" stroke-width=".2"/>${text(frame.right-62,frame.top+7,'Знаки скважин · таблица 4',2.3)}${legendLayers.map((l,i)=>{const o=project.objects.find(o=>o.layerId===l.id)!;const y=frame.top+12+i*4;return `<path d="M${frame.right-62},${y-.8}h5" stroke="${o.style.stroke}" stroke-width=".4"/>${text(frame.right-55,y,l.name.slice(0,29),2.3)}`}).join('')}${types.map((t,i)=>{const y=frame.top+14+(legendLayers.length+i)*4;return `${collarSvg(t.name, frame.right - 60, y - 1, .8)}${text(frame.right-55,y,t.name,2.3)}`}).join('')}</g>`
   const ruler = 50, meters = ruler / k
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}"><title>${escape(project.title)}</title><defs><marker id="profile-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 1L7 4L0 7" fill="none" stroke="context-stroke"/></marker><clipPath id="frame"><rect x="${frame.left}" y="${frame.top}" width="${frame.right - frame.left}" height="${frame.bottom - frame.top}"/></clipPath></defs><rect width="${w}" height="${h}" fill="white"/><g font-family="Arial,sans-serif">${text(15, 10, project.title, 4, '#10212c')}${text(15, 16, `${project.deposit} · залежь ${project.lens} · ${project.date} · ${project.author}`)}${axisLabels.join('')}<g clip-path="url(#frame)">${items.join('')}</g>${legend}<rect x="${frame.left}" y="${frame.top}" width="${frame.right - frame.left}" height="${frame.bottom - frame.top}" fill="none" stroke="#536671" stroke-width=".25"/>${text(15, h - 14, `Масштаб 1:${project.print.scale} · X — север, Y — восток · метры`)}<path d="M15,${h - 8}h${ruler}m-${ruler},-1v2m${ruler},-2v2" stroke="#10212c" stroke-width=".4"/>${text(15 + ruler + 3, h - 7, `${meters.toFixed(0)} м · контроль 50 мм`)}${text(w - 65, h - 8, `${project.id} · ${project.print.paper}`)}</g></svg>`
 }
