@@ -218,7 +218,7 @@
 .geobase-limits-table__row > span > input, .geobase-limits-table__row input { min-height: 36px; width: 100%; padding: 0 8px; border: 1px solid var(--border-default); border-radius: 7px; background: var(--surface-panel); color: var(--text-primary); font-size: var(--font-size-sm); }
 .geobase-limits-table__row > span > input:disabled, .geobase-limits-table__row input:disabled { cursor: not-allowed; color: var(--text-tertiary); background: var(--surface-subtle); }
 .geobase-limits-table__row > small { color: var(--text-secondary); font-size: var(--font-size-sm); text-align: right; }
-.bgd-well-tabs { position: sticky; z-index: 4; top: 0; display: flex; padding: 7px; gap: 6px; border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--surface-panel) 94%, transparent); box-shadow: var(--shadow-sm); backdrop-filter: blur(10px); scrollbar-width: thin; }
+.bgd-well-tabs { position: sticky; z-index: 4; top: 0; display: flex; padding: 4px; gap: 4px; border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--surface-panel) 94%, transparent); box-shadow: var(--shadow-sm); backdrop-filter: blur(10px); scrollbar-width: thin; }
 .bgd-well-tabs button { min-height: 38px; padding: 0 16px; cursor: pointer; color: var(--text-tertiary); border: 0; border-radius: 8px; background: transparent; font-weight: 750; }
 .bgd-well-tabs button:hover, .bgd-well-tabs button:focus-visible { color: var(--text-primary); background: var(--surface-subtle); }
 .bgd-well-tabs button.is-active { color: var(--color-brand-700); background: var(--color-brand-50); }

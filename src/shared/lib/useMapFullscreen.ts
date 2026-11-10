@@ -19,7 +19,7 @@ export function useMapFullscreen() {
     const previous = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     const escape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || document.querySelector('dialog[open], .map-object-popup')) return
+      if (event.key !== 'Escape' || document.querySelector('dialog[open], .map-object-popup, .filter-popover, .graphic-context-menu')) return
       event.preventDefault(); event.stopImmediatePropagation(); void exit()
     }
     document.addEventListener('keydown', escape, true)

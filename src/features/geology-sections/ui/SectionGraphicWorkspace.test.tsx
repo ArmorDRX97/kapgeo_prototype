@@ -22,6 +22,17 @@ describe('graph and tools composition', () => {
     expect(within(tools).queryByLabelText('Графическая область, прокрутка разреза')).toBeNull()
     expect(container.querySelector('.section-graph-stage')?.contains(screen.getByLabelText('Графическая область, прокрутка разреза'))).toBe(true)
   })
+  it('keeps the legend out of the plot and opens it from the camera controls', () => {
+    const { container } = render(<SectionGraphicWorkspace title="Разрез"><SectionCanvas section={initialSections()[0]!} /></SectionGraphicWorkspace>)
+    expect(within(container.querySelector<HTMLElement>('.section-graph-stage')!).queryByText('Технологические пропластки')).toBeNull()
+    const button = screen.getByRole('button', { name: 'Условные обозначения' })
+    fireEvent.click(button)
+    const legend = screen.getByRole('dialog', { name: 'Условные обозначения разреза' })
+    expect(within(legend).getByText('Технологические пропластки')).toBeVisible()
+    fireEvent.keyDown(legend, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(button).toHaveFocus()
+  })
   it('places section-map tools in the right panel while keeping the map in the main surface', () => {
     const { container } = render(<SectionGraphicWorkspace title="Карта"><ProfileMap section={initialSections()[0]!} disabled={false} onChange={vi.fn()} onPending={vi.fn()} /></SectionGraphicWorkspace>)
     const tools = screen.getByRole('complementary', { name: 'Инструменты разреза' })

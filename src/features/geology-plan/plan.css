@@ -125,7 +125,7 @@
 @media(max-width:850px) { .map-find>select { max-width:115px; }.map-members{max-height:160px} }
 
 /* Workspace chrome, inspection and editing follow the same spacing as section tools. */
-.map-document-header { min-height: 64px; padding: 10px 16px; }
+.map-document-header { min-height: 44px; padding: 5px 8px; }
 .map-document-title { flex: 1; }
 .map-document-name { display: grid; min-width: 0; gap: 4px; }
 .map-document-name > small { font-size: 11px; color: var(--text-tertiary); }
@@ -157,7 +157,7 @@
 .map-layer-footer { flex: none; padding: 12px 8px 8px; }
 .map-layer-footer > span { display: block; margin: 0 4px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .map-layer-footer .map-actions { flex-wrap: nowrap; gap: 4px; }
-.map-toolbar { flex: none; min-height: 52px; padding: 8px 12px; gap: 8px; }
+.map-toolbar { flex: none; min-height: 40px; padding: 4px 6px; gap: 4px; }
 .map-toolbar .map-actions { gap: 4px; }
 .map-toolbar .map-actions:first-child { padding-right: 8px; }
 .map-find { flex: none; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border-default); gap: 8px; }
@@ -183,7 +183,7 @@
 .map-draft-bar { position: static; flex: none; margin: 0 12px 10px; padding: 10px 12px; background: var(--color-brand-50); border-radius: 8px; }
 .map-draft-bar > span { min-width: 100px; line-height: 1.5; }
 .map-right { overflow: hidden; }
-.map-right > header { flex: none; min-height: 57px; padding: 10px 12px; }
+.map-right > header { flex: none; min-height: 38px; padding: 5px 6px; }
 .map-right > header > strong { font-size: 13px; }
 .map-right > .map-tool-block { display: flex; flex-direction: column; min-height: 0; flex: none; }
 .map-right > .map-tool-block.is-open { flex: 1; }

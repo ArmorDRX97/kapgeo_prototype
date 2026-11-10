@@ -1,9 +1,10 @@
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, Ref } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '../../../shared/ui/Button'
 import { Tooltip } from '../../../shared/ui/Tooltip'
 
 type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
+  ref?: Ref<HTMLButtonElement>
   icon: LucideIcon
   label: string
   variant?: 'primary' | 'secondary' | 'quiet' | 'danger'

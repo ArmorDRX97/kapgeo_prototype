@@ -14,7 +14,7 @@ const icons: Record<SectionView, typeof Map> = {
 }
 
 /** Grouped vertical workspace navigation keeps the geological tools one click away. */
-export function SectionAreaNavigation({ value, onChange, children }: { value: SectionView; onChange: (id: SectionView) => void; children: ReactNode }) {
+export function SectionAreaNavigation({ value, onChange, header, children }: { value: SectionView; onChange: (id: SectionView) => void; header?: ReactNode; children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false)
   const id = useId(), list = useRef<HTMLDivElement>(null)
   const ordered = groups.flatMap(group => group.ids)
@@ -46,6 +46,6 @@ export function SectionAreaNavigation({ value, onChange, children }: { value: Se
         </section>)}
       </div>
     </nav>
-    <div id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-${active.id}`} tabIndex={0} className="section-area-navigation__panel">{children}</div>
+    <div id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-${active.id}`} tabIndex={0} className="section-area-navigation__panel">{header}{children}</div>
   </div>
 }

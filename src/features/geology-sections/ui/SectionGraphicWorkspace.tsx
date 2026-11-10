@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { createPortal } from 'react-dom'
 import { ChevronDown, Info, PanelRightClose, PanelRightOpen, Eye, MousePointer2, ScanLine } from 'lucide-react'
 import type { SectionView } from '../../../entities/geology-section/model/types'
-import { Button } from '../../../shared/ui/Button'
+import { SectionToolButton } from './SectionToolButton'
 import { WorkspaceDialog } from '../../../shared/ui/WorkspaceDialog'
 import { ToolContext, type ToolId, type ToolSlot } from '../model/toolContext'
 
@@ -42,7 +42,7 @@ export function PlotSurface({ children, state }: { children: ReactNode; state?: 
   return target ? createPortal(<div className="section-plot-surface" inert={state === 'inactive' || undefined} data-plot-preview={state === 'preview' || undefined}>{children}</div>, target) : null
 }
 
-export function SectionGraphicWorkspace({ title, view, children }: { title: string; view?: SectionView; children: ReactNode }) {
+export function SectionGraphicWorkspace({ title, view, children, cameraTarget, helpTarget }: { title: string; view?: SectionView; children: ReactNode; cameraTarget?: HTMLElement | null; helpTarget?: HTMLElement | null }) {
   const [camera, setCamera] = useState<HTMLDivElement | null>(null)
   const [surface, setSurface] = useState<HTMLDivElement | null>(null), [open, setOpen] = useState(true)
   const [activeGroup, setActiveGroup] = useState<{ title: string; id: ToolId | null }>({ title, id: 'objects' })
@@ -50,18 +50,28 @@ export function SectionGraphicWorkspace({ title, view, children }: { title: stri
   const setActive = useCallback((id: ToolId | null) => setActiveGroup({ title, id }), [title])
   const [helpOpen, setHelpOpen] = useState(false)
   const [display, setDisplay] = useState<HTMLDivElement | null>(null), [coordinates, setCoordinates] = useState<HTMLDivElement | null>(null), [footer, setFooter] = useState<HTMLDivElement | null>(null), [help, setHelp] = useState<HTMLDivElement | null>(null)
-  const content = useRef<HTMLDivElement>(null)
+  const content = useRef<HTMLDivElement>(null), toolToggle = useRef<HTMLButtonElement>(null)
+  const restoreToolsFocus = useRef(false)
+  const toggleTools = (value: boolean) => { restoreToolsFocus.current = true; setOpen(value) }
+  useEffect(() => {
+    if (!restoreToolsFocus.current) return
+    toolToggle.current?.focus({ preventScroll: true })
+    restoreToolsFocus.current = false
+  }, [open])
   useEffect(() => { content.current?.querySelectorAll('[data-tool-body]').forEach(node => { node.scrollTop = 0 }) }, [title])
   const groups = [{ id: 'objects' as ToolId, label: 'Работа с объектами', icon: MousePointer2 }, { id: 'display' as ToolId, label: 'Отображение', icon: Eye }, { id: 'coordinates' as ToolId, label: view === 'drawing' ? 'Состав чертежа' : 'Координаты точек', icon: ScanLine }]
-  return <PlotToolbarContext.Provider value={camera}><PlotSurfaceContext.Provider value={surface}><ToolContext.Provider value={{ targets: { display, coordinates, footer }, help, reveal: setActive }}>
+  const helpButton = <SectionToolButton variant="quiet" icon={Info} label="Как работать" aria-haspopup="dialog" onClick={() => setHelpOpen(true)} />
+  const reopen = !open && <div className="section-tools-reopen"><SectionToolButton variant="quiet" icon={PanelRightOpen} ref={toolToggle} label="Показать инструменты" aria-expanded={false} aria-controls="section-graphic-tools" onClick={() => toggleTools(true)} /></div>
+  return <PlotToolbarContext.Provider value={cameraTarget === undefined ? camera : cameraTarget}><PlotSurfaceContext.Provider value={surface}><ToolContext.Provider value={{ targets: { display, coordinates, footer }, help, reveal: setActive }}>
     <div className={`section-graphic-workspace${view === 'map' ? ' section-graphic-workspace--map' : ''}${open ? '' : ' is-tools-collapsed'}`}>
       <div className="section-graph-center">
-        <header className="section-graph-center__header"><div className="section-graph-heading"><h2>{title}</h2>{view && <p>{viewHints[view]}</p>}</div>{view === 'map' && <div className="section-graph-camera" ref={setCamera} aria-label="Управление видом" />}<div className="section-graph-center__actions"><Button variant="quiet" size="sm" onClick={() => setHelpOpen(true)} aria-haspopup="dialog"><Info size={17} />Как работать</Button><Button variant="quiet" size="sm" aria-expanded={open} aria-controls="section-graphic-tools" onClick={() => setOpen(!open)}>{open ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}{open ? 'Скрыть инструменты' : 'Показать инструменты'}</Button></div></header>
-        {view !== 'map' && <div className="section-graph-camera" ref={setCamera} aria-label="Управление видом" />}
+        {cameraTarget === undefined && <div className="section-graph-camera" ref={setCamera} aria-label="Управление видом" />}
+        {helpTarget === undefined && helpButton}
+        {cameraTarget === undefined ? reopen : cameraTarget && reopen && createPortal(reopen, cameraTarget)}
         <div className="section-graph-stage" ref={setSurface}><p className="section-graph-empty">Выберите или создайте объект в панели инструментов.</p></div>
       </div>
       <aside id="section-graphic-tools" className="section-graphic-tools" aria-label="Инструменты разреза" hidden={!open}>
-        <header><strong>Инструменты</strong><span>Выберите объект или настройте вид</span></header>
+        <header><strong>Инструменты</strong><SectionToolButton variant="quiet" icon={PanelRightClose} ref={toolToggle} label="Скрыть инструменты" aria-expanded={true} aria-controls="section-graphic-tools" onClick={() => toggleTools(false)} /></header>
         <div className="section-graphic-tools__content section-tools-groups" ref={content}>{groups.map(group => <section key={group.id} className={`section-tools-group${active === group.id ? ' is-open' : ''}`}>
           <h3><button id={`section-tool-${group.id}`} type="button" aria-expanded={active === group.id} aria-controls={`section-tool-body-${group.id}`} onClick={() => setActive(active === group.id ? null : group.id)}><span><group.icon size={16} aria-hidden="true" />{group.label}</span><ChevronDown size={16} aria-hidden="true" /></button></h3>
           <div id={`section-tool-body-${group.id}`} role="region" aria-labelledby={`section-tool-${group.id}`} hidden={active !== group.id} data-tool-body className="section-tools-group__body" ref={group.id === 'display' ? setDisplay : group.id === 'coordinates' ? setCoordinates : undefined}>
@@ -71,7 +81,9 @@ export function SectionGraphicWorkspace({ title, view, children }: { title: stri
         <div ref={setFooter} className="section-tool-footer" />
       </aside>
     </div>
+    {helpTarget && createPortal(helpButton, helpTarget)}
     {helpOpen && <WorkspaceDialog title="Управление графикой" size="compact" onClose={() => setHelpOpen(false)}><div className="section-graph-help">
+      {view && viewHints[view] && <p>{viewHints[view]}</p>}
       <p>Выберите нужный инструмент справа. Заголовки блоков всегда доступны; открытый блок можно свернуть повторным нажатием.</p>
       {view !== 'map' && <p>На разрезе откройте меню объекта правой кнопкой мыши или сочетанием Shift+F10. Нажмите Enter на объекте в фокусе, чтобы сразу открыть сведения.</p>}
       <div ref={setHelp} />
