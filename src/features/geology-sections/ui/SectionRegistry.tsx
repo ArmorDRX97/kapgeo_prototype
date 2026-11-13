@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { ChevronRight, Crosshair, Layers, LockKeyhole, PanelLeftClose, PanelLeftOpen, Plus, Route, Search, SlidersHorizontal, X } from 'lucide-react'
+import { ChevronRight, Layers, LockKeyhole, PanelLeftClose, PanelLeftOpen, Plus, Route, Search, SlidersHorizontal, X } from 'lucide-react'
 import type { SectionRegistryEntry } from '../model/registryEntries'
 import { sectionRegistrySearch, type SectionSearch } from '../model/search'
 import { sectionStageValues, stageNames } from '../../../entities/geology-section/model/stages'
@@ -14,15 +14,12 @@ export function SectionRegistry({ sections, sectionId, search, onSearch, collaps
   collapsed: boolean; onToggle: () => void; onCreate?: () => void
 }) {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, { open: boolean; sectionId?: string }>>({})
-  const [expandedSections, setExpandedSections] = useState<Record<string, { open: boolean; selection?: string }>>({})
   const [open, setOpen] = useState(false)
   const closeFilters = useCallback(() => setOpen(false), [])
   const resetFilters = () => onSearch({ q: undefined, kind: undefined, stage: undefined, year: undefined, body: undefined, geoBlock: undefined, techBlock: undefined, sortBy: undefined, sortDirection: undefined, groupBy: undefined })
   const selectedLink = useRef<HTMLAnchorElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
-  const selectedWellId = (search.view ?? 'map') === 'map' ? search.mapWell : undefined
-  const selection = sectionId ? `${sectionId}/${selectedWellId ?? ''}` : undefined
-  useEffect(() => { selectedLink.current?.scrollIntoView?.({ block: 'nearest' }) }, [selection, collapsed])
+  useEffect(() => { selectedLink.current?.scrollIntoView?.({ block: 'nearest' }) }, [sectionId, collapsed])
   const active = [search.kind, search.stage, search.year, search.body, search.geoBlock, search.techBlock].filter(Boolean).length
   const filtered = sections.filter(s => `${s.techBlock} ${s.title} ${s.id}`.toLocaleLowerCase('ru').includes((search.q ?? '').trim().toLocaleLowerCase('ru')) && (!search.kind || s.kind === search.kind) && (!search.stage || (s.stage ?? 'exploration') === search.stage) && (!search.year || s.year === search.year) && (!search.body || s.depositBody === search.body) && (!search.geoBlock || s.geoBlock === search.geoBlock) && (!search.techBlock || s.techBlock === search.techBlock)).sort((a, b) => {
     const direction = search.sortDirection === 'asc' ? 1 : -1
@@ -68,38 +65,14 @@ export function SectionRegistry({ sections, sectionId, search, onSearch, collaps
             <div className="section-registry-group__items" hidden={!visible}>
               {items.map(entry => {
                 const current = entry.id === sectionId
-                const currentWell = current && entry.wells.some(well => well.id === selectedWellId) ? selectedWellId : undefined
-                const expansion = expandedSections[entry.id]
-                const wellsOpen = entry.wells.length > 0 && (current && expansion?.selection !== selection ? true : expansion?.open ?? current)
                 const title = entry.demo ? `${entry.title} · пример` : entry.title
-                const wellsId = `section-wells-${entry.id}`
-                return <div key={entry.id} className="section-registry-branch" data-current={current}>
-                  <div className="section-registry-branch__row">
-                    {entry.wells.length > 0 && <button type="button" className="section-registry-branch__toggle"
-                      aria-label={`${wellsOpen ? 'Свернуть' : 'Раскрыть'} скважины: ${entry.title}`} aria-expanded={wellsOpen} aria-controls={wellsId}
-                      onClick={() => setExpandedSections(previous => ({ ...previous, [entry.id]: { open: !wellsOpen, selection } }))}>
-                      <ChevronRight size={13} aria-hidden="true" />
-                    </button>}
-                    <Link className="section-registry-branch__link" ref={current && !currentWell ? selectedLink : undefined}
-                      to="/geology/sections/$sectionId" params={{ sectionId: entry.id }} search={{ ...registrySearch, view: search.view, mode: search.mode }} activeOptions={{ exact: true }}
-                      onClick={() => { if (current && !currentWell && !wellsOpen && entry.wells.length) setExpandedSections(previous => ({ ...previous, [entry.id]: { open: true, selection } })) }}
-                      aria-current={current && !currentWell ? 'page' : undefined} title={title}>
-                      <Route size={14} className="section-registry__icon" aria-hidden="true" />
-                      <span>{entry.title}</span>
-                      {entry.status === 'locked' && <LockKeyhole size={12} className="section-registry__icon" aria-label="Зафиксирован" />}
-                      <small aria-label={`Скважин: ${entry.wells.length}`}>{entry.wells.length}</small>
-                    </Link>
-                  </div>
-                  {entry.wells.length > 0 && <ul className="section-registry-branch__wells" id={wellsId} aria-label={`Скважины: ${entry.title}`} hidden={!wellsOpen}>
-                    {wellsOpen && entry.wells.map(well => <li key={well.id}>
-                      <Link ref={well.id === currentWell ? selectedLink : undefined} to="/geology/sections/$sectionId"
-                        params={{ sectionId: entry.id }} search={{ ...registrySearch, view: 'map', mapWell: well.id, segment: well.segment }} activeOptions={{ exact: true }}
-                        aria-current={well.id === currentWell ? 'page' : undefined} title={well.name}>
-                        <Crosshair size={13} className="section-registry__icon" aria-hidden="true" /><span>{well.name}</span>
-                      </Link>
-                    </li>)}
-                  </ul>}
-                </div>
+                return <Link key={entry.id} className="section-registry__link" ref={current ? selectedLink : undefined}
+                  to="/geology/sections/$sectionId" params={{ sectionId: entry.id }} search={{ ...registrySearch, view: search.view, mode: search.mode }} activeOptions={{ exact: true }}
+                  aria-current={current ? 'page' : undefined} title={title}>
+                  <Route size={14} className="section-registry__icon" aria-hidden="true" />
+                  <span>{entry.title}</span>
+                  {entry.status === 'locked' && <LockKeyhole size={12} className="section-registry__icon" aria-label="Зафиксирован" />}
+                </Link>
               })}
             </div>
           </details>

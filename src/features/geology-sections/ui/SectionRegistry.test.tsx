@@ -90,21 +90,20 @@ describe('compact section registry', () => {
     expect(screen.queryByText('Разрезы не найдены')).toBeNull()
     expect(list().getAllByRole('link', { hidden: true })).toHaveLength(2)
   })
-  it('expands a selected example inside its block and links its well to the same example on the map', () => {
+  it('lists only sections in the selected block, even when a well is selected on the map', () => {
     const sections = sectionRegistryEntries(initialSections())
     const sectionId = 'GTR-SAMPLE-03-02'
     const props = { sections, sectionId, onSearch: vi.fn(), collapsed: false, onToggle: vi.fn() }
-    const { rerender } = render(<SectionRegistry {...props} search={{ view: 'lithology' }} />)
+    render(<SectionRegistry {...props} search={{ view: 'map', mapWell: 'GTR-W1', segment: 0 }} />)
     const block = screen.getByText('ТБ-03').closest('details')!
-    const wells = within(block).getByRole('list', { name: 'Скважины: Разрез 02' })
-    const well = within(wells).getByRole('link', { name: 'ГС-101' })
     expect(block.open).toBe(true)
-    const url = new URL(well.getAttribute('href')!, 'https://example.test')
+    const links = within(block).getAllByRole('link', { hidden: true })
+    expect(links.map(link => link.textContent)).toEqual(['Разрез 01', 'Разрез 02', 'Разрез 03', 'Разрез 04'])
+    const section = within(block).getByRole('link', { name: 'Разрез 02' })
+    expect(section).toHaveAttribute('aria-current', 'page')
+    const url = new URL(section.getAttribute('href')!, 'https://example.test')
     expect(url.pathname).toBe(`/geology/sections/${sectionId}`)
-    const search = validateSectionSearch(Object.fromEntries(url.searchParams))
-    expect(search).toMatchObject({ view: 'map', mapWell: 'GTR-W1' })
-    rerender(<SectionRegistry {...props} search={search} />)
-    expect(well).toHaveAttribute('aria-current', 'page')
-    expect(within(block).getByRole('link', { name: /Разрез 02/ })).not.toHaveAttribute('aria-current')
+    expect(validateSectionSearch(Object.fromEntries(url.searchParams))).toMatchObject({ view: 'map', mapWell: undefined })
+    expect(within(block).queryByRole('button', { name: /скважины/i })).not.toBeInTheDocument()
   })
 })

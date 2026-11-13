@@ -14,20 +14,18 @@ describe('demonstration section registry', () => {
     expect(examples.filter(row => row.techBlock === 'ТБ-02').map(row => row.title)).toEqual(['Разрез 01', 'Разрез 02', 'Разрез 03', 'Разрез 04'])
     expect(examples.every(row => row.documentId === 'GTR-01')).toBe(true)
     expect(rows.filter(row => row.status === 'locked').map(row => row.id)).toEqual(['GTR-02'])
-    expect(rows.every(row => !('graphics' in row) && !('profile' in row) && !('wellIds' in row))).toBe(true)
+    expect(rows.every(row => !('graphics' in row) && !('profile' in row) && !('wellIds' in row) && !('wells' in row))).toBe(true)
     expect(JSON.stringify(documents)).toBe(before)
   })
   it('keeps shared saved metadata current and preserves separately created documents', () => {
     const documents = initialSections()
     const shared = documents[0]!
-    shared.wellIds = ['GTR-W1']
     shared.status = 'locked'
     documents.push(createSection('GTR-NEW-1', 'Собственный разрез'))
     const rows = sectionRegistryEntries(documents)
     expect(rows.filter(row => !row.demo)).toHaveLength(3)
     const profileRows = rows.filter(row => row.documentId === 'GTR-01')
     expect(profileRows.every(row => row.status === 'locked')).toBe(true)
-    expect(profileRows.map(row => row.wells)).toEqual(profileRows.map(() => [{ id: 'GTR-W1', name: 'ГС-101', segment: undefined }]))
     expect(rows.find(row => row.id === 'GTR-NEW-1')?.documentId).toBe('GTR-NEW-1')
     expect(sectionRegistryEntries(documents.filter(document => document.id !== 'GTR-01')).map(row => row.id)).toEqual(['GTR-02', 'GTR-NEW-1'])
   })
