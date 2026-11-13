@@ -27,9 +27,13 @@ export function SectionsPage() {
   const entries = useMemo(() => sectionRegistryEntries(query.data ?? []), [query.data])
   const selectedEntry = entries.find(entry => entry.id === sectionId) ?? (/^GTR-DEMO-\d+$/.test(sectionId ?? '') ? entries.find(entry => entry.id === 'GTR-01') : undefined)
   const selected = query.data?.find(d => d.id === selectedEntry?.documentId)
+  const example = selectedEntry?.demo ? { title: selectedEntry.title, techBlock: selectedEntry.techBlock } : undefined
   const canCreate = hasPermission(persona, 'geology.sections.edit')
-  const openCatalog = (replace = false) => void navigate({ to: '/geology/sections', search: registryContext, replace })
-  const openConstruction = canCreate ? () => void navigate({ to: '/geology/sections', search: { ...registryContext, create: true } }) : undefined
+  const changeConstruction = (create?: true) => {
+    const next = { ...search, create }
+    if (selected && sectionId) void navigate({ to: '/geology/sections/$sectionId', params: { sectionId }, search: next, replace: !create })
+    else void navigate({ to: '/geology/sections', search: { ...registryContext, create }, replace: !create })
+  }
   const updateRegistry = (patch: Partial<SectionSearch>, replace = false) => {
     if (selected && sectionId) void navigate({ to: '/geology/sections/$sectionId', params: { sectionId }, search: { ...search, ...patch }, replace, resetScroll: false })
     else void navigate({ to: '/geology/sections', search: { ...registryContext, ...patch }, replace, resetScroll: false })
@@ -40,22 +44,25 @@ export function SectionsPage() {
     void navigate({ to: '/geology/sections/$sectionId', params: { sectionId: doc.id }, search: { ...registryContext, view: 'lithology' }, replace: true })
   }
 
-  if (query.isPending) return <GeologyModuleLayout><div className="page-loading"><p>Открываем каталог разрезов…</p></div></GeologyModuleLayout>
-  if (query.error) return <GeologyModuleLayout><Panel title="Не удалось открыть каталог"><p role="alert">{query.error.message}</p><Button onClick={() => void query.refetch()}>Повторить</Button></Panel></GeologyModuleLayout>
+  if (query.isPending) return <GeologyModuleLayout><div className="page-loading"><p>Загружаем разрезы…</p></div></GeologyModuleLayout>
+  if (query.error) return <GeologyModuleLayout><Panel title="Не удалось загрузить разрезы"><p role="alert">{query.error.message}</p><Button onClick={() => void query.refetch()}>Повторить</Button></Panel></GeologyModuleLayout>
 
-  if (!sectionId && search.create && canCreate) {
-    return <GeologyModuleLayout><SectionConstruction onCancel={() => openCatalog(true)} onSave={create} /></GeologyModuleLayout>
+  if (search.create && canCreate) {
+    return <GeologyModuleLayout><SectionConstruction onCancel={() => changeConstruction()} onSave={create} /></GeologyModuleLayout>
   }
 
-  const registryProps = { sections: entries, search, onSearch: updateRegistry, onCreate: openConstruction }
-  if (!selected) return <GeologyModuleLayout><SectionRegistry key="catalog" catalog {...registryProps} missingDocument={Boolean(sectionId)} /></GeologyModuleLayout>
-
   return <GeologyModuleLayout><div className={`section-layout${collapsed ? ' is-registry-collapsed' : ''}`}>
-    <SectionRegistry {...registryProps} sectionId={sectionId} collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+    <SectionRegistry sections={entries} search={search} onSearch={updateRegistry} onCreate={canCreate ? () => changeConstruction(true) : undefined}
+      sectionId={selectedEntry?.id} collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
     <div className="section-document">
-      <SectionWorkbench documents={query.data} key={selected.id} initial={selected} persona={persona} search={search}
+      {selected ? <SectionWorkbench documents={query.data} key={selectedEntry!.id} initial={selected} example={example} persona={persona} search={search}
         onSearch={next => void navigate({ to: '/geology/sections/$sectionId', params: { sectionId: selectedEntry!.id }, search: { ...registryContext, ...next }, resetScroll: false })}
-        onSaved={() => void refresh()} onDeleted={() => { void refresh(); openCatalog() }} />
+        onSaved={saved => queryClient.setQueryData<GeologySection[]>(sectionsQueryKey, current => current?.map(doc => doc.id === saved.id ? saved : doc))}
+        onDeleted={() => { void refresh(); void navigate({ to: '/geology/sections', search: registryContext }) }} />
+        : <div className="section-document-empty">
+          <h1>{sectionId ? 'Разрез не найден' : 'Разрезы и развёртки'}</h1>
+          <p>{canCreate ? 'Выберите разрез в списке или нажмите «+», чтобы создать новый.' : 'Выберите разрез в списке.'}</p>
+        </div>}
     </div>
   </div></GeologyModuleLayout>
 }

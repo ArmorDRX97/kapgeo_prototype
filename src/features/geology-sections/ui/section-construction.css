@@ -37,9 +37,12 @@
 .section-construction__coordinates { padding: 8px 0; border-top: 1px solid var(--border-default); }
 .section-construction__coordinates summary { cursor: pointer; font-size: 13px; font-weight: 600; }
 .section-construction__coordinates form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-.section-construction__coordinates form button { grid-column: 1 / -1; justify-self: start; }
+.section-construction__coordinates form > .ui-tooltip-trigger { grid-column: 1 / -1; justify-self: start; }
+.section-construction__coordinates summary span { margin-inline-start: 4px; color: var(--text-secondary); font-size: 11px; font-weight: 400; }
 .section-construction__panel .section-search { margin: 0; }
 .section-construction__panel .section-search :is(input, select) { width: 100%; min-width: 0; min-height: 36px; }
+.section-construction__panel .section-search em { color: var(--color-red-700); font-style: normal; }
+.section-construction__panel .section-search input[aria-invalid="true"] { border-color: var(--color-red-600); }
 .section-construction__wells { min-height: 88px; overflow: auto; border: 1px solid var(--border-default); border-radius: var(--radius-sm); }
 .section-construction__wells table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
 .section-construction__wells :is(th, td) { padding: 6px 8px; border-bottom: 1px solid var(--border-default); }
@@ -48,12 +51,16 @@
 .section-construction__wells label { display: flex; align-items: center; gap: 7px; cursor: pointer; }
 .section-construction__wells label input { margin: 0; accent-color: var(--color-brand-700); }
 .section-construction__wells small { display: block; color: var(--text-secondary); font-size: 11px; }
-.section-construction__wells > button { margin: 4px 8px; }
+.section-construction__more { display: flex; justify-content: center; padding: 4px 8px; }
 .section-construction__summary { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; margin: 0; padding: 8px; border-radius: var(--radius-sm); background: var(--surface-subtle); font-size: 13px; }
 .section-construction__summary dt { color: var(--text-secondary); }
 .section-construction__summary dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
 .section-construction__save-form { display: grid; gap: 10px; }
 .section-construction__save-form details label { margin-top: 8px; }
+.section-construction__required { padding: 10px; border: 1px solid var(--color-brand-200); border-radius: var(--radius-sm); background: var(--color-brand-50); }
+.section-construction__required label > span { font-weight: 650; }
+.section-construction__required p { margin: 4px 0 0; color: var(--text-secondary); font-size: 12px; }
+.section-construction__required [role="alert"] { color: var(--color-red-700); }
 .section-construction__footer { justify-content: space-between; border-top: 1px solid var(--border-default); }
 .section-construction-map { position: relative; display: flex; min-width: 0; min-height: 300px; background: var(--surface-subtle); }
 .section-construction-map .map-canvas-area { padding: 6px; }

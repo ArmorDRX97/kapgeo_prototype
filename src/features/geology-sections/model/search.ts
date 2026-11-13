@@ -12,7 +12,7 @@ export function validateSectionSearch(input: Record<string, unknown>): SectionSe
   const year = Number(input.year)
   return { create: input.create === true ? true : undefined, view, mode: allowedModes.includes(String(input.mode)) ? input.mode as SectionSearch['mode'] : undefined,
     segment: input.segment !== undefined && Number.isInteger(Number(input.segment)) && Number(input.segment) >= 0 && Number(input.segment) < 500 ? Number(input.segment) : undefined,
-    mapWell: typeof input.mapWell === 'string' && /^(GTR-W\d+|field-well-p\d+-\d+-\d+)$/.test(input.mapWell) ? input.mapWell : undefined,
+    mapWell: typeof input.mapWell === 'string' && /^(GTR-W\d+|INKAI-\d+|field-well-p\d+-\d+-\d+)$/.test(input.mapWell) ? input.mapWell : undefined,
     selection: input.mode === 'rhythm' ? undefined : typeof input.selection === 'string' && input.selection.length < 500 ? input.selection : undefined,
     q: typeof input.q === 'string' && input.q ? input.q.slice(0, 120) : undefined,
     kind: input.kind === 'main' || input.kind === 'auxiliary' ? input.kind : undefined,

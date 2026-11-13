@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useBlocker } from '@tanstack/react-router'
-import { ArrowLeft, ArrowRight, Check, Save, Undo2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, ChevronsDown, Plus, Save, Trash2, Undo2 } from 'lucide-react'
 import type { GeologySection, SectionLayer, XY } from '../../../entities/geology-section/model/types'
 import { createSection } from '../../../entities/geology-section/model/fixtures'
 import { distance, profileLength } from '../../../entities/geology-section/lib/profile'
@@ -14,6 +14,7 @@ import { usePlotSize } from '../model/usePlotSize'
 import { sectionWellCatalogue } from '../model/wellAssignment'
 import { SectionSvg } from './SectionCanvas'
 import { SectionConstructionMap } from './SectionConstructionMap'
+import { SectionToolButton } from './SectionToolButton'
 import './section-construction.css'
 
 const steps = ['Трасса', 'Скважины', 'Предпросмотр'] as const
@@ -45,7 +46,11 @@ export function SectionConstruction({ onCancel, onSave }: {
   const [techBlock, setTechBlock] = useState('')
   const [feedback, setFeedback] = useState('')
   const [error, setError] = useState('')
+  const [submitted, setSubmitted] = useState(false)
   const heading = useRef<HTMLHeadingElement>(null)
+  const titleField = useRef<HTMLInputElement>(null)
+  const titleHint = useId()
+  const radiusError = useId()
   const saved = useRef(false)
   const dirty = points.length > 0 || Boolean(title.trim())
   const blocker = useBlocker({ withResolver: true, disabled: !dirty, enableBeforeUnload: dirty, shouldBlockFn: () => !saved.current })
@@ -93,7 +98,12 @@ export function SectionConstruction({ onCancel, onSave }: {
   }
   const save = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (saved.current || !preview || !title.trim()) return
+    if (saved.current || !preview) return
+    if (!title.trim()) {
+      setSubmitted(true)
+      titleField.current?.focus()
+      return
+    }
     const createdOn = new Date().toLocaleDateString('sv-SE')
     saved.current = true
     try {
@@ -109,7 +119,7 @@ export function SectionConstruction({ onCancel, onSave }: {
 
   return <section className="section-construction" aria-label="Построение разреза">
     <header className="section-construction__header">
-      <Button variant="quiet" size="sm" onClick={onCancel}><ArrowLeft size={16} />К каталогу</Button>
+      <Button variant="quiet" size="sm" onClick={onCancel}><ArrowLeft size={16} />К разрезам</Button>
       <div><h1>Новый разрез</h1><p>{template.depositName}</p></div>
       <ol aria-label="Этапы построения">{steps.map((label, index) => <li key={label} aria-current={step === index ? 'step' : undefined} data-complete={step > index}><span>{step > index ? <Check size={13} aria-hidden="true" /> : index + 1}</span>{label}</li>)}</ol>
     </header>
@@ -124,50 +134,55 @@ export function SectionConstruction({ onCancel, onSave }: {
           <p className="section-construction__instruction" aria-live="polite">{traceInstruction}</p>
           <div className="section-construction__metrics"><span>Точек <strong>{points.length}</strong></span><span>Длина <strong>{planNumber(length)} м</strong></span></div>
           {points.length > 0 && <ol className="section-construction__vertices" aria-label="Точки трассы">{points.map((point, index) => <li key={index}><strong>{profileVertexName(index)}</strong><span>X {planNumber(point.x)}<br />Y {planNumber(point.y)}</span></li>)}</ol>}
-          <div className="section-construction__actions">
-            <Button size="sm" variant="secondary" disabled={!points.length} onClick={() => { setPoints(points.slice(0, -1)); setFeedback('') }}><Undo2 size={14} />Убрать последнюю</Button>
-            <Button size="sm" variant="quiet" disabled={!points.length} onClick={() => { setPoints([]); setFeedback('') }}>Очистить</Button>
+          <div className="section-construction__actions" data-tooltip-group role="group" aria-label="Действия с трассой">
+            <SectionToolButton icon={Undo2} label="Убрать последнюю точку" disabled={!points.length} onClick={() => { setPoints(points.slice(0, -1)); setFeedback('') }} />
+            <SectionToolButton icon={Trash2} label="Очистить трассу" variant="quiet" disabled={!points.length} onClick={() => { setPoints([]); setFeedback('') }} />
           </div>
           <details className="section-construction__coordinates">
             <summary>Ввести координаты точки</summary>
             <form onSubmit={addCoordinates}>
-              <label className="section-search">X, м<input name="x" type="number" step="any" required /></label>
-              <label className="section-search">Y, м<input name="y" type="number" step="any" required /></label>
-              <Button type="submit" size="sm" variant="secondary">Добавить точку</Button>
+              <label className="section-search"><span>X, м <em aria-hidden="true">*</em></span><input name="x" type="number" step="any" required /></label>
+              <label className="section-search"><span>Y, м <em aria-hidden="true">*</em></span><input name="y" type="number" step="any" required /></label>
+              <SectionToolButton icon={Plus} label="Добавить точку по координатам" type="submit" />
             </form>
           </details>
         </>}
         {step === 1 && <>
           <p className="section-construction__instruction">Включены скважины, чьи устья попали в полосу вдоль трассы. Каждая относится к ближайшему сегменту. Измените захват или снимите отметки на карте и в списке.</p>
-          <label className="section-search">Захват в каждую сторону, м<input type="number" min="0" max="100000" step="any" value={radiusInput} aria-invalid={!validRadius || undefined} onChange={event => { setRadiusInput(event.target.value); setFeedback(''); setVisibleWells(40) }} /></label>
+          <label className="section-search"><span>Захват в каждую сторону, м <em aria-hidden="true">*</em></span><input required type="number" min="0" max="100000" step="any" value={radiusInput} aria-invalid={!validRadius || undefined} aria-describedby={!validRadius ? radiusError : undefined} onChange={event => { setRadiusInput(event.target.value); setFeedback(''); setVisibleWells(40) }} /></label>
           <div className="section-construction__metrics" aria-live="polite"><span>Найдено <strong>{candidates.length}</strong></span><span>В разрезе <strong>{selected.length}</strong></span></div>
           {candidates.length > 0 && <div className="section-construction__wells"><table aria-label="Скважины в полосе захвата">
             <thead><tr><th scope="col">Скважина</th><th scope="col">До трассы</th></tr></thead>
             <tbody>{candidates.slice(0, visibleWells).map(well => <tr key={well.id}><td><label><input type="checkbox" aria-label={`Включить ${well.name}`} checked={!excluded.has(well.id)} onChange={() => toggleWell(well.id)} /><span><strong>{well.name}</strong><small>Сегмент {well.segment + 1} · {planNumber(well.station)} м от начала</small></span></label></td><td>{planNumber(well.distance)} м</td></tr>)}</tbody>
-          </table>{visibleWells < candidates.length && <Button variant="quiet" size="sm" onClick={() => setVisibleWells(count => count + 40)}>Показать ещё</Button>}</div>}
-          {!validRadius ? <p className="section-error" role="alert">Введите расстояние от 0 до 100 000 м.</p>
+          </table>{visibleWells < candidates.length && <div className="section-construction__more"><SectionToolButton icon={ChevronsDown} variant="quiet" label="Показать ещё скважины" onClick={() => setVisibleWells(count => count + 40)} /></div>}</div>}
+          {!validRadius ? <p id={radiusError} className="section-error" role="alert">Введите расстояние от 0 до 100 000 м.</p>
             : candidates.length === 0 && <p className="section-construction__instruction">В полосе нет скважин. Увеличьте захват или измените трассу.</p>}
         </>}
         {step === 2 && preview && <>
-          <p className="section-construction__instruction">{selected.length ? 'Колонки расположены по расстоянию от начала трассы. Высоты подобраны по устьям и забоям выбранных скважин.' : 'Вернитесь к подбору или сохраните трассу и добавьте скважины позже.'}</p>
-          <dl className="section-construction__summary"><dt>Длина трассы</dt><dd>{planNumber(length)} м</dd><dt>Сегменты</dt><dd>{profile.length - 1}</dd><dt>Скважины</dt><dd>{selected.length}</dd><dt>Диапазон Z</dt><dd>{planNumber(preview.bottom)}…{planNumber(preview.top)} м</dd></dl>
-          <form id="section-construction-save" className="section-construction__save-form" onSubmit={save}>
-            <label className="section-search">Название разреза<input required maxLength={120} value={title} placeholder="Например, Северный · профиль 03" onChange={event => { setTitle(event.target.value); setError('') }} /></label>
-            <details className="section-construction__coordinates"><summary>Привязка к блокам</summary>
+          <form id="section-construction-save" className="section-construction__save-form" onSubmit={save} noValidate>
+            <div className="section-construction__required">
+              <label className="section-search"><span>Название разреза <em aria-hidden="true">*</em></span>
+                <input ref={titleField} required maxLength={120} value={title} placeholder="Например, Северный · профиль 03" aria-describedby={titleHint} aria-invalid={submitted && !title.trim() || undefined} onChange={event => { setTitle(event.target.value); setError('') }} />
+              </label>
+              <p id={titleHint} role={submitted && !title.trim() ? 'alert' : undefined}>{submitted && !title.trim() ? 'Введите название разреза.' : 'Обязательное поле для сохранения разреза.'}</p>
+            </div>
+            <details className="section-construction__coordinates"><summary>Привязка к блокам <span>необязательно</span></summary>
               <label className="section-search">Геологический блок<select value={geoBlock} onChange={event => setGeoBlock(event.target.value)}><option value="">Не выбран</option>{geoBlocks.map(block => <option key={block}>{block}</option>)}</select></label>
               <label className="section-search">Технологический блок<select value={techBlock} onChange={event => setTechBlock(event.target.value)}><option value="">Не выбран</option>{techBlocks.map(block => <option key={block}>{block}</option>)}</select></label>
             </details>
           </form>
+          {error && <p className="section-error" role="alert">{error}</p>}
+          <p className="section-construction__instruction">{selected.length ? 'Колонки расположены по расстоянию от начала трассы. Высоты подобраны по устьям и забоям выбранных скважин.' : 'Вернитесь к подбору или сохраните трассу и добавьте скважины позже.'}</p>
+          <dl className="section-construction__summary"><dt>Длина трассы</dt><dd>{planNumber(length)} м</dd><dt>Сегменты</dt><dd>{profile.length - 1}</dd><dt>Скважины</dt><dd>{selected.length}</dd><dt>Диапазон Z</dt><dd>{planNumber(preview.bottom)}…{planNumber(preview.top)} м</dd></dl>
         </>}
         {feedback && <p className="section-construction__instruction" role="status">{feedback}</p>}
-        {error && <p className="section-error" role="alert">{error}</p>}
       </aside>
     </div>
     <footer className="section-construction__footer">
       {step > 0 ? <Button variant="secondary" onClick={() => goTo(step - 1)}><ArrowLeft size={16} />{step === 1 ? 'К трассе' : 'К скважинам'}</Button> : <Button variant="quiet" onClick={onCancel}>Отмена</Button>}
       {step === 0 && <Button disabled={points.length < 2} onClick={() => goTo(1)}>К подбору скважин<ArrowRight size={16} /></Button>}
       {step === 1 && <Button disabled={!validRadius} onClick={() => goTo(2)}>Посмотреть разрез<ArrowRight size={16} /></Button>}
-      {step === 2 && <Button type="submit" form="section-construction-save" disabled={!title.trim()}><Save size={16} />Сохранить разрез</Button>}
+      {step === 2 && <Button type="submit" form="section-construction-save"><Save size={16} />Сохранить разрез</Button>}
     </footer>
     {blocker?.status === 'blocked' && <DiscardChangesDialog description="Трасса и выбранные скважины ещё не сохранены. Вернитесь к построению или выйдите из черновика." onStay={blocker.reset} onDiscard={blocker.proceed} />}
   </section>

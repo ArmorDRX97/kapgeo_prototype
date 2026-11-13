@@ -3,16 +3,17 @@ import { createSection, initialSections } from '../../../entities/geology-sectio
 import { sectionRegistryEntries } from './registryEntries'
 
 describe('demonstration section registry', () => {
-  it('shows only existing section documents with no artificial duplicate profiles', () => {
+  it('gives demo links distinct identities in eight blocks without copying documents', () => {
     const documents = initialSections(), before = JSON.stringify(documents)
     const rows = sectionRegistryEntries(documents)
-    expect(rows).toHaveLength(2)
-    expect(new Set(rows.map(row => row.id)).size).toBe(2)
-    expect(new Set(rows.map(row => row.title)).size).toBe(2)
-    expect(rows.filter(row => row.documentId === 'GTR-01')).toHaveLength(1)
+    const examples = rows.filter(row => row.demo)
+    expect(rows.filter(row => !row.demo).map(row => row.id)).toEqual(['GTR-01', 'GTR-02'])
+    expect(examples).toHaveLength(32)
+    expect(new Set(rows.map(row => row.id)).size).toBe(rows.length)
+    expect(new Set(examples.map(row => row.techBlock)).size).toBe(8)
+    expect(examples.filter(row => row.techBlock === 'ТБ-02').map(row => row.title)).toEqual(['Разрез 01', 'Разрез 02', 'Разрез 03', 'Разрез 04'])
+    expect(examples.every(row => row.documentId === 'GTR-01')).toBe(true)
     expect(rows.filter(row => row.status === 'locked').map(row => row.id)).toEqual(['GTR-02'])
-    expect(rows.filter(row => row.stage === 'detailed')).toHaveLength(1)
-    expect(rows.filter(row => row.stage === 'operationalExploration')).toHaveLength(1)
     expect(rows.every(row => !('graphics' in row) && !('profile' in row) && !('wellIds' in row))).toBe(true)
     expect(JSON.stringify(documents)).toBe(before)
   })
@@ -23,8 +24,10 @@ describe('demonstration section registry', () => {
     shared.status = 'locked'
     documents.push(createSection('GTR-NEW-1', 'Собственный разрез'))
     const rows = sectionRegistryEntries(documents)
-    expect(rows).toHaveLength(3)
-    expect(rows.filter(row => row.documentId === 'GTR-01').every(row => row.wellCount === 1 && row.status === 'locked')).toBe(true)
+    expect(rows.filter(row => !row.demo)).toHaveLength(3)
+    const profileRows = rows.filter(row => row.documentId === 'GTR-01')
+    expect(profileRows.every(row => row.status === 'locked')).toBe(true)
+    expect(profileRows.map(row => row.wells)).toEqual(profileRows.map(() => [{ id: 'GTR-W1', name: 'ГС-101', segment: undefined }]))
     expect(rows.find(row => row.id === 'GTR-NEW-1')?.documentId).toBe('GTR-NEW-1')
     expect(sectionRegistryEntries(documents.filter(document => document.id !== 'GTR-01')).map(row => row.id)).toEqual(['GTR-02', 'GTR-NEW-1'])
   })

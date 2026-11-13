@@ -2,16 +2,22 @@ import { useState, type AnchorHTMLAttributes } from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { initialSections } from '../../../entities/geology-section/model/fixtures'
-import type { SectionSearch } from '../model/search'
+import { validateSectionSearch, type SectionSearch } from '../model/search'
 import { SectionRegistry } from './SectionRegistry'
 import { sectionRegistryEntries } from '../model/registryEntries'
 
-vi.mock('@tanstack/react-router', () => ({ Link: ({ children, params: _params, search: _search, to, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { params?: unknown; search?: unknown; to: string }) => { void _params; void _search; return <a href={to} {...props}>{children}</a> } }))
+vi.mock('@tanstack/react-router', () => ({ Link: ({ children, params, search, to, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { params?: { sectionId: string }; search?: SectionSearch; to: string; activeOptions?: { exact?: boolean } }) => {
+  delete props.activeOptions
+  const query = new URLSearchParams(Object.entries(search ?? {}).filter(([, value]) => value !== undefined).map(([key, value]) => [key, String(value)]))
+  return <a href={`${to.replace('$sectionId', params?.sectionId ?? '')}${query.size ? `?${query}` : ''}`} {...props}>{children}</a>
+} }))
 afterEach(cleanup)
 const list = () => within(screen.getByRole('navigation', { name: 'Список разрезов' }))
 function Harness() {
   const [search, setSearch] = useState<SectionSearch>({})
-  return <SectionRegistry sections={sectionRegistryEntries(initialSections())} sectionId="GTR-01" search={search} onSearch={patch => setSearch({ ...search, ...patch })} collapsed={false} onToggle={vi.fn()} />
+  const documents = initialSections()
+  const sections = sectionRegistryEntries(documents).filter(entry => !entry.demo).map((entry, index) => ({ ...entry, techBlock: `ТБ-0${index + 1}` }))
+  return <SectionRegistry sections={sections} sectionId="GTR-01" search={search} onSearch={patch => setSearch({ ...search, ...patch })} collapsed={false} onToggle={vi.fn()} />
 }
 describe('compact section registry', () => {
   it('filters the two demo branches by study stage independently of section type',()=>{
@@ -22,20 +28,20 @@ describe('compact section registry', () => {
     expect(stage.querySelectorAll('option')).toHaveLength(7)
     fireEvent.change(stage,{target:{value:'detailed'}})
     expect(screen.queryByText('Разрезы не найдены')).toBeNull()
-    expect(registry.getByText('Детальная разведка')).toBeTruthy()
-    expect(registry.queryByText('Эксплуатационная разведка')).toBeNull()
-    expect(registry.getAllByRole('link', { hidden: true })).toHaveLength(1)
+    expect(registry.getByText('ТБ-01')).toBeTruthy()
+    expect(registry.queryByText('ТБ-02')).toBeNull()
+    expect(registry.getAllByRole('link', { hidden: true, name: /Северный · профиль/ })).toHaveLength(1)
     fireEvent.change(stage,{target:{value:'operationalExploration'}})
-    expect(registry.getByText('Эксплуатационная разведка')).toBeTruthy()
-    expect(registry.queryByText('Детальная разведка')).toBeNull()
-    expect(registry.getAllByRole('link', { hidden: true })).toHaveLength(1)
+    expect(registry.getByText('ТБ-02')).toBeTruthy()
+    expect(registry.queryByText('ТБ-01')).toBeNull()
+    expect(registry.queryByRole('link', { name: /Северный · профиль 01/ })).not.toBeInTheDocument()
   })
   it('collapses a registry group while preserving its count and chosen grouping',()=>{
     render(<Harness />)
-    const summary=screen.getByText('Детальная разведка'),group=summary.closest('details')!
+    const summary=screen.getByText('ТБ-01'),group=summary.closest('details')!
     expect(group.open).toBe(true)
     expect(within(group).getByText('1')).toBeTruthy()
-    expect(list().getAllByRole('link')).toHaveLength(1)
+    expect(list().getByRole('link', { name: /Северный · профиль 01/ })).toBeInTheDocument()
     expect(group.querySelector('.section-registry-group__items a[aria-current="page"]')).toBeTruthy()
     fireEvent.click(summary)
     expect(group.open).toBe(false)
@@ -56,7 +62,8 @@ describe('compact section registry', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Поиск разреза' }), { target: { value: 'missing' } })
     expect(screen.getByText('Разрезы не найдены')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить поиск и фильтры' }))
-    expect(list().getAllByRole('link', { hidden: true })).toHaveLength(2)
+    expect(screen.getByText('ТБ-01')).toBeInTheDocument()
+    expect(screen.getByText('ТБ-02')).toBeInTheDocument()
   })
   it('filters by block and sorts by title in ascending order', () => {
     render(<Harness />)
@@ -64,9 +71,9 @@ describe('compact section registry', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Сортировать по' }), { target: { value: 'title' } })
     fireEvent.change(screen.getByRole('combobox', { name: 'Направление сортировки' }), { target: { value: 'asc' } })
     fireEvent.change(screen.getByRole('combobox', { name: 'Геологический блок' }), { target: { value: 'Без геологического блока' } })
-    const links = list().getAllByRole('link', { hidden: true })
-    expect(links.length).toBe(2)
-    expect(links[0]?.textContent).toContain('Северный · профиль')
+    expect(list().getByText('ТБ-01')).toBeInTheDocument()
+    expect(list().getByText('ТБ-02')).toBeInTheDocument()
+    expect(list().getByRole('link', { name: /Северный · профиль 01/ })).toBeInTheDocument()
   })
   it('resets block filters from an empty result', () => {
     const [first, second] = initialSections()
@@ -75,12 +82,29 @@ describe('compact section registry', () => {
     second!.metadata = { ...metadata, ...second!.metadata, techBlock: 'ТБ-02' }
     function EmptyBlockHarness() {
       const [search, setSearch] = useState<SectionSearch>({ geoBlock: 'ГБ-01', techBlock: 'ТБ-02' })
-      return <SectionRegistry sections={sectionRegistryEntries([first!, second!])} search={search} onSearch={patch => setSearch({ ...search, ...patch })} collapsed={false} onToggle={vi.fn()} />
+      return <SectionRegistry sections={sectionRegistryEntries([first!, second!]).filter(entry => !entry.demo)} search={search} onSearch={patch => setSearch({ ...search, ...patch })} collapsed={false} onToggle={vi.fn()} />
     }
     render(<EmptyBlockHarness />)
     expect(screen.getByText('Разрезы не найдены')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить поиск и фильтры' }))
     expect(screen.queryByText('Разрезы не найдены')).toBeNull()
     expect(list().getAllByRole('link', { hidden: true })).toHaveLength(2)
+  })
+  it('expands a selected example inside its block and links its well to the same example on the map', () => {
+    const sections = sectionRegistryEntries(initialSections())
+    const sectionId = 'GTR-SAMPLE-03-02'
+    const props = { sections, sectionId, onSearch: vi.fn(), collapsed: false, onToggle: vi.fn() }
+    const { rerender } = render(<SectionRegistry {...props} search={{ view: 'lithology' }} />)
+    const block = screen.getByText('ТБ-03').closest('details')!
+    const wells = within(block).getByRole('list', { name: 'Скважины: Разрез 02' })
+    const well = within(wells).getByRole('link', { name: 'ГС-101' })
+    expect(block.open).toBe(true)
+    const url = new URL(well.getAttribute('href')!, 'https://example.test')
+    expect(url.pathname).toBe(`/geology/sections/${sectionId}`)
+    const search = validateSectionSearch(Object.fromEntries(url.searchParams))
+    expect(search).toMatchObject({ view: 'map', mapWell: 'GTR-W1' })
+    rerender(<SectionRegistry {...props} search={search} />)
+    expect(well).toHaveAttribute('aria-current', 'page')
+    expect(within(block).getByRole('link', { name: /Разрез 02/ })).not.toHaveAttribute('aria-current')
   })
 })

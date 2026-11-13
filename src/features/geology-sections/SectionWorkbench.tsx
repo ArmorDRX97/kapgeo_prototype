@@ -26,18 +26,19 @@ import { SectionAreaNavigation } from './ui/SectionAreaNavigation'
 import { reconcileProfile } from '../../entities/geology-section/lib/segments'
 import './sections.css'
 
-export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, onDeleted, documents=[] }: { documents?:GeologySection[]; initial: GeologySection; persona: UserPersona | null; search: SectionSearch; onSearch: (next: SectionSearch) => void; onSaved: (section: GeologySection) => void; onDeleted?: () => void }) {
+export function SectionWorkbench({ initial, example, persona, search, onSearch, onSaved, onDeleted, documents=[] }: { documents?:GeologySection[]; initial: GeologySection; example?: { title: string; techBlock: string }; persona: UserPersona | null; search: SectionSearch; onSearch: (next: SectionSearch) => void; onSaved: (section: GeologySection) => void; onDeleted?: () => void }) {
   const fullscreen = useMapFullscreen()
   const [helpTarget, setHelpTarget] = useState<HTMLDivElement | null>(null)
   const [section, setSection] = useState(initial), [saved, setSaved] = useState(initial)
   const [past, setPast] = useState<GeologySection[]>([]), [future, setFuture] = useState<GeologySection[]>([])
   const [error, setError] = useState(''), [notice, setNotice] = useState('')
   const [pendingGeometry, setPendingGeometry] = useState(false)
+  const displayTitle = example ? `${example.techBlock} · ${example.title}` : section.title
   const shared = useSharedAuxiliary(), stale = staleAuxiliary(section, shared.data ?? [])
   const editable = canEditSection(persona, saved), dirty = JSON.stringify(section) !== JSON.stringify(saved), view = search.view ?? 'map'
   const routeBlocker = useBlocker({ withResolver: true, disabled: !dirty && !pendingGeometry, enableBeforeUnload: dirty || pendingGeometry, shouldBlockFn: ({ current, next }) => {
     const destination = validateSectionSearch(next.search as Record<string, unknown>)
-    return next.pathname !== current.pathname || pendingGeometry && (destination.view !== search.view || destination.mode !== search.mode)
+    return next.pathname !== current.pathname || destination.create === true || pendingGeometry && (destination.view !== search.view || destination.mode !== search.mode)
   } })
   const commit = (next: GeologySection) => {
     if (!editable) return
@@ -69,20 +70,20 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
   </>
   const messages = <>{error && routeBlocker?.status !== 'blocked' && <p role="alert" className="section-error">{error}</p>}
     {stale.length > 0 && <p role="status" className="section-preview">Изменились общие вспомогательные опоры: {stale.length}. Сохранена прежняя геометрия. Откройте опоры соответствующего слоя и примените коррекцию.</p>}</>
-  const deleteAction = editable && <Button variant="quiet" className="section-delete" disabled={dirty || pendingGeometry} onClick={() => {
+  const deleteAction = editable && !example && <Button variant="quiet" className="section-delete" disabled={dirty || pendingGeometry} onClick={() => {
       if (!window.confirm(`Удалить разрез «${saved.title}»?`)) return
       try { sectionRepository.remove(saved.id, saved.revision, persona); onDeleted?.() } catch (problem) { setError(problem instanceof Error ? problem.message : 'Не удалось удалить разрез.') }
     }}><Trash2 size={15} />Удалить разрез</Button>
-  const editor = view === 'overview' ? <SectionSetup {...props} segment={search.segment} onSegment={segment => onSearch({ ...search, segment, mapWell: undefined })} onPending={setPendingGeometry} onMap={mapWell => onSearch({ ...search, mapWell, view: 'map' })} /> : view === 'map' ? <ProfileMap documents={documents} {...props} segment={search.segment} mapWell={search.mapWell} onSegment={segment => onSearch({ ...search, segment, mapWell: undefined })} onMapWell={mapWell => onSearch({ ...search, mapWell })} onPending={setPendingGeometry} /> : !graphicReady ? <PlotSurface><p role="alert" className="section-error">Для графической области исправьте профиль и диапазон высот во вкладке «Разрез». Черновик сохранён в текущей рабочей области.</p></PlotSurface> : view === 'drawing' ? <DrawingEditor {...props} selection={search.selection} onSelect={select} /> : <>
+  const editor = view === 'overview' ? <SectionSetup {...props} segment={search.segment} onSegment={segment => onSearch({ ...search, segment, mapWell: undefined })} onPending={setPendingGeometry} onMap={mapWell => onSearch({ ...search, mapWell, view: 'map' })} /> : view === 'map' ? <ProfileMap documents={documents} {...props} displayTitle={displayTitle} segment={search.segment} mapWell={search.mapWell} onSegment={segment => onSearch({ ...search, segment, mapWell: undefined })} onMapWell={mapWell => onSearch({ ...search, mapWell })} onPending={setPendingGeometry} /> : !graphicReady ? <PlotSurface><p role="alert" className="section-error">Для графической области исправьте профиль и диапазон высот во вкладке «Разрез». Черновик сохранён в текущей рабочей области.</p></PlotSurface> : view === 'drawing' ? <DrawingEditor {...props} selection={search.selection} onSelect={select} /> : <>
         {view === 'technology' && <div className="section-actions section-mode-switch" role="group" aria-label="Режим технологии">{(['layers', 'foundation'] as const).map((mode, i) => <Button key={mode} variant={(search.mode ?? 'layers') === mode ? 'primary' : 'secondary'} onClick={() => onSearch({ ...search, view, mode })}>{['Пропластки', 'Фундамент и разломы'][i]}</Button>)}</div>}
         {view === 'ore' && <div className="section-actions section-mode-switch" role="group" aria-label="Источник руды">{(['corrected', 'uncorrected'] as const).map((mode, i) => <Button key={mode} variant={(search.mode ?? 'corrected') === mode ? 'primary' : 'secondary'} onClick={() => onSearch({ ...search, view, mode })}>{['В технологической толще', 'Без поправок'][i]}</Button>)}</div>}
         {view === 'lithology' || view === 'oxidation' || view === 'technology' && search.mode === 'foundation' ? <GraphicEditor key={`${view}-${search.mode}`} {...props} onPending={setPendingGeometry} mode={view === 'technology' ? search.mode as 'foundation' : view} selection={search.selection} onSelect={select} /> : <CorrelationEditor onPending={setPendingGeometry} key={`${view}-${search.mode}`} {...props} layer={view === 'ore' ? search.mode === 'uncorrected' ? 'uncorrected' : 'ore' : view === 'offbalance' ? 'offbalance' : 'technology'} selection={search.selection} onSelect={select} />}
       </>
-  const documentActions = <SectionDocumentActions section={section} status={!editable ? 'readonly' : pendingGeometry ? 'pending' : dirty ? 'dirty' : 'saved'} help={graphView && <div className="section-document-help" ref={setHelpTarget} />} secondaryActions={deleteAction} message={notice}>{documentButtons}</SectionDocumentActions>
+  const documentActions = <SectionDocumentActions section={section} exampleTitle={example ? displayTitle : undefined} status={!editable ? 'readonly' : pendingGeometry ? 'pending' : dirty ? 'dirty' : 'saved'} help={graphView && <div className="section-document-help" ref={setHelpTarget} />} secondaryActions={deleteAction} message={notice}>{documentButtons}</SectionDocumentActions>
   const fullscreenButton = <SectionToolButton variant="quiet" icon={fullscreen.active ? Minimize2 : Expand} label={fullscreen.active ? 'Вернуть обычный вид' : 'Развернуть график'} aria-pressed={fullscreen.active} onClick={fullscreen.toggle} />
   return <div className={`section-workbench${graphView ? ' section-workbench--graph' : ' section-workbench--setup'}${fullscreen.active ? ' is-expanded' : ''}`}>
     <SectionAreaNavigation actions={<>{!graphView && documentActions}</>} value={view} onChange={id => onSearch({ ...search, view: id, mode: undefined, selection: undefined })}>
-      <h1 className="section-document-title">{section.title || 'Новый разрез'}</h1>
+      <h1 className="section-document-title">{displayTitle || 'Новый разрез'}</h1>
       {(error && routeBlocker?.status !== 'blocked' || stale.length > 0) && <div className="section-document-alerts">{messages}</div>}
       <div className="section-workbench__main">{graphView ? <SectionGraphicWorkspace view={view} title={sectionViews.find(v => v.id === view)?.label ?? 'Разрез'} cameraActions={fullscreenButton} documentActions={documentActions} helpTarget={helpTarget}>{editor}</SectionGraphicWorkspace> : editor}</div>
     </SectionAreaNavigation>

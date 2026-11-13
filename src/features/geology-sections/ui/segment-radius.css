@@ -7,6 +7,3 @@
 .section-segment-radius__input > span { font-size: 11px; line-height: 16px; color: var(--text-secondary); }
 .section-segment-radius > p { margin: 0; font-size: 11px; line-height: 17px; color: var(--text-secondary); }
 .section-document-setup .section-segment-radius { margin: 0 10px 10px; }
-
-.section-corridor-key { display: inline-flex; align-items: center; gap: 6px; color: var(--color-brand-700); }
-.section-corridor-key::before { content: ""; width: 18px; height: 12px; border: 1px dashed #3d78c9; background: rgb(37 99 189 / .1); border-radius: 3px; }
