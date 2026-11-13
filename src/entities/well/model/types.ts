@@ -57,6 +57,22 @@ export type WellStatusHistoryItem = {
   changedAt: string
 }
 
+type WellPassportLegacyPeople = {
+  author: string
+  chiefGeologist: string
+  chiefGeophysicist: string
+  drillingManager: string
+  samplingPerformer: string
+  interpretationPerformer: string
+  surveyor: string
+}
+
+export type WellPassportPerson = {
+  id: string
+  position: string
+  name: string
+}
+
 export type WellBgdData = {
   name: number
   depositId: string
@@ -81,17 +97,11 @@ export type WellBgdData = {
     bottomOffsetLength: number | null
     bottomOffsetAzimuth: number | null
   }
-  passport: {
+  passport: Partial<WellPassportLegacyPeople> & {
     documentStartDate: string
     documentEndDate: string
     date: string
-    author: string
-    chiefGeologist: string
-    chiefGeophysicist: string
-    drillingManager: string
-    samplingPerformer: string
-    interpretationPerformer: string
-    surveyor: string
+    people?: WellPassportPerson[]
   }
   drilling: {
     startedAt: string

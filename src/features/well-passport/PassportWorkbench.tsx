@@ -1,19 +1,17 @@
-import { ChevronLeft, ChevronRight, CircleHelp, Download, FileText, Info, Maximize, Minus, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Printer, Search, SlidersHorizontal, X, ZoomIn } from 'lucide-react'
-import { useEffect, useRef, useState, type Dispatch, type ReactElement, type ReactNode, type SetStateAction } from 'react'
+import { ChevronLeft, ChevronRight, FileText, Maximize, PanelLeftClose, PanelLeftOpen, Search, UnfoldHorizontal, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '../../shared/ui/Button'
-import { Tooltip } from '../../shared/ui/Tooltip'
 import { WorkspaceDialog } from '../../shared/ui/WorkspaceDialog'
 import { cellText, download, excelDocument, rasterSheet, serializeSheet } from './documentActions'
 import { ExportDialog, TemplateDialog, TrackDialog, WellDetailsDialog, type ExportFormat } from './PassportDialogs'
 import { PassportSettingsPanel } from './PassportSettingsPanel'
+import { PassportInspector } from './PassportInspector'
+import { PassportIconButton as IconButton, PassportToolbar } from './PassportToolbar'
 import { PassportSheet, SHEET_HEIGHT, SHEET_WIDTH } from './PassportSheet'
 import { loadSettings, number, PASSPORT_STORAGE_PREFIX, passportPages, passportWells, templates, type PassportSettings, type PassportWell, type TemplateId, type TrackId } from './model'
 import './passport.css'
 
-function IconButton({ label, children, onClick, disabled, pressed, expanded }: { label: string; children: ReactElement; onClick: () => void; disabled?: boolean; pressed?: boolean; expanded?: boolean }) {
-  return <Tooltip content={label}><Button variant="quiet" size="sm" className="passport-icon-button" aria-label={label} disabled={disabled} aria-pressed={pressed} aria-expanded={expanded} onClick={onClick}>{children}</Button></Tooltip>
-}
 type RegistryState = { query: string; filter: TemplateId | 'all' }
 function WellRegistry({ well, onSelect, onClose, state, onState }: { well: PassportWell; onSelect: (id: string) => void; onClose: () => void; state: RegistryState; onState: (state: RegistryState) => void }) {
   const { query, filter } = state
@@ -29,13 +27,13 @@ function WellRegistry({ well, onSelect, onClose, state, onState }: { well: Passp
   </>
 }
 type Dialog = 'template' | 'export' | 'info' | 'help' | TrackId | null
-export function PassportWorkbench({ well, onSelect, sampling = false, navigation }: { well: PassportWell; onSelect: (id: string) => void; sampling?: boolean; navigation?: ReactNode }) {
+export function PassportWorkbench({ well, onSelect, sampling = false }: { well: PassportWell; onSelect: (id: string) => void; sampling?: boolean }) {
   const [registryOpen, setRegistryOpen] = useState(() => window.innerWidth >= 1180), [settingsOpen, setSettingsOpen] = useState(() => window.innerWidth >= 900)
   const [registryState, setRegistryState] = useState<RegistryState>({ query: '', filter: 'all' })
-  return <PassportDocument navigation={navigation} sampling={sampling} key={well.id} well={well} onSelect={onSelect} registryOpen={registryOpen} setRegistryOpen={setRegistryOpen} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen} registryState={registryState} onRegistryState={setRegistryState} />
+  return <PassportDocument sampling={sampling} key={well.id} well={well} onSelect={onSelect} registryOpen={registryOpen} setRegistryOpen={setRegistryOpen} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen} registryState={registryState} onRegistryState={setRegistryState} />
 }
-function PassportDocument({ well, onSelect, registryOpen, setRegistryOpen, settingsOpen, setSettingsOpen, registryState, onRegistryState, sampling, navigation }: {
-  navigation?: ReactNode; sampling: boolean; well: PassportWell; onSelect: (id: string) => void; registryOpen: boolean; setRegistryOpen: Dispatch<SetStateAction<boolean>>; settingsOpen: boolean; setSettingsOpen: Dispatch<SetStateAction<boolean>>; registryState: RegistryState; onRegistryState: (state: RegistryState) => void
+function PassportDocument({ well, onSelect, registryOpen, setRegistryOpen, settingsOpen, setSettingsOpen, registryState, onRegistryState, sampling }: {
+  sampling: boolean; well: PassportWell; onSelect: (id: string) => void; registryOpen: boolean; setRegistryOpen: Dispatch<SetStateAction<boolean>>; settingsOpen: boolean; setSettingsOpen: Dispatch<SetStateAction<boolean>>; registryState: RegistryState; onRegistryState: (state: RegistryState) => void
 }) {
   const [settings, setSettings] = useState(() => loadSettings(well, sampling))
   const [dialog, setDialog] = useState<Dialog>(null), [pageIndex, setPageIndex] = useState(0), [zoom, setZoom] = useState<number | 'width' | 'page'>('width'), [viewport, setViewport] = useState({ width: 800, height: 650 }), [storageError, setStorageError] = useState(''), [message, setMessage] = useState('')
@@ -77,17 +75,28 @@ function PassportDocument({ well, onSelect, registryOpen, setRegistryOpen, setti
     setMessage(`Файл ${format.toUpperCase()} подготовлен`)
   }
   return <div className={`passport-workbench${registryOpen ? ' has-registry' : ''}${settingsOpen ? ' has-settings' : ''}`}>
-    <header className="passport-document-header"><div className="passport-document-title"><span className="passport-title-icon"><FileText size={23} /></span><div><div className="passport-breadcrumb">Геология <span>/</span> Паспорт скважины</div><div className="passport-title-line"><h1>{well.name}</h1><span>{well.purpose}</span><IconButton label="Сведения о скважине" onClick={() => setDialog('info')}><Info size={17} /></IconButton></div></div></div><div className="passport-header-actions"><IconButton label="Как работать с паспортом" onClick={() => setDialog('help')}><CircleHelp size={18} /></IconButton><span className={`passport-saved${storageError ? ' has-error' : ''}`} role="status">{storageError ? 'Не сохранено' : 'Сохранено'}</span><Button variant="secondary" size="sm" onClick={print}><Printer size={16} /><span>Печать</span></Button><Button size="sm" onClick={() => setDialog('export')}><Download size={16} /><span>Экспорт</span></Button></div></header>
     <div className="passport-workspace">
-      {registryOpen && <><button type="button" className="passport-pane-backdrop passport-registry-backdrop" aria-label="Закрыть список скважин" onClick={() => setRegistryOpen(false)} /><aside className="passport-registry" aria-label="Список скважин для паспорта">{navigation}<WellRegistry well={well} state={registryState} onState={onRegistryState} onSelect={id => { onSelect(id); if (window.innerWidth < 1180) setRegistryOpen(false) }} onClose={() => setRegistryOpen(false)} /></aside></>}
+      {registryOpen && <><button type="button" className="passport-pane-backdrop passport-registry-backdrop" aria-label="Закрыть список скважин" onClick={() => setRegistryOpen(false)} /><aside className="passport-registry" aria-label="Список скважин для паспорта"><WellRegistry well={well} state={registryState} onState={onRegistryState} onSelect={id => { onSelect(id); if (window.innerWidth < 1180) setRegistryOpen(false) }} onClose={() => setRegistryOpen(false)} /></aside></>}
       <section className="passport-document" aria-label="Предпросмотр паспорта">
-        <div className="passport-toolbar"><div className="passport-toolbar-group" data-tooltip-group><IconButton label={registryOpen ? 'Скрыть список скважин' : 'Показать список скважин'} onClick={() => setRegistryOpen(!registryOpen)}>{registryOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}</IconButton><span className="passport-toolbar-divider" /><IconButton label="Уменьшить предпросмотр" disabled={zoomPercent <= 25} onClick={() => setZoom(Math.max(25, Math.round(zoomPercent / 10) * 10 - 10))}><Minus size={17} /></IconButton><span className="passport-zoom-value" aria-label="Увеличение предпросмотра">{zoomPercent}%</span><IconButton label="Увеличить предпросмотр" disabled={zoomPercent >= 175} onClick={() => setZoom(Math.min(175, Math.round(zoomPercent / 10) * 10 + 10))}><ZoomIn size={17} /></IconButton><span className="passport-toolbar-divider" /><IconButton label="Вписать по ширине" pressed={zoom === 'width'} onClick={() => setZoom('width')}><SlidersHorizontal size={17} /></IconButton><IconButton label="Показать лист целиком" pressed={zoom === 'page'} onClick={() => setZoom('page')}><Maximize size={17} /></IconButton></div>{!settingsOpen && <div className="passport-toolbar-group"><IconButton label="Показать настройки паспорта" expanded={false} onClick={() => setSettingsOpen(true)}><PanelRightOpen size={17} /></IconButton></div>}</div>
-        <div className="passport-document-context"><span><strong>{sampling ? 'Паспорт с опробованием' : 'Паспорт рудных интервалов'}</strong><i />{number(settings.from)}–{number(settings.to)} м<i />1:{settings.scale}</span><span>{sampling ? 'Расширенный лист · опробование' : 'A3 · книжный'}</span></div>
+        <PassportToolbar unsaved={!!storageError} onPrint={print} onExport={() => setDialog('export')} onInfo={() => setDialog('info')} onHelp={() => setDialog('help')}
+          registry={<IconButton label={registryOpen ? 'Свернуть реестр' : 'Показать список скважин'} onClick={() => setRegistryOpen(!registryOpen)}>{registryOpen ? <PanelLeftClose size={17} aria-hidden="true" /> : <PanelLeftOpen size={17} aria-hidden="true" />}</IconButton>}
+          view={<>
+            <IconButton label="Уменьшить предпросмотр" disabled={zoomPercent <= 25} onClick={() => setZoom(Math.max(25, Math.round(zoomPercent / 10) * 10 - 10))}><ZoomOut size={17} aria-hidden="true" /></IconButton>
+            <span className="passport-zoom-value" aria-label="Увеличение предпросмотра">{zoomPercent}%</span>
+            <IconButton label="Увеличить предпросмотр" disabled={zoomPercent >= 175} onClick={() => setZoom(Math.min(175, Math.round(zoomPercent / 10) * 10 + 10))}><ZoomIn size={17} aria-hidden="true" /></IconButton>
+            <IconButton label="Вписать по ширине" pressed={zoom === 'width'} onClick={() => setZoom('width')}><UnfoldHorizontal size={17} aria-hidden="true" /></IconButton>
+            <IconButton label="Показать лист целиком" pressed={zoom === 'page'} onClick={() => setZoom('page')}><Maximize size={17} aria-hidden="true" /></IconButton>
+          </>}
+        >
+        <div className="passport-document-context"><div className="passport-document-details"><h1>{well.name}</h1><span className="passport-well-purpose">{well.purpose}</span><span>{number(settings.from)}–{number(settings.to)} м</span><span>1:{settings.scale}</span></div><span>{sampling ? 'Расширенный лист · опробование' : 'A3 · книжный'}</span></div>
         {storageError && <div className="passport-storage-error" role="alert">{storageError}</div>}
         <div ref={stage} className="passport-preview-scroll"><div className="passport-paper-wrap" ref={paper} style={{ width: paperWidth }}><PassportSheet sampling={sampling} well={well} settings={settings} range={page} pageNumber={pageIndex + 1} pageCount={pages.length} onTrack={id => setDialog(id)} /></div></div>
         <div className="passport-preview-footer"><span className="passport-preview-tip">Наведите указатель на ГК или ЭК/ПС для значений; нажмите для таблицы</span><div className="passport-pagination"><IconButton label="Предыдущий лист" disabled={pageIndex === 0} onClick={() => { setPageIndex(pageIndex - 1); stage.current?.scrollTo({ top: 0, left: 0 }) }}><ChevronLeft size={17} /></IconButton><label><span>Лист</span><select aria-label="Номер листа паспорта" value={pageIndex} onChange={e => { setPageIndex(Number(e.target.value)); stage.current?.scrollTo({ top: 0, left: 0 }) }}>{pages.map((_, i) => <option key={i} value={i}>{i + 1}</option>)}</select><span>из {pages.length}</span></label><IconButton label="Следующий лист" disabled={pageIndex === pages.length - 1} onClick={() => { setPageIndex(pageIndex + 1); stage.current?.scrollTo({ top: 0, left: 0 }) }}><ChevronRight size={17} /></IconButton></div><span className="passport-page-range">{number(page.from)}–{number(page.to)} м</span></div>
+        </PassportToolbar>
       </section>
-      {settingsOpen && <><button type="button" className="passport-pane-backdrop passport-settings-backdrop" aria-label="Закрыть настройки паспорта" onClick={() => setSettingsOpen(false)} /><aside id="passport-inspector" className="passport-inspector" aria-label="Оформление паспорта"><div className="passport-pane-heading"><h2>Настройки паспорта</h2><IconButton label="Скрыть настройки паспорта" onClick={() => setSettingsOpen(false)}><PanelRightClose size={17} /></IconButton></div><PassportSettingsPanel well={well} settings={settings} onChange={patch} onTrack={id => setDialog(id)} /></aside></>}
+      <PassportInspector open={settingsOpen} onToggle={() => setSettingsOpen(open => !open)}>
+        <PassportSettingsPanel well={well} settings={settings} onChange={patch} onTrack={id => setDialog(id)} />
+      </PassportInspector>
     </div>
     {message && <div className="passport-toast" role="status">{message}</div>}
     {dialog === 'template' && <TemplateDialog selected={settings.template} onClose={() => setDialog(null)} onSelect={id => { patch({ template: id, tracks: [...templates.find(t => t.id === id)!.tracks] }); setDialog(null) }} />}

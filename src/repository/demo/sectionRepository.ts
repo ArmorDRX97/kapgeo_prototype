@@ -58,7 +58,8 @@ export function validateSection(value: unknown): GeologySection {
   issues.push(...segmentMembershipIssues(section))
   if (issues.length) throw new Error(issues.join(' '))
   if (section.top <= section.bottom) throw new Error('Верхняя отметка должна быть выше нижней.')
-  if (new Set(section.wellIds).size !== section.wellIds.length || section.wellIds.some(id => !sectionSources(section).some(w => w.id === id))) throw new Error('Состав скважин содержит неизвестные или повторяющиеся объекты.')
+  const sourceIds = new Set(sectionSources(section).map(well => well.id))
+  if (new Set(section.wellIds).size !== section.wellIds.length || section.wellIds.some(id => !sourceIds.has(id))) throw new Error('Состав скважин содержит неизвестные или повторяющиеся объекты.')
   for (const [layer, wellIds] of Object.entries(section.participation)) {
     if (new Set(wellIds).size !== wellIds.length || wellIds.some(id => !section.wellIds.includes(id))) throw new Error('Участвующие скважины должны входить в разрез.')
     const layerLinks = section.links[layer as keyof typeof section.links]

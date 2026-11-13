@@ -13,11 +13,18 @@ function readInfo(target: EventTarget | null) {
 }
 
 /** Object information opens by context menu or keyboard. Maps may also show a preview. */
-export function GraphicInspection({ children, onSelect, hoverPreview = true }: { children: ReactNode; onSelect?: (id: string) => void; hoverPreview?: boolean }) {
+export function GraphicInspection({ children, onSelect, hoverPreview = true, highlightOnClick = true }: { children: ReactNode; onSelect?: (id: string) => void; hoverPreview?: boolean; highlightOnClick?: boolean }) {
   const [hover, setHover] = useState<{ info: GraphicInfo; x: number; y: number } | null>(null)
   const [menu, setMenu] = useState<typeof hover>(null), [detail, setDetail] = useState<GraphicInfo | null>(null)
   const { ref: panel, handle } = useMovablePopup(menu)
   const origin = useRef<Element | null>(null)
+  const highlighted = useRef<SVGElement | null>(null)
+  const highlight = (element: SVGElement | null) => {
+    if (highlighted.current === element) return
+    highlighted.current?.removeAttribute('data-inspected')
+    element?.setAttribute('data-inspected', '')
+    highlighted.current = element
+  }
   useEffect(() => {
     if (!menu) return
     panel.current?.querySelector<HTMLButtonElement>('[role=menuitem]')?.focus({ preventScroll: true })
@@ -35,20 +42,30 @@ export function GraphicInspection({ children, onSelect, hoverPreview = true }: {
     document.addEventListener('pointerdown', outside); document.addEventListener('keydown', key); document.addEventListener('wheel', close, true); document.addEventListener('focusin', close)
     return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', key); document.removeEventListener('wheel', close, true); document.removeEventListener('focusin', close) }
   }, [menu, panel])
-  const showMenu = (target: EventTarget | null, x: number, y: number) => { const object = readInfo(target); if (!object) return false; origin.current = object.element; setHover(null); setMenu({ info: object.info, x, y }); return true }
+  const showMenu = (target: EventTarget | null, x: number, y: number) => { const object = readInfo(target); if (!object) return false; highlight(object.element); origin.current = object.element; setHover(null); setMenu({ info: object.info, x, y }); return true }
   const events: HTMLAttributes<HTMLDivElement> = {
     onPointerDown: () => setHover(null),
+    onClickCapture: event => {
+      if (!(event.target instanceof SVGElement)) return
+      const element = highlightOnClick ? event.target.closest<SVGElement>('[data-inspect]') : null
+      const click = event.nativeEvent
+      // Panning can cancel the click later in the capture phase.
+      queueMicrotask(() => { if (!click.defaultPrevented) highlight(element?.isConnected ? element : null) })
+    },
     onPointerOver: hoverPreview ? event => { const object = readInfo(event.target); if (object && !menu && !detail) setHover({ info: object.info, x: event.clientX, y: event.clientY }); else setHover(null) } : undefined,
     onPointerOut: () => setHover(null), onPointerLeave: () => setHover(null),
     onContextMenu: event => { if (showMenu(event.target, event.clientX, event.clientY)) { event.preventDefault(); event.stopPropagation() } },
     onFocus: hoverPreview ? event => { const object = readInfo(event.target); if (object) { const r = object.element.getBoundingClientRect(); setHover({ info: object.info, x: r.left, y: r.bottom }) } } : undefined,
     onBlur: () => setHover(null),
     onKeyDown: event => {
+      if (event.key === 'Escape' && !event.defaultPrevented) highlight(null)
       if (event.key === 'ContextMenu' || event.key === 'F10' && event.shiftKey) { const r = (event.target as Element).getBoundingClientRect(); if (showMenu(event.target, r.left, r.bottom)) { event.preventDefault(); event.stopPropagation() } }
-      if (event.key === 'Enter') {
+      if (event.key === 'Enter' || event.key === ' ') {
         const object = readInfo(event.target)
         if (!object) return
-        event.preventDefault(); origin.current = object.element; setDetail(object.info); setHover(null)
+        event.preventDefault()
+        highlight(object.element)
+        if (event.key === 'Enter') { origin.current = object.element; setDetail(object.info); setHover(null) }
       }
     },
   }

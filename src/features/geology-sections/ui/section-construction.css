@@ -1,0 +1,70 @@
+.section-construction {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: var(--surface-panel);
+}
+.section-construction__header, .section-construction__footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  padding: 10px 16px;
+}
+.section-construction__header { border-bottom: 1px solid var(--border-default); }
+.section-construction__header > div { padding-left: 16px; border-left: 1px solid var(--border-default); }
+.section-construction__header h1 { margin: 0; font-size: 17px; line-height: 1.3; }
+.section-construction__header p { margin: 2px 0 0; color: var(--text-secondary); font-size: 12px; }
+.section-construction__header ol { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+.section-construction__header li { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 13px; font-weight: 600; }
+.section-construction__header li > span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-subtle); font-size: 12px; }
+.section-construction__header li[aria-current] { color: var(--color-brand-800); }
+.section-construction__header li[aria-current] > span { background: var(--color-brand-700); color: white; }
+.section-construction__header li[data-complete="true"] > span { background: var(--color-brand-50); color: var(--color-brand-800); }
+.section-construction__body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 320px); min-height: 0; }
+.section-construction__panel { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; overflow: auto; border-left: 1px solid var(--border-default); }
+.section-construction__panel h2 { margin: 0; font-size: 16px; }
+.section-construction__instruction { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
+.section-construction__metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.section-construction__metrics > span { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; padding: 7px 8px; border-radius: var(--radius-sm); background: var(--surface-subtle); color: var(--text-secondary); font-size: 12px; }
+.section-construction__metrics strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.section-construction__vertices { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.section-construction__vertices li { display: flex; align-items: center; gap: 9px; padding: 5px 8px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); font-size: 12px; font-variant-numeric: tabular-nums; }
+.section-construction__vertices li > strong { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--color-brand-50); color: var(--color-brand-800); }
+.section-construction__actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.section-construction__coordinates { padding: 8px 0; border-top: 1px solid var(--border-default); }
+.section-construction__coordinates summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+.section-construction__coordinates form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.section-construction__coordinates form button { grid-column: 1 / -1; justify-self: start; }
+.section-construction__panel .section-search { margin: 0; }
+.section-construction__panel .section-search :is(input, select) { width: 100%; min-width: 0; min-height: 36px; }
+.section-construction__wells { min-height: 88px; overflow: auto; border: 1px solid var(--border-default); border-radius: var(--radius-sm); }
+.section-construction__wells table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+.section-construction__wells :is(th, td) { padding: 6px 8px; border-bottom: 1px solid var(--border-default); }
+.section-construction__wells th { position: sticky; top: 0; background: var(--surface-subtle); }
+.section-construction__wells td:last-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.section-construction__wells label { display: flex; align-items: center; gap: 7px; cursor: pointer; }
+.section-construction__wells label input { margin: 0; accent-color: var(--color-brand-700); }
+.section-construction__wells small { display: block; color: var(--text-secondary); font-size: 11px; }
+.section-construction__wells > button { margin: 4px 8px; }
+.section-construction__summary { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; margin: 0; padding: 8px; border-radius: var(--radius-sm); background: var(--surface-subtle); font-size: 13px; }
+.section-construction__summary dt { color: var(--text-secondary); }
+.section-construction__summary dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.section-construction__save-form { display: grid; gap: 10px; }
+.section-construction__save-form details label { margin-top: 8px; }
+.section-construction__footer { justify-content: space-between; border-top: 1px solid var(--border-default); }
+.section-construction-map { position: relative; display: flex; min-width: 0; min-height: 300px; background: var(--surface-subtle); }
+.section-construction-map .map-canvas-area { padding: 6px; }
+.section-construction-map__tools { position: absolute; top: 39px; left: 70px; z-index: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 3px; max-width: calc(100% - 94px); padding: 3px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-panel); box-shadow: var(--shadow-sm); }
+.section-construction-map__tools .section-icon-tool { width: 28px; min-width: 28px; height: 28px; min-height: 28px; }
+.section-construction__preview { min-width: 0; min-height: 0; overflow: auto; scrollbar-width: thin; background: var(--surface-subtle); }
+.section-construction__preview:focus-visible { outline-offset: -2px; }
+.section-construction__empty { display: grid; place-items: center; margin: 0; color: var(--text-secondary); background: var(--surface-subtle); text-align: center; }
+@media (max-width: 860px) {
+  .section-construction__header ol { width: 100%; margin-left: 0; }
+  .section-construction__body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(340px, 1fr) auto; overflow: auto; }
+  .section-construction__panel { border-top: 1px solid var(--border-default); border-left: 0; }
+  .section-construction__wells { max-height: 320px; }
+}

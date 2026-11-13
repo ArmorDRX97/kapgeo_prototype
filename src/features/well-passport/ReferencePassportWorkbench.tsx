@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowDown, ArrowUp, Check, CircleHelp, Download, FileText, Info, Maximize, Minus, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Printer, Redo2, RotateCcw, Settings2, Trash2, Undo2, ZoomIn } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, Columns3, Maximize, Plus, Redo2, RotateCcw, Trash2, Undo2, UnfoldHorizontal, ZoomIn, ZoomOut } from 'lucide-react'
 import { Button } from '../../shared/ui/Button'
 import { Switch } from '../../shared/ui/Switch'
 import { WorkspaceDialog } from '../../shared/ui/WorkspaceDialog'
 import { ExportDialog, type ExportFormat } from './PassportDialogs'
+import { PassportInspector } from './PassportInspector'
+import { PassportIconButton, PassportToolbar } from './PassportToolbar'
 import { download, rasterSheet } from './documentActions'
 import { composeReferenceSvg, loadReferenceSettings, referenceColumns, referenceDefaults, referenceSize, referenceStorageKey, type ReferenceColumnId, type ReferenceSettings } from './referenceModel'
 import raw22 from './assets/127cd.svg?raw'
@@ -12,10 +14,10 @@ import raw231 from './assets/127cd-2.svg?raw'
 import './passport.css'
 
 type Dialog = 'add'|'template'|'export'|'info'|'help'|'legend'|ReferenceColumnId|null
-export function ReferencePassportWorkbench({ id, navigation }:{id:'127-2-2'|'127-2-3-1';navigation:ReactNode}) {
+export function ReferencePassportWorkbench({ id }:{id:'127-2-2'|'127-2-3-1'}) {
  const name=id==='127-2-2'?'127СВ-2-2':'127СВ-2-3-1', raw=id==='127-2-2'?raw22:raw231
  const [settings,setSettings]=useState(()=>loadReferenceSettings(id)),[past,setPast]=useState<ReferenceSettings[]>([]),[future,setFuture]=useState<ReferenceSettings[]>([])
- const [left,setLeft]=useState(true),[right,setRight]=useState(true),[dialog,setDialog]=useState<Dialog>(null),[error,setError]=useState('')
+ const [right,setRight]=useState(() => window.innerWidth >= 900),[dialog,setDialog]=useState<Dialog>(null),[error,setError]=useState('')
  const [zoom,setZoom]=useState<number|'width'|'page'>('width'),[viewport,setViewport]=useState({width:1200,height:800})
  const [from,setFrom]=useState(String(settings.from)),[to,setTo]=useState(String(settings.to))
  const stage=useRef<HTMLDivElement>(null),size=referenceSize(settings)
@@ -30,7 +32,7 @@ export function ReferencePassportWorkbench({ id, navigation }:{id:'127-2-2'|'127
  const valid=from.trim()!==''&&to.trim()!==''&&Number.isFinite(Number(from))&&Number.isFinite(Number(to))&&Number(from)>=647.1&&Number(to)<=712.6&&Number(to)>Number(from)
  const title=referenceColumns.find(c=>c.id===dialog)?.name
  useEffect(()=>{const el=stage.current;if(!el)return;const observer=new ResizeObserver(([entry])=>{if(entry)setViewport({width:entry.contentRect.width,height:entry.contentRect.height})});observer.observe(el);return()=>observer.disconnect()},[])
- const icon=(label:string,child:ReactNode,action:()=>void,disabled=false)=><Button size="sm" variant="quiet" className="passport-icon-button" aria-label={label} title={label} onClick={action} disabled={disabled}>{child}</Button>
+ const icon=(label:string,child:ReactElement,action:()=>void,disabled=false)=><PassportIconButton label={label} onClick={action} disabled={disabled}>{child}</PassportIconButton>
  const exportDocument=async(format:ExportFormat)=>{
   if(format==='pdf'){window.print();return}
   if(format==='svg')download(new Blob([source],{type:'image/svg+xml;charset=utf-8'}),`${name}-паспорт.svg`)
@@ -45,23 +47,35 @@ export function ReferencePassportWorkbench({ id, navigation }:{id:'127-2-2'|'127
   }
  }
  return <div className="passport-workbench passport-reference-workbench">
-  <header className="passport-document-header"><div className="passport-document-title"><span className="passport-title-icon"><FileText size={23}/></span><div><div className="passport-breadcrumb">Геология <span>/</span> Паспорт скважины</div><div className="passport-title-line"><h1>{name}</h1><span>Геологическая колонка</span>{icon('Сведения о скважине',<Info size={17}/>,()=>setDialog('info'))}</div></div></div><div className="passport-header-actions">{icon('Как работать с паспортом',<CircleHelp size={17}/>,()=>setDialog('help'))}<span className={`passport-saved${error?' has-error':''}`}>{error?'Не сохранено':'Сохранено'}</span><Button size="sm" variant="secondary" onClick={()=>window.print()}><Printer size={16}/>Печать</Button><Button size="sm" onClick={()=>setDialog('export')}><Download size={16}/>Экспорт</Button></div></header>
   <div className="passport-workspace">
-   {left&&<aside className="passport-document-sidebar">{navigation}<div className="passport-reference-context"><strong>Буденовское</strong><span>Блок 127св · {name}</span></div></aside>}
    <section className="passport-document" aria-label="Предпросмотр паспорта">
-    <div className="passport-toolbar"><div className="passport-toolbar-group">{icon(left?'Скрыть боковое меню':'Показать боковое меню',left?<PanelLeftClose size={17}/>:<PanelLeftOpen size={17}/>,()=>setLeft(!left))}<span className="passport-toolbar-divider"/>{icon('Уменьшить предпросмотр',<Minus size={17}/>,()=>setZoom(Math.max(10,percent-10)),percent<=10)}<span className="passport-zoom-value">{percent}%</span>{icon('Увеличить предпросмотр',<ZoomIn size={17}/>,()=>setZoom(Math.min(250,percent+10)),percent>=250)}{icon('Вписать по ширине',<Settings2 size={17}/>,()=>setZoom('width'))}{icon('Показать лист целиком',<Maximize size={17}/>,()=>setZoom('page'))}<span className="passport-toolbar-divider"/>{icon('Отменить изменение',<Undo2 size={17}/>,undo,!past.length)}{icon('Повторить изменение',<Redo2 size={17}/>,redo,!future.length)}<Button size="sm" variant="secondary" onClick={()=>setDialog('add')}><Plus size={15}/>Колонка</Button></div>{!right && <div className="passport-toolbar-group">{icon('Показать настройки паспорта',<PanelRightOpen size={17}/>,()=>setRight(true))}</div>}</div>
-    <div className="passport-document-context"><span><strong>Геологическая колонка</strong><i/>{settings.from}–{settings.to} м<i/>1:{settings.scale}</span><span>{Math.round(size.width/100)} × {Math.round(size.height/100)} мм</span></div>
+    <PassportToolbar unsaved={!!error} onPrint={()=>window.print()} onExport={()=>setDialog('export')} onInfo={()=>setDialog('info')} onHelp={()=>setDialog('help')}
+     view={<>
+      {icon('Уменьшить предпросмотр',<ZoomOut size={17} aria-hidden="true"/>,()=>setZoom(Math.max(10,percent-10)),percent<=10)}
+      <span className="passport-zoom-value" aria-label="Увеличение предпросмотра">{percent}%</span>
+      {icon('Увеличить предпросмотр',<ZoomIn size={17} aria-hidden="true"/>,()=>setZoom(Math.min(250,percent+10)),percent>=250)}
+      <PassportIconButton label="Вписать по ширине" pressed={zoom==='width'} onClick={()=>setZoom('width')}><UnfoldHorizontal size={17} aria-hidden="true"/></PassportIconButton>
+      <PassportIconButton label="Показать лист целиком" pressed={zoom==='page'} onClick={()=>setZoom('page')}><Maximize size={17} aria-hidden="true"/></PassportIconButton>
+     </>}
+     actions={<>
+      {icon('Отменить изменение',<Undo2 size={17} aria-hidden="true"/>,undo,!past.length)}
+      {icon('Повторить изменение',<Redo2 size={17} aria-hidden="true"/>,redo,!future.length)}
+      {icon('Добавить колонку',<Columns3 size={17} aria-hidden="true"/>,()=>setDialog('add'))}
+     </>}
+    >
+    <div className="passport-document-context"><div className="passport-document-details"><h1>{name}</h1><span className="passport-well-purpose">Геологическая колонка</span><span>{settings.from}–{settings.to} м</span><span>1:{settings.scale}</span></div><span>{Math.round(size.width/100)} × {Math.round(size.height/100)} мм</span></div>
     {error&&<div className="passport-storage-error" role="alert">{error}</div>}
     <div ref={stage} className="passport-preview-scroll"><div className="passport-paper-wrap" style={{width:Math.max(160,width)}}><img className="reference-document-image" src={image} alt={`Паспорт ${name}: ${settings.columns.map(id=>referenceColumns.find(c=>c.id===id)!.name).join(', ')}`}/></div></div>
     <div className="passport-preview-footer"><span>Колонок: {settings.columns.length}</span><span>Лист 1 из 1</span><span>{settings.from}–{settings.to} м</span></div>
+    </PassportToolbar>
    </section>
-   {right&&<aside className="passport-inspector" aria-label="Оформление паспорта"><div className="passport-pane-heading"><h2>Настройки паспорта</h2>{icon('Скрыть настройки паспорта',<PanelRightClose size={17}/>,()=>setRight(false))}</div><div className="passport-settings-scroll">
+   <PassportInspector open={right} onToggle={()=>setRight(open=>!open)}><div className="passport-settings-scroll">
     <div className="passport-settings-section"><div className="passport-setting-heading"><h3>Геологическая колонка</h3></div><p className="passport-muted">Интервал, состав колонок и оформление листа.</p><div className="data-actions"><Button size="sm" variant="secondary" onClick={()=>setDialog('template')}>Шаблон</Button><Button size="sm" variant="quiet" onClick={()=>patch(referenceDefaults())}><RotateCcw size={14}/>Исходный вид</Button></div></div>
     <div className="passport-settings-section"><form className="passport-range" onSubmit={e=>{e.preventDefault();if(valid)patch({from:Number(from),to:Number(to)})}}><div className="passport-setting-heading"><h3>Интервал глубин</h3><span>м</span></div><div className="passport-range-fields"><label><span>От</span><input aria-label="Паспорт: от, м" type="number" step="0.1" value={from} onChange={e=>setFrom(e.target.value)}/></label><span>—</span><label><span>До</span><input aria-label="Паспорт: до, м" type="number" step="0.1" value={to} onChange={e=>setTo(e.target.value)}/></label></div>{!valid&&<p className="passport-error" role="alert">Задайте интервал в пределах 647,1–712,6 м.</p>}{(Number(from)!==settings.from||Number(to)!==settings.to)&&<Button type="submit" size="sm" disabled={!valid}>Применить интервал</Button>}<div className="passport-range-presets"><button type="button" onClick={()=>patch({from:647.1,to:712.6})}>Весь лист</button></div></form><div className="passport-setting-heading"><h3>Масштаб документа</h3></div><div className="passport-segmented" role="group" aria-label="Масштаб документа">{([50,100,200] as const).map(scale=><button type="button" key={scale} aria-pressed={settings.scale===scale} onClick={()=>patch({scale})}>1:{scale}</button>)}</div></div>
     <div className="passport-settings-section"><div className="passport-setting-heading"><h3>Состав колонок</h3><Button size="sm" variant="quiet" aria-label="Добавить колонку" onClick={()=>setDialog('add')}><Plus size={16}/></Button></div><div className="reference-column-list">{settings.columns.map((id,index)=><div key={id}><button type="button" className="reference-column-name" onClick={()=>setDialog(id)}>{referenceColumns.find(c=>c.id===id)!.name}</button><div>{icon(`Поднять: ${id}`,<ArrowUp size={13}/>,()=>move(index,-1),index===0)}{icon(`Опустить: ${id}`,<ArrowDown size={13}/>,()=>move(index,1),index===settings.columns.length-1)}<Button variant="quiet" size="sm" className="reference-column-delete" aria-label={`Убрать: ${referenceColumns.find(c=>c.id===id)!.name}`} disabled={settings.columns.length===1} onClick={()=>patch({columns:settings.columns.filter(c=>c!==id)})}><Trash2 size={14}/></Button></div></div>)}</div></div>
     <div className="passport-settings-section"><Button size="sm" variant="secondary" onClick={()=>setDialog('legend')}>Условные обозначения</Button><Switch label="Сетка глубин и значений" checked={settings.grid} onChange={grid=>patch({grid})}/><div className="passport-segmented" role="group" aria-label="Цвет паспорта"><button type="button" aria-pressed={settings.color} onClick={()=>patch({color:true})}>Цветной</button><button type="button" aria-pressed={!settings.color} onClick={()=>patch({color:false})}>Чёрно-белый</button></div></div>
     <div className="passport-settings-section"><div className="passport-setting-heading"><h3>Реквизиты документа</h3></div><label className="passport-field"><span>Составил</span><input value={settings.author} maxLength={60} onChange={e=>patch({author:e.target.value})}/></label><label className="passport-field"><span>Дата</span><input type="date" value={settings.date} onChange={e=>patch({date:e.target.value})}/></label></div>
-   </div><div className="passport-settings-footer"><Check size={14}/><span>{error?'Изменения не сохранены':'Настройки сохраняются автоматически'}</span></div></aside>}
+   </div><div className="passport-settings-footer"><Check size={14}/><span>{error?'Изменения не сохранены':'Настройки сохраняются автоматически'}</span></div></PassportInspector>
   </div>
   {dialog==='export'&&<ExportDialog well={{name}} page={1} count={1} sheetLabel={`${Math.round(size.width/100)} × ${Math.round(size.height/100)} мм`} excelDetail="Состав документа и подписи выбранных колонок" onExport={exportDocument} onClose={()=>setDialog(null)}/>}
   {dialog==='add'&&<WorkspaceDialog title="Добавить колонку" size="compact" onClose={()=>setDialog(null)} footer={<Button variant="secondary" onClick={()=>setDialog(null)}>Закрыть</Button>}><div className="reference-add-columns">{referenceColumns.filter(c=>!settings.columns.includes(c.id)).map(c=><Button key={c.id} variant="secondary" onClick={()=>{patch({columns:[...settings.columns,c.id]});setDialog(null)}}><Plus size={15}/>{c.name}</Button>)}{settings.columns.length===referenceColumns.length&&<p>Все колонки уже добавлены. Их порядок и состав меняются в настройках паспорта.</p>}</div></WorkspaceDialog>}

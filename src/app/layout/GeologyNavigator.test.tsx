@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defaultPersona } from '../../entities/session/model/personas'
 import type { UserPersona } from '../../entities/session/model/types'
@@ -7,6 +7,8 @@ import { SessionContext } from '../../entities/session/model/sessionContext'
 import { demoDatabase } from '../../repository/demo/demoDatabase'
 import { bgdFieldWells } from '../../features/geobase/model/bgdField'
 import { primaryWell } from '../../repository/data/wells'
+import * as api from '../../repository/api'
+import { setUiLocale } from '../../shared/lib/useUiLocale'
 import { GeologyNavigator } from './GeologyNavigator'
 
 const route = vi.hoisted(() => ({ navigate: vi.fn(), location: { pathname: '/geology/bgd/DEP-SARYTAU/wells/WELL-1019', search: { tab: 'lithology', view: 'composite' } } }))
@@ -20,13 +22,14 @@ function mount(readOnly = false) {
 
 describe('BGD deposit navigation', () => {
   beforeEach(async () => { route.navigate.mockReset(); await demoDatabase.reset() })
-  afterEach(async () => { cleanup(); await demoDatabase.reset() })
+  afterEach(async () => { cleanup(); vi.restoreAllMocks(); setUiLocale('ru'); await demoDatabase.reset() })
 
-  it('marks only the selected well and groups actions above the full-width search', async () => {
+  it('marks only the selected well and places icon actions to the right of search', async () => {
     mount()
-    await screen.findByRole('button', { name: 'Главная' })
+    await screen.findByRole('button', { name: 'WELL-1019' }, { timeout: 3000 })
     fireEvent.change(screen.getByLabelText('Поиск по скважинам'), { target: { value: '1010' } })
     const well = await screen.findByRole('button', { name: /^WELL-1010/ })
+    expect(screen.getByTitle('Всего скважин')).toHaveTextContent('8 215')
     expect(well).toHaveTextContent(/^WELL-1010$/)
     expect(well.querySelector('svg, i')).toBeNull()
     expect(well.querySelector('.well-navigator__selected')).toBeNull()
@@ -37,11 +40,15 @@ describe('BGD deposit navigation', () => {
     expect(screen.queryByRole('button', { name: 'Все' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Требуют внимания' })).not.toBeInTheDocument()
     const add = screen.getByRole('button', { name: 'Добавить скважину' })
-    expect(add).toHaveTextContent('Добавить')
     const filter = screen.getByRole('button', { name: 'Фильтр' })
-    expect(add.parentElement).toBe(filter.parentElement)
-    expect(filter.closest('header')).toContainElement(screen.getByLabelText('Количество скважин'))
-    expect(filter.closest('header')).not.toContainElement(screen.getByLabelText('Поиск по скважинам'))
+    expect(add.textContent).toBe('')
+    expect(filter.textContent).toBe('')
+    const search = screen.getByLabelText('Поиск по скважинам')
+    const row = search.closest('.well-navigator__search-row')!
+    expect(row).toContainElement(add)
+    expect(row).toContainElement(filter)
+    expect(search.compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(add.compareDocumentPosition(filter) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     fireEvent.click(add)
     expect(route.navigate).toHaveBeenCalledWith({ to: '/geology/bgd/$depositId/wells/new', params: { depositId: 'DEP-SARYTAU' } })
   })
@@ -66,21 +73,70 @@ describe('BGD deposit navigation', () => {
     expect(button).toHaveFocus()
   })
 
-  it('opens the unified deposit overview directly from the collapse-button row', async () => {
+  it('opens the map directly from the icon row and the details from the information dropdown', async () => {
     mount()
-    const trigger = await screen.findByRole('button', { name: 'Главная' })
+    await screen.findByText('Сарытау')
+    const trigger = screen.getByRole('button', { name: 'Карта' })
+    const info = screen.getByRole('button', { name: 'Информация' })
     const collapse = screen.getByRole('button', { name: 'Свернуть список скважин' })
     expect(trigger.closest('header')).toBe(collapse.closest('header'))
-    expect(trigger).not.toHaveAttribute('aria-haspopup')
+    expect(trigger.closest('header')).toBe(info.closest('header'))
     fireEvent.click(trigger)
     expect(route.navigate).toHaveBeenCalledWith({ to: '/geology/bgd/$depositId', params: { depositId: 'DEP-SARYTAU' }, search: {} })
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Сменить месторождение' })).not.toBeInTheDocument()
+    fireEvent.pointerEnter(info, { pointerType: 'mouse' })
+    expect(info).toHaveAttribute('aria-expanded', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'Сведения о месторождении' }))
+    expect(route.navigate).toHaveBeenLastCalledWith({ to: '/geology/bgd/$depositId/conditions', params: { depositId: 'DEP-SARYTAU' } })
+    expect(info).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('shows the localized deposit name and description in the navigation', async () => {
+    mount()
+    await screen.findByText('Сарытау')
+    act(() => setUiLocale('en'))
+    expect(screen.getByText('Sarytau')).toBeVisible()
+    const description = screen.getByRole('button', { name: 'Описание месторождения' })
+    fireEvent.pointerEnter(description, { pointerType: 'mouse' })
+    const panel = screen.getByRole('region', { name: 'Описание месторождения' })
+    expect(panel).toHaveTextContent('Sarytau uranium deposit.')
+    fireEvent.keyDown(panel, { key: 'Escape' })
+    expect(description).toHaveAttribute('aria-expanded', 'false')
+    expect(panel).not.toBeInTheDocument()
+  })
+
+  it('switches deposits from the information dropdown and saves the preference', async () => {
+    mount()
+    await screen.findByText('Сарытау')
+    fireEvent.click(screen.getByRole('button', { name: 'Информация' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сменить месторождение' }))
+    const dialog = screen.getByRole('dialog', { name: 'Сменить месторождение' })
+    expect(within(dialog).queryByRole('button', { name: /Восточная/ })).not.toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole('button', { name: /Северное/ }))
+    await waitFor(() => expect(route.navigate).toHaveBeenCalledWith({ to: '/geology/bgd/$depositId', params: { depositId: 'DEP-SEVERNOE' }, search: {} }))
+    expect((await api.fetchPlatformPreferences()).currentDepositId).toBe('DEP-SEVERNOE')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('keeps the current deposit and shows a switching failure without navigation', async () => {
+    vi.spyOn(api, 'savePlatformPreferences').mockRejectedValueOnce(new Error('Настройки не сохранены.'))
+    mount()
+    await screen.findByText('Сарытау')
+    fireEvent.click(screen.getByRole('button', { name: 'Информация' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сменить месторождение' }))
+    const dialog = screen.getByRole('dialog', { name: 'Сменить месторождение' })
+    fireEvent.click(within(dialog).getByRole('button', { name: /Северное/ }))
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Настройки не сохранены.')
+    expect(route.navigate).not.toHaveBeenCalled()
+    expect((await api.fetchPlatformPreferences()).currentDepositId).toBe('DEP-SARYTAU')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Отменить' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Информация' })).toHaveFocus()
   })
 
   it('preserves the selected well section and view', async () => {
     mount()
-    await screen.findByRole('button', { name: 'Главная' })
+    await screen.findByText('Сарытау')
     fireEvent.change(screen.getByLabelText('Поиск по скважинам'), { target: { value: '1010' } })
     fireEvent.click(await screen.findByRole('button', { name: /^WELL-1010/ }))
     expect(route.navigate).toHaveBeenLastCalledWith({ to: '/geology/bgd/$depositId/wells/$wellId', params: { depositId: 'DEP-SARYTAU', wellId: primaryWell.id }, search: { tab: 'lithology', view: 'composite' }, resetScroll: false })
@@ -88,14 +144,15 @@ describe('BGD deposit navigation', () => {
 
   it('keeps deposit viewing and search available for a read-only user', async () => {
     mount(true)
-    expect(await screen.findByRole('button', { name: 'Главная' })).toBeEnabled()
+    await screen.findByText('Сарытау')
+    expect(screen.getByRole('button', { name: 'Карта' })).toBeEnabled()
     expect(screen.queryByRole('button', { name: 'Редактировать' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('Поиск по скважинам')).toBeEnabled()
     expect(screen.queryByRole('button', { name: 'Добавить скважину' })).not.toBeInTheDocument()
   })
   it('loads the catalogue in batches of 80 and searches beyond the loaded batch', async () => {
     mount()
-    await screen.findByRole('button', { name: 'Главная' })
+    await screen.findByText('Сарытау')
     const catalogueRows = () => screen.getAllByRole('button', { name: /^\d/ })
     expect(catalogueRows()).toHaveLength(80)
     fireEvent.click(screen.getByRole('button', { name: 'Показать ещё 80' }))

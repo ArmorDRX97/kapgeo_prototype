@@ -1,15 +1,17 @@
 import './workspace.css'
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 
-type WorkspaceTab = { id: string; label: ReactNode }
+type WorkspaceTab<Id extends string> = { id: Id; label: ReactNode }
 
 /** A horizontal tab strip with roving focus. Only this strip scrolls on selection. */
-export function WorkspaceTabs({ tabs, value, onChange, label, children }: {
-  tabs: readonly WorkspaceTab[]
-  value: string
-  onChange: (id: string) => void
+export function WorkspaceTabs<Id extends string>({ tabs, value, onChange, label, children, actions, compact = false }: {
+  tabs: readonly WorkspaceTab<Id>[]
+  value: Id
+  onChange: (id: Id) => void
   label: string
   children: ReactNode
+  actions?: ReactNode
+  compact?: boolean
 }) {
   const id = useId()
   const list = useRef<HTMLDivElement>(null)
@@ -40,13 +42,16 @@ export function WorkspaceTabs({ tabs, value, onChange, label, children }: {
       else if (overflow + button.offsetWidth > list.current.scrollLeft + list.current.clientWidth) list.current.scrollLeft = overflow + button.offsetWidth - list.current.clientWidth
     }
   }
-  return <>
-    <div className="workspace-tabs" role="tablist" aria-label={label} ref={list}>
+  const tabList = (
+    <div className={`workspace-tabs${compact ? ' workspace-tabs--compact' : ''}`} role="tablist" aria-label={label} ref={list}>
       {tabs.map((tab, index) => <button key={tab.id} id={`${id}-${tab.id}`} type="button" role="tab" aria-selected={value === tab.id} aria-controls={`${id}-panel`} tabIndex={value === tab.id ? 0 : -1} onClick={() => { if (value !== tab.id) onChange(tab.id) }} onKeyDown={(event) => {
         const destination = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null
         if (destination !== null) { event.preventDefault(); select(destination) }
       }}>{tab.label}</button>)}
     </div>
+  )
+  return <>
+    {actions ? <div className="workspace-tabs-bar">{tabList}{actions}</div> : tabList}
     <div id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-${value}`} tabIndex={0} className="workspace-tab-panel">{children}</div>
   </>
 }

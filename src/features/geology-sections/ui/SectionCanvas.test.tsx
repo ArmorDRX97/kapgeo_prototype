@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { initialSections } from '../../../entities/geology-section/model/fixtures'
 import { layerAnchors, sourceAnchorPoint } from '../../../entities/geology-section/lib/correlation'
@@ -30,7 +30,7 @@ describe('section exploration', () => {
       }
     }
   })
-  it('pans by left drag, suppresses selection after a drag and restores the camera on Escape', () => {
+  it('pans by left drag, suppresses selection after a drag and restores the camera on Escape', async () => {
     vi.stubGlobal('PointerEvent', MouseEvent)
     const section = initialSections()[0]!, original = JSON.stringify(section), select = vi.fn()
     render(<SectionCanvas section={section} onAnchor={select} />)
@@ -46,13 +46,27 @@ describe('section exploration', () => {
     fireEvent.pointerUp(viewport)
     expect(viewport.classList.contains('is-panning')).toBe(false)
     fireEvent.click(point, { detail: 1 })
+    await Promise.resolve()
     expect(select).not.toHaveBeenCalled()
+    expect(point).not.toHaveAttribute('data-inspected')
     const beforeCancel = point.getAttribute('cx')
     fireEvent.pointerDown(viewport, { button: 0, clientX: 400, clientY: 200 })
     fireEvent.pointerMove(viewport, { clientX: 350, clientY: 200 })
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(Number(point.getAttribute('cx'))).toBeCloseTo(Number(beforeCancel), 8)
     expect(JSON.stringify(section)).toBe(original)
+  })
+  it('highlights the clicked contour and moves the highlight to the next inspected object', async () => {
+    render(<SectionCanvas section={initialSections()[0]!} />)
+    const contour = screen.getAllByRole('button', { name: /контур .*сведения/ })[0]!
+    const contact = screen.getAllByRole('button', { name: /Верхний контакт .*: сведения/ })[0]!
+    fireEvent.click(contour)
+    await waitFor(() => expect(contour).toHaveAttribute('data-inspected'))
+    fireEvent.keyDown(contact, { key: ' ' })
+    expect(contact).toHaveAttribute('data-inspected')
+    expect(contour).not.toHaveAttribute('data-inspected')
+    fireEvent.keyDown(contact, { key: 'Escape' })
+    expect(contact).not.toHaveAttribute('data-inspected')
   })
   it('keeps the SVG frame and marker sizes fixed while magnifying the geometry', () => {
     const { container } = render(<SectionCanvas section={initialSections()[0]!} />)

@@ -21,14 +21,13 @@ import { CorrelationEditor } from './ui/CorrelationEditor'
 import { GraphicEditor } from './ui/GraphicEditor'
 import { DrawingEditor } from './ui/DrawingEditor'
 import { SectionGraphicWorkspace, PlotSurface } from './ui/SectionGraphicWorkspace'
-import { SectionDocumentHeader } from './ui/SectionDocumentHeader'
+import { SectionDocumentActions } from './ui/SectionDocumentActions'
 import { SectionAreaNavigation } from './ui/SectionAreaNavigation'
 import { reconcileProfile } from '../../entities/geology-section/lib/segments'
 import './sections.css'
 
 export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, onDeleted, documents=[] }: { documents?:GeologySection[]; initial: GeologySection; persona: UserPersona | null; search: SectionSearch; onSearch: (next: SectionSearch) => void; onSaved: (section: GeologySection) => void; onDeleted?: () => void }) {
   const fullscreen = useMapFullscreen()
-  const [cameraTarget, setCameraTarget] = useState<HTMLDivElement | null>(null)
   const [helpTarget, setHelpTarget] = useState<HTMLDivElement | null>(null)
   const [section, setSection] = useState(initial), [saved, setSaved] = useState(initial)
   const [past, setPast] = useState<GeologySection[]>([]), [future, setFuture] = useState<GeologySection[]>([])
@@ -62,7 +61,12 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
     a.href = url; a.download = `${section.id}-разрез.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
   const graphView = view !== 'overview'
-  const documentActions = <div className="section-actions">{graphView && <div className="section-document-help" ref={setHelpTarget} />}<SectionToolButton variant="quiet" icon={Download} label="Скачать копию разреза JSON" disabled={pendingGeometry} onClick={backup} /><SectionToolButton variant="quiet" icon={Undo2} label="Отменить действие разреза" title="Отменить последнее изменение" disabled={!editable || pendingGeometry || !past.length} onClick={undo} /><SectionToolButton variant="quiet" icon={Redo2} label="Повторить действие разреза" title="Повторить отменённое изменение" disabled={!editable || pendingGeometry || !future.length} onClick={redo} /><Button size="sm" disabled={!editable || !dirty || pendingGeometry} title={pendingGeometry ? 'Сначала примените правки геометрии' : !dirty ? 'Все изменения сохранены' : 'Сохранить изменения разреза'} onClick={() => save()}><Save size={17} />Сохранить разрез</Button></div>
+  const documentButtons = <>
+    <SectionToolButton variant="quiet" icon={Download} label="Скачать копию разреза JSON" disabled={pendingGeometry} onClick={backup} />
+    <SectionToolButton variant="quiet" icon={Undo2} label="Отменить действие разреза" title="Отменить последнее изменение" disabled={!editable || pendingGeometry || !past.length} onClick={undo} />
+    <SectionToolButton variant="quiet" icon={Redo2} label="Повторить действие разреза" title="Повторить отменённое изменение" disabled={!editable || pendingGeometry || !future.length} onClick={redo} />
+    <SectionToolButton icon={Save} label="Сохранить разрез" variant="primary" disabled={!editable || !dirty || pendingGeometry} title={!editable ? 'Сохранить разрез · только просмотр' : pendingGeometry ? 'Сохранить разрез · сначала примените правки геометрии' : !dirty ? 'Сохранить разрез · все изменения сохранены' : undefined} onClick={() => save()} />
+  </>
   const messages = <>{error && routeBlocker?.status !== 'blocked' && <p role="alert" className="section-error">{error}</p>}
     {stale.length > 0 && <p role="status" className="section-preview">Изменились общие вспомогательные опоры: {stale.length}. Сохранена прежняя геометрия. Откройте опоры соответствующего слоя и примените коррекцию.</p>}</>
   const deleteAction = editable && <Button variant="quiet" className="section-delete" disabled={dirty || pendingGeometry} onClick={() => {
@@ -74,12 +78,13 @@ export function SectionWorkbench({ initial, persona, search, onSearch, onSaved, 
         {view === 'ore' && <div className="section-actions section-mode-switch" role="group" aria-label="Источник руды">{(['corrected', 'uncorrected'] as const).map((mode, i) => <Button key={mode} variant={(search.mode ?? 'corrected') === mode ? 'primary' : 'secondary'} onClick={() => onSearch({ ...search, view, mode })}>{['В технологической толще', 'Без поправок'][i]}</Button>)}</div>}
         {view === 'lithology' || view === 'oxidation' || view === 'technology' && search.mode === 'foundation' ? <GraphicEditor key={`${view}-${search.mode}`} {...props} onPending={setPendingGeometry} mode={view === 'technology' ? search.mode as 'foundation' : view} selection={search.selection} onSelect={select} /> : <CorrelationEditor onPending={setPendingGeometry} key={`${view}-${search.mode}`} {...props} layer={view === 'ore' ? search.mode === 'uncorrected' ? 'uncorrected' : 'ore' : view === 'offbalance' ? 'offbalance' : 'technology'} selection={search.selection} onSelect={select} />}
       </>
-  const header = <SectionDocumentHeader section={section} status={!editable ? 'readonly' : pendingGeometry ? 'pending' : dirty ? 'dirty' : 'saved'} actions={documentActions} secondaryActions={deleteAction} message={notice}
-    camera={(graphView || fullscreen.active) && <div className="section-document-camera" role="group" aria-label="Управление видом"><div ref={setCameraTarget} /><SectionToolButton variant="quiet" icon={fullscreen.active ? Minimize2 : Expand} label={fullscreen.active ? 'Вернуть обычный вид' : 'Развернуть график'} aria-pressed={fullscreen.active} onClick={fullscreen.toggle} /></div>} />
+  const documentActions = <SectionDocumentActions section={section} status={!editable ? 'readonly' : pendingGeometry ? 'pending' : dirty ? 'dirty' : 'saved'} help={graphView && <div className="section-document-help" ref={setHelpTarget} />} secondaryActions={deleteAction} message={notice}>{documentButtons}</SectionDocumentActions>
+  const fullscreenButton = <SectionToolButton variant="quiet" icon={fullscreen.active ? Minimize2 : Expand} label={fullscreen.active ? 'Вернуть обычный вид' : 'Развернуть график'} aria-pressed={fullscreen.active} onClick={fullscreen.toggle} />
   return <div className={`section-workbench${graphView ? ' section-workbench--graph' : ' section-workbench--setup'}${fullscreen.active ? ' is-expanded' : ''}`}>
-    <SectionAreaNavigation header={header} value={view} onChange={id => onSearch({ ...search, view: id, mode: undefined, selection: undefined })}>
+    <SectionAreaNavigation actions={<>{!graphView && documentActions}</>} value={view} onChange={id => onSearch({ ...search, view: id, mode: undefined, selection: undefined })}>
+      <h1 className="section-document-title">{section.title || 'Новый разрез'}</h1>
       {(error && routeBlocker?.status !== 'blocked' || stale.length > 0) && <div className="section-document-alerts">{messages}</div>}
-      <div className="section-workbench__main">{graphView ? <SectionGraphicWorkspace view={view} title={sectionViews.find(v => v.id === view)?.label ?? 'Разрез'} cameraTarget={cameraTarget} helpTarget={helpTarget}>{editor}</SectionGraphicWorkspace> : editor}</div>
+      <div className="section-workbench__main">{graphView ? <SectionGraphicWorkspace view={view} title={sectionViews.find(v => v.id === view)?.label ?? 'Разрез'} cameraActions={fullscreenButton} documentActions={documentActions} helpTarget={helpTarget}>{editor}</SectionGraphicWorkspace> : editor}</div>
     </SectionAreaNavigation>
 
     {routeBlocker?.status === 'blocked' && <DiscardChangesDialog error={error} onStay={() => routeBlocker.reset()} onDiscard={() => routeBlocker.proceed()} onSave={editable ? () => save(true) : undefined} />}

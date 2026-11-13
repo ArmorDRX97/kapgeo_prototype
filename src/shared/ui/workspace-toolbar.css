@@ -1,0 +1,58 @@
+.workspace-toolbar-layout {
+  position: relative;
+  display: grid;
+  flex: 1;
+  grid-template: 'toolbar' auto 'content' minmax(0, 1fr) / minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+}
+.workspace-toolbar-layout[data-toolbar-dock="left"] { grid-template: 'toolbar content' minmax(0, 1fr) / auto minmax(0, 1fr); }
+.workspace-toolbar-layout[data-toolbar-dock="right"] { grid-template: 'content toolbar' minmax(0, 1fr) / minmax(0, 1fr) auto; }
+.workspace-toolbar-content { grid-area: content; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.workspace-toolbar {
+  grid-area: toolbar;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  min-height: 39px;
+  padding: 5px 9px;
+  border-block-end: 1px solid var(--border-default);
+  background: var(--surface-panel);
+}
+.workspace-toolbar-items, .workspace-toolbar-group { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.workspace-toolbar-items { flex: 1; }
+.workspace-toolbar-group + .workspace-toolbar-group { padding-inline-start: 6px; border-inline-start: 1px solid var(--border-default); }
+.workspace-toolbar-group--end { margin-inline-start: auto; }
+.workspace-toolbar .workspace-toolbar-group .button, .workspace-toolbar-status {
+  width: 28px; min-width: 28px; height: 28px; min-height: 28px;
+  padding: 0;
+  box-shadow: none;
+}
+.workspace-toolbar-status { display: grid; place-items: center; border-radius: var(--radius-sm); color: var(--text-secondary); }
+.workspace-toolbar-status[data-state="saved"] { color: var(--color-green-600); }
+.workspace-toolbar-status:is([data-state="dirty"], [data-state="pending"]) { color: var(--color-amber-600); }
+.workspace-toolbar-announcement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.workspace-toolbar-handle { position: relative; padding-inline-end: 6px; border-inline-end: 1px solid var(--border-default); }
+.workspace-toolbar .workspace-toolbar-grip { width: 20px; min-width: 20px; min-height: 28px; height: 28px; padding: 0; color: var(--text-secondary); cursor: grab; }
+.workspace-toolbar-grip:active { cursor: grabbing; }
+.workspace-toolbar-grip > svg, .workspace-toolbar-drop-targets svg { pointer-events: none; }
+.workspace-toolbar-options { position: absolute; inset-block-start: calc(100% + 4px); inset-inline-start: 0; z-index: 15; display: grid; min-width: 108px; padding: 3px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-panel); box-shadow: var(--shadow-md); }
+.workspace-toolbar-options .button { justify-content: flex-start; }
+.workspace-toolbar-options [aria-pressed="true"] { background: var(--color-brand-50); color: var(--color-brand-800); }
+.workspace-toolbar-layout:not([data-toolbar-dock="top"]) .workspace-toolbar { flex-direction: column; align-items: center; width: 41px; min-height: 0; padding: 6px 5px; border: 0; }
+.workspace-toolbar-layout[data-toolbar-dock="left"] .workspace-toolbar { border-inline-end: 1px solid var(--border-default); }
+.workspace-toolbar-layout[data-toolbar-dock="right"] .workspace-toolbar { border-inline-start: 1px solid var(--border-default); }
+.workspace-toolbar-layout[data-toolbar-dock="right"] .workspace-toolbar-options { inset-inline: auto 0; }
+.workspace-toolbar-layout:not([data-toolbar-dock="top"]) :is(.workspace-toolbar-items, .workspace-toolbar-group) { flex-direction: column; flex-wrap: nowrap; }
+.workspace-toolbar-layout:not([data-toolbar-dock="top"]) .workspace-toolbar-handle { display: grid; place-items: center; width: 100%; padding: 0 0 6px; border: 0; border-block-end: 1px solid var(--border-default); }
+.workspace-toolbar-layout:not([data-toolbar-dock="top"]) .workspace-toolbar-items { min-height: 0; width: 100%; overflow-y: auto; scrollbar-width: none; }
+.workspace-toolbar-layout:not([data-toolbar-dock="top"]) .workspace-toolbar-group { width: 100%; flex: none; }
+.workspace-toolbar-layout:not([data-toolbar-dock="top"]) .workspace-toolbar-group + .workspace-toolbar-group { padding: 6px 0 0; border: 0; border-block-start: 1px solid var(--border-default); }
+.workspace-toolbar-layout:not([data-toolbar-dock="top"]) .workspace-toolbar-group--end { margin-inline-start: 0; margin-block-start: auto; }
+.workspace-toolbar-drop-targets { position: absolute; inset: 4px; z-index: 16; display: grid; grid-template: 'left top right' 46px 'left . right' minmax(0, 1fr) / clamp(56px, 11%, 104px) minmax(0, 1fr) clamp(56px, 11%, 104px); gap: 5px; pointer-events: none; }
+.workspace-toolbar-drop-targets > div { display: flex; align-items: center; justify-content: center; gap: 5px; border: 1px dashed var(--color-brand-500); border-radius: var(--radius-md); background: var(--color-brand-50); color: var(--color-brand-800); font-size: 12px; font-weight: 600; pointer-events: auto; }
+.workspace-toolbar-drop-targets > div[data-dock="left"] { grid-area: left; flex-direction: column; }
+.workspace-toolbar-drop-targets > div[data-dock="top"] { grid-area: top; }
+.workspace-toolbar-drop-targets > div[data-dock="right"] { grid-area: right; flex-direction: column; }
+.workspace-toolbar-drop-targets > div[data-active="true"] { background: var(--color-brand-200); border-style: solid; }

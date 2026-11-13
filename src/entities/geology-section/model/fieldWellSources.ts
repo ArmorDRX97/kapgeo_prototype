@@ -22,7 +22,7 @@ export function fieldWellSource(id: string): SectionWellSource | undefined {
     uncorrected: [band('R-U', depth * .872, depth * .895), band('R-L', depth * .935, depth * .96)],
     offbalance: [band('B-M', depth * .905, depth * .92, 'impermeable')],
     lithology: [{ id: 'L-U', from: 0, to: depth * .87, rock: 'clay' }, { id: 'L-S', from: depth * .87, to: depth * .97, rock: 'sand' }, { id: 'L-B', from: depth * .97, to: depth, rock: 'silt' }],
-    curves: [{ id: 'gr', name: 'ГК', unit: 'мкР/ч', min: 0, max: 100, samples: Array.from({ length: 81 }, (_, i) => ({ md: depth * i / 80, value: 44 + 20 * Math.sin(i * .51 + head.x) })) }],
+    curves: [{ id: 'gr', name: 'ГК', unit: 'мкР/ч', min: 0, max: 100, samples: Array.from({ length: 81 }, (_, i) => ({ md: depth * (i / 80), value: 44 + 20 * Math.sin(i * .51 + head.x) })) }],
   }
   sources.set(id, source)
   return source

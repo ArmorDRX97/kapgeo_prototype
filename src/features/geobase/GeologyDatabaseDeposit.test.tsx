@@ -9,18 +9,17 @@ import { demoDatabase } from '../../repository/demo/demoDatabase'
 import { GeologyDatabaseDeposit } from './GeologyDatabaseDeposit'
 
 const onOpenDeposit = vi.fn()
-const onOpenConditions = vi.fn()
 
 function mount(depositId = 'DEP-SARYTAU', readOnly = false, admin = false, view: 'overview' | 'conditions' = 'conditions') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const persona = admin ? { ...defaultPersona, roles: ['R13' as const] } : readOnly ? { ...defaultPersona, roles: ['R3' as const] } : defaultPersona
   return render(<QueryClientProvider client={client}><SessionContext.Provider value={{ status: 'authenticated', persona, signIn: () => persona, signOut: vi.fn(), switchPersona: vi.fn() }}>
-    <GeologyDatabaseDeposit depositId={depositId} view={view} onOpenDeposit={onOpenDeposit} onOpenConditions={onOpenConditions} onDeleted={vi.fn()} />
+    <GeologyDatabaseDeposit depositId={depositId} view={view} onOpenDeposit={onOpenDeposit} onDeleted={vi.fn()} />
   </SessionContext.Provider></QueryClientProvider>)
 }
 
 describe('Deposit condition limits', () => {
-  beforeEach(async () => { localStorage.removeItem('kapgeo.ui.locale'); vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} }); vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null); onOpenDeposit.mockReset(); onOpenConditions.mockReset(); await demoDatabase.reset() })
+  beforeEach(async () => { localStorage.removeItem('kapgeo.ui.locale'); vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} }); vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null); onOpenDeposit.mockReset(); await demoDatabase.reset() })
   afterEach(async () => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); await demoDatabase.reset() })
 
   it('opens one editable deposit set, saves and closes, then reloads without approval or versions', async () => {
@@ -107,16 +106,16 @@ describe('Deposit condition limits', () => {
     expect(screen.getByRole('button', { name: 'Добавить участок' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'Добавить залежь' })).toBeVisible()
   })
-  it('starts with a well-only map and a localized heading instead of facts', async () => {
+  it('starts with a well-only map and keeps the filters with the coordinate readout', async () => {
     mount('DEP-SARYTAU', false, false, 'overview')
-    expect(await screen.findByRole('heading', { name: 'Сарытау' })).toBeVisible()
-    expect(screen.getByLabelText('8215 скважин на карте')).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Основные сведения' })).not.toBeInTheDocument()
+    expect(await screen.findByLabelText('8215 скважин на карте')).toBeInTheDocument()
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Редактировать' })).not.toBeInTheDocument()
-    act(() => setUiLocale('en'))
-    expect(screen.getByRole('heading', { name: 'Sarytau' })).toBeVisible()
-    fireEvent.click(screen.getByRole('button', { name: 'Сведения о месторождении' }))
-    expect(onOpenConditions).toHaveBeenCalledWith('DEP-SARYTAU')
+    const coordinates = screen.getByText('X — север · Y — восток · метры')
+    const footer = coordinates.closest('.map-canvas-footer')!
+    expect(footer).toContainElement(screen.getByRole('combobox', { name: 'Участок' }))
+    expect(footer).toContainElement(screen.getByRole('group', { name: 'Типы скважин' }))
+    expect(footer).not.toContainElement(screen.getByRole('group', { name: 'Управление картой' }))
     fireEvent.click(screen.getByRole('button', { name: /Наблюдательная/ }), { altKey: true })
     await waitFor(() => expect(document.querySelector('[data-field-wells]')).toHaveAttribute('data-field-wells', '449'))
     const display = screen.getByRole('button', { name: 'Настройки отображения карты' })
@@ -223,30 +222,6 @@ describe('Deposit condition limits', () => {
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('используется скважинами')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Отменить' }))
     expect(screen.getByRole('button', { name: 'Действия: залежь PR-07' })).toBeInTheDocument()
-  })
-
-  it('switches deposits from the header, saves the preference and excludes hidden entries', async () => {
-    mount('DEP-SARYTAU', false, false, 'overview')
-    fireEvent.click(await screen.findByRole('button', { name: 'Сменить месторождение' }))
-    const dialog = screen.getByRole('dialog', { name: 'Сменить месторождение' })
-    expect(within(dialog).queryByRole('button', { name: /Восточная/ })).not.toBeInTheDocument()
-    fireEvent.click(within(dialog).getByRole('button', { name: /Северное/ }))
-    await waitFor(() => expect(onOpenDeposit).toHaveBeenCalledWith('DEP-SEVERNOE'))
-    expect((await api.fetchPlatformPreferences()).currentDepositId).toBe('DEP-SEVERNOE')
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-  })
-
-  it('keeps the current deposit and shows a switching failure without navigation', async () => {
-    vi.spyOn(api, 'savePlatformPreferences').mockRejectedValueOnce(new Error('Настройки не сохранены.'))
-    mount('DEP-SARYTAU', false, false, 'overview')
-    fireEvent.click(await screen.findByRole('button', { name: 'Сменить месторождение' }))
-    const dialog = screen.getByRole('dialog', { name: 'Сменить месторождение' })
-    fireEvent.click(within(dialog).getByRole('button', { name: /Северное/ }))
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Настройки не сохранены.')
-    expect(onOpenDeposit).not.toHaveBeenCalled()
-    expect((await api.fetchPlatformPreferences()).currentDepositId).toBe('DEP-SARYTAU')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Отменить' }))
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('shows audit in the same view only with permission and omits editing for readers', async () => {

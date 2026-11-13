@@ -59,7 +59,6 @@
 .alpha-inspector { align-self: start; max-height: calc(100dvh - 200px); overflow-y: auto; position: sticky; top: var(--space-2); }
 .alpha-workspace .wellog__body, .alpha-workspace .wellog__track { cursor: default; }
 .alpha-workspace .wellog__body--panning .wellog__track { cursor: grabbing; }
-.alpha-workspace :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .alpha-passport { padding: var(--space-4); }
 .alpha-passport-settings fieldset { display: flex; align-items: end; gap: var(--space-3); flex-wrap: wrap; border: 0; padding: 0; }
 .alpha-passport-settings .alpha-field { max-width: 180px; }
@@ -95,3 +94,5 @@
 
 .alpha-plotbar .button[aria-pressed="true"] { color: var(--color-brand-700); background: var(--surface-selected, #eaf2ff); }
 .alpha-plotbar .button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.alpha-curve-point:focus { outline: none; }
+.alpha-curve-point:is([aria-pressed="true"], :focus-visible) { stroke: var(--geo-selection-stroke); stroke-width: 2; vector-effect: non-scaling-stroke; }

@@ -1,0 +1,7 @@
+.workspace-panel-heading { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 4px; min-height: 34px; padding: 2px 8px; border-bottom: 1px solid var(--border-default); background: var(--surface-subtle); }
+.workspace-panel-heading > h2 { min-width: 0; margin: 0; font-size: 12px; font-weight: 650; }
+.workspace-panel-heading > .ui-tooltip-trigger > .workspace-panel-toggle { width: 26px; min-width: 26px; min-height: 26px; padding: 0; color: var(--text-secondary); }
+.workspace-panel-heading[data-open="false"] { flex: 1; padding: 0; border: 0; }
+.workspace-panel-heading[data-open="false"] > .ui-tooltip-trigger { align-self: stretch; flex: 1; }
+.workspace-panel-heading[data-open="false"] > .ui-tooltip-trigger > .workspace-panel-toggle { flex: 1; flex-direction: column; width: 100%; gap: 7px; border-radius: 0; font-size: 12px; }
+.workspace-panel-toggle > span { writing-mode: vertical-rl; rotate: 180deg; }

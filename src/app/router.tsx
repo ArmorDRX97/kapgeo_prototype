@@ -61,7 +61,7 @@ const interpretationRoute = createRoute({ getParentRoute: () => rootRoute, path:
   if (!search.mode) throw redirect({ to: '/geology/interpretation/$method', params: { method: 'gamma' }, search: { well: search.well, from: search.from, to: search.to }, replace: true })
 }, component: InterpretationPage })
 const alphaInterpretationRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/interpretation/$method', validateSearch: validateAlphaSearch, component: AlphaInterpretationPage })
-const sectionsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/sections', component: SectionsPage })
+const sectionsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/sections', validateSearch: validateSectionSearch, component: SectionsPage })
 const sectionRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/sections/$sectionId', validateSearch: validateSectionSearch, component: SectionsPage })
 const plansRoute = createRoute({ getParentRoute: () => rootRoute, path: '/geology/plans', beforeLoad: async () => {
   let first: string | undefined

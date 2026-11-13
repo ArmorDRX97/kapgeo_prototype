@@ -2,6 +2,14 @@
 .workspace-tabs > button { flex: none; min-height: 40px; padding: var(--space-2) var(--space-4); display: flex; align-items: center; gap: var(--space-2); border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--text-secondary); cursor: pointer; font-size: var(--font-size-base); }
 .workspace-tabs > button[aria-selected="true"] { color: var(--color-brand-800); background: var(--color-brand-50); border-color: var(--color-brand-200); font-weight: 700; }
 .workspace-tabs > button:hover { background: var(--surface-subtle); }
+.workspace-tabs--compact { flex: none; gap: 3px; padding: 4px 8px; border-width: 0 0 1px; border-radius: 0; }
+.workspace-tabs--compact > :is(button, a) { display: flex; align-items: center; gap: 6px; flex: none; min-height: 30px; padding: 4px 8px; border: 1px solid transparent; border-radius: var(--radius-sm); color: var(--text-secondary); background: transparent; font-size: 12px; text-decoration: none; white-space: nowrap; }
+.workspace-tabs--compact > a:hover { background: var(--surface-subtle); }
+.workspace-tabs--compact > a[aria-current="page"] { color: var(--color-brand-800); background: var(--color-brand-50); border-color: var(--color-brand-200); font-weight: 700; }
+.workspace-tabs--compact > :is(button, a):focus-visible { outline-offset: -2px; }
+.workspace-tabs--compact > :is(button, a) svg { flex: none; }
+.workspace-tabs-bar { position: relative; display: flex; align-items: center; flex: none; min-width: 0; border-bottom: 1px solid var(--border-default); background: var(--surface-panel); }
+.workspace-tabs-bar > .workspace-tabs { flex: 1; border: 0; border-radius: 0; }
 .workspace-tab-panel { min-width: 0; }
 .discard-changes-dialog { width: min(480px, calc(100vw - 32px)); padding: var(--space-6); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-panel); box-shadow: var(--shadow-lg); }
 .discard-changes-dialog::backdrop { background: color-mix(in srgb, var(--surface-dark) 45%, transparent); }

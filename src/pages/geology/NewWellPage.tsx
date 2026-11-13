@@ -22,6 +22,7 @@ import { DiscardChangesDialog } from '../../shared/ui/DiscardChangesDialog'
 import '../../features/geobase/bgd-workbench.css'
 import { BgdWellLogsTab } from './components/BgdWellLogsTab'
 import { BgdWellConstructionTab } from './components/BgdWellConstructionTab'
+import { BgdWellPassportTab } from './components/BgdWellPassportTab'
 import { BgdWellDeviationTab } from './components/BgdWellDeviationTab'
 import { BgdWellCoreRunsTab, BgdWellCoreSamplesTab } from './components/BgdWellCoreTabs'
 import { BgdWellLithologyTab } from './components/BgdWellLithologyTab'
@@ -216,7 +217,6 @@ export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: 
   const setBgd = <Key extends keyof WellBgdData>(key: Key, value: WellBgdData[Key]) => setForm((current) => ({ ...current, bgd: { ...current.bgd!, [key]: value } }))
   const setFormField = <Key extends keyof CreateWellInput>(key: Key, value: CreateWellInput[Key]) => setForm((current) => ({ ...current, [key]: value }))
   const setGeometry = (key: keyof WellBgdData['geometry'], value: number | null) => setBgd('geometry', { ...bgd.geometry, [key]: value })
-  const setPassport = (key: keyof WellBgdData['passport'], value: string) => setBgd('passport', { ...bgd.passport, [key]: value })
   const setDrilling = <Key extends keyof WellBgdData['drilling']>(key: Key, value: WellBgdData['drilling'][Key]) => setForm(current => ({ ...current, bgd: { ...current.bgd!, drilling: { ...current.bgd!.drilling, [key]: value } } }))
   const setDevelopment = <Key extends keyof WellBgdData['development']>(key: Key, value: WellBgdData['development'][Key]) => setBgd('development', { ...bgd.development, [key]: value })
   const setGeology = <Key extends keyof WellBgdData['geology']>(key: Key, value: WellBgdData['geology'][Key]) => setBgd('geology', { ...bgd.geology, [key]: value })
@@ -240,7 +240,8 @@ export function WellEditorPage({ depositId, wellId: requestedWellId, activeTab: 
 
   const displayWell = wellQuery.data && fieldWell ? { ...wellQuery.data, code: fieldWell.name } : wellQuery.data
   const content = <>
-    {(['description', 'geometry', 'passport', 'documentation'] as BgdWellSection[]).includes(activeTab) && <DescriptionTab selectedWellName={fieldWell?.name} section={activeTab} view={view} form={form} master={master} currentDeposit={currentDeposit} disabled={generalDisabled} technologyDisabled={technologyDisabled} setFormField={setFormField} setBgd={setBgd} setGeometry={setGeometry} setPassport={setPassport} calculateBottom={calculateBottom} />}
+    {(['description', 'geometry', 'documentation'] as BgdWellSection[]).includes(activeTab) && <DescriptionTab selectedWellName={fieldWell?.name} section={activeTab} view={view} form={form} master={master} currentDeposit={currentDeposit} disabled={generalDisabled} technologyDisabled={technologyDisabled} setFormField={setFormField} setBgd={setBgd} setGeometry={setGeometry} calculateBottom={calculateBottom} />}
+    {activeTab === 'passport' && <BgdWellPassportTab passport={bgd.passport} disabled={generalDisabled} onChange={(passport) => setBgd('passport', passport)} />}
     {activeTab === 'drilling' && <DrillingTab bgd={bgd} disabled={generalDisabled} loggingDisabled={loggingDisabled} setDrilling={setDrilling} />}
     {activeTab === 'development' && <DevelopmentTab bgd={bgd} disabled={technologyDisabled} setDevelopment={setDevelopment} />}
     {activeTab === 'construction' && (wellQuery.data ? <BgdWellConstructionTab key={wellId} well={displayWell!} canEdit={editMode && (canEditAll)} onDirtyChange={setDataDirty} /> : <Panel title="Конструкция скважины" description="Конструктивные элементы сохраняются в карточке скважины."><div className="geobase-empty"><Plus size={18} /><strong>Сначала создайте скважину</strong><span>После сохранения здесь можно будет добавлять интервалы конструкции.</span></div></Panel>)}
@@ -274,8 +275,9 @@ function CoreRequiresSavedWell({ title }: { title: string }) {
 type FormSetter = <Key extends keyof CreateWellInput>(key: Key, value: CreateWellInput[Key]) => void
 type BgdSetter = <Key extends keyof WellBgdData>(key: Key, value: WellBgdData[Key]) => void
 
-function DescriptionTab({ selectedWellName, section, view, form, master, currentDeposit, disabled, technologyDisabled, setFormField, setBgd, setGeometry, setPassport, calculateBottom }: { selectedWellName?: string; section: BgdWellSection; view?: string; form: CreateWellInput; master: Awaited<ReturnType<typeof fetchGeologicalMasterData>> | undefined; currentDeposit: Awaited<ReturnType<typeof fetchGeologicalMasterData>>['deposits'][number] | undefined; disabled: boolean; technologyDisabled: boolean; setFormField: FormSetter; setBgd: BgdSetter; setGeometry: (key: keyof WellBgdData['geometry'], value: number | null) => void; setPassport: (key: keyof WellBgdData['passport'], value: string) => void; calculateBottom: () => void }) {
+function DescriptionTab({ selectedWellName, section, view, form, master, currentDeposit, disabled, technologyDisabled, setFormField, setBgd, setGeometry, calculateBottom }: { selectedWellName?: string; section: BgdWellSection; view?: string; form: CreateWellInput; master: Awaited<ReturnType<typeof fetchGeologicalMasterData>> | undefined; currentDeposit: Awaited<ReturnType<typeof fetchGeologicalMasterData>>['deposits'][number] | undefined; disabled: boolean; technologyDisabled: boolean; setFormField: FormSetter; setBgd: BgdSetter; setGeometry: (key: keyof WellBgdData['geometry'], value: number | null) => void; calculateBottom: () => void }) {
   const bgd = form.bgd!
+  const setPassport = (key: 'documentStartDate' | 'documentEndDate', value: string) => setBgd('passport', { ...bgd.passport, [key]: value })
   const selectedOccurrenceId = currentDeposit?.occurrences.find((item) => item.id === bgd.lensId || item.legacyIds?.includes(bgd.lensId))?.id ?? bgd.lensId
   return <div className="bgd-well-stack">
     {section === 'description' && <Panel title={view === 'notes' ? 'Описание и примечание' : 'Общие сведения'} description="Название скважины уникально в пределах выбранного месторождения.">{view !== 'notes' && <div className="form-grid bgd-well-form-grid">
@@ -307,7 +309,6 @@ function DescriptionTab({ selectedWellName, section, view, form, master, current
       </div>
     </Panel>}
     {section === 'documentation' && <Panel title="Документация" description="Период составления документации по скважине."><div className="form-grid bgd-well-paired-grid"><label className="field"><span className="field__label">Дата начала составления документации</span><input type="datetime-local" disabled={disabled} max={bgd.passport.documentEndDate || undefined} value={bgd.passport.documentStartDate} onChange={(event) => setPassport('documentStartDate', event.target.value)} /></label><label className="field"><span className="field__label">Дата окончания составления документации</span><input type="datetime-local" disabled={disabled} min={bgd.passport.documentStartDate || undefined} value={bgd.passport.documentEndDate} onChange={(event) => setPassport('documentEndDate', event.target.value)} /></label></div></Panel>}
-    {section === 'passport' && <Panel title="Паспорт" description="Паспортные сведения и ответственные специалисты."><div className="form-grid bgd-well-paired-grid"><label className="field"><span className="field__label">Дата составления паспорта</span><input type="datetime-local" disabled={disabled} max={new Date().toISOString().slice(0, 16)} value={bgd.passport.date} onChange={(event) => setPassport('date', event.target.value)} /></label></div><div className="form-grid bgd-well-form-grid bgd-passport-people-grid">{([['author', 'Паспорт составил'], ['chiefGeologist', 'Главный геолог'], ['chiefGeophysicist', 'Главный геофизик'], ['drillingManager', 'Начальник бурения'], ['samplingPerformer', 'Опробование выполнил'], ['interpretationPerformer', 'Интерпретацию выполнил'], ['surveyor', 'Топограф']] as const).map(([key, label]) => <PersonField key={key} label={label} value={bgd.passport[key]} disabled={disabled} onChange={(value) => setPassport(key, value)} />)}</div></Panel>}
   </div>
 }
 

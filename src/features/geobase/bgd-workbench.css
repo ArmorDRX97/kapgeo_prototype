@@ -2,54 +2,45 @@
 .app-frame.app-frame--bgd > .topbar { height: var(--topbar-height); min-height: var(--topbar-height); }
 .app-frame--bgd .topbar__module-nav { height: calc(var(--topbar-height) - 1px); }
 .app-frame--bgd > .app-workspace--bgd { height: calc(100dvh - var(--topbar-height)); min-height: 0; }
-.app-workspace--bgd > .geology-navigator { width: var(--bgd-context-width); flex-basis: var(--bgd-context-width); height: 100%; padding: var(--space-3); background: var(--surface-panel); }
-.geology-navigator__body { display: flex; min-height: 0; flex: 1; flex-direction: column; gap: var(--space-3); }
-.geology-navigator__header { display: flex; min-height: 56px; flex: none; align-items: center; justify-content: space-between; gap: var(--space-2); }
-.geology-navigator__header > span { color: var(--text-secondary); font-size: var(--font-size-sm); }
-.app-workspace--bgd .geology-navigator__header { gap: var(--space-2); margin-bottom: var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-default); }
-.geology-navigator__deposit { display: flex; flex: 1; min-width: 0; height: 40px; align-items: center; gap: var(--space-2); padding: 0 var(--space-3); color: var(--text-primary); background: transparent; border: 1px solid transparent; border-radius: var(--radius-md); text-align: left; cursor: pointer; transition: background-color var(--duration-fast), border-color var(--duration-fast); }
-.geology-navigator__deposit:hover, .geology-navigator__deposit[aria-current="page"] { background: var(--color-brand-50); border-color: var(--color-brand-200); }
-.geology-navigator__deposit > span:last-child { display: grid; min-width: 0; gap: var(--space-1); }
-.geology-navigator__deposit strong { overflow: hidden; font-size: var(--font-size-base); text-overflow: ellipsis; white-space: nowrap; }
-.geology-navigator__deposit small { color: var(--text-secondary); font-size: var(--font-size-sm); }
-.app-workspace--bgd .geology-navigator__deposit .deposit-context-card__icon { width: var(--space-9); height: var(--space-9); flex: none; }
-.geology-navigator.is-collapsed .geology-navigator__deposit { display: none; }
-.geology-navigator__collapse { display: grid; width: 40px; height: 40px; flex: none; place-items: center; color: var(--text-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-subtle); cursor: pointer; }
-.geology-navigator__collapse:hover { background: var(--color-brand-50); color: var(--color-brand-800); }
-.app-workspace--bgd .deposit-context-card { padding: 0 0 var(--space-3); border: 0; border-bottom: 1px solid var(--border-default); border-radius: 0; background: transparent; box-shadow: none; }
-.app-workspace--bgd .deposit-context-card__trigger { padding: var(--space-2); background: transparent; }
-.app-workspace--bgd .deposit-context-card__trigger:hover, .app-workspace--bgd .deposit-context-card__trigger[aria-expanded="true"] { background: var(--color-brand-50); }
-.app-workspace--bgd .deposit-context-card__menu { top: calc(100% - var(--space-2)); left: 0; right: 0; max-height: max(120px, calc(100dvh - var(--topbar-height) - 176px)); overflow-y: auto; padding: var(--space-2); background: var(--surface-panel); box-shadow: var(--shadow-lg); }
-.deposit-context-card__menu-label { padding: var(--space-2); color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: 650; }
-.deposit-context-card__menu-separator { height: 1px; margin: var(--space-2) 0; background: var(--border-default); }
-.app-workspace--bgd .deposit-context-card__menu > button { min-height: 44px; color: var(--text-primary); }
-.deposit-context-card__menu > button > svg { flex: none; }
-.deposit-context-card__menu > button > span { flex: 1; }
-.deposit-context-card__menu > button em { min-width: 22px; padding: var(--space-1); color: var(--text-secondary); background: var(--surface-subtle); border-radius: var(--radius-lg); font-size: var(--font-size-sm); font-style: normal; text-align: center; }
-.app-workspace--bgd .deposit-context-card__menu > button.is-active { color: var(--color-brand-800); background: var(--color-brand-50); }
+.app-frame--bgd { --bgd-context-width: 192px; }
+.app-workspace--bgd > .geology-navigator { width: var(--bgd-context-width); flex-basis: var(--bgd-context-width); height: 100%; gap: 0; overflow: visible; padding: 0; background: var(--surface-panel); }
+.geology-navigator__body { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.geology-navigator__header, .bgd-section-navigation > header { display: flex; flex: none; align-items: center; gap: 4px; min-height: 47px; padding: 4px 6px; border-bottom: 1px solid var(--border-default); }
+.geology-navigator__header > .ui-tooltip-trigger, .geology-navigator__header > .geology-navigator__close { margin-inline-start: auto; }
+.app-workspace--bgd .geology-navigator__icon, .bgd-section-navigation__actions button { display: grid; width: 28px; height: 28px; flex: none; place-items: center; padding: 0; color: var(--text-secondary); border: 0; border-radius: var(--radius-sm); background: transparent; cursor: pointer; }
+.app-workspace--bgd :is(.geology-navigator__info, .geology-navigator__map) .geology-navigator__icon { width: 36px; height: 36px; }
+.geology-navigator__icon:hover, .bgd-section-navigation__actions button:hover, .geology-navigator__icon[aria-current="page"], :is(.geology-navigator__info, .geology-navigator__description) > button[aria-expanded="true"],
+.well-navigator__filter-button:is([aria-expanded="true"], [data-active="true"]) { color: var(--color-brand-800); background: var(--color-brand-50); }
+.geology-navigator__icon:disabled { opacity: .45; cursor: default; }
+.geology-navigator__icon:focus-visible, .bgd-section-navigation__actions button:focus-visible, .geology-navigator__info-panel > button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.app-workspace--bgd .geology-navigator__close { display: none; }
+.geology-navigator__info { position: relative; }
+.geology-navigator__dropdown-panel { position: absolute; inset-block-start: 100%; z-index: 3; border: 1px solid var(--border-default); border-radius: var(--radius-md); color: var(--text-primary); background: var(--surface-panel); box-shadow: var(--shadow-lg); }
+.geology-navigator__info-panel { inset-inline-start: 0; display: grid; width: min(248px, calc(100vw - 24px)); padding: 5px; }
+.geology-navigator__info-panel > button { display: flex; align-items: center; gap: 9px; min-height: 36px; padding: 5px 10px; border: 0; border-radius: var(--radius-sm); background: transparent; color: inherit; text-align: start; font-size: 14px; cursor: pointer; }
+.geology-navigator__info-panel > button:hover { background: var(--color-brand-50); }
+.geology-navigator__info-panel > button > svg { flex: none; color: var(--text-secondary); }
+.geology-navigator__deposit { position: relative; display: flex; flex: none; align-items: center; justify-content: space-between; gap: 4px; min-height: 47px; padding-inline: 8px 6px; border-bottom: 1px solid var(--border-default); }
+.geology-navigator__deposit > strong { min-width: 0; overflow: hidden; color: var(--text-primary); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.geology-navigator__description { display: flex; align-self: stretch; align-items: center; }
+.geology-navigator__description-panel { inset-inline-start: 6px; width: min(300px, calc(100vw - 16px)); max-height: min(320px, 50dvh); overflow: auto; padding: 12px 14px; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-wrap; }
 .app-workspace--bgd .well-navigator { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-.app-workspace--bgd .well-navigator > header { display: grid; min-height: 0; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-1); border: 0; }
-.app-workspace--bgd .well-navigator__title { justify-content: space-between; }
-.app-workspace--bgd .well-navigator__count { min-width: calc(5ch + 16px); padding-inline: var(--space-2); flex: none; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.app-workspace--bgd .well-navigator__actions { display: flex; gap: var(--space-2); }
-.app-workspace--bgd .well-navigator__actions > button { flex: 1; }
-.app-workspace--bgd .well-navigator__add { display: inline-flex; min-width: 0; height: var(--space-9); align-items: center; justify-content: center; gap: var(--space-2); padding: 0 var(--space-3); border: 1px solid transparent; border-radius: var(--radius-sm); color: var(--text-inverse); background: var(--color-brand-800); font-size: var(--font-size-sm); font-weight: 650; cursor: pointer; }
-.app-workspace--bgd .well-navigator__add:hover { background: var(--color-brand-700); }
-.app-workspace--bgd .well-navigator__add:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.app-workspace--bgd .well-navigator__search-row { display: flex; flex: none; align-items: stretch; gap: var(--space-2); margin: var(--space-2) var(--space-2) var(--space-1); }
-.app-workspace--bgd .well-navigator__search { flex: 1; min-width: 0; height: var(--space-9); min-height: var(--space-9); margin: 0; }
-.app-workspace--bgd .well-navigator__filter-button { display: inline-flex; flex: none; height: var(--space-9); align-items: center; justify-content: center; gap: var(--space-2); padding: 0 var(--space-3); color: var(--text-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-panel); font-size: var(--font-size-sm); font-weight: 650; }
-.app-workspace--bgd .well-navigator__filter-button { cursor: pointer; transition: background-color var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast); }
-.app-workspace--bgd .well-navigator__filter-button:hover { color: var(--color-brand-800); border-color: var(--color-brand-200); background: var(--color-brand-50); }
-.app-workspace--bgd .well-navigator__filter-button:active { color: var(--color-brand-800); border-color: var(--color-brand-300); background: var(--color-brand-100); }
-.app-workspace--bgd .well-navigator__filter-button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.app-workspace--bgd .well-navigator__filter-button[aria-expanded="true"], .app-workspace--bgd .well-navigator__filter-button[data-active="true"] { color: var(--color-brand-800); border-color: var(--color-brand-200); background: var(--color-brand-50); }
-.app-workspace--bgd .well-navigator__list { padding-inline: 0; }
-.geology-navigator__rail { margin: var(--space-3) auto; writing-mode: vertical-rl; font-size: var(--font-size-sm); color: var(--text-secondary); }
-.app-workspace--bgd > .geology-navigator.is-collapsed { width: var(--bgd-navigation-rail); flex-basis: var(--bgd-navigation-rail); padding: var(--space-1); }
-.geology-navigator.is-collapsed .geology-navigator__body, .geology-navigator.is-collapsed .geology-navigator__header > span { display: none; }
+.well-navigator__title { display: flex; align-items: baseline; justify-content: space-between; gap: 4px; padding: 8px 8px 4px; color: var(--text-secondary); font-size: 12px; font-weight: 650; }
+.well-navigator__count { font-size: 11px; font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.well-navigator__search-row { display: flex; flex: none; align-items: center; gap: 2px; padding: 0 6px; }
+.app-workspace--bgd .well-navigator__search-row .geology-navigator__icon { height: 32px; }
+.app-workspace--bgd .well-navigator__search { flex: 1; min-width: 0; min-height: 32px; margin: 0; gap: 5px; padding: 0 7px; border-radius: var(--radius-sm); }
+.well-navigator__search > svg { flex: none; }
+.well-navigator__search:focus-within { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.well-navigator__search input { font-size: 13px; }
+.app-workspace--bgd .well-navigator__list { margin-top: 4px; padding-inline: 3px; }
+.app-workspace--bgd > .geology-navigator.is-collapsed { width: 36px; flex-basis: 36px; }
+.geology-navigator.is-collapsed .geology-navigator__header { justify-content: center; padding-inline: 0; }
+.geology-navigator.is-collapsed .geology-navigator__header > .ui-tooltip-trigger { margin-inline-start: 0; }
+.geology-navigator.is-collapsed :is(.geology-navigator__body, .geology-navigator__info, .geology-navigator__map) { display: none; }
 .app-workspace--bgd .well-navigator__item.is-active { box-shadow: none; }
-.app-workspace--bgd .well-navigator__open { min-height: 21px; grid-template-columns: minmax(0, 1fr) 8px; padding: 1px var(--space-2); }
+.app-workspace--bgd .well-navigator__open { min-height: 25px; grid-template-columns: minmax(0, 1fr) 8px; padding: 3px var(--space-2); }
+.app-workspace--bgd .well-navigator__open:focus-visible { outline-offset: -2px; }
 .app-workspace--bgd .well-navigator__open strong { font-size: 12px; font-weight: 400; line-height: 1.25; }
 .app-workspace--bgd .well-navigator__open small { font-size: 11px; color: var(--text-secondary); }
 .well-navigator__selected { width: 8px; height: 8px; border-radius: 50%; background: var(--color-green-600); }
@@ -57,19 +48,20 @@
 .app-workspace--bgd > .app-workspace__content { overflow: auto; }
 .app-workspace--bgd > .app-workspace__content:has(.bgd-well-workbench) { padding: 0; overflow: hidden; }
 .bgd-well-workbench { display: flex; height: 100%; min-width: 0; }
-.bgd-section-navigation { width: var(--bgd-sections-width); min-width: 0; flex: 0 0 var(--bgd-sections-width); height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 0 var(--space-3) var(--space-3); border-right: 1px solid var(--border-default); background: var(--surface-panel); }
-.bgd-section-navigation > header { position: sticky; top: 0; z-index: 2; display: flex; min-height: 68px; padding-block: var(--space-3); align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-4); background: var(--surface-panel); }
-.bgd-section-navigation > header > .bgd-section-navigation__identity { display: grid; min-width: 0; gap: var(--space-1); }
-.bgd-section-navigation__actions { display: flex; flex: none; gap: var(--space-2); }
-.bgd-section-navigation > header small { color: var(--text-secondary); font-size: var(--font-size-sm); }
-.bgd-section-navigation > header strong { color: var(--text-primary); overflow-wrap: anywhere; font-size: var(--font-size-base); }
-.bgd-section-navigation > header button { display: grid; width: 40px; height: 40px; flex: none; place-items: center; color: var(--text-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-subtle); cursor: pointer; }
-.bgd-section-navigation.is-collapsed { width: var(--bgd-navigation-rail); flex-basis: var(--bgd-navigation-rail); padding: 0 var(--space-1) var(--space-1); }
-.bgd-section-navigation.is-collapsed > header { margin-bottom: var(--space-2); }
+.bgd-section-navigation { width: var(--bgd-sections-width); min-width: 0; flex: 0 0 var(--bgd-sections-width); height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-block-end: var(--space-3); border-right: 1px solid var(--border-default); background: var(--surface-panel); }
+.bgd-section-navigation > header { position: sticky; top: 0; z-index: 2; justify-content: space-between; padding-inline-start: 8px; background: var(--surface-panel); }
+.bgd-section-navigation__identity { display: grid; min-width: 0; gap: 2px; line-height: 1.2; }
+.bgd-section-navigation__actions { display: flex; flex: none; gap: 4px; }
+.bgd-section-navigation__identity small { color: var(--text-secondary); font-size: var(--font-size-sm); }
+.bgd-section-navigation__identity strong { overflow: hidden; color: var(--text-primary); font-size: var(--font-size-base); text-overflow: ellipsis; white-space: nowrap; }
+.bgd-section-navigation > nav { padding-inline: var(--space-3); }
+.bgd-section-navigation.is-collapsed { width: var(--bgd-navigation-rail); flex-basis: var(--bgd-navigation-rail); }
+.bgd-section-navigation.is-collapsed > header { justify-content: center; padding-inline: 0; }
 .bgd-section-navigation.is-collapsed > header > .bgd-section-navigation__identity { display: none; }
 .bgd-section-navigation.is-collapsed .bgd-section-navigation__actions { flex-direction: column; }
-.bgd-section-navigation__rail { display: block; margin: auto; width: max-content; writing-mode: vertical-rl; color: var(--text-secondary); font-size: var(--font-size-sm); }
+.bgd-section-navigation__rail { display: block; margin: var(--space-2) auto 0; width: max-content; writing-mode: vertical-rl; color: var(--text-secondary); font-size: var(--font-size-sm); }
 .bgd-section-group { padding-block: var(--space-2); border-top: 1px solid var(--border-default); }
+.bgd-section-group:first-child { border-top: 0; }
 .bgd-section-group > summary { display: flex; min-height: 32px; align-items: center; gap: var(--space-2); color: var(--text-secondary); cursor: pointer; list-style: none; font-size: 13px; font-weight: 700; }
 .bgd-section-group > summary::-webkit-details-marker { display: none; }
 .bgd-section-group:not([open]) > summary > svg { transform: rotate(-90deg); }
@@ -117,27 +109,25 @@
   .bgd-well-page .form-grid .field:first-child { grid-column: auto; }
 }
 @media (max-width: 1180px) {
-  .app-workspace--bgd > .geology-navigator, .app-workspace--bgd > .geology-navigator.is-collapsed { position: fixed; top: var(--topbar-height); bottom: 0; left: 0; z-index: 55; width: min(var(--bgd-context-width), calc(100vw - 48px)); height: auto; padding: var(--space-3); transform: translateX(-105%); }
+  .app-workspace--bgd > .geology-navigator, .app-workspace--bgd > .geology-navigator.is-collapsed { position: fixed; top: var(--topbar-height); bottom: 0; left: 0; z-index: 55; width: min(232px, calc(100vw - 48px)); height: auto; transform: translateX(-105%); }
   .app-workspace--bgd > .geology-navigator.is-mobile-open { transform: translateX(0); }
   .app-workspace--bgd > .geology-navigator:not(.is-mobile-open) { visibility: hidden; }
-  .app-workspace--bgd .geology-navigator__collapse, .app-workspace--bgd .geology-navigator__rail { display: none; }
-  .app-workspace--bgd .geology-navigator.is-collapsed .geology-navigator__header > span { display: block; }
-  .app-workspace--bgd .geology-navigator.is-collapsed .geology-navigator__body { display: flex; }
-  .app-workspace--bgd .geology-navigator__header > span { max-width: calc(100% - 48px); }
-  .app-workspace--bgd .geology-navigator__close { position: absolute; top: calc(var(--space-3) + 8px); right: var(--space-3); display: grid; width: 40px; height: 40px; place-items: center; color: var(--text-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-subtle); cursor: pointer; }
-  .app-workspace--bgd .geology-navigator__header { padding-right: calc(var(--space-10) + var(--space-2)); }
-  .app-workspace--bgd .geology-navigator.is-collapsed .geology-navigator__deposit { display: flex; }
+  .app-workspace--bgd .geology-navigator__header > .ui-tooltip-trigger { display: none; }
+  .app-workspace--bgd .geology-navigator__close { position: static; display: grid; }
+  .geology-navigator.is-collapsed .geology-navigator__header { justify-content: flex-start; padding-inline: 6px; }
+  .geology-navigator.is-collapsed :is(.geology-navigator__info, .geology-navigator__map) { display: block; }
+  .geology-navigator.is-collapsed .geology-navigator__body { display: flex; }
   .geology-navigator-backdrop { position: fixed; inset: var(--topbar-height) 0 0; z-index: 50; background: color-mix(in srgb, var(--surface-dark) 40%, transparent); border: 0; cursor: pointer; }
   .topbar__geology-toggle { display: inline-flex; }
 }
 @media (max-width: 700px) {
   .bgd-well-workbench { flex-direction: column; }
-  .bgd-section-navigation, .bgd-section-navigation.is-collapsed { width: 100%; height: auto; max-height: 48%; flex: none; padding: var(--space-2) var(--space-3); border-right: 0; border-bottom: 1px solid var(--border-default); }
-  .bgd-section-navigation > header, .bgd-section-navigation.is-collapsed > header { min-height: 40px; margin: 0; }
-  .bgd-section-navigation.is-collapsed > header > div { display: grid; }
+  .bgd-section-navigation, .bgd-section-navigation.is-collapsed { width: 100%; height: auto; max-height: 48%; flex: none; padding-block-end: 0; border-right: 0; border-bottom: 1px solid var(--border-default); }
+  .bgd-section-navigation.is-collapsed > header { justify-content: space-between; padding-inline: 8px 6px; border-bottom: 0; }
+  .bgd-section-navigation.is-collapsed > header > .bgd-section-navigation__identity { display: grid; }
+  .bgd-section-navigation.is-collapsed .bgd-section-navigation__actions { flex-direction: row; }
   .bgd-section-navigation__rail { display: none; }
   .bgd-well-workbench > .bgd-well-page { min-height: 0; height: auto; padding: var(--space-4); scrollbar-gutter: auto; }
-  .bgd-section-navigation > header > div { display: flex; flex-wrap: wrap; }
 }
 .bgd-drilling-add { position: relative; flex: none; }
 .bgd-drilling-add__menu { position: absolute; z-index: 20; top: calc(100% + var(--space-1)); right: 0; display: grid; width: 180px; padding: var(--space-1); background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); }
@@ -149,19 +139,28 @@
 .bgd-drilling-table thead, .bgd-drilling-table tbody { display: contents; }
 .bgd-drilling-table tr { display: grid; grid-template-columns: var(--space-8) repeat(3, minmax(0, 1fr)) repeat(2, minmax(0, 1.5fr)) var(--space-10); }
 .bgd-drilling-table th, .bgd-drilling-table td { min-width: 0; }
-.bgd-drilling-table th, .bgd-drilling-table td { padding: var(--space-1); border-bottom: 1px solid var(--border-default); }
-.bgd-drilling-table thead th { text-align: left; font-weight: 600; color: var(--text-secondary); background: var(--surface-subtle); overflow-wrap: anywhere; }
+:is(.bgd-drilling-table, .bgd-passport-table) :is(th, td) { padding: var(--space-1); border-bottom: 1px solid var(--border-default); }
+:is(.bgd-drilling-table, .bgd-passport-table) thead th { text-align: left; font-weight: 600; color: var(--text-secondary); background: var(--surface-subtle); overflow-wrap: anywhere; }
 .bgd-drilling-table em { color: var(--color-danger-600); font-style: normal; }
 .bgd-drilling-table tbody th { font-weight: 500; color: var(--text-tertiary); }
-.bgd-drilling-table tbody tr:last-child > * { border-bottom: 0; }
-.bgd-drilling-table tbody tr:focus-within { background: var(--surface-subtle); }
-.bgd-drilling-table input, .bgd-drilling-table select { width: 100%; min-width: 0; height: var(--space-8); padding: var(--space-1) var(--space-2); color: var(--text-primary); background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: var(--radius-sm); font: inherit; }
-.bgd-drilling-table input:disabled, .bgd-drilling-table select:disabled { cursor: not-allowed; color: var(--text-secondary); background: var(--surface-subtle); }
-.bgd-drilling-table .bgd-drilling-table__remove { width: var(--space-8); min-width: var(--space-8); min-height: var(--space-8); padding: 0; color: var(--color-danger-600); }
+:is(.bgd-drilling-table, .bgd-passport-table) tbody tr:last-child > * { border-bottom: 0; }
+:is(.bgd-drilling-table, .bgd-passport-table) tbody tr:focus-within { background: var(--surface-subtle); }
+:is(.bgd-drilling-table, .bgd-passport-table) :is(input, select) { width: 100%; min-width: 0; height: var(--space-8); padding: var(--space-1) var(--space-2); color: var(--text-primary); background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: var(--radius-sm); font: inherit; }
+:is(.bgd-drilling-table, .bgd-passport-table) :is(input, select):disabled { cursor: not-allowed; color: var(--text-secondary); background: var(--surface-subtle); }
+.bgd-drilling-table .bgd-drilling-table__remove, .bgd-passport-table .bgd-passport-table__remove { width: var(--space-8); min-width: var(--space-8); min-height: var(--space-8); padding: 0; color: var(--color-danger-600); }
 .bgd-impermeable-intervals.panel { padding: var(--space-3); }
 .bgd-impermeable-intervals .panel__header { margin-bottom: var(--space-2); }
 .bgd-drilling-table.bgd-impermeable-table { min-width: 280px; }
 .bgd-impermeable-table tr { grid-template-columns: var(--space-8) repeat(2, minmax(0, 1fr)) var(--space-10); }
+
+.bgd-passport-date { max-width: 280px; margin-top: 0; }
+.bgd-passport-people { max-width: 720px; margin-top: var(--space-4); }
+.bgd-passport-people__header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-1) var(--space-3); border-bottom: 1px solid var(--border-default); }
+.bgd-passport-people__header h3 { margin: 0; font-size: var(--font-size-sm); font-weight: 600; }
+.bgd-passport-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: var(--font-size-sm); }
+.bgd-passport-table thead th { padding: var(--space-1) var(--space-3); }
+.bgd-passport-table__actions { width: var(--space-10); }
+.bgd-passport-table td.bgd-passport-table__empty { padding: var(--space-3); color: var(--text-secondary); }
 
 /* All BGD editors use one field size; data tables keep their own column layout. */
 .bgd-well-page .panel,

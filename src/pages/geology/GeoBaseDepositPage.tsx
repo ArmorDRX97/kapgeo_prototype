@@ -14,7 +14,6 @@ export function GeoBaseDepositPage() {
     focusWellId={well}
     key={depositId}
     onOpenDeposit={(nextDepositId) => void navigate({ to: '/geology/bgd/$depositId', params: { depositId: nextDepositId }, search: {} })}
-    onOpenConditions={(nextDepositId) => void navigate({ to: '/geology/bgd/$depositId/conditions', params: { depositId: nextDepositId } })}
     onDeleted={() => void navigate({ to: '/geology/bgd', replace: true })}
   />
 }

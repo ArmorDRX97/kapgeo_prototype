@@ -1,8 +1,5 @@
 .section-workbench--setup { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .section-workbench--setup .section-workbench__body { display: flex; flex: 1; min-height: 0; }
-.section-workbench--setup .section-area-navigation { flex: 1; min-height: 0; }
-.section-workbench--setup .section-area-navigation__nav { overflow-y: auto; }
-.section-workbench--setup .section-area-navigation__panel { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 .section-workbench--setup .section-workbench__main { flex: 1; padding: 12px; min-height: 0; overflow: auto; }
 .section-setup.section-catalog { display: flex; flex-direction: column; max-width: none; margin: 0; gap: 12px; }
 .section-catalog__header, .section-catalog__actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -32,11 +29,7 @@
 .section-catalog__wells > footer, .section-catalog__wells > footer > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .section-catalog__wells > footer { flex: none; padding: 7px 14px; border-top: 1px solid var(--border-default); color: var(--text-secondary); font-size: 11px; font-variant-numeric: tabular-nums; }
 .section-catalog__empty { padding: 20px; text-align: center; }
-.section-catalog button:focus-visible, .section-catalog input:focus-visible, .section-catalog select:focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }
-@media (max-width: 1050px) {
-  .section-workbench--setup .section-area-navigation:not(.is-collapsed), .section-workbench--setup .section-area-navigation.is-collapsed { display: flex; flex-direction: column; }
-  .section-workbench--setup .section-area-navigation__nav { flex: none; }
-}
+.section-catalog button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .section-document-setup__parameters { flex: none; background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: 8px; padding: 12px 14px; }
 .section-document-setup__parameters > summary { cursor: pointer; font-size: 13px; font-weight: 600; }
 .section-document-setup__parameters > summary > span { margin-left: 14px; color: var(--text-secondary); font-weight: 400; font-size: 12px; }

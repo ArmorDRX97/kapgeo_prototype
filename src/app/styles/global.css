@@ -10,7 +10,12 @@ h1, h2, h3, p { margin-top: 0; }
 h1 { margin-bottom: 8px; font-size: clamp(1.65rem, 2.2vw, 2.15rem); line-height: 1.15; letter-spacing: -0.035em; }
 h2 { letter-spacing: -0.02em; }
 ::selection { color: var(--color-brand-800); background: var(--color-brand-200); }
-:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+:where(:focus:not(:focus-visible)) { outline: none; }
+:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+:where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="button"], [type="submit"], [type="reset"], [type="image"]), select, textarea):focus {
+  outline: 1px solid var(--focus-ring);
+  outline-offset: -1px;
+}
 input[type="checkbox"], input[type="radio"] { accent-color: var(--color-brand-700); }
 html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}html[data-contrast="high"]{--text-primary:#000;--text-secondary:#202020;--border-default:#263238;--border-strong:#000;--focus-ring:#003f91}html[data-contrast="high"] .badge{border:1px solid currentColor}html[data-density="compact"] .panel{--space-panel:10px}
 

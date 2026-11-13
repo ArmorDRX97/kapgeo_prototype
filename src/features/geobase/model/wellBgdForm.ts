@@ -6,7 +6,7 @@ function blankBgd(depositId: string): WellBgdData {
     name: 1064, depositId, lensId: '', profileId: '', geoBlockId: '', techBlockId: '', statusChangedAt: now,
     statusHistory: [{ status: 'На проверке', changedAt: now }], descriptionRu: '', descriptionKk: '', descriptionEn: '', note: '',
     geometry: { headX: null, headY: null, headZ: null, bottomX: null, bottomY: null, bottomZ: null, acceptedDepth: null, bottomOffsetLength: null, bottomOffsetAzimuth: null },
-    passport: { documentStartDate: '', documentEndDate: '', date: '', author: '', chiefGeologist: '', chiefGeophysicist: '', drillingManager: '', samplingPerformer: '', interpretationPerformer: '', surveyor: '' },
+    passport: { documentStartDate: '', documentEndDate: '', date: '' },
     drilling: { startedAt: '', completedAt: '', drillingType: '', foreman: '', rigType: '', rigNumber: null, company: '', brigade: '', designDepth: null, drillLogDepth: null, loggingDepth: null, intervals: [] },
     development: { flowRate: null, specificFlowRate: null, works: [] },
     geology: { permafrostDepth: null, groundwaterLevel: null, complications: '', impermeableIntervals: [] },

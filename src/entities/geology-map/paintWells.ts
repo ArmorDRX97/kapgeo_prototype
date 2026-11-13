@@ -48,6 +48,7 @@ export function paintWells(canvas: HTMLCanvasElement, wells: MapObject[], camera
   const ratio = Math.min(window.devicePixelRatio || 1, 2), ctx = canvas.getContext('2d')
   if (!ctx) return
   const brandBlue = getComputedStyle(document.documentElement).getPropertyValue('--color-brand-600').trim() || '#243d7c'
+  const selectedColor = getComputedStyle(document.documentElement).getPropertyValue('--geo-selection-stroke').trim() || '#1c64b5'
   canvas.width = Math.round(size.width * ratio); canvas.height = Math.round(size.height * ratio)
   ctx.scale(ratio, ratio); ctx.clearRect(0, 0, size.width, size.height)
   const radius = Math.max(1.2, Math.min(4.2, camera.scale * 9))
@@ -74,7 +75,7 @@ export function paintWells(canvas: HTMLCanvasElement, wells: MapObject[], camera
       ctx.fillStyle = `${color}22`; ctx.beginPath(); ctx.arc(a.x, a.y, r + 4, 0, Math.PI * 2); ctx.fill()
       paintMarks(ctx, [a], r, wellMark(o.attributes.type), 1.4)
     }
-    if (active) { ctx.strokeStyle = brandBlue; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(a.x, a.y, 7, 0, Math.PI * 2); ctx.stroke() }
+    if (active) { ctx.strokeStyle = selectedColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(a.x, a.y, 7, 0, Math.PI * 2); ctx.stroke() }
     if ((!labels || !o.label.visible || camera.scale < 1.6 && wells.length > 100 && !forceLabels) && !active && !hovered && !(emphasis && labels)) continue
     const key = `${Math.floor(a.x / 80)}:${Math.floor(a.y / 18)}`
     if (occupied.has(key) && !active && !hovered && !emphasis) continue
