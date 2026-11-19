@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { UpdateDepositPatch } from '../../entities/geology-master/model/types'
+import type { Deposit, UpdateDepositPatch } from '../../entities/geology-master/model/types'
 import { DemoDatabase, type DemoRecord } from './demoDatabase'
 import { DemoGeologyMasterRepository } from './geologyMasterRepository'
 
@@ -18,7 +18,9 @@ describe('DemoGeologyMasterRepository BGD CRUD', () => {
     expect(data.deposits).toHaveLength(3)
     expect(sarytau).toMatchObject({ code: 1, nameRu: 'Сарытау', nameKk: 'Сарытау', nameEn: 'Sarytau', objectType: 'field', isHidden: false })
     expect(data.deposits.find((item) => item.code === 4)?.isHidden).toBe(true)
-    expect(sarytau?.occurrences).toHaveLength(2)
+    expect(sarytau?.occurrences.map((item) => item.type)).toEqual([
+      'Участок', 'Участок', 'Участок', 'Рудная залежь', 'Рудная залежь', 'Рудная залежь',
+    ])
     const limits = data.conditionSets.find((item) => item.id === 'CONDITIONS-DEP-SARYTAU')?.limits
     expect(limits).toHaveLength(28)
     expect(limits).toContainEqual(expect.objectContaining({ id: 'uranium-cutoff', value: '0.012', unit: 'м%' }))
@@ -138,7 +140,7 @@ describe('DemoGeologyMasterRepository BGD CRUD', () => {
     expect(stored?.data).toMatchObject({ code: 91, nameRu: 'Старое месторождение' })
   })
 
-  it('blocks deletion when hierarchy or embedded occurrences exist', async () => {
+  it('blocks deletion when linked structure objects or condition sets exist', async () => {
     const data = await repository.getMasterData()
     const sarytau = data.deposits.find((item) => item.code === 1)!
 
@@ -156,33 +158,47 @@ describe('DemoGeologyMasterRepository BGD CRUD', () => {
 
   it('consolidates legacy site lenses without duplicates and preserves references used by wells', async () => {
     const data = await repository.getMasterData()
-    expect(data.lenses).toEqual([])
     const deposit = data.deposits.find((item) => item.id === 'DEP-SARYTAU')!
-    expect(deposit.occurrences).toHaveLength(2)
-    expect(deposit.occurrences.find((item) => item.nameRu === 'PR-07')?.legacyIds).toContain('LENS-PR07')
+    await database.put('records', { id: 'lens:LENS-PR07', entityType: 'lens', objectId: 'LENS-PR07', scopeId: deposit.id, status: 'active', updatedAt: '2026-10-09',
+      data: { id: 'LENS-PR07', siteId: 'SITE-NORTH', code: 'PR-07', name: 'Залежь PR-07', status: 'active' } })
+    expect((await repository.getMasterData()).deposits.find((item) => item.id === deposit.id)?.occurrences).toHaveLength(6)
     expect(await database.get('meta', 'legacy-lens:lens:LENS-PR07')).toBeDefined()
     await database.put('records', { id: 'lens:EXTRA', entityType: 'lens', objectId: 'EXTRA', scopeId: deposit.id, status: 'active', updatedAt: '2026-10-09',
       data: { id: 'EXTRA', siteId: 'SITE-NORTH', code: 'EXTRA', name: 'Дополнительная залежь', version: 1, status: 'active' } })
     const migrated = await repository.getMasterData()
     expect(migrated.deposits.find((item) => item.id === deposit.id)?.occurrences).toContainEqual(expect.objectContaining({ id: 'EXTRA', nameRu: 'Дополнительная залежь' }))
-    await repository.deleteSite(migrated.sites.find((item) => item.id === 'SITE-NORTH')!)
-    expect((await repository.getMasterData()).deposits.find((item) => item.id === deposit.id)?.occurrences).toHaveLength(3)
-    await expect(repository.deleteOccurrence(deposit, deposit.occurrences.find((item) => item.nameRu === 'PR-07')!.id)).rejects.toThrow('используется скважинами')
+    await expect(repository.deleteOccurrence(deposit, 'OCC-SARYTAU-01')).rejects.toThrow('используется скважинами')
   })
 
-  it('supports independent site CRUD, unique codes per deposit without record versions', async () => {
+  it('upgrades the default structure once and preserves edits and existing sites', async () => {
     await repository.getMasterData()
-    const site = await repository.createSite({ depositId: 'DEP-SARYTAU', code: 'SOUTH', name: 'Южный' })
-    const other = await repository.createSite({ depositId: 'DEP-SEVERNOE', code: 'SOUTH', name: 'Другой' })
-    expect(other.id).not.toBe(site.id)
-    const updated = await repository.updateSite(site, { name: 'Южный изменённый' })
-    expect(updated).not.toHaveProperty('version')
-    expect(await repository.updateSite(site, { name: 'Новое название' })).toMatchObject({ name: 'Новое название' })
-    await expect(repository.updateSite(updated, { name: '  ' })).rejects.toThrow('наименование')
-    await repository.deleteSite(updated)
-    const reloaded = await repository.getMasterData()
-    expect(reloaded.sites.some((item) => item.id === site.id)).toBe(false)
-    expect(reloaded.sites.some((item) => item.id === other.id)).toBe(true)
+    const key = 'deposit:DEP-SARYTAU'
+    const stored = (await database.get<DemoRecord<Deposit>>('records', key))!
+    stored.data.occurrences = [
+      { id: 'OCC-SARYTAU-01', type: 'Рудная залежь', nameRu: 'PR-07', nameKk: 'PR-07', nameEn: 'PR-07', legacyIds: ['LENS-PR07'] },
+      { id: 'OCC-SARYTAU-02', type: 'Рудная залежь', nameRu: 'Изменённая', nameKk: 'CN-02', nameEn: 'CN-02' },
+    ]
+    await database.put('records', stored)
+    await database.put('meta', { key: 'geologyMasterStructureSeeded', value: false })
+    const legacySite = (id: string, code: string, name: string, status = 'active') => ({
+      id: `site:${id}`, entityType: 'site', objectId: id, scopeId: stored.objectId, status, updatedAt: '2026-10-09',
+      data: { id, depositId: stored.objectId, code, name, status },
+    })
+    await database.put('records', legacySite('SITE-NORTH', 'NORTH', 'Северный'))
+    await database.put('records', legacySite('SITE-USER', 'CUSTOM', 'Авторский участок', 'archived'))
+    const migrated = (await repository.getMasterData()).deposits.find((item) => item.id === stored.objectId)!
+    expect(migrated.occurrences).toHaveLength(6)
+    expect(migrated.occurrences).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'SITE-NORTH', type: 'Участок', nameRu: 'Карасай', nameKk: 'Қарасай', nameEn: 'Karasai' }),
+      expect.objectContaining({ id: 'SITE-USER', type: 'Участок', nameRu: 'Авторский участок', nameKk: 'Авторский участок', nameEn: 'Авторский участок', status: 'archived' }),
+      expect.objectContaining({ id: 'OCC-SARYTAU-01', nameRu: 'КС-14', legacyIds: ['LENS-PR07'] }),
+      expect.objectContaining({ id: 'OCC-SARYTAU-02', nameRu: 'Изменённая' }),
+    ]))
+    expect(migrated.occurrences.some((item) => item.id === 'SITE-CENTRAL')).toBe(false)
+    expect(await database.get('records', 'site:SITE-USER')).toBeUndefined()
+    expect(await database.get('meta', 'legacy-site:site:SITE-USER')).toMatchObject({ value: { data: { code: 'CUSTOM' } } })
+    const afterDelete = await repository.deleteOccurrence(migrated, 'OCC-SARYTAU-03')
+    expect((await repository.getMasterData()).deposits.find((item) => item.id === stored.objectId)?.occurrences).toEqual(afterDelete.occurrences)
   })
 
   it('validates occurrence CRUD and preserves the list when updating only deposit details', async () => {
@@ -198,6 +214,6 @@ describe('DemoGeologyMasterRepository BGD CRUD', () => {
     expect(updated.occurrences[0]?.nameEn).toBe('Edited')
     const deleted = await repository.deleteOccurrence(updated, occurrence.id)
     expect(deleted.occurrences).toEqual([])
-    await expect(repository.deleteOccurrence(deleted, occurrence.id)).rejects.toThrow('не найдена')
+    await expect(repository.deleteOccurrence(deleted, occurrence.id)).rejects.toThrow('не найден')
   })
 })

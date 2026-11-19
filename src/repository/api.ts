@@ -1,4 +1,4 @@
-import type { ConditionSet, CreateDepositInput, Deposit, DepositOccurrence, GeologicalMasterData, GeologicalSite, UpdateDepositPatch } from '../entities/geology-master/model/types'
+import type { ConditionSet, CreateDepositInput, Deposit, DepositOccurrence, GeologicalMasterData, UpdateDepositPatch } from '../entities/geology-master/model/types'
 import type { WellCoreWorkspace } from '../entities/well-core/model/types'
 import { validateConstruction } from '../entities/well-construction/model/validation'
 import type { WellGeologyWorkspace } from '../entities/well-geology/model/types'
@@ -194,20 +194,8 @@ export async function recordDepositViewed(depositId: string, actor: { id: string
   return demoGeologyMasterRepository.recordDepositViewed(depositId, actor)
 }
 
-export async function createSite(input: Pick<GeologicalSite, 'depositId' | 'code' | 'name'>): Promise<GeologicalSite> {
-  return demoGeologyMasterRepository.createSite(input)
-}
-
 export async function saveConditionSet(input: Omit<ConditionSet, 'id'>): Promise<ConditionSet> {
   return demoGeologyMasterRepository.saveConditionSet(input)
-}
-
-export async function updateSite(current: GeologicalSite, patch: Pick<GeologicalSite, 'name'>) {
-  return demoGeologyMasterRepository.updateSite(current, patch)
-}
-
-export async function deleteSite(current: GeologicalSite) {
-  return demoGeologyMasterRepository.deleteSite(current)
 }
 
 export async function saveOccurrence(current: Deposit, input: Omit<DepositOccurrence, 'id'> & { id?: string }) {

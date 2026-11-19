@@ -55,8 +55,6 @@ type DepositFormState = {
 }
 
 export type DepositDependencies = {
-  sites: number
-  lenses: number
   conditions: number
   occurrences: number
 }
@@ -178,10 +176,8 @@ export function GeologyDatabaseRegistry({ onOpenDeposit }: {
     {orderedDeposits.length ? <section className="geobase-deposit-grid" aria-label="Месторождения">
       {orderedDeposits.map((item) => {
         const current = currentDepositId === item.id
-        const sites = data.sites.filter((site) => site.depositId === item.id)
-        const lensCount = new Set([
-          ...item.occurrences.map((occurrence) => occurrence.nameRu.trim().toLocaleLowerCase('ru')),
-        ].filter(Boolean)).size
+        const siteCount = item.occurrences.filter(({ type }) => type === 'Участок').length
+        const lensCount = item.occurrences.filter(({ type }) => type === 'Рудная залежь').length
         return <article className={`geobase-deposit-card${current ? ' is-current' : ''}${item.isHidden ? ' is-hidden' : ''}`} key={item.id}>
           <header className="geobase-deposit-card__header">
             <span className="geobase-deposit-card__icon"><Mountain size={24} /></span>
@@ -196,7 +192,7 @@ export function GeologyDatabaseRegistry({ onOpenDeposit }: {
           <p className="geobase-deposit-card__description">{getDepositDescription(item) || 'Краткое описание месторождения пока не заполнено.'}</p>
 
           <dl className="geobase-deposit-card__facts">
-            <div><dt><MapPinned size={16} /> Участки</dt><dd>{sites.length}</dd></div>
+            <div><dt><MapPinned size={16} /> Участки</dt><dd>{siteCount}</dd></div>
             <div><dt><Layers3 size={16} /> Залежи</dt><dd>{lensCount}</dd></div>
             <div className="geobase-deposit-card__coordinate"><dt><Database size={16} /> Система координат</dt><dd>{item.coordinateSystem || 'Не указана'}</dd></div>
           </dl>
@@ -290,12 +286,12 @@ export function DeleteDepositDialog({ deposit, dependencies, pending, error, onC
   onClose: () => void
   onConfirm: () => void
 }) {
-  const dependencyTotal = dependencies.sites + dependencies.lenses + dependencies.conditions + dependencies.occurrences
+  const dependencyTotal = dependencies.conditions + dependencies.occurrences
   return <div className="geobase-dialog-backdrop" role="presentation">
     <section className="geobase-dialog geobase-dialog--confirm" role="alertdialog" aria-modal="true" aria-labelledby="delete-deposit-title">
       <header><div><span className="is-danger"><Trash2 size={20} /></span><div><h2 id="delete-deposit-title">Удалить «{deposit.nameRu}»?</h2><p>Удаление необратимо для записи месторождения. Сведения об операции сохранятся в аудите.</p></div></div><button type="button" onClick={onClose} disabled={pending} aria-label="Закрыть подтверждение"><X size={19} /></button></header>
       <div className="geobase-dialog__body">
-        <div className={`geobase-delete-check${dependencyTotal ? ' is-blocked' : ''}`}><CircleAlert size={18} /><span><strong>{dependencyTotal ? 'Удаление заблокировано зависимостями' : 'Связанные объекты не найдены'}</strong><small>Участки: {dependencies.sites} · Залежи: {dependencies.lenses + dependencies.occurrences} · Кондиции: {dependencies.conditions}</small></span></div>
+        <div className={`geobase-delete-check${dependencyTotal ? ' is-blocked' : ''}`}><CircleAlert size={18} /><span><strong>{dependencyTotal ? 'Удаление заблокировано зависимостями' : 'Связанные объекты не найдены'}</strong><small>Объекты структуры: {dependencies.occurrences} · Кондиции: {dependencies.conditions}</small></span></div>
         {dependencyTotal > 0 && <p className="field__hint">Чтобы сохранить целостность БГД, скройте месторождение либо сначала перенесите дочерние объекты.</p>}
         {error && <div className="form-alert form-alert--error" role="alert">{error}</div>}
       </div>

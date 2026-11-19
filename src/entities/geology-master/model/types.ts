@@ -4,6 +4,8 @@ export type DepositObjectType = 'field' | 'area' | 'custom'
 
 export type BgdLocale = 'ru' | 'kk' | 'en'
 
+export const depositStructureTypes = ['Участок', 'Рудная залежь', 'Площадь'] as const
+
 export type DepositOccurrence = {
   id: string
   legacyIds?: string[]
@@ -49,22 +51,6 @@ export function getDepositDescription(deposit: Pick<Deposit, 'descriptionRu' | '
 
 export function getOccurrenceName(occurrence: Pick<DepositOccurrence, 'nameRu' | 'nameKk' | 'nameEn'>, locale: BgdLocale = 'ru'): string {
   return occurrence[locale === 'kk' ? 'nameKk' : locale === 'en' ? 'nameEn' : 'nameRu'] || occurrence.nameRu || occurrence.nameKk || occurrence.nameEn
-}
-
-export type GeologicalSite = {
-  id: string
-  depositId: string
-  code: string
-  name: string
-  status: MasterStatus
-}
-
-export type GeologicalLens = {
-  id: string
-  siteId: string
-  code: string
-  name: string
-  status: MasterStatus
 }
 
 export type ConditionLimit = {
@@ -133,7 +119,5 @@ export type ConditionSet = {
 
 export type GeologicalMasterData = {
   deposits: Deposit[]
-  sites: GeologicalSite[]
-  lenses: GeologicalLens[]
   conditionSets: ConditionSet[]
 }

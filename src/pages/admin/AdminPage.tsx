@@ -44,7 +44,7 @@ export function AdminPage() {
     <section className="admin-stat-grid" aria-label="Сводка администрирования">
       <article><span><UsersRound size={20} /></span><div><strong>{userPersonas.length}</strong><small>ролей</small></div></article>
       <article><span><Building2 size={20} /></span><div><strong>{data?.deposits.length ?? '—'}</strong><small>месторождения в БГД</small></div></article>
-      <article><span><Database size={20} /></span><div><strong>{(data?.sites.length ?? 0) + (data?.deposits.reduce((count, item) => count + item.occurrences.length, 0) ?? 0)}</strong><small>связанных объектов</small></div></article>
+      <article><span><Database size={20} /></span><div><strong>{data?.deposits.reduce((count, item) => count + item.occurrences.length, 0) ?? 0}</strong><small>связанных объектов</small></div></article>
     </section>
     <div className="admin-grid">
       {hasPermission(persona, 'administration.references.view') && <Panel title="Справочники" description="Обычные и reff-справочники: записи, фиксированные поля, статусы и история изменений."><Link to="/admin/references" className="button button--primary button--md"><Database size={17} /> Открыть справочники</Link></Panel>}

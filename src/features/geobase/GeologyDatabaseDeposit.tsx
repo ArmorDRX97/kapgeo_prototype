@@ -99,11 +99,8 @@ export function GeologyDatabaseDeposit({ depositId, onDeleted, onOpenDeposit, vi
 
   const canEdit = hasDepositPermission(persona, 'geology.bgd.update', deposit)
   const canDelete = hasDepositPermission(persona, 'geology.bgd.delete', deposit)
-  const sites = data.sites.filter((item) => item.depositId === deposit.id)
   const depositCondition = data.conditionSets.find((item) => item.depositId === deposit.id)
   const dependencies: DepositDependencies = {
-    sites: sites.length,
-    lenses: 0,
     conditions: depositCondition ? 1 : 0,
     occurrences: deposit.occurrences.length,
   }
@@ -128,7 +125,7 @@ export function GeologyDatabaseDeposit({ depositId, onDeleted, onOpenDeposit, vi
         <dl className="geobase-object-facts"><div><dt>Наименование</dt><dd>{getDepositName(deposit, locale)}</dd></div><div><dt>Код месторождения</dt><dd>{deposit.code}</dd></div><div><dt>Тип объекта</dt><dd>{deposit.objectType === 'custom' ? deposit.customType || 'Другой тип' : deposit.objectType === 'area' ? 'Площадь' : 'Месторождение'}</dd></div><div><dt>Система координат</dt><dd>{deposit.coordinateSystem || 'Не указана'}</dd></div><div><dt>Использование</dt><dd>{deposit.isHidden ? 'Скрыто из списков выбора' : 'Используется'}</dd></div></dl><div className="geobase-overview__description"><strong>Описание</strong><p>{getDepositDescription(deposit, locale) || 'Не указано'}</p></div>
       </Panel>
 
-      <DepositCollections deposit={deposit} sites={sites} canEdit={canEdit} canDelete={canDelete} />
+      <DepositCollections key={deposit.id} deposit={deposit} canEdit={canEdit} canDelete={canDelete} />
 
       {canViewAudit && <Panel title="Аудит месторождения" action={<History size={18} />}>
         {auditQuery.isLoading ? <p className="geobase-muted">Загружаем события…</p> : auditQuery.isError ? <div className="form-alert form-alert--error" role="alert">{auditQuery.error.message}<Button size="sm" variant="secondary" onClick={() => void auditQuery.refetch()}>Повторить</Button></div> : auditEvents.length ? <div className="geobase-audit">{auditEvents.map((event) => <article key={event.id}><span><strong>{event.eventType}</strong><small>{event.actor.name}</small></span><time dateTime={event.occurredAt}>{new Date(event.occurredAt).toLocaleString('ru-RU')}</time></article>)}</div> : <p className="geobase-muted">Событий по этому месторождению пока нет.</p>}
