@@ -6,6 +6,10 @@ export type Permission =
   | 'administration.references.update'
   | 'administration.references.status'
   | 'administration.references.delete'
+  | 'adm.nsi.view'
+  | 'adm.nsi.edit'
+  | 'adm.nsi.delete'
+  | 'adm.nsi.exchange'
   | 'bgd.view'
   | 'geology.view'
   | 'geology.interpretation.edit'
@@ -50,6 +54,8 @@ const rolePermissions: Record<RoleId, Permission[]> = {
   R14: ['administration.references.view', 'bgd.view', 'geology.view', 'geology.bgd.audit', 'technology.view', 'administration.view'],
 }
 
+rolePermissions.R13.push('adm.nsi.view', 'adm.nsi.edit', 'adm.nsi.delete', 'adm.nsi.exchange')
+rolePermissions.R14.push('adm.nsi.view')
 // Explicit prototype permission; object scope/status are checked by the editor.
 for (const role of ['R1', 'R2', 'R13'] as const) rolePermissions[role].push('geology.interpretation.edit')
 // Autonomous section prototype: explicitly approved by the user, 12.10.2026.

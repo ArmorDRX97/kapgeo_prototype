@@ -47,7 +47,7 @@ export function AdminPage() {
       <article><span><Database size={20} /></span><div><strong>{data?.deposits.reduce((count, item) => count + item.occurrences.length, 0) ?? 0}</strong><small>связанных объектов</small></div></article>
     </section>
     <div className="admin-grid">
-      {hasPermission(persona, 'administration.references.view') && <Panel title="Справочники" description="Обычные и reff-справочники: записи, фиксированные поля, статусы и история изменений."><Link to="/admin/references" className="button button--primary button--md"><Database size={17} /> Открыть справочники</Link></Panel>}
+      {(hasPermission(persona, 'adm.nsi.view') || hasPermission(persona, 'adm.nsi.exchange')) && <Panel title="Справочники" description="Ведение справочников и цветов, импорт и выгрузка значений."><Link to="/admin/references" className="button button--primary button--md"><Database size={17} /> Открыть справочники</Link></Panel>}
       <Panel title="Управление месторождениями" description="Создание корневых объектов вынесено из ежедневной рабочей области геолога.">
         {masterQuery.isLoading ? <div className="skeleton skeleton--list" /> : <div className="admin-deposit-list">{data?.deposits.map((deposit) => <button key={deposit.id} type="button" onClick={() => void navigate({ to: '/geology/bgd/$depositId', params: { depositId: deposit.id } })}><span><strong>{getDepositName(deposit)}</strong><small>№ {deposit.code}</small></span><Badge tone={deposit.isHidden ? 'neutral' : 'success'} dot>{deposit.isHidden ? 'Скрыто' : 'Используется'}</Badge></button>)}</div>}
         {canCreateDeposit && <Button className="admin-deposit-list__create" variant="secondary" onClick={() => setCreateOpen(true)}><Plus size={16} /> Добавить месторождение</Button>}

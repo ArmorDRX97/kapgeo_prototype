@@ -1,4 +1,4 @@
-import type { ReferenceDefinition } from './types'
+import { referenceNameKey, type ReferenceDefinition, type ReferenceField } from './types'
 
 const commonFields: ReferenceDefinition['fields'] = [
   { key: 'code', label: 'Код', type: 'text', required: true, maxLength: 32 },
@@ -8,7 +8,7 @@ const commonFields: ReferenceDefinition['fields'] = [
 ]
 
 // Fixed schemas from UC.KAPGEO.ADM.04 and the supplied reff table. ID and status are record metadata.
-export const referenceDefinitions: ReferenceDefinition[] = [
+const legacyDefinitions: ReferenceDefinition[] = [
   ...[["deposit_type","Типы месторождений"],["deposits_lodes_type","Типы залежей"],["well_core_type_id","Типы керна"],["column_materials","Материалы колонн"],["fault_type","Типы неисправностей"],["repair_work_type","Виды ремонтных работ"],["well_status","Состояния скважин"],["drilling_fluid_method","Способы подачи бурового раствора"],["waterproofing_type","Типы гидроизоляции"],["gis_type","Типы ГИС"],["destroy_type","Типы разрушения"],["well_column_type","Типы колонн"],["litology_type","Типы литологии"],["laboratory","Лаборатории"],["reserve_stage","Стадии запасов"],["line_zone_type","Типы зон профиля"],["interpolation_method","Методы интерполяции"],["reserve_method","Методы подсчёта запасов"],["development_method","Методы освоения"],["drilling_type","Типы бурения"],["rig_type","Типы буровых установок"],["drilling_tool","Буровые инструменты"],["flushing_agent","Промывочные агенты"],["section_kind","Виды разрезов"],["usage_kind","Виды использования"]].map(([id, label]) => ({ id: id!, label: label!, kind: 'ordinary' as const, fields: commonFields })),
   ...[
   {
@@ -1141,4 +1141,50 @@ export const referenceDefinitions: ReferenceDefinition[] = [
   { id: 'device_type', label: 'Типы приборов', kind: 'ordinary', fields: commonFields, provisional: true },
 ]
 
-export const referenceDefinition = (id: string) => referenceDefinitions.find((item) => item.id === id)
+const standardFields: ReferenceField[] = [
+  { ...commonFields[0]!, maxLength: 255 },
+  commonFields[1]!,
+  { ...commonFields[2]!, required: false },
+  { ...commonFields[3]!, required: false },
+  { key: 'description', label: 'Описание', type: 'textarea', maxLength: 2000 },
+  { key: 'sort_order', label: 'Порядок сортировки', type: 'integer', required: true, defaultValue: 0, min: 0 },
+  { key: 'color_id', label: 'Цвет', type: 'color' },
+  { key: 'valid_from', label: 'Действует с', type: 'date', required: true },
+  { key: 'valid_to', label: 'Действует по', type: 'date' },
+]
+
+export const referenceDefinitions = legacyDefinitions.map(definition => {
+  const nameKey = referenceNameKey(definition)
+  const hierarchical = definition.fields.some(field => field.key === 'parent_id')
+  const fields = standardFields.map(field => {
+    const key = field.key === 'name_ru' ? nameKey : field.key
+    const existing = definition.fields.find(candidate => candidate.key === key)
+    return { ...existing, ...field, key, label: existing?.label ?? field.label }
+  })
+  const standardKeys = new Set(fields.map(field => field.key))
+  const attributes: ReferenceField[] = definition.fields.filter(field => !standardKeys.has(field.key)).map(field => ({
+    ...field,
+    ...(field.key === 'parent_id' ? { label: 'Родительское значение' } : {}),
+    internal: field.key === 'symbol_file' || (definition.id === 'reff_rock_type' && field.key === 'color'),
+    showInList: false,
+  }))
+  if (definition.id === 'reff_rock_type') attributes.unshift({ key: 'st_nak_number', label: '№ по СТ НАК', labelKk: 'СТ НАК бойынша №', labelEn: 'ST NAK No.', type: 'text', maxLength: 32, showInList: true })
+  if (hierarchical) attributes.push({ key: 'is_group', label: 'Группа', type: 'boolean', showInList: false })
+  for (const field of attributes.filter(field => !field.internal && !['is_active', 'parent_id', 'is_group'].includes(field.key)).slice(0, 6)) field.showInList = true
+  return {
+    ...definition,
+    hierarchical,
+    autoCode: !definition.fields.some(field => field.key === 'code'),
+    system: definition.id === 'reff_colour',
+    schemaVersion: 1,
+    fields: [...fields, ...attributes],
+  }
+})
+
+const definitionsById = new Map(referenceDefinitions.map(definition => [definition.id, definition]))
+export const referenceDefinition = (id: string): ReferenceDefinition | undefined => definitionsById.get(id)
+
+export function referenceAttributes(definition: ReferenceDefinition) {
+  const baseKeys = new Set([...standardFields.map(field => field.key), referenceNameKey(definition), 'is_active'])
+  return definition.fields.filter(field => !field.internal && !baseKeys.has(field.key))
+}

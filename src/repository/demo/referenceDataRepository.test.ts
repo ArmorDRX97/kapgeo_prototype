@@ -44,12 +44,12 @@ describe('ReferenceDataRepository', () => {
     expect(current.entries.some((item) => item.id === entry.id)).toBe(false)
     expect(referenceDefinitions).toEqual(schema)
     const events = await demoDatabase.getAll<{ actor: { id: string }; eventType: string }>('auditEvents')
-    expect(events.find((item) => item.eventType === 'reference.deleted')?.actor.id).toBe(admin.id)
+    expect(events.find((item) => item.eventType === 'NSI_ITEM_DELETE')?.actor.id).toBe(admin.id)
   })
 
-  it('rejects duplicate codes, missing translations, extra attributes and wrong typed values', async () => {
+  it('rejects duplicate codes, missing primary names, extra attributes and wrong typed values', async () => {
     const current = await repository.get()
-    for (const [dictionaryId, values] of [['deposit_type', { ...names, code: String(current.entries.find((entry) => entry.dictionaryId === 'deposit_type')!.values.code).toLowerCase() }], ['fault_type', { code: 'X', name_ru: 'Тест' }], ['fault_type', { ...names, extra: 'value' }], ['reff_coordinate_system', { code: 'CS', name: 'Demo', epsg_code: 1.5, transform_params: 'broken JSON' }]] as const) {
+    for (const [dictionaryId, values] of [['deposit_type', { ...names, code: String(current.entries.find((entry) => entry.dictionaryId === 'deposit_type')!.values.code).toLowerCase() }], ['fault_type', { code: 'X', name_en: 'Test' }], ['fault_type', { ...names, extra: 'value' }], ['reff_coordinate_system', { code: 'CS', name: 'Demo', epsg_code: 1.5, transform_params: 'broken JSON' }]] as const) {
       await expect(repository.execute({ operation: 'created', dictionaryId, values, expectedVersion: current.version }, admin)).rejects.toThrow()
     }
     expect((await repository.get()).version).toBe(current.version)

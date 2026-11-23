@@ -86,7 +86,16 @@ const technologyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/t
 const modelingRoute = createRoute({ getParentRoute: () => rootRoute, path: '/modeling', component: ModelingModulePage })
 const analyticsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/analytics', component: AnalyticsModulePage })
 const adminRoute = createRoute({ getParentRoute: () => rootRoute, path: '/admin', component: AdminPage })
-const referencesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/admin/references', validateSearch: (search: Record<string, unknown>): { dictionary?: string; entry?: string } => ({ dictionary: typeof search.dictionary === 'string' ? search.dictionary : undefined, entry: typeof search.entry === 'string' ? search.entry : undefined }), component: ReferenceDataPage })
+const referencesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/references',
+  validateSearch: (search: Record<string, unknown>): { dictionary?: string; entry?: string; tab?: 'colors' | 'exchange' } => ({
+    dictionary: typeof search.dictionary === 'string' ? search.dictionary : undefined,
+    entry: typeof search.entry === 'string' ? search.entry : undefined,
+    tab: search.tab === 'colors' || search.tab === 'exchange' ? search.tab : undefined,
+  }),
+  component: ReferenceDataPage,
+})
 const forbiddenRoute = createRoute({ getParentRoute: () => rootRoute, path: '/forbidden', component: () => <AccessDeniedPage moduleName="выбранный раздел" /> })
 
 const routeTree = rootRoute.addChildren([

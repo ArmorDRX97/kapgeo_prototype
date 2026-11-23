@@ -1,197 +1,358 @@
-import { useDialogDismissGuard } from '../../shared/lib/useDialogDismissGuard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useSearch } from '@tanstack/react-router'
-import { ArrowLeft, BookOpen, Check, ChevronRight, Download, History, Plus, Save, Search, Trash2, X } from 'lucide-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { referenceDefinitions, referenceDefinition } from '../../entities/reference-data/model/catalog'
-import { referenceEntryLabel, type ReferenceEntry, type ReferenceDefinition, type ReferenceField, type ReferenceValue, type ReferenceWorkspace } from '../../entities/reference-data/model/types'
-import { validateReferenceValues } from '../../entities/reference-data/lib/validation'
+import { Link, useBlocker, useNavigate, useSearch } from '@tanstack/react-router'
+import { ArrowDownUp, ArrowLeft, BookOpen, ChevronRight, Download, History, Pencil, Plus, Power, Search, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { exportReference, type ExchangeFormat } from '../../entities/reference-data/lib/exchange'
+import { referenceTree } from '../../entities/reference-data/lib/validation'
+import { referenceAttributes, referenceDefinition, referenceDefinitions } from '../../entities/reference-data/model/catalog'
+import { referenceDate, referenceEntryLabel, type DictionaryMetadata, type ReferenceEntry, type ReferenceField, type ReferenceWorkspace } from '../../entities/reference-data/model/types'
 import { useSession } from '../../entities/session/model/sessionContext'
-import { referenceDataRepository, type ReferenceCommand } from '../../repository/demo/referenceDataRepository'
+import { dictionaryMetadata, referenceDataRepository, type ReferenceCommand } from '../../repository/demo/referenceDataRepository'
+import { importReferences } from '../../repository/demo/referenceExchange'
 import { hasPermission } from '../../shared/auth/permissions'
+import { useUiLocale } from '../../shared/lib/useUiLocale'
 import { Badge } from '../../shared/ui/Badge'
 import { Button } from '../../shared/ui/Button'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { Panel } from '../../shared/ui/Panel'
+import { ColorSample, ReferenceColors } from './ReferenceColors'
+import { ReferenceDialog } from './ReferenceDialog'
+import { ReferenceEntryEditor } from './ReferenceEntryEditor'
+import { ReferenceExchange, type ExchangeState } from './ReferenceExchange'
+import { ReferenceMetadataForm } from './ReferenceMetadataForm'
+import { referenceMessage, referenceText } from './reference-messages'
 import './reference-data.css'
 
-const operations = { created: 'Создание', updated: 'Изменение', activated: 'Активация', deactivated: 'Деактивация', deleted: 'Удаление' }
-const tabs = [{ id: 'all', label: 'Все' }, { id: 'ordinary', label: 'Обычные' }, { id: 'reff', label: 'Reff' }]
-const languages = [{ id: 'ru', label: 'RU', name: 'Русский' }, { id: 'kk', label: 'KZ', name: 'Қазақша' }, { id: 'en', label: 'EN', name: 'English' }] as const
-const historyValue = (entry: ReferenceEntry | null, key: string) => key === 'active' ? entry ? entry.active ? 'Активная' : 'Неактивная' : '—' : String(entry?.values[key] ?? '—')
-const fieldLanguage = (field: ReferenceField) => languages.find(language => field.key.endsWith(`_${language.id}`))?.id
+const queryKey = ['reference-data']
+const exchangeQueryKey = ['reference-data', 'exchange-progress']
+const defaultDictionary = 'reff_rock_type'
+const operations = { created: 'Создание значения', updated: 'Изменение значения', activated: 'Активация значения', deactivated: 'Перевод в недействующие', deleted: 'Удаление значения' }
+const activityNames: Record<string, string> = {
+  NSI_TYPE_UPDATE: 'Изменение справочника', NSI_COLOR_CREATE: 'Создание цвета', NSI_COLOR_UPDATE: 'Изменение цвета',
+  NSI_COLOR_DELETE: 'Удаление цвета', NSI_EXPORT: 'Выгрузка', NSI_IMPORT: 'Импорт', ACCESS_DENIED: 'Отказ в доступе',
+}
+const dateLabel = (value: unknown) => typeof value === 'string' ? value.split('-').reverse().join('.') : ''
+const matches = (query: string, ...values: unknown[]) => query.trim().length < 2 || values.some(value =>
+  String(value ?? '').toLocaleLowerCase('ru').includes(query.trim().toLocaleLowerCase('ru')),
+)
+const period = (entry: ReferenceEntry) => [entry.values.valid_from && `с ${dateLabel(entry.values.valid_from)}`, entry.values.valid_to && `по ${dateLabel(entry.values.valid_to)}`].filter(Boolean).join(' ') || '—'
+type Confirmation = { entry: ReferenceEntry; operation: 'activated' | 'deactivated' | 'deleted'; endDate: string }
+type Tab = 'colors' | 'exchange'
 
-function revealSelection(list: HTMLElement | null, selector: string) {
-  const row = list?.querySelector<HTMLElement>(selector)
-  if (!list || !row) return
-  const top = row.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop
-  if (top < list.scrollTop) list.scrollTop = top - 6
-  else if (top + row.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = top + row.offsetHeight - list.clientHeight + 6
+function localizedName(value: DictionaryMetadata, locale: string) {
+  return (locale === 'kk' ? value.nameKk : locale === 'en' ? value.nameEn : value.name) || value.name
+}
+
+function valueName(entry: ReferenceEntry, locale: string) {
+  return String((locale === 'kk' ? entry.values.name_kk : locale === 'en' ? entry.values.name_en : null) || referenceEntryLabel(entry))
+}
+
+function attributeValue(field: ReferenceField, entry: ReferenceEntry, workspace: ReferenceWorkspace, locale: string) {
+  const value = entry.values[field.key]
+  if (value == null || value === '') return '—'
+  if (field.type === 'reference') {
+    const target = workspace.entries.find(item => item.id === value)
+    return target ? valueName(target, locale) : '—'
+  }
+  if (field.type === 'color') {
+    const color = workspace.colors?.find(item => item.id === value && !item.deleted)
+    return color ? <span className="reference-value-color"><ColorSample hex={color.hex} />{localizedName(color, locale)}</span> : '—'
+  }
+  if (field.type === 'boolean') return value ? 'Да' : 'Нет'
+  if (field.type === 'date') return dateLabel(value)
+  return String(value)
 }
 
 export function ReferenceDataPage() {
   const { persona } = useSession()
-  const client = useQueryClient(), navigate = useNavigate(), search = useSearch({ from: '/admin/references' })
-  const definition = referenceDefinition(search.dictionary ?? '')
-  const query = useQuery({ queryKey: ['reference-data'], queryFn: () => referenceDataRepository.get(), enabled: hasPermission(persona, 'administration.references.view') })
-  const [kind, setKind] = useState('all'), [text, setText] = useState('')
-  const [entryText, setEntryText] = useState(''), [status, setStatus] = useState('all')
-  const [newEntry, setNewEntry] = useState(false), [dirty, setDirty] = useState(false), [revision, setRevision] = useState(0)
-  const [historyOpen, setHistoryOpen] = useState(false), [notice, setNotice] = useState('')
-  const [confirm, setConfirm] = useState<ReferenceCommand | null>(null)
-  const directoryList = useRef<HTMLDivElement>(null), recordList = useRef<HTMLDivElement>(null)
-  const canCreate = hasPermission(persona, 'administration.references.create'), canUpdate = hasPermission(persona, 'administration.references.update')
-  const canStatus = hasPermission(persona, 'administration.references.status'), canDelete = hasPermission(persona, 'administration.references.delete')
+  const locale = useUiLocale()
+  const search = useSearch({ from: '/admin/references' })
+  const navigate = useNavigate()
+  const client = useQueryClient()
+  const canView = hasPermission(persona, 'adm.nsi.view')
+  const canEdit = hasPermission(persona, 'adm.nsi.edit')
+  const canDelete = hasPermission(persona, 'adm.nsi.delete')
+  const canExchange = hasPermission(persona, 'adm.nsi.exchange')
+  const query = useQuery({ queryKey, queryFn: () => referenceDataRepository.get(), enabled: canView || canExchange })
+  const definition = referenceDefinition(search.dictionary ?? defaultDictionary)
+  const tab = search.tab ?? (canView ? undefined : 'exchange')
+  const [directorySearch, setDirectorySearch] = useState('')
+  const [valueSearch, setValueSearch] = useState('')
+  const [status, setStatus] = useState('all')
+  const [date, setDate] = useState('')
+  const [sort, setSort] = useState<{ key: 'code' | 'name'; descending: boolean } | null>(null)
+  const [dirty, setDirty] = useState(false)
+  const [metadataRevision, setMetadataRevision] = useState<number | null>(null)
+  const [editorKey, setEditorKey] = useState(0)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
+  const [exportFormat, setExportFormat] = useState<ExchangeFormat | null>(null)
+  const { data: exchange } = useQuery({ queryKey: exchangeQueryKey, queryFn: (): ExchangeState | null => null, enabled: false, gcTime: Infinity })
+  const [notice, setNotice] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const directory = useRef<HTMLDivElement>(null)
+  const canLeave = !dirty && !busy
+  useBlocker({
+    disabled: canLeave,
+    enableBeforeUnload: !canLeave,
+    shouldBlockFn: () => busy || !window.confirm('Есть несохранённые изменения. Покинуть карточку?'),
+  })
   useEffect(() => {
-    revealSelection(directoryList.current, '.is-active')
-    if (!historyOpen) revealSelection(recordList.current, '.is-selected')
-  }, [query.data, search.dictionary, search.entry, kind, text, entryText, status, historyOpen])
+    const list = directory.current
+    const row = list?.querySelector<HTMLElement>('.is-active')
+    if (!list || !row) return
+    const offset = row.getBoundingClientRect().top - list.getBoundingClientRect().top
+    if (offset < 0 || offset + row.offsetHeight > list.clientHeight) list.scrollTop += offset - 8
+  }, [query.data, definition?.id, tab])
+  const update = (workspace: ReferenceWorkspace) => client.setQueryData(queryKey, workspace)
+  const changeLocation = (dictionary?: string, entry?: string, nextTab?: Tab, replace = false) =>
+    void navigate({ to: '/admin/references', search: { dictionary, entry, tab: nextTab }, resetScroll: false, replace, ignoreBlocker: true })
   const mutation = useMutation({
     mutationFn: (command: ReferenceCommand) => referenceDataRepository.execute(command, persona),
     onSuccess: (workspace, command) => {
-      client.setQueryData(['reference-data'], workspace)
-      setDirty(false); setNewEntry(false); setConfirm(null); setRevision(value => value + 1)
-      setNotice(operations[command.operation] + ' выполнено. Данные сохранены.')
-      const entry = command.operation === 'created' ? workspace.changes.at(-1)?.after?.id : command.operation === 'deleted' ? undefined : command.entryId
-      if (command.operation === 'created') { setEntryText(''); setStatus('all') }
-      void navigate({ to: '/admin/references', search: { dictionary: command.dictionaryId, ...(entry ? { entry } : {}) }, resetScroll: false })
+      update(workspace)
+      setConfirmation(null)
+      setDirty(false)
+      setNotice(`${operations[command.operation]}. Данные сохранены.`)
+      if (search.entry) changeLocation(command.dictionaryId, undefined, undefined, true)
+      if (command.operation === 'created') { setValueSearch(''); setStatus('all'); setDate('') }
     },
   })
-  const discard = () => !dirty || window.confirm('Есть несохранённые изменения. Отменить их и продолжить?')
-  const resetEditor = () => { setDirty(false); setNewEntry(false); setHistoryOpen(false); setNotice(''); mutation.reset(); setRevision(value => value + 1) }
-  const selectDictionary = (id: string) => {
-    if (mutation.isPending || !discard()) return
-    resetEditor(); setEntryText(''); setStatus('all')
-    void navigate({ to: '/admin/references', search: { dictionary: id }, resetScroll: false })
+  const resetDialog = () => { mutation.reset(); setActionError(''); setNotice(''); setDirty(false) }
+  const openEntry = (id?: string) => {
+    resetDialog()
+    changeLocation(definition?.id, id)
   }
-  const selectEntry = (id: string) => {
-    if (!definition || mutation.isPending || !discard()) return
-    resetEditor()
-    void navigate({ to: '/admin/references', search: { dictionary: definition.id, entry: id }, resetScroll: false })
+  const closeEntry = () => { resetDialog(); changeLocation(definition?.id, undefined, undefined, true) }
+  const chooseDictionary = (id: string) => {
+    setValueSearch(''); setStatus('all'); setDate(''); setSort(null)
+    resetDialog()
+    changeLocation(id)
   }
-  if (!hasPermission(persona, 'administration.references.view')) return <Panel title="Доступ ограничен">Нет права просмотра справочников.</Panel>
+  const chooseTab = (nextTab?: Tab) => {
+    if (dirty && !window.confirm('Есть несохранённые изменения. Закрыть карточку?')) return
+    resetDialog()
+    changeLocation(search.dictionary, undefined, nextTab)
+  }
+  const importFile = (file: File, fallback?: string) => {
+    if (!persona || !canExchange || exchange?.pending) return
+    client.setQueryData<ExchangeState>(exchangeQueryKey, { filename: file.name, pending: true })
+    void importReferences(file, fallback, persona).then(({ workspace, result }) => {
+      if (workspace) update(workspace)
+      client.setQueryData<ExchangeState>(exchangeQueryKey, { filename: file.name, pending: false, result })
+    })
+  }
+  const perform = async (action: () => Promise<void>) => {
+    setBusy(true); setActionError('')
+    try { await action() }
+    catch (error) { setActionError(error instanceof Error ? error.message : 'Операция не выполнена.') }
+    finally { setBusy(false) }
+  }
+
+  if (!canView && !canExchange) return <Panel title="Доступ ограничен">Нет права просмотра справочников.</Panel>
   if (query.error) return <Panel title="Не удалось загрузить справочники"><p role="alert">{query.error.message}</p><Button onClick={() => void query.refetch()}>Повторить</Button></Panel>
-  if (query.isLoading || !query.data) return <div className="page-loading"><span /><p>Загружаем справочники…</p></div>
-  const workspace = query.data, entries = workspace.entries.filter(entry => entry.dictionaryId === definition?.id)
-  const selected = newEntry ? undefined : search.entry ? entries.find(entry => entry.id === search.entry) : entries[0]
-  const catalog = referenceDefinitions.filter(item => (kind === 'all' || item.kind === kind) && `${item.label} ${item.id}`.toLocaleLowerCase('ru').includes(text.trim().toLocaleLowerCase('ru')))
-  const visibleEntries = entries.filter(entry => (status === 'all' || entry.active === (status === 'active')) && `${referenceEntryLabel(entry)} ${entry.values.code ?? ''} ${entry.values.name_kk ?? ''} ${entry.values.name_en ?? ''}`.toLocaleLowerCase('ru').includes(entryText.trim().toLocaleLowerCase('ru')))
-  const changes = workspace.changes.filter(change => change.dictionaryId === definition?.id).reverse()
-  const exportData = () => {
-    const url = URL.createObjectURL(new Blob([JSON.stringify({ synthetic: true, dictionaryId: definition?.id, entries }, null, 2)], { type: 'application/json' }))
-    const anchor = document.createElement('a'); anchor.href = url; anchor.download = (definition?.id ?? 'references') + '.json'; anchor.click(); URL.revokeObjectURL(url)
+  if (!query.data) return <div className="page-loading"><span /><p>Загружаем справочники…</p></div>
+  const workspace = query.data
+  const importState = exchange ?? (workspace.lastImport ? { ...workspace.lastImport, pending: false } : null)
+  const entries = workspace.entries.filter(entry => entry.dictionaryId === definition?.id)
+  const selected = entries.find(entry => entry.id === search.entry)
+  const creating = search.entry === 'new' && canEdit
+  const catalog = referenceDefinitions.filter(item => !item.system).map(item => ({ item, metadata: dictionaryMetadata(workspace, item) }))
+    .filter(({ item, metadata }) => matches(directorySearch, item.id, metadata.name, metadata.nameKk, metadata.nameEn))
+    .sort((a, b) => localizedName(a.metadata, locale).localeCompare(localizedName(b.metadata, locale), locale))
+  const metadata = definition && dictionaryMetadata(workspace, definition)
+  const dictionaryName = metadata ? localizedName(metadata, locale) : ''
+  const attributes = definition ? referenceAttributes(definition).filter(field => field.showInList) : []
+  const visibleEntries = entries
+    .filter(entry => (status === 'all' || entry.active === (status === 'active')) &&
+      (!date || entry.active && String(entry.values.valid_from ?? '') <= date && (!entry.values.valid_to || String(entry.values.valid_to) >= date)) &&
+      matches(valueSearch, referenceEntryLabel(entry), entry.values.code, entry.values.name_kk, entry.values.name_en, entry.values.st_nak_number))
+    .sort((a, b) => {
+      if (!sort) return Number(a.values.sort_order ?? 0) - Number(b.values.sort_order ?? 0) || String(a.values.code).localeCompare(String(b.values.code), locale, { numeric: true })
+      const order = sort.key === 'code' ? String(a.values.code).localeCompare(String(b.values.code), locale, { numeric: true }) : valueName(a, locale).localeCompare(valueName(b, locale), locale)
+      return sort.descending ? -order : order
+    })
+  const heading = (key: 'code' | 'name', label: string) => <th aria-sort={sort?.key === key ? sort.descending ? 'descending' : 'ascending' : 'none'}>
+    <button type="button" className="reference-sort" onClick={() => setSort({ key, descending: sort?.key === key && !sort.descending })}>{label}<ArrowDownUp size={13} aria-hidden="true" /></button>
+  </th>
+  const rows = definition?.hierarchical && !sort ? referenceTree(visibleEntries) : visibleEntries.map(entry => ({ entry, depth: 0 }))
+  const askStatus = (entry: ReferenceEntry) => {
+    resetDialog()
+    setConfirmation({ entry, operation: entry.active ? 'deactivated' : 'activated', endDate: entry.active ? referenceDate() : '' })
   }
+  const askDelete = (entry: ReferenceEntry) => {
+    resetDialog()
+    setConfirmation({ entry, operation: 'deleted', endDate: '' })
+  }
+
   return <div className="page-stack reference-page">
-    <PageHeader eyebrow="Администрирование" title="Справочники" description="Записи, наименования и параметры справочников системы." actions={<Link to="/admin" className="button button--secondary button--md"><ArrowLeft size={16} /> Администрирование</Link>} />
-    <div className="reference-workbench">
-      <section className="reference-directory" aria-label="Перечень справочников">
-        <div className="reference-directory-toolbar">
-          <div className="reference-pane-title"><BookOpen size={17} /><strong>Каталог</strong><span>{referenceDefinitions.length}</span></div>
-          <div className="reference-tabs" role="tablist" aria-label="Тип справочника">{tabs.map((tab, index) => <button key={tab.id} type="button" role="tab" id={`reference-tab-${tab.id}`} aria-selected={kind === tab.id} aria-controls="reference-directory-list" tabIndex={kind === tab.id ? 0 : -1} onClick={() => setKind(tab.id)} onKeyDown={event => {
-            const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null
-            if (next !== null) { event.preventDefault(); setKind(tabs[next]!.id); document.getElementById(`reference-tab-${tabs[next]!.id}`)?.focus() }
-          }}>{tab.label}</button>)}</div>
-          <label className="reference-search"><Search size={16} /><input aria-label="Поиск справочника" placeholder="Найти справочник…" value={text} onChange={event => setText(event.target.value)} />{text && <button type="button" aria-label="Очистить поиск справочника" onClick={() => setText('')}><X size={14} /></button>}</label>
-        </div>
-        <div ref={directoryList} id="reference-directory-list" role="tabpanel" aria-labelledby={`reference-tab-${kind}`} className="reference-directory-list">
-          {(['ordinary', 'reff'] as const).map(group => {
-            const items = catalog.filter(item => item.kind === group)
-            return items.length > 0 && <div className="reference-catalog-group" key={group}><div className="reference-group-title"><span>{group === 'ordinary' ? 'Обычные справочники' : 'Reff справочники'}</span><span>{items.length}</span></div>{items.map(item => <button className={`reference-directory-row${item.id === definition?.id ? ' is-active' : ''}`} key={item.id} type="button" aria-label={`${item.label} ${item.id}`} aria-pressed={item.id === definition?.id} onClick={() => selectDictionary(item.id)} title={item.label}><span>{item.label}</span><span className="reference-row-count" aria-label="Записей">{workspace.entries.filter(entry => entry.dictionaryId === item.id).length}</span>{item.id === definition?.id && <ChevronRight size={14} />}</button>)}</div>
-          })}
-          {!catalog.length && <div className="reference-empty"><Search size={24} /><strong>Ничего не найдено</strong><span>Измените название или код в поиске.</span></div>}
-        </div>
-        <div className="reference-directory-footer">Показано {catalog.length} из {referenceDefinitions.length}</div>
-      </section>
-      <section className="reference-document" aria-label="Работа со справочником">
-        {!definition ? <div className="reference-empty reference-document-empty"><span className="reference-empty-icon"><BookOpen size={28} /></span><strong>{search.dictionary ? 'Справочник не найден' : 'Выберите справочник'}</strong><span>Выберите название в каталоге слева.<br />Здесь появятся записи и форма редактирования.</span></div> : <>
-          <header className="reference-document-header"><div><div className="reference-document-meta"><Badge tone={definition.kind === 'reff' ? 'info' : 'neutral'}>{definition.kind === 'reff' ? 'Reff' : 'Обычный справочник'}</Badge><span>Записей: {entries.length}</span></div><h2>{definition.label}</h2></div><div className="reference-document-actions"><Button size="sm" variant="secondary" onClick={exportData}><Download size={15} /> Экспорт</Button>{canCreate && <Button size="sm" disabled={mutation.isPending || newEntry} onClick={() => { if (discard()) { resetEditor(); setNewEntry(true) } }}><Plus size={16} /> Добавить запись</Button>}</div></header>
-          <div className="reference-document-tabs"><Button size="sm" variant={historyOpen ? 'quiet' : 'secondary'} aria-pressed={!historyOpen} onClick={() => setHistoryOpen(false)}><BookOpen size={15} />Записи<span>{entries.length}</span></Button><Button size="sm" variant={historyOpen ? 'secondary' : 'quiet'} aria-label={historyOpen ? 'Закрыть историю' : 'История'} aria-expanded={historyOpen} aria-controls="reference-history" onClick={() => setHistoryOpen(value => !value)}><History size={15} />История<span>{changes.length}</span></Button>{dirty && <span className="reference-draft-note"><span />Есть несохранённые изменения</span>}</div>
-          {notice && <div className="reference-notice success-message" role="status"><Check size={16} />{notice}</div>}
-          {mutation.error && !confirm && <div className="reference-notice form-alert form-alert--error" role="alert">{mutation.error.message}<Button size="sm" variant="secondary" onClick={() => void query.refetch()}>Обновить данные</Button></div>}
-          <div hidden={historyOpen} className="reference-records-workspace">
-            <section className="reference-records" aria-label="Записи справочника">
-              <div className="reference-records-toolbar"><div className="reference-pane-title"><strong>Записи</strong><span>{visibleEntries.length} из {entries.length}</span></div><label className="reference-search"><Search size={15} /><input aria-label="Поиск записи" placeholder="Название или код…" value={entryText} onChange={event => setEntryText(event.target.value)} />{entryText && <button type="button" aria-label="Очистить поиск записи" onClick={() => setEntryText('')}><X size={14} /></button>}</label><fieldset className="reference-segmented"><legend className="sr-only">Статус записей</legend>{[{ id: 'all', label: 'Все' }, { id: 'active', label: 'Активные' }, { id: 'inactive', label: 'Неактивные' }].map(option => <label key={option.id}><input type="radio" name="reference-status-filter" value={option.id} checked={status === option.id} onChange={() => setStatus(option.id)} /><span>{option.label}</span></label>)}</fieldset></div>
-              <div ref={recordList} className="reference-record-list">
-                {newEntry && <div className="reference-record-row is-selected is-new"><Plus size={17} /><span><strong>Новая запись</strong><small>Заполните поля справа</small></span></div>}
-                {visibleEntries.map(entry => <button type="button" key={entry.id} className={`reference-record-row${selected?.id === entry.id ? ' is-selected' : ''}`} aria-current={selected?.id === entry.id ? 'true' : undefined} onClick={() => selectEntry(entry.id)}><span><strong>{referenceEntryLabel(entry)}</strong><small>{Boolean(entry.values.code) && <span>{String(entry.values.code)}</span>}<span className={`reference-record-status${entry.active ? ' is-active' : ''}`}><i />{entry.active ? 'Активная' : 'Неактивная'}</span></small></span><ChevronRight size={14} /></button>)}
-                {!visibleEntries.length && <div className="reference-empty"><Search size={24} /><strong>{entries.length ? 'Записи не найдены' : 'Пока нет записей'}</strong><span>{entries.length ? 'Попробуйте другое название или статус.' : 'Добавьте первую запись в справочник.'}</span>{entries.length > 0 && <Button variant="quiet" size="sm" onClick={() => { setEntryText(''); setStatus('all') }}>Сбросить фильтры</Button>}</div>}
-              </div>
-            </section>
-            <aside className="reference-inspector" aria-label="Поля справочника">
-              {(selected || newEntry) ? <><header className="reference-editor-header"><div><span>{newEntry ? 'Создание записи' : canUpdate ? 'Редактирование записи' : 'Только просмотр'}</span><h3>{newEntry ? 'Новая запись' : referenceEntryLabel(selected!)}</h3></div>{selected && canDelete && <Button size="sm" variant="quiet" aria-label="Удалить запись" title="Удалить запись" disabled={mutation.isPending || dirty} onClick={() => { mutation.reset(); setConfirm({ operation: 'deleted', dictionaryId: definition.id, entryId: selected.id, expectedVersion: workspace.version }) }}><Trash2 size={16} /></Button>}</header><ReferenceEntryEditor key={`${definition.id}:${selected?.id ?? 'new'}:${revision}`} definition={definition} entry={selected} workspace={workspace} pending={mutation.isPending} canStatus={canStatus} readOnly={newEntry ? !canCreate : !canUpdate} onDirty={setDirty} onClose={resetEditor} onSave={(values, active) => mutation.mutate({ dictionaryId: definition.id, entryId: selected?.id, operation: newEntry ? 'created' : 'updated', values, active, expectedVersion: workspace.version })} /></> : <div className="reference-empty"><BookOpen size={28} /><strong>{search.entry ? 'Запись не найдена' : 'Выберите запись'}</strong><span>Откройте запись из списка или добавьте новую.</span></div>}
-            </aside>
-          </div>
-          {historyOpen && <section id="reference-history" className="reference-history"><header><h3>История изменений</h3><p>Изменения всех записей справочника, начиная с последних.</p></header>{!changes.length ? <div className="reference-empty"><History size={28} /><strong>Изменений пока нет.</strong><span>После сохранения здесь появятся автор, время и изменённые значения.</span></div> : changes.map(change => <article key={change.id}><div className="reference-history-heading"><span className="reference-history-icon"><History size={16} /></span><div><strong>{referenceEntryLabel(change.after ?? change.before!)}</strong><small>{change.actor} · {new Date(change.occurredAt).toLocaleString('ru-RU')}</small></div><Badge tone="neutral">{operations[change.operation]}</Badge></div><dl>{['active', ...definition.fields.map(field => field.key)].filter(key => historyValue(change.before, key) !== historyValue(change.after, key)).map(key => <div key={key}><dt>{key === 'active' ? 'Статус' : definition.fields.find(field => field.key === key)?.label}</dt><dd><span>{historyValue(change.before, key)}</span><ChevronRight size={13} /><strong>{historyValue(change.after, key)}</strong></dd></div>)}</dl></article>)}</section>}
-        </>}
-      </section>
+    <PageHeader eyebrow="Администрирование" title="Справочники" actions={<Link to="/admin" className="button button--secondary button--md"><ArrowLeft size={16} />Администрирование</Link>} />
+    <div className="reference-section-bar">
+      <nav aria-label="Разделы справочников">
+        {canView && <><Button variant={tab === undefined ? 'secondary' : 'quiet'} aria-current={tab === undefined ? 'page' : undefined} onClick={() => chooseTab()}>Справочники</Button>
+          <Button variant={tab === 'colors' ? 'secondary' : 'quiet'} aria-current={tab === 'colors' ? 'page' : undefined} onClick={() => chooseTab('colors')}>Цвета</Button></>}
+        {canExchange && <Button variant={tab === 'exchange' ? 'secondary' : 'quiet'} aria-current={tab === 'exchange' ? 'page' : undefined} onClick={() => chooseTab('exchange')}>Обмен{exchange?.pending && <span className="reference-progress-dot" />}</Button>}
+      </nav>
+      {canView && <Button size="sm" variant="quiet" onClick={() => setHistoryOpen(true)}><History size={16} />Журнал изменений</Button>}
     </div>
-    {confirm && <ReferenceDialog title={operations[confirm.operation] + ' записи'} pending={mutation.isPending} onClose={() => setConfirm(null)}><p>{confirm.operation === 'deleted' ? 'Удалить запись? Если она используется в других справочниках этого раздела, удаление будет запрещено. История изменений сохранится.' : 'Изменить статус записи? Существующие связи сохранятся; неактивные записи недоступны для нового выбора.'}</p>{mutation.error && <p role="alert" className="form-alert form-alert--error">{mutation.error.message}</p>}<footer><Button variant="secondary" disabled={mutation.isPending} onClick={() => setConfirm(null)}>Отмена</Button>{mutation.error && confirm.operation === 'deleted' && canStatus && <Button disabled={mutation.isPending} variant="secondary" onClick={() => { mutation.reset(); setConfirm({ ...confirm, operation: 'deactivated' }) }}>Деактивировать вместо удаления</Button>}<Button disabled={mutation.isPending} variant={confirm.operation === 'deleted' ? 'danger' : 'primary'} onClick={() => mutation.mutate(confirm)}>Подтвердить</Button></footer></ReferenceDialog>}
+    {notice && <div className="reference-notice success-message" role="status">{notice}</div>}
+    {!tab && search.entry && !selected && !creating && <div className="reference-notice form-alert form-alert--error" role="status">
+      {search.entry === 'new' ? 'У вашей роли нет права добавлять значения.' : 'Значение не найдено или удалено.'}
+      <Button size="sm" variant="quiet" onClick={closeEntry}>Закрыть</Button>
+    </div>}
+    {tab === 'colors' && canView ? <ReferenceColors workspace={workspace} persona={persona} onUpdate={update} />
+      : tab === 'exchange' && canExchange ? <ReferenceExchange workspace={workspace} state={importState} dictionary={search.dictionary} onFile={importFile} />
+        : tab ? <Panel title="Доступ ограничен">У вашей роли нет доступа к этой вкладке.</Panel>
+          : <div className="reference-workbench">
+            <section className="reference-directory" aria-label="Перечень справочников">
+              <div className="reference-directory-toolbar">
+                <div className="reference-pane-title"><BookOpen size={17} /><strong>Каталог</strong><span>{catalog.length}</span></div>
+                <label className="reference-search"><Search size={16} /><input aria-label="Поиск справочника" placeholder="Наименование или код" value={directorySearch} onChange={event => setDirectorySearch(event.target.value)} /></label>
+              </div>
+              <div ref={directory} className="reference-directory-list">{catalog.map(({ item, metadata: itemMetadata }) => {
+                const active = item.id === definition?.id
+                const label = localizedName(itemMetadata, locale)
+                return <button key={item.id} type="button" className={`reference-directory-row${active ? ' is-active' : ''}`}
+                  aria-current={active ? 'true' : undefined} aria-label={`${label} ${item.id}`} onClick={() => chooseDictionary(item.id)}>
+                  <span>{label}</span><span className="reference-row-count" aria-label="Значений">{workspace.entries.filter(entry => entry.dictionaryId === item.id).length}</span>
+                  {active && <ChevronRight size={14} />}
+                </button>
+              })}{!catalog.length && <div className="reference-empty"><strong>Справочники не найдены</strong></div>}</div>
+            </section>
+            <section className="reference-document" aria-label="Работа со справочником">
+              {definition && metadata && !definition.system ? <>
+                <header className="reference-document-header"><div>
+                  <div className="reference-document-meta"><span>{definition.id}</span><span>Значений: {entries.length}</span></div>
+                  <h2>{dictionaryName}</h2>
+                  {metadata.description && <p>{metadata.description}</p>}
+                </div><div className="reference-document-actions">
+                  {canExchange && <Button size="sm" variant="secondary" onClick={() => { setActionError(''); setExportFormat('json') }}><Download size={16} />Выгрузить</Button>}
+                  <Button size="sm" variant="secondary" onClick={() => { setActionError(''); setMetadataRevision(workspace.version) }}><Pencil size={15} />{canEdit ? 'Изменить справочник' : 'О справочнике'}</Button>
+                  {canEdit && <Button size="sm" onClick={() => openEntry('new')}><Plus size={16} />Добавить значение</Button>}
+                </div></header>
+                <section className="reference-values" aria-label="Значения справочника">
+                  <div className="reference-toolbar">
+                    <label className="reference-search"><Search size={16} /><input aria-label="Поиск значения" placeholder="Код или наименование" value={valueSearch} onChange={event => setValueSearch(event.target.value)} /></label>
+                    <label className="reference-filter"><span>Статус</span><select value={status} onChange={event => setStatus(event.target.value)}><option value="all">Все</option><option value="active">Действующие</option><option value="inactive">Недействующие</option></select></label>
+                    <label className="reference-filter"><span>Действует на дату</span><input type="date" value={date} onChange={event => setDate(event.target.value)} /></label>
+                    {date && <Button size="sm" variant="quiet" onClick={() => setDate('')}>Сбросить дату</Button>}
+                  </div>
+                  <div className="reference-table-scroll"><table className="reference-table">
+                    <thead><tr>{heading('code', 'Код')}{heading('name', 'Наименование')}{attributes.map(field => <th key={field.key}>{(locale === 'kk' ? field.labelKk : locale === 'en' ? field.labelEn : field.label) || field.label}</th>)}
+                      <th>Цвет</th><th>Период действия</th><th>Статус</th>{(canEdit || canDelete) && <th>Действия</th>}
+                    </tr></thead>
+                    <tbody>{rows.map(({ entry, depth }) => {
+                      const label = valueName(entry, locale)
+                      const color = workspace.colors?.find(item => item.id === entry.values.color_id && !item.deleted)
+                      return <tr key={entry.id} className={entry.active ? undefined : 'reference-inactive'}>
+                        <td>{entry.values.code}</td>
+                        <td><button className="reference-table-link" type="button" onClick={() => openEntry(entry.id)}>{entry.values.parent_id ? `${'  '.repeat(Math.min(Math.max(0, depth - 1), 8))}↳ ` : ''}{label}</button>
+                          {Boolean(entry.values.is_group) && <small>Группа</small>}</td>
+                        {attributes.map(field => <td key={field.key}>{attributeValue(field, entry, workspace, locale)}</td>)}
+                        <td>{color ? <span className="reference-value-color" title={localizedName(color, locale)}><ColorSample hex={color.hex} /><span>{localizedName(color, locale)}</span></span> : '—'}</td>
+                        <td className="reference-period">{period(entry)}</td>
+                        <td><Badge tone={entry.active ? 'success' : 'neutral'}>{entry.active ? 'Действующее' : 'Недействующее'}</Badge></td>
+                        {(canEdit || canDelete) && <td><div className="reference-row-actions">
+                          {canEdit && <Button variant="quiet" size="sm" aria-label={`Изменить «${label}»`} title="Изменить" onClick={() => openEntry(entry.id)}><Pencil size={15} /></Button>}
+                          {canEdit && <Button variant="quiet" size="sm" aria-label={`${entry.active ? 'Перевести в недействующие' : 'Сделать действующим'} «${label}»`} title={entry.active ? 'Перевести в недействующие' : 'Сделать действующим'} onClick={() => askStatus(entry)}><Power size={15} /></Button>}
+                          {canDelete && <Button variant="quiet" size="sm" aria-label={`Удалить «${label}»`} title="Удалить" onClick={() => askDelete(entry)}><Trash2 size={15} /></Button>}
+                        </div></td>}
+                      </tr>
+                    })}</tbody>
+                  </table>{visibleEntries.length === 0 && <div className="reference-empty"><strong>{entries.length ? 'Значения не найдены' : 'Пока нет значений'}</strong>
+                    {entries.length > 0 && <Button size="sm" variant="quiet" onClick={() => { setValueSearch(''); setStatus('all'); setDate('') }}>Сбросить фильтры</Button>}
+                  </div>}</div>
+                </section>
+              </> : <div className="reference-empty reference-document-empty"><span className="reference-empty-icon"><BookOpen size={28} /></span><strong>Справочник не найден</strong><span>Выберите справочник в каталоге.</span></div>}
+            </section>
+          </div>}
+    {!tab && definition && !definition.system && !confirmation && (selected || creating) && <ReferenceDialog title={creating ? 'Новое значение' : 'Карточка значения'} pending={mutation.isPending} wide dirty={dirty} onClose={closeEntry}>
+      <ReferenceEntryEditor key={`${selected?.id ?? 'new'}:${editorKey}`} definition={definition} dictionaryName={dictionaryName} entry={selected} workspace={workspace}
+        pending={mutation.isPending} error={mutation.error?.message} readOnly={!canEdit} onDirty={setDirty} onClose={closeEntry}
+        onSave={(values, expectedRevision) => mutation.mutate({
+          operation: creating ? 'created' : 'updated', values, dictionaryId: definition.id, entryId: selected?.id,
+          expectedVersion: workspace.version, expectedRevision, expectedSchemaVersion: definition.schemaVersion,
+        })}
+        onRefresh={mutation.error && /Обновите/.test(mutation.error.message) ? () => {
+          if (dirty && !window.confirm('Обновить карточку? Несохранённые изменения будут сброшены.')) return
+          void query.refetch().then(response => {
+            if (response.isSuccess) { resetDialog(); setEditorKey(key => key + 1) }
+          })
+        } : undefined}
+        onStatus={canEdit && selected ? () => askStatus(selected) : undefined}
+        onDelete={canDelete && selected ? () => askDelete(selected) : undefined} />
+    </ReferenceDialog>}
+    {confirmation && <ReferenceDialog title={confirmation.operation === 'deleted' ? 'Удалить значение?' : confirmation.operation === 'deactivated' ? 'Перевести в недействующие?' : 'Сделать действующим?'} pending={mutation.isPending} dirty={false} onClose={() => { setConfirmation(null); mutation.reset() }}>
+      <form className="reference-modal-form" onSubmit={event => {
+        event.preventDefault()
+        mutation.mutate({ operation: confirmation.operation, dictionaryId: confirmation.entry.dictionaryId, entryId: confirmation.entry.id, expectedVersion: workspace.version, expectedRevision: confirmation.entry.version, endDate: confirmation.endDate || null })
+      }}>
+        <p><strong>{valueName(confirmation.entry, locale)}</strong></p>
+        {confirmation.operation === 'deactivated' && <p>{referenceText(locale,
+          'Значение сохранится в ранее введённых данных и перестанет предлагаться для нового выбора.',
+          'Мән бұрын енгізілген деректерде сақталады, бірақ таңдауға ұсынылмайды.',
+          'The value will remain in previously entered data and will no longer be offered for selection.',
+        )}</p>}
+        {confirmation.operation !== 'deleted' && <label className="field"><span className="field__label">Действует по</span><input type="date" required={confirmation.operation === 'deactivated'}
+          min={String(confirmation.entry.values.valid_from ?? '')} value={confirmation.endDate} onChange={event => setConfirmation({ ...confirmation, endDate: event.target.value })} /></label>}
+        {mutation.error && <p role="alert" className="form-alert form-alert--error">{referenceMessage(mutation.error.message, locale)}</p>}
+        <footer><Button variant="secondary" disabled={mutation.isPending} onClick={() => { setConfirmation(null); mutation.reset() }}>Отмена</Button>
+          <Button type="submit" disabled={mutation.isPending} variant={confirmation.operation === 'deleted' ? 'danger' : 'primary'}>{confirmation.operation === 'deleted' ? 'Удалить' : 'Подтвердить'}</Button></footer>
+      </form>
+    </ReferenceDialog>}
+    {metadataRevision !== null && definition && metadata && <ReferenceMetadataForm definition={definition} initial={metadata} readOnly={!canEdit} pending={busy} error={referenceMessage(actionError, locale)}
+      onClose={() => setMetadataRevision(null)} onSave={draft => void perform(async () => {
+        update(await referenceDataRepository.updateDictionary(definition.id, draft, metadataRevision, persona))
+        setMetadataRevision(null); setNotice('Справочник сохранён.')
+      })} />}
+    {exportFormat && definition && canExchange && <ReferenceDialog title="Выгрузить справочник" pending={busy} dirty={false} onClose={() => setExportFormat(null)}>
+      <form className="reference-modal-form" onSubmit={event => {
+        event.preventDefault()
+        void perform(async () => {
+          if (!persona) return
+          const file = exportReference(workspace, definition, exportFormat, persona.name)
+          update(await referenceDataRepository.changeWorkspace('adm.nsi.exchange', null, persona, () =>
+            [{ action: 'NSI_EXPORT', label: `${dictionaryName} · ${entries.length} · ${exportFormat.toUpperCase()}` }],
+          ))
+          const url = URL.createObjectURL(new Blob([file.text], { type: file.mime }))
+          const anchor = document.createElement('a')
+          anchor.href = url; anchor.download = file.name; anchor.click()
+          setTimeout(() => URL.revokeObjectURL(url), 1000)
+          setExportFormat(null)
+        })
+      }}>
+        <p>{dictionaryName} · значений: {entries.length}</p>
+        <label className="field"><span className="field__label">Формат файла</span><select value={exportFormat} onChange={event => setExportFormat(event.target.value as ExchangeFormat)}><option value="json">JSON</option><option value="xml">XML</option><option value="csv">CSV</option></select></label>
+        {actionError && <p role="alert" className="form-alert form-alert--error">{referenceMessage(actionError, locale)}</p>}
+        <footer><Button variant="secondary" disabled={busy} onClick={() => setExportFormat(null)}>Отмена</Button><Button type="submit" disabled={busy}><Download size={16} />Скачать</Button></footer>
+      </form>
+    </ReferenceDialog>}
+    {historyOpen && <ReferenceHistory workspace={workspace} onClose={() => setHistoryOpen(false)} />}
   </div>
 }
 
-function ReferenceDialog({ title, children, pending, onClose }: { title: string; children: ReactNode; pending: boolean; onClose: () => void }) {
-  const ref = useRef<HTMLElement>(null)
-  const dismiss = useDialogDismissGuard(ref, { onClose, pending })
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null
-    ref.current?.focus()
-    return () => previous?.focus()
-  }, [])
-  return <><div className="reference-dialog-backdrop" onMouseDown={event => { if (!pending && event.target === event.currentTarget) onClose() }}><section ref={ref} className="reference-dialog" role="dialog" aria-modal="true" aria-labelledby="reference-dialog-title" tabIndex={-1} onKeyDown={event => {
-    if (event.key === 'Escape' && !pending) { event.stopPropagation(); onClose() }
-    if (event.key === 'Tab') {
-      const elements = [...(ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled)') ?? [])]
-      const first = elements[0], last = elements.at(-1)
-      if (event.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { event.preventDefault(); last?.focus() }
-      else if (!event.shiftKey && (document.activeElement === last || document.activeElement === ref.current)) { event.preventDefault(); first?.focus() }
-    }
-  }}><header><h2 id="reference-dialog-title">{title}</h2><Button variant="quiet" disabled={pending} onClick={onClose} aria-label="Закрыть форму"><X size={20} /></Button></header>{children}</section></div>{dismiss.confirmation}</>
-}
-
-function ReferenceSwitch({ id, label, description, checked, disabled, errorId, onChange }: { id: string; label: string; description?: string; checked: boolean; disabled: boolean; errorId?: string; onChange: (checked: boolean) => void }) {
-  return <label className="reference-switch" htmlFor={id}><span className="reference-switch-label"><strong>{label}</strong>{description && <small>{description}</small>}</span><span className="reference-switch-control"><input id={id} type="checkbox" role="switch" aria-label={label} aria-describedby={errorId} aria-invalid={Boolean(errorId)} checked={checked} disabled={disabled} onChange={event => onChange(event.target.checked)} /><span className="reference-switch-track" aria-hidden="true" /><span className="reference-switch-value" aria-hidden="true">{checked ? 'Да' : 'Нет'}</span></span></label>
-}
-
-export function ReferenceEntryEditor({ definition, entry, workspace, pending, error, canStatus, readOnly, onDirty, onClose, onSave }: { definition: ReferenceDefinition; entry?: ReferenceEntry; workspace: ReferenceWorkspace; pending: boolean; error?: string; canStatus: boolean; readOnly: boolean; onDirty: (dirty: boolean) => void; onClose: () => void; onSave: (values: Record<string, ReferenceValue>, active: boolean) => void }) {
-  const [values, setValues] = useState<Record<string, ReferenceValue>>(() => entry ? { ...entry.values } : Object.fromEntries(definition.fields.map(field => [field.key, field.type === 'boolean' ? false : null])))
-  const [active, setActive] = useState(entry?.active ?? true), [errors, setErrors] = useState<Record<string, string>>({})
-  const [language, setLanguage] = useState<(typeof languages)[number]['id']>('ru')
-  const localized = definition.fields.filter(field => fieldLanguage(field)), basic = definition.fields.filter(field => field.key !== 'is_active' && !fieldLanguage(field))
-  const inlineStatus = basic.length === 1 && basic[0]?.key === 'code'
-  const modified = !entry || active !== entry.active || JSON.stringify(values) !== JSON.stringify(entry.values)
-  useEffect(() => { onDirty(modified) }, [modified, onDirty])
-  const setValue = (key: string, value: ReferenceValue) => { setValues(current => ({ ...current, [key]: value })); setErrors(current => ({ ...current, [key]: '' })) }
-  const submit = () => {
-    const normalized = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value]))
-    const nextErrors = validateReferenceValues(definition.id, normalized, workspace, entry?.id)
-    setErrors(nextErrors)
-    const firstInvalid = definition.fields.find(field => nextErrors[field.key])
-    if (firstInvalid) {
-      const nextLanguage = fieldLanguage(firstInvalid)
-      if (nextLanguage) setLanguage(nextLanguage)
-      requestAnimationFrame(() => document.getElementById(`reference-field-${firstInvalid.key}`)?.focus())
-    } else if (!Object.keys(nextErrors).length) onSave(normalized, active)
-  }
-  const renderField = (field: ReferenceField) => {
-    const value = values[field.key], errorId = errors[field.key] ? `reference-error-${field.key}` : undefined
-    const controlProps = { id: `reference-field-${field.key}`, disabled: pending || readOnly, 'aria-invalid': Boolean(errorId), 'aria-describedby': errorId }
-    return <div className={`field${['textarea', 'json', 'boolean'].includes(field.type) || fieldLanguage(field) ? ' reference-field-wide' : ''}`} key={field.key}>
-      {field.type === 'boolean' ? <ReferenceSwitch id={controlProps.id} label={field.label} checked={Boolean(value)} disabled={controlProps.disabled} errorId={errorId} onChange={checked => setValue(field.key, checked)} /> : <><label className="field__label" htmlFor={controlProps.id}>{field.label}{field.required && <span aria-label="обязательно"> *</span>}</label>
-        {field.type === 'reference' ? <select {...controlProps} value={String(value ?? '')} onChange={event => setValue(field.key, event.target.value || null)}><option value="">Не выбрано</option>{workspace.entries.filter(item => item.dictionaryId === field.reference && (item.active || item.id === value) && (field.key !== 'parent_id' || item.id !== entry?.id)).map(item => <option key={item.id} value={item.id}>{referenceEntryLabel(item)}{item.active ? '' : ' · неактивная'}</option>)}</select> : field.type === 'json' || field.type === 'textarea' ? <textarea {...controlProps} rows={3} maxLength={field.maxLength} value={String(value ?? '')} onChange={event => setValue(field.key, event.target.value)} /> : <input {...controlProps} type={field.type === 'number' || field.type === 'integer' ? 'number' : 'text'} step={field.type === 'integer' ? 1 : 'any'} maxLength={field.maxLength} value={value === null || value === undefined ? '' : String(value)} onChange={event => setValue(field.key, field.type === 'number' || field.type === 'integer' ? event.target.value === '' ? null : Number(event.target.value) : event.target.value)} />}
-      </>}
-      {errorId && <small id={errorId} className="reference-field-error">{errors[field.key]}</small>}
-    </div>
-  }
-  const statusControl = <ReferenceSwitch id="reference-entry-active" label="Активная запись" description={inlineStatus ? undefined : active ? 'Доступна при выборе значений' : 'Сохраняется в истории, недоступна для нового выбора'} checked={active} disabled={pending || readOnly || !canStatus} onChange={setActive} />
-  return <form className="reference-entry-form" onSubmit={event => { event.preventDefault(); if (!readOnly && !pending) submit() }}>
-    <div className="reference-form-body">
-      {error && <div className="form-alert form-alert--error" role="alert">{error}</div>}
-      {Object.values(errors).some(Boolean) && <div className="form-alert form-alert--error" role="alert">Проверьте отмеченные поля. Значения сохранены в форме.</div>}
-      {basic.length > 0 && <section className="reference-field-section">{basic.length > 1 && <h4>Основные сведения</h4>}<div className="reference-form-grid">{basic.map(renderField)}{inlineStatus && <div className="reference-status-inline">{statusControl}</div>}</div></section>}
-      {localized.length > 0 && <section className="reference-field-section"><div className="reference-language-heading"><h4>Наименования и описания</h4><fieldset className="reference-segmented reference-language-tabs"><legend className="sr-only">Язык полей</legend>{languages.map(option => <label key={option.id} title={option.name}><input type="radio" name="reference-field-language" aria-label={option.name} checked={language === option.id} onChange={() => setLanguage(option.id)} /><span>{option.label}{localized.some(field => fieldLanguage(field) === option.id && errors[field.key]) && <i className="reference-language-error" />}</span></label>)}</fieldset></div>{languages.map(option => <div className="reference-translation-panel" key={option.id} hidden={language !== option.id}>{localized.filter(field => fieldLanguage(field) === option.id).map(renderField)}</div>)}</section>}
-      {!inlineStatus && <section className="reference-status-setting">{statusControl}</section>}
-      <div className="reference-record-meta"><span>Обязательные поля отмечены *</span>{entry && <span>Версия {entry.version}</span>}</div>
-    </div>
-    {!readOnly && <footer><span className={modified ? 'reference-unsaved' : ''}>{pending ? 'Сохранение…' : modified ? 'Изменения не сохранены' : 'Все изменения сохранены'}</span><Button variant="secondary" disabled={pending || !modified} onClick={onClose}>Отменить</Button><Button type="submit" disabled={pending || !modified}><Save size={15} />{pending ? 'Сохраняем…' : 'Сохранить'}</Button></footer>}
-  </form>
+function ReferenceHistory({ workspace, onClose }: { workspace: ReferenceWorkspace; onClose: () => void }) {
+  const labels: Record<string, string> = { name: 'Наименование', nameKk: 'Наименование на казахском', nameEn: 'Наименование на английском', description: 'Описание', code: 'Код', hex: 'HEX', deleted: 'Удалён', active: 'Статус' }
+  const records = [
+    ...workspace.changes.map(change => ({
+      id: change.id, action: operations[change.operation], actor: change.actor, occurredAt: change.occurredAt,
+      label: referenceEntryLabel((change.after ?? change.before)!), dictionaryId: change.dictionaryId,
+      before: change.before && { ...change.before.values, active: change.before.active ? 'Действующее' : 'Недействующее' },
+      after: change.after && { ...change.after.values, active: change.after.active ? 'Действующее' : 'Недействующее' },
+    })),
+    ...(workspace.activity ?? []).filter(event => event.action !== 'NSI_ITEM_CREATE').map(event => ({ ...event, action: activityNames[event.action] ?? event.action, dictionaryId: undefined })),
+  ].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
+  return <ReferenceDialog title="Журнал изменений" wide onClose={onClose}>
+    <div className="reference-history">{records.length ? records.map(record => {
+      const before = (record.before ?? {}) as Record<string, unknown>, after = (record.after ?? {}) as Record<string, unknown>
+      const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])].filter(key => key !== 'id' && before[key] !== after[key])
+      return <article key={record.id}><div className="reference-history-heading"><span className="reference-history-icon"><History size={16} /></span>
+        <div><strong>{record.label}</strong><small>{record.actor} · {new Date(record.occurredAt).toLocaleString('ru-RU')}</small></div><Badge tone="neutral">{record.action}</Badge>
+      </div>{keys.length > 0 && <dl>{keys.map(key => <div key={key}>
+        <dt>{(record.dictionaryId ? referenceDefinition(record.dictionaryId)?.fields.find(field => field.key === key)?.label : undefined) ?? labels[key] ?? key}</dt>
+        <dd><span>{String(before[key] ?? '—')}</span><ChevronRight size={13} /><strong>{String(after[key] ?? '—')}</strong></dd>
+      </div>)}</dl>}</article>
+    }) : <div className="reference-empty"><strong>Изменений пока нет</strong></div>}</div>
+  </ReferenceDialog>
 }

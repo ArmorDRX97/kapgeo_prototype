@@ -14,8 +14,12 @@ export function RootLayout() {
   // Internal tools have their own visual shell and never mount product navigation.
   if (pathname === '/team/knowledge-map' || pathname === '/team/ui-kit') return <Outlet />
 
+  if (pathname === '/admin/references') {
+    const allowed = hasPermission(persona, 'adm.nsi.view') || hasPermission(persona, 'adm.nsi.exchange')
+    return <AppShell>{allowed ? <Outlet /> : <AccessDeniedPage moduleName="Справочники" />}</AppShell>
+  }
+
   const guardedModules: Array<{ prefix: string; permission: Permission; name: string }> = [
-    { prefix: '/admin/references', permission: 'administration.references.view', name: 'Справочники' },
     { prefix: '/geology/bgd', permission: 'bgd.view', name: 'БГД' },
     { prefix: '/geology', permission: 'geology.view', name: 'Геология' },
     { prefix: '/technology', permission: 'technology.view', name: 'Геотехнология' },

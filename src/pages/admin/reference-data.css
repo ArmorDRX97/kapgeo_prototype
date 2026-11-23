@@ -1,14 +1,11 @@
 .reference-page { gap: 16px; }
-.reference-workbench { display: grid; grid-template-columns: 252px minmax(0, 1fr); gap: 16px; height: calc(100dvh - 224px); min-height: 480px; }
+.reference-workbench { display: grid; grid-template-columns: 252px minmax(0, 1fr); gap: 16px; height: calc(100dvh - 248px); min-height: 430px; }
 .reference-directory, .reference-document { min-width: 0; min-height: 0; border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-panel); overflow: hidden; }
 .reference-directory { display: flex; flex-direction: column; }
 .reference-directory-toolbar { display: grid; gap: 12px; padding: 16px 12px 12px; border-bottom: 1px solid var(--border-default); }
 .reference-pane-title { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: var(--font-size-sm); }
 .reference-pane-title strong { color: var(--text-primary); font-size: var(--font-size-base); }
 .reference-pane-title > span:last-child { margin-left: auto; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
-.reference-tabs { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-subtle); }
-.reference-tabs button { flex: 1; cursor: pointer; border: 0; border-radius: 4px; background: transparent; padding: 7px 5px; font-size: var(--font-size-sm); font-weight: 600; color: var(--text-secondary); }
-.reference-tabs button[aria-selected=true] { color: var(--color-brand-700); background: var(--surface-panel); box-shadow: var(--shadow-sm); }
 .reference-search { display: flex; align-items: center; gap: 8px; padding: 0 10px; min-height: 36px; background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-tertiary); }
 .reference-search:focus-within { border-color: var(--color-brand-500); box-shadow: 0 0 0 2px var(--brand-focus-halo); }
 .reference-search svg { flex: none; }
@@ -16,8 +13,6 @@
 .reference-search input:focus { outline: none; box-shadow: none; }
 .reference-search button { display: grid; place-items: center; padding: 2px; color: var(--text-tertiary); border: 0; background: transparent; cursor: pointer; }
 .reference-directory-list { flex: 1; min-height: 0; overflow-y: auto; padding: 6px; scrollbar-gutter: stable; }
-.reference-catalog-group + .reference-catalog-group { margin-top: 8px; }
-.reference-group-title { display: flex; justify-content: space-between; gap: 8px; padding: 12px 8px 8px; color: var(--text-tertiary); font-size: var(--font-size-sm); }
 .reference-directory-row { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 46px; padding: 9px 10px; text-align: left; cursor: pointer; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--text-secondary); }
 .reference-directory-row > span:first-child { flex: 1; font-size: var(--font-size-base); line-height: 1.4; overflow-wrap: anywhere; }
 .reference-directory-row:hover { background: var(--surface-subtle); color: var(--text-primary); }
@@ -25,23 +20,13 @@
 .reference-directory-row svg { flex: none; }
 .reference-row-count { flex: none; min-width: 21px; text-align: center; font-size: var(--font-size-sm); font-weight: 400; border-radius: 4px; padding: 1px 4px; color: var(--text-tertiary); background: var(--surface-subtle); }
 .reference-directory-row.is-active .reference-row-count { background: var(--surface-panel); color: var(--color-brand-700); }
-.reference-directory-footer { padding: 10px 16px; border-top: 1px solid var(--border-default); color: var(--text-tertiary); font-size: var(--font-size-sm); }
 .reference-document { display: flex; flex-direction: column; }
 .reference-document-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 16px 10px; }
 .reference-document-header > div:first-child { min-width: 0; }
 .reference-document-header h2 { font-size: 20px; line-height: 1.3; margin: 4px 0 0; overflow-wrap: anywhere; }
 .reference-document-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: var(--text-tertiary); font-size: var(--font-size-sm); }
 .reference-document-actions { display: flex; align-items: center; gap: 8px; flex: none; }
-.reference-document-tabs { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 0 20px 12px; border-bottom: 1px solid var(--border-default); }
-.reference-document-tabs .button { box-shadow: none; }
-.reference-document-tabs .button > span { padding: 0 5px; min-width: 20px; border-radius: 4px; background: var(--surface-subtle); color: var(--text-tertiary); font-size: var(--font-size-sm); }
-.reference-draft-note { display: flex; align-items: center; gap: 6px; margin-left: auto; color: var(--color-amber-700); font-size: var(--font-size-sm); }
-.reference-draft-note > span { width: 6px; height: 6px; border-radius: 50%; background: var(--color-amber-500); }
 .reference-notice { flex: none; margin: 10px 16px 0; padding: 10px 12px; font-size: var(--font-size-sm); }
-.reference-records-workspace { display: grid; grid-template-columns: 252px minmax(0, 1fr); flex: 1; min-height: 0; }
-.reference-records-workspace[hidden], .reference-translation-panel[hidden] { display: none; }
-.reference-records { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--border-default); background: var(--surface-subtle); }
-.reference-records-toolbar { display: grid; gap: 12px; padding: 16px 12px 12px; }
 .reference-segmented { position: relative; display: flex; padding: 3px; gap: 2px; min-width: 0; margin: 0; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-panel); }
 .reference-segmented legend { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .reference-segmented label { position: relative; flex: 1; cursor: pointer; }
@@ -49,26 +34,6 @@
 .reference-segmented label > span { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px; border-radius: 4px; color: var(--text-secondary); font-size: var(--font-size-sm); }
 .reference-segmented input:checked + span { color: var(--color-brand-700); background: var(--color-brand-50); font-weight: 600; }
 .reference-segmented input:focus-visible + span { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
-.reference-record-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 12px; scrollbar-gutter: stable; }
-.reference-record-row { display: flex; gap: 10px; align-items: center; width: 100%; padding: 12px; margin-bottom: 4px; border: 1px solid transparent; border-radius: var(--radius-sm); color: var(--text-secondary); background: transparent; text-align: left; cursor: pointer; }
-.reference-record-row > span { flex: 1; min-width: 0; }
-.reference-record-row strong { display: block; color: var(--text-primary); font-weight: 500; font-size: var(--font-size-base); line-height: 1.4; overflow-wrap: anywhere; }
-.reference-record-row small { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 7px; font-size: var(--font-size-sm); color: var(--text-tertiary); }
-.reference-record-row > svg { flex: none; }
-.reference-record-row:hover { background: var(--surface-panel); }
-.reference-record-row.is-selected { background: var(--surface-panel); border-color: var(--color-brand-200); box-shadow: var(--shadow-sm); }
-.reference-record-row.is-selected strong, .reference-record-row.is-selected > svg { color: var(--color-brand-700); }
-.reference-record-row.is-new { border-style: dashed; border-color: var(--color-brand-300); cursor: default; }
-.reference-record-status { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-.reference-record-status i { width: 5px; height: 5px; border-radius: 50%; background: var(--border-strong); }
-.reference-record-status.is-active i { background: var(--color-green-600); }
-.reference-inspector { display: flex; flex-direction: column; min-width: 0; min-height: 0; container-type: inline-size; }
-.reference-editor-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border-default); }
-.reference-editor-header > div { min-width: 0; }
-.reference-editor-header span { font-size: var(--font-size-sm); color: var(--text-tertiary); }
-.reference-editor-header h3 { font-size: 16px; line-height: 1.4; margin: 4px 0 0; overflow-wrap: anywhere; }
-.reference-editor-header > .button { color: #bd2424; background: #fceaea; border-color: #f5c7c7; }
-.reference-editor-header > .button:not(:disabled):hover { color: #fff; background: #c62828; border-color: #c62828; }
 .reference-entry-form { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .reference-form-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; scrollbar-gutter: stable; }
 .reference-form-body > * + * { margin-top: 16px; }
@@ -85,12 +50,9 @@
 .reference-language-tabs label > span { padding: 5px 7px; }
 .reference-language-error { width: 5px; height: 5px; background: var(--color-red-600); border-radius: 50%; }
 .reference-translation-panel { display: grid; gap: 16px; }
-.reference-status-setting { border-top: 1px solid var(--border-default); padding-top: 12px; }
-.reference-status-inline { display: grid; align-items: center; align-self: end; min-height: 40px; padding-left: 8px; }
+.reference-translation-panel[hidden] { display: none; }
 .reference-switch { display: flex; gap: 12px; align-items: center; justify-content: space-between; cursor: pointer; }
-.reference-switch-label { display: grid; gap: 4px; }
-.reference-switch-label strong { color: var(--text-primary); font-size: var(--font-size-base); font-weight: 500; line-height: 1.4; }
-.reference-switch-label small { color: var(--text-tertiary); font-size: var(--font-size-sm); line-height: 1.4; }
+.reference-switch-label { color: var(--text-primary); font-size: var(--font-size-base); font-weight: 500; line-height: 1.4; }
 .reference-switch-control { position: relative; display: inline-flex; align-items: center; gap: 8px; flex: none; }
 .reference-switch-control input { position: absolute; inset: 0 auto 0 0; z-index: 1; opacity: 0; width: 34px; height: 20px; margin: 0; cursor: inherit; }
 .reference-switch-track { position: relative; width: 34px; height: 20px; border: 1px solid var(--border-strong); border-radius: 20px; background: var(--border-strong); transition: background var(--duration-fast); }
@@ -100,10 +62,7 @@
 .reference-switch-control input:focus-visible + .reference-switch-track { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 .reference-switch:has(input:disabled) { cursor: default; opacity: .65; }
 .reference-switch-value { min-width: 22px; font-size: var(--font-size-sm); color: var(--text-secondary); }
-.reference-record-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--text-tertiary); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
 .reference-entry-form footer { flex: none; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding: 12px 20px; background: var(--surface-panel); border-top: 1px solid var(--border-default); }
-.reference-entry-form footer > span { margin-right: auto; color: var(--text-tertiary); font-size: var(--font-size-sm); }
-.reference-entry-form footer > .reference-unsaved { color: var(--color-amber-700); }
 .reference-field-error { color: var(--color-red-700); font-size: var(--font-size-sm); }
 .reference-empty { display: flex; min-height: 190px; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; color: var(--text-tertiary); }
 .reference-empty strong { color: var(--text-primary); font-size: 16px; font-weight: 600; }
@@ -130,7 +89,82 @@
 .reference-dialog > header, .reference-dialog > footer { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
 .reference-dialog h2 { margin: 0; font-size: 20px; }
 .reference-dialog > footer { justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--border-default); padding-top: 16px; margin-top: 20px; }
-@container (max-width: 460px) { .reference-form-grid { grid-template-columns: minmax(0, 1fr); } .reference-entry-form footer > span { width: 100%; } }
-@media (max-width: 1150px) { .reference-workbench { grid-template-columns: 224px minmax(0, 1fr); gap: 12px; } .reference-records-workspace { grid-template-columns: 218px minmax(0, 1fr); } .reference-document-header { align-items: flex-start; } .reference-document-actions { flex-direction: column-reverse; align-items: stretch; } }
-@media (max-width: 900px) { .reference-workbench { height: auto; min-height: 0; grid-template-columns: 218px minmax(0, 1fr); } .reference-directory { max-height: calc(100dvh - 120px); position: sticky; top: calc(var(--topbar-height) + 16px); } .reference-directory-list { max-height: 520px; } .reference-records-workspace { grid-template-columns: minmax(0, 1fr); } .reference-records { border-right: 0; border-bottom: 1px solid var(--border-default); } .reference-record-list { max-height: 180px; } .reference-inspector { min-height: 480px; } .reference-form-body { overflow: visible; } .reference-history { overflow: visible; } .reference-document-header { flex-wrap: wrap; } .reference-document-actions { flex-direction: row; flex-wrap: wrap; } .reference-draft-note { margin-left: 0; width: 100%; } }
-@media (max-width: 620px) { .reference-workbench { grid-template-columns: minmax(0, 1fr); } .reference-directory { position: static; max-height: 330px; } .reference-directory-list { min-height: 120px; } .reference-document-header, .reference-editor-header, .reference-form-body, .reference-history { padding: 16px; } .reference-document-tabs { padding: 0 16px 12px; } .reference-document-header h2 { font-size: 18px; } .reference-language-heading { align-items: flex-start; } .reference-entry-form footer { padding: 12px 16px; } }
+
+.reference-section-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border-default); padding-bottom: 10px; }
+.reference-section-bar nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.reference-section-bar nav [aria-current] { color: var(--color-brand-700); }
+.reference-progress-dot { width: 7px; height: 7px; border-radius: 100%; background: var(--color-brand-600); }
+.reference-document-header { flex-wrap: wrap; padding: 18px 20px; }
+.reference-document-header p { color: var(--text-secondary); margin: 8px 0 0; max-width: 62ch; }
+.reference-document-actions { flex-wrap: wrap; flex: 0 1 auto; }
+.reference-values { display: flex; flex-direction: column; min-height: 0; }
+.reference-toolbar, .reference-row-actions { display: flex; align-items: center; gap: 8px; }
+.reference-toolbar { flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid var(--border-default); background: var(--surface-subtle); }
+.reference-toolbar .reference-search { flex: 1 1 210px; max-width: 360px; }
+.reference-filter { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; white-space: nowrap; color: var(--text-secondary); font-size: var(--font-size-sm); }
+.reference-filter select, .reference-filter input { width: auto; min-height: 36px; padding: 6px 8px; color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-panel); font: inherit; }
+.reference-row-actions .button { min-width: 32px; padding-inline: 7px; }
+.reference-table-scroll { min-width: 0; overflow: auto; }
+.reference-table { width: 100%; border-collapse: separate; border-spacing: 0; color: var(--text-primary); font-size: var(--font-size-sm); }
+.reference-table th, .reference-table td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border-default); vertical-align: middle; }
+.reference-table th:first-child, .reference-table td:first-child { padding-left: 20px; }
+.reference-table th:last-child, .reference-table td:last-child { padding-right: 20px; }
+.reference-table thead th { position: sticky; z-index: 1; top: 0; background: var(--surface-subtle); color: var(--text-secondary); font-weight: 600; }
+.reference-table tbody tr:hover { background: var(--surface-subtle); }
+.reference-table td small { display: block; margin-top: 3px; color: var(--text-tertiary); }
+.reference-table .reference-inactive { color: var(--text-secondary); }
+.reference-inactive .reference-table-link { color: var(--text-secondary); }
+.reference-sort, .reference-table-link { appearance: none; border: 0; background: transparent; font: inherit; text-align: left; padding: 2px 0; color: inherit; cursor: pointer; }
+.reference-sort { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.reference-table-link { color: var(--color-brand-700); font-weight: 600; min-width: 145px; }
+.reference-table-link:hover { text-decoration: underline; }
+.reference-period { white-space: nowrap; }
+.reference-table td:first-child { overflow-wrap: anywhere; }
+.reference-color-sample { width: 23px; height: 18px; border-radius: 4px; border: 1px solid rgb(0 0 0 / .12); background: var(--reference-swatch); display: inline-block; flex: none; }
+.reference-value-color, .reference-color-select { display: flex; align-items: center; gap: 7px; }
+.reference-color-select select { flex: 1; }
+.reference-dialog--wide { width: min(780px, 100%); }
+.reference-dialog .reference-entry-form { margin-top: 12px; }
+.reference-dialog .reference-form-body { padding: 12px 0 20px; overflow: visible; }
+.reference-dialog .reference-entry-form footer { padding-inline: 0; }
+.reference-dialog:has(.reference-entry-form) { display: flex; flex-direction: column; overflow: hidden; }
+.reference-dialog:has(.reference-entry-form) > header { flex: none; }
+.reference-dialog .reference-entry-form .reference-form-body { overflow: auto; padding-inline: 3px; }
+.reference-dialog .reference-entry-form { min-height: 0; }
+.reference-entry-context { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); }
+.reference-entry-context strong { color: var(--text-primary); }
+.reference-modal-form, .reference-fields { display: grid; gap: 14px; }
+.reference-modal-form { margin-top: 18px; }
+.reference-fields .field, .reference-modal-form .field, .reference-exchange-target { margin: 0; }
+.reference-modal-form p, .reference-modal-form h3 { margin: 0; }
+.reference-modal-form footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--border-default); padding-top: 14px; }
+.reference-modal-form :is(input, textarea, select) { width: 100%; min-width: 0; }
+.reference-color-controls { display: grid; grid-template-columns: 1fr 1.2fr repeat(3, minmax(46px, .55fr)); gap: 8px; align-items: end; }
+.reference-color-controls input[type=color] { padding: 3px; min-height: 38px; }
+.reference-color-warning { color: var(--color-amber-700); }
+.reference-exchange-body { display: grid; gap: 16px; padding: 0 20px 20px; }
+.reference-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); padding: 32px 16px; gap: 10px; background: var(--surface-subtle); text-align: center; }
+.reference-drop.is-dragging { background: var(--color-brand-50); border-color: var(--color-brand-600); }
+.reference-drop p, .reference-import-result p { color: var(--text-secondary); margin: 0 0 8px; }
+.reference-exchange-target { max-width: 400px; }
+.reference-import-result { border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 16px; }
+.reference-import-result h3 { margin: 0 0 8px; }
+.reference-import-result progress { width: 100%; accent-color: var(--color-brand-600); }
+.reference-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+.reference-dialog > .reference-history { padding: 16px 0 0; overflow: visible; }
+
+@media (max-width: 1150px) {
+  .reference-workbench { grid-template-columns: 218px minmax(0, 1fr); gap: 12px; }
+}
+@media (max-width: 850px) {
+  .reference-workbench { min-height: 0; height: auto; grid-template-columns: 185px minmax(0, 1fr); }
+  .reference-directory-list { max-height: 480px; }
+  .reference-document-header, .reference-toolbar { padding-inline: 14px; }
+}
+@media (max-width: 620px) {
+  .reference-workbench { grid-template-columns: minmax(0, 1fr); }
+  .reference-directory-list { max-height: 200px; }
+  .reference-form-grid { grid-template-columns: minmax(0, 1fr); }
+  .reference-dialog { padding: 16px; }
+  .reference-color-controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
