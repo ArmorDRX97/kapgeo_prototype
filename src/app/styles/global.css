@@ -520,3 +520,37 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 .button.action-delete--icon:not(:disabled):hover { color: #c62828; background: #fceaea; border-color: transparent; }
 .data-workbench .legend-editor__delete, .passport-workspace .legend-editor__delete { color: #c62828; background: transparent; border-color: transparent; }
 .data-workbench .legend-editor__delete:not(:disabled):hover, .passport-workspace .legend-editor__delete:not(:disabled):hover { color: #c62828; background: #fceaea; }
+
+/* Sign-in demonstration */
+.auth-step__heading { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.auth-step__icon { display: grid; width: 36px; height: 36px; flex: none; place-items: center; color: var(--color-brand-700); border-radius: 10px; background: var(--color-brand-100); }
+.auth-form-card .auth-step__heading h2 { margin: 0; font-size: clamp(16px, 5vw, 23px); line-height: 1.2; }
+.auth-step .auth-form-card__lead { margin-bottom: 22px; }
+.auth-qr { position: relative; display: block; width: 232px; max-width: 100%; margin: 0 auto 16px; padding: 12px; overflow: hidden; cursor: pointer; border: 1px solid var(--border-default); border-radius: 15px; background: white; box-shadow: 0 8px 24px rgb(8 40 52 / 0.08); transition: box-shadow 180ms, transform 180ms; }
+.auth-qr:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 28px rgb(8 40 52 / 0.15); }
+.auth-qr:disabled { cursor: wait; }
+.auth-qr svg { display: block; width: 100%; }
+.auth-qr__scan { position: absolute; top: 10%; left: 8%; width: 84%; height: 3px; border-radius: 3px; background: var(--color-brand-500); box-shadow: 0 0 12px 3px var(--color-brand-400); animation: auth-scan 1s ease-in-out forwards; }
+@keyframes auth-scan { from { top: 10%; } to { top: 90%; } }
+.auth-step__hint { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.5; text-align: center; }
+.auth-demo-hint { margin: 12px 0 0; color: var(--text-tertiary); font-size: var(--font-size-sm); text-align: center; }
+.auth-demo-hint--left { text-align: left; }
+.auth-back { display: inline-flex; margin-top: 26px; align-items: center; gap: 7px; padding: 4px 0; cursor: pointer; color: var(--color-brand-700); border: 0; background: transparent; font-size: var(--font-size-sm); font-weight: 650; }
+.auth-back:hover, .auth-resend button:hover, .auth-settings__reset:hover { text-decoration: underline; }
+.auth-code { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.auth-code input { width: 100%; min-width: 0; height: 54px; padding: 0; color: var(--text-primary); border: 1px solid var(--border-default); border-radius: 9px; background: #fbfcfd; font-size: 22px; font-weight: 700; text-align: center; }
+.auth-verifying { display: grid; min-height: 230px; place-items: center; }
+.auth-verifying__spinner { width: 42px; height: 42px; border: 3px solid var(--color-brand-100); border-top-color: var(--color-brand-700); border-radius: 50%; animation: auth-spin 0.8s linear infinite; }
+@keyframes auth-spin { to { transform: rotate(360deg); } }
+.auth-resend { margin-top: 22px; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.6; }
+.auth-resend button, .auth-settings__reset { padding: 0; cursor: pointer; color: var(--color-brand-700); border: 0; background: transparent; font-weight: 650; }
+.auth-settings__intro, .auth-settings__note { color: var(--text-secondary); line-height: 1.55; }
+.auth-settings__options { display: grid; gap: 10px; margin: 20px 0; }
+.auth-settings__option { display: flex; align-items: flex-start; gap: 11px; padding: 14px; cursor: pointer; border: 1px solid var(--border-default); border-radius: 10px; }
+.auth-settings__option.is-selected { border-color: var(--color-brand-500); background: var(--color-brand-50); }
+.auth-settings__option input { margin-top: 4px; }
+.auth-settings__option span { display: grid; gap: 3px; }
+.auth-settings__option small, .auth-settings__note { color: var(--text-secondary); font-size: var(--font-size-sm); }
+.auth-settings__note { margin: 7px 0 0; }
+@media (prefers-reduced-motion: reduce) { .auth-qr__scan { animation-duration: 0.01ms; } .auth-verifying__spinner { animation: none; } }
+
