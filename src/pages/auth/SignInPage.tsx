@@ -47,7 +47,8 @@ export function SignInPage() {
 
   useEffect(() => {
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.code === 'F8' && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.repeat) {
+      const editing = event.target instanceof HTMLElement && event.target.closest('input:not([type="radio"]):not([type="checkbox"]), textarea, select, [contenteditable]:not([contenteditable="false"])')
+      if (event.code === 'KeyP' && !editing && !event.isComposing && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.repeat) {
         event.preventDefault()
         setSettingsOpen((open) => !open)
       }
@@ -170,16 +171,15 @@ export function SignInPage() {
               <div className="auth-step__icon"><Smartphone size={20} /></div>
               <h2>Подключите приложение</h2>
             </div>
-            <p className="auth-form-card__lead">При первом входе отсканируйте QR-код в приложении AI KAPGEO, чтобы привязать устройство.</p>
-            <button type="button" className={`auth-qr${scanning ? ' auth-qr--scanning' : ''}`} onClick={handleScan} disabled={scanning} aria-label="Имитировать сканирование QR-кода">
-              <svg viewBox="-2 -2 33 33" role="img" aria-label="Демонстрационный QR-код" shapeRendering="crispEdges">
+            <p className="auth-form-card__lead">Отсканируйте QR-код в приложении-аутентификаторе.</p>
+            <button type="button" className={`auth-qr${scanning ? ' auth-qr--scanning' : ''}`} onClick={handleScan} disabled={scanning} aria-label="Отсканировать QR-код">
+              <svg viewBox="-2 -2 33 33" role="img" aria-label="QR-код для подключения приложения" shapeRendering="crispEdges">
                 <rect x="-2" y="-2" width="33" height="33" fill="white" />
                 {qrModules.map((filled, index) => filled && <rect key={index} x={index % 29} y={Math.floor(index / 29)} width="1" height="1" fill="#102d3a" />)}
               </svg>
               {scanning && <span className="auth-qr__scan" />}
             </button>
             <p className="auth-step__hint" role="status">{scanning ? 'Подключаем приложение…' : 'После сканирования код для входа появится в приложении.'}</p>
-            <p className="auth-demo-hint">Для демонстрации нажмите на QR-код</p>
             <button type="button" className="auth-back" onClick={resetStep}><ArrowLeft size={16} /> Вернуться назад</button>
           </div>}
           {step === 'code' && <div className="auth-step">
@@ -187,7 +187,7 @@ export function SignInPage() {
               <div className="auth-step__icon"><Smartphone size={20} /></div>
               <h2>Подтвердите вход</h2>
             </div>
-            <p className="auth-form-card__lead">Введите 6-значный код из приложения AI KAPGEO. Вход произойдёт автоматически.</p>
+            <p className="auth-form-card__lead">Введите 6-значный код из приложения-аутентификатора. Вход произойдёт автоматически.</p>
             <div className="auth-code" role="group" aria-label="Код подтверждения">
               {code.map((digit, index) => <input key={index} ref={(element) => { inputs.current[index] = element }} aria-label={`Цифра ${index + 1} из 6`} inputMode="numeric" autoComplete={index === 0 ? 'one-time-code' : 'off'} value={digit} onFocus={(event) => event.currentTarget.select()} onChange={(event) => updateCode(index, event.target.value)} onKeyDown={(event) => handleCodeKey(event, index)} onPaste={(event) => handlePaste(event, index)} />)}
             </div>
@@ -195,7 +195,6 @@ export function SignInPage() {
               <span>Не пришёл код?</span>{' '}
               {remaining > 0 ? <span>Отправить снова через {remaining} сек.</span> : <button type="button" onClick={startCode}>Отправить код в приложение снова</button>}
             </div>
-            <p className="auth-demo-hint auth-demo-hint--left">В прототипе подойдёт любой 6-значный код</p>
             <button type="button" className="auth-back" onClick={resetStep}><ArrowLeft size={16} /> Вернуться к входу</button>
           </div>}
           {step === 'verifying' && <div className="auth-verifying" role="status" aria-label="Проверка кода">
@@ -203,14 +202,14 @@ export function SignInPage() {
           </div>}
         </div>
       </section>
-      {settingsOpen && <WorkspaceDialog title="Настройки прототипа" size="compact" onClose={() => setSettingsOpen(false)} footer={<Button onClick={() => setSettingsOpen(false)}>Готово <Check size={16} /></Button>}>
-        <p className="auth-settings__intro">Выберите сценарий следующего входа. Настройка хранится в этом браузере и нужна только для демонстрации.</p>
+      {settingsOpen && <WorkspaceDialog title="Настройки входа" size="compact" onClose={() => setSettingsOpen(false)} footer={<Button onClick={() => setSettingsOpen(false)}>Готово <Check size={16} /></Button>}>
+        <p className="auth-settings__intro">Выберите сценарий следующего входа. Настройка хранится в этом браузере.</p>
         <div className="auth-settings__options">
           <label className={`auth-settings__option${!bound ? ' is-selected' : ''}`}><input type="radio" name="auth-demo-mode" checked={!bound} onChange={() => { setDemoBound(false); resetStep() }} /><span><strong>Первый вход</strong><small>После логина и пароля — привязка приложения по QR-коду, затем код.</small></span></label>
           <label className={`auth-settings__option${bound ? ' is-selected' : ''}`}><input type="radio" name="auth-demo-mode" checked={bound} onChange={() => { setDemoBound(true); resetStep() }} /><span><strong>Приложение уже подключено</strong><small>После логина и пароля сразу появится ввод кода.</small></span></label>
         </div>
         <button type="button" className="auth-settings__reset" onClick={() => { setDemoBound(false); resetStep() }}>Сбросить состояние входа</button>
-        <p className="auth-settings__note">Сброс возвращает сценарий первого входа. Остальные данные прототипа не затрагиваются.</p>
+        <p className="auth-settings__note">Сброс возвращает сценарий первого входа. Остальные данные не затрагиваются.</p>
       </WorkspaceDialog>}
     </main>
   )
