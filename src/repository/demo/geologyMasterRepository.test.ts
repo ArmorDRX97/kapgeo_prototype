@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Deposit, UpdateDepositPatch } from '../../entities/geology-master/model/types'
+import { buildConditionLimits, isRequiredConditionLimit } from '../../entities/geology-master/model/types'
 import { DemoDatabase, type DemoRecord } from './demoDatabase'
 import { DemoGeologyMasterRepository } from './geologyMasterRepository'
 
@@ -22,8 +23,9 @@ describe('DemoGeologyMasterRepository BGD CRUD', () => {
       'Участок', 'Участок', 'Участок', 'Рудная залежь', 'Рудная залежь', 'Рудная залежь',
     ])
     const limits = data.conditionSets.find((item) => item.id === 'CONDITIONS-DEP-SARYTAU')?.limits
-    expect(limits).toHaveLength(28)
-    expect(limits).toContainEqual(expect.objectContaining({ id: 'uranium-cutoff', value: '0.012', unit: 'м%' }))
+    expect(limits).toHaveLength(34)
+    expect(limits?.map(isRequiredConditionLimit)).toEqual([...Array(9).fill(true), ...Array(25).fill(false)])
+    expect(limits).toContainEqual(expect.objectContaining({ id: 'uranium-cutoff-percent', value: '0,01', unit: '%' }))
   })
 
   it('adds the full condition-limits list to legacy stored condition sets', async () => {
@@ -33,8 +35,8 @@ describe('DemoGeologyMasterRepository BGD CRUD', () => {
     await database.put('records', stored!)
 
     const migrated = (await repository.getMasterData()).conditionSets.find((item) => item.id === 'CONDITIONS-DEP-SARYTAU')
-    expect(migrated?.limits).toHaveLength(28)
-    expect(migrated?.limits?.find((item) => item.id === 'rock-density')?.value).toBe('1730')
+    expect(migrated?.limits).toHaveLength(34)
+    expect(migrated?.limits.find(({ id }) => id === 'rock-density')?.value).toBe('1730')
   })
 
   it('migrates site sets into one deposit set, keeps edited values and backs up the sources', async () => {
@@ -43,7 +45,10 @@ describe('DemoGeologyMasterRepository BGD CRUD', () => {
     const legacy = (id: string, siteId: string, value: string, updatedAt: string) => ({
       id: `condition-set:${id}`, entityType: 'condition-set', objectId: id, scopeId: 'DEP-SARYTAU', status: 'published', updatedAt,
       data: { id, siteId, version: 3, status: 'published', density: 2.71, limits: [
-        { id: 'uranium-cutoff', parameter: 'Бортовое содержание урана', value },
+        { id: 'min-area-ore-factor', parameter: 'Минимальный коэффициент площадной рудоносности', value },
+        { id: 'uranium-cutoff', parameter: 'Бортовое содержание урана', value: '0.012', unit: 'м%' },
+        { id: 'max-waste-thickness', parameter: 'Максимальная мощность пустых пород', value: '3', unit: 'м' },
+        { id: 'section-top', parameter: 'Верхняя высота разрезов по умолчанию', value: '-440', unit: 'м' },
         { id: 'permafrost-boundary', parameter: 'Граница вечной мерзлоты', value: 'Не задана' },
       ] },
     })
@@ -52,8 +57,11 @@ describe('DemoGeologyMasterRepository BGD CRUD', () => {
     const migrated = (await repository.getMasterData()).conditionSets
     expect(migrated).toHaveLength(1)
     expect(migrated[0]).toMatchObject({ id: 'CONDITIONS-DEP-SARYTAU', depositId: 'DEP-SARYTAU' })
-    expect(migrated[0]!.limits).toHaveLength(28)
-    expect(migrated[0]!.limits.find((item) => item.id === 'uranium-cutoff')?.value).toBe('0.04')
+    expect(migrated[0]!.limits).toHaveLength(34)
+    expect(migrated[0]!.limits.find((item) => item.id === 'min-area-ore-factor')?.value).toBe('0.04')
+    expect(migrated[0]!.limits.find((item) => item.id === 'uranium-cutoff-percent')?.value).toBe('0,01')
+    expect(migrated[0]!.limits.find((item) => item.id === 'max-waste-in-ore-interval')?.value).toBe('3')
+    expect(migrated[0]!.limits.find((item) => item.id === 'section-top')?.value).toBe('-440')
     expect(migrated[0]!.limits.some((item) => item.id === 'permafrost-boundary')).toBe(false)
     expect(migrated[0]).not.toHaveProperty('siteId')
     expect(await database.get('meta', 'legacy-condition-set:condition-set:OLD-NORTH')).toBeDefined()
@@ -63,19 +71,29 @@ describe('DemoGeologyMasterRepository BGD CRUD', () => {
 
   it('saves deposit limits directly, repeatedly and without versions, including a deposit without sites', async () => {
     const original = (await repository.getMasterData()).conditionSets[0]!
-    const limits = original.limits.map((item) => item.id === 'uranium-cutoff' ? { ...item, value: '0.05' } : item)
+    const limits = original.limits.map((item) => item.id === 'uranium-cutoff-percent' ? { ...item, value: '0.05' } : item)
     const saved = await repository.saveConditionSet({ ...original, limits })
     expect(saved).not.toHaveProperty('version')
     expect(saved).not.toHaveProperty('status')
-    await repository.saveConditionSet({ ...saved, limits: saved.limits.map((item) => item.id === 'uranium-cutoff' ? { ...item, value: '0.06' } : item) })
+    await repository.saveConditionSet({ ...saved, limits: saved.limits.map((item) => item.id === 'uranium-cutoff-percent' ? { ...item, value: '0.06' } : item) })
     await repository.saveConditionSet({ ...saved, depositId: 'DEP-SEVERNOE' })
     const reloaded = await new DemoGeologyMasterRepository(database).getMasterData()
     expect(reloaded.conditionSets.filter((item) => item.depositId === 'DEP-SARYTAU')).toHaveLength(1)
-    expect(reloaded.conditionSets.find((item) => item.depositId === 'DEP-SARYTAU')?.limits.find((item) => item.id === 'uranium-cutoff')?.value).toBe('0.06')
+    expect(reloaded.conditionSets.find((item) => item.depositId === 'DEP-SARYTAU')?.limits.find((item) => item.id === 'uranium-cutoff-percent')?.value).toBe('0.06')
     expect(reloaded.conditionSets.filter((item) => item.depositId === 'DEP-SEVERNOE')).toHaveLength(1)
     const versions = await database.getAll<{ id: string }>('versions')
     expect(versions.some((item) => item.id.includes('condition-set'))).toBe(false)
     await expect(repository.saveConditionSet({ ...saved, depositId: 'UNKNOWN' })).rejects.toThrow('Месторождение не найдено')
+  })
+
+  it('creates a deposit and its entered limits together, and rejects incomplete sets', async () => {
+    const input = { code: 77, nameRu: 'Лимиты', nameKk: 'Лимиттер', nameEn: 'Limits' }
+    const limits = buildConditionLimits()
+    await expect(repository.createDeposit({ ...input, conditionLimits: limits.slice(1) })).rejects.toThrow('Заполните все')
+    expect((await repository.getMasterData()).deposits.some(({ code }) => code === input.code)).toBe(false)
+    const edited = limits.map((item) => item.id === 'max-barren-thickness-c2' ? { ...item, value: '2,5' } : item)
+    const deposit = await repository.createDeposit({ ...input, conditionLimits: edited.filter(isRequiredConditionLimit) })
+    expect((await repository.getMasterData()).conditionSets.find(({ depositId }) => depositId === deposit.id)?.limits).toEqual(edited)
   })
 
   it('creates, updates, hides and deletes an independent field', async () => {

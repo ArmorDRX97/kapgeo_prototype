@@ -2,7 +2,7 @@ import { useDialogDismissGuard } from '../../shared/lib/useDialogDismissGuard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, CircleAlert, Database, History, PencilLine, ShieldCheck, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { buildConditionLimits, getDepositDescription, getDepositName, type ConditionSet, type Deposit, type UpdateDepositPatch } from '../../entities/geology-master/model/types'
+import { buildConditionLimits, getDepositDescription, getDepositName, groupConditionLimits, isValidConditionLimit, unrestrictedConditionLimit, type ConditionSet, type Deposit, type UpdateDepositPatch } from '../../entities/geology-master/model/types'
 import { useSession } from '../../entities/session/model/sessionContext'
 import {
   deleteDeposit,
@@ -19,6 +19,7 @@ import { Panel } from '../../shared/ui/Panel'
 import { DeleteDepositDialog, DepositEditor, type DepositDependencies } from './GeologyDatabaseRegistry'
 import { WorkspaceDialog } from '../../shared/ui/WorkspaceDialog'
 import { DepositCollections } from './DepositCollections'
+import { ConditionLimitFields } from './ConditionLimitFields'
 import './geobase.css'
 import { useUiLocale } from '../../shared/lib/useUiLocale'
 import { BgdFieldMap } from './ui/BgdFieldMap'
@@ -108,9 +109,20 @@ export function GeologyDatabaseDeposit({ depositId, onDeleted, onOpenDeposit, vi
   const canViewAudit = hasPermission(persona, 'geology.bgd.audit')
 
   const conditionCard = <Panel title={`Кондиционные лимиты ${deposit.nameRu}`} action={<Button size="sm" variant="secondary" onClick={() => { saveLimitsMutation.reset(); setLimitsCondition(depositCondition ?? getEmptyConditionSet(deposit.id)) }}><PencilLine size={16} />Изменить</Button>}>
-    <dl className="geobase-condition-values">{(depositCondition ?? getEmptyConditionSet(deposit.id)).limits.map((limit) => <div key={limit.id}>
-      <dt>{limit.parameter}</dt><dd>{limit.value || 'Не задано'}{limit.value && limit.unit && <small>{limit.unit}</small>}</dd>
-    </div>)}</dl>
+    <div className="geobase-limit-groups">
+      {groupConditionLimits(depositCondition?.limits ?? buildConditionLimits([], false)).map(({ title, required, limits }) => <section key={title} className="geobase-limit-group">
+        <h3 className="geobase-limit-group__title" data-required={required}>{title}</h3>
+        <dl className="geobase-condition-values">
+          {limits.map(({ id, parameter, value, unit }) => <div key={id}>
+            <dt>{parameter}</dt>
+            <dd>
+              {(required ? value.replace('.', ',') : value) || 'Не задано'}
+              {value && value !== unrestrictedConditionLimit && unit && <small>{'\u00a0'}{unit}</small>}
+            </dd>
+          </div>)}
+        </dl>
+      </section>)}
+    </div>
   </Panel>
 
   return <div className={view === 'overview' ? 'bgd-deposit-map-page' : 'page-stack geobase-page geobase-overview'}>
@@ -161,7 +173,7 @@ function getEmptyConditionSet(depositId: string): ConditionSet {
     offBalanceThreshold: 0,
     azimuthCorrection: 0,
     geometryTolerance: 0,
-    limits: buildConditionLimits(''),
+    limits: buildConditionLimits(),
   }
 }
 
@@ -175,6 +187,7 @@ function ConditionLimitsDialog({ input, depositName, canEdit, onClose, onSave, p
   error?: string
 }) {
   const [condition, setCondition] = useState(input)
+  const canSave = canEdit && !pending && condition.limits.every(isValidConditionLimit)
   const dialogRef = useRef<HTMLFormElement>(null)
   const dismiss = useDialogDismissGuard(dialogRef, { onClose, pending })
 
@@ -186,7 +199,7 @@ function ConditionLimitsDialog({ input, depositName, canEdit, onClose, onSave, p
 
   return <><div className="geobase-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose() }}>
     <form ref={dialogRef} className="geobase-dialog geobase-dialog--limits" role="dialog" aria-modal="true" aria-labelledby="condition-limits-title"
-      onSubmit={(event) => { event.preventDefault(); if (canEdit && !pending) onSave(condition) }}
+      onSubmit={(event) => { event.preventDefault(); if (canSave) onSave(condition) }}
       onKeyDown={(event) => {
         if (event.key === 'Escape') { event.preventDefault(); if (!pending) onClose() }
         if (event.key !== 'Tab') return
@@ -199,20 +212,10 @@ function ConditionLimitsDialog({ input, depositName, canEdit, onClose, onSave, p
       <div className="geobase-dialog__body">
         {error && <div className="form-alert form-alert--error" role="alert">{error}</div>}
         {!canEdit && <div className="form-alert">Нет прав для редактирования кондиционных лимитов.</div>}
-        <div className="geobase-limits-table">
-          <div className="geobase-limits-table__head"><span>Параметр</span><span>Значение</span><span>Ед. изм.</span></div>
-          {condition.limits.map((limit) => <div key={limit.id} className="geobase-limits-table__row">
-            <label htmlFor={`condition-limit-${limit.id}`}>{limit.parameter}</label>
-            <span><input id={`condition-limit-${limit.id}`} type="text" value={limit.value} disabled={!canEdit || pending} onChange={(event) => setCondition({
-              ...condition,
-              limits: condition.limits.map((item) => item.id === limit.id ? { ...item, value: event.target.value } : item),
-            })} /></span>
-            <small>{limit.unit ?? '—'}</small>
-          </div>)}
-        </div>
+        <ConditionLimitFields limits={condition.limits} disabled={!canEdit || pending} onChange={(limits) => setCondition({ ...condition, limits })} />
       </div>
       <footer>
-        <Button type="submit" disabled={!canEdit || pending}>Сохранить</Button>
+        <Button type="submit" disabled={!canSave}>Сохранить</Button>
         <Button disabled={pending} variant="secondary" onClick={onClose}>Отменить</Button>
       </footer>
     </form>

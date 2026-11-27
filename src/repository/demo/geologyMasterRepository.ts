@@ -8,7 +8,7 @@ import type {
   UpdateDepositPatch,
 } from '../../entities/geology-master/model/types'
 import type { Well } from '../../entities/well/model/types'
-import { buildConditionLimits } from '../../entities/geology-master/model/types'
+import { buildConditionLimits, isValidConditionLimit } from '../../entities/geology-master/model/types'
 import { DemoDatabase, demoDatabase, type DemoRecord, type DemoTransaction } from './demoDatabase'
 
 const seedTimestamp = '2026-08-24T00:00:00.000Z'
@@ -31,26 +31,23 @@ const oldSarytauNames = new Map([
   ['OCC-SARYTAU-02', 'CN-02'],
 ])
 
-const seededConditionLimits = buildConditionLimits('', {
+const seededOptionalConditionValues: Record<string, string> = {
   'section-top': '-420',
   'filter-top-addition': '2',
   'filter-bottom-addition': '6',
   'filter-top-percent': '20',
   'filter-bottom-percent': '20',
   'section-bottom': '-570',
-  'uranium-cutoff': '0.012',
   'effective-thickness-addition': '2',
   'gamma-barren': '100',
   'resistivity-impermeable': '24',
   'rare-earth-core': '0',
-  'max-waste-thickness': '5',
   'max-ore-thickness': '15',
   'min-zenith-angle': '4',
   'min-barren-thickness': '0.3',
   'min-impermeable-thickness': '0.3',
   'min-industrial-linear-reserve': '0.12',
   'min-core-recovery': '30',
-  'min-area-ore-factor': '0.75',
   'min-linear-reserve': '0.08',
   'min-balanced-well-content': '0.0795',
   'min-balanced-intersection-content': '0.001',
@@ -60,7 +57,12 @@ const seededConditionLimits = buildConditionLimits('', {
   'rock-density': '1730',
   'true-azimuth-correction': '10',
   'magnetic-azimuth-correction': '5',
-})
+}
+
+const seededConditionLimits = buildConditionLimits().map((limit) => ({
+  ...limit,
+  value: seededOptionalConditionValues[limit.id] ?? limit.value,
+}))
 
 const seed: GeologicalMasterData = {
   deposits: [
@@ -196,18 +198,24 @@ function validateDepositValues(value: Deposit, previous: DepositOccurrence[] = [
   }
 }
 
-function migrateConditionLimits(condition: LegacyConditionSet) {
-  const seededMatch = seed.conditionSets.find((item) => item.id === condition.id || condition.id === 'CONDITIONS-NORTH-2026')
-  if (seededMatch?.limits) return seededMatch.limits.map((item) => ({ ...item }))
-  return buildConditionLimits('', {
-    'uranium-cutoff': String(condition.balanceThreshold ?? ''),
-    'rock-density': (condition.density ?? 0) > 0 ? String(condition.density! < 100 ? condition.density! * 1000 : condition.density) : '',
-    'true-azimuth-correction': String(condition.azimuthCorrection ?? ''),
-  })
+function migrateConditionLimits(source: Partial<LegacyConditionSet>) {
+  const limits = source.limits ?? []
+  if (limits.length) {
+    const oldWasteLimit = limits.find((limit) => limit.id === 'max-waste-thickness')
+    if (oldWasteLimit && !limits.some((limit) => limit.id === 'max-waste-in-ore-interval')) {
+      return [...limits, { ...oldWasteLimit, id: 'max-waste-in-ore-interval' }]
+    }
+    return limits
+  }
+  if (source.id === seed.conditionSets[0]?.id || source.id === 'CONDITIONS-NORTH-2026') return seededConditionLimits
+  const density = source.density ?? 0
+  return [
+    { id: 'rock-density', parameter: '', value: density > 0 ? String(density < 100 ? density * 1000 : density) : '' },
+    { id: 'true-azimuth-correction', parameter: '', value: String(source.azimuthCorrection ?? '') },
+  ]
 }
 
-function normalizeConditionSet(source: LegacyConditionSet, depositId: string): ConditionSet {
-  const limits = source.limits?.length ? source.limits : migrateConditionLimits(source)
+function normalizeConditionSet(source: Partial<LegacyConditionSet>, depositId: string): ConditionSet {
   return {
     id: `CONDITIONS-${depositId}`,
     depositId,
@@ -216,7 +224,13 @@ function normalizeConditionSet(source: LegacyConditionSet, depositId: string): C
     offBalanceThreshold: source.offBalanceThreshold ?? 0,
     azimuthCorrection: source.azimuthCorrection ?? 0,
     geometryTolerance: source.geometryTolerance ?? 0,
-    limits: buildConditionLimits('', Object.fromEntries(limits.map((limit) => [limit.id, limit.value]))),
+    limits: buildConditionLimits(migrateConditionLimits(source).filter(isValidConditionLimit)),
+  }
+}
+
+function validateConditionLimits(limits: ConditionSet['limits']) {
+  if (!buildConditionLimits(limits, false).every(isValidConditionLimit)) {
+    throw new Error('Заполните все обязательные кондиционные лимиты допустимыми значениями.')
   }
 }
 
@@ -337,8 +351,15 @@ export class DemoGeologyMasterRepository {
       updatedBy: 'Ирина Иванова',
     }
     validateDepositValues(deposit)
+    const limits = input.conditionLimits
+    if (limits) validateConditionLimits(limits)
     await this.database.transaction(['records', 'auditEvents'], async (transaction) => {
+      if (await transaction.get('records', `deposit:${deposit.id}`)) throw new Error('Месторождение с таким кодом уже существует.')
       await transaction.put('records', record('deposit', deposit, deposit.status))
+      if (limits) {
+        const condition = normalizeConditionSet({ limits }, deposit.id)
+        await transaction.put('records', record('condition-set', condition))
+      }
 
       await transaction.put('auditEvents', this.audit('deposit.created', deposit.id, 'Создано месторождение в БГД.'))
     })
@@ -444,6 +465,7 @@ export class DemoGeologyMasterRepository {
   }
 
   async saveConditionSet(input: Omit<ConditionSet, 'id'>): Promise<ConditionSet> {
+    validateConditionLimits(input.limits)
     await this.getMasterData()
     await this.requireDeposit(input.depositId)
     // A deterministic key makes saves an upsert: a deposit can never get a second set.
